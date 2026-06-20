@@ -1,0 +1,16 @@
+---
+# Dedicated unprivileged agent user. See docs/claude-user-design.md (§4 design,
+# §10 the as-built record). This role does the filesystem/user/group plumbing;
+# the identity (keys, GitHub bot, Claude Code login) is interactive/external and
+# stays a documented manual step — see bootstrap/README.md.
+claude_user: claude
+devshare_group: devshare
+claude_admin_user: "{{ lookup('env', 'USER') }}"   # the human who shares /srv/dev with claude
+claude_shared_tree: /srv/dev                        # neutral root-owned collaboration tree
+
+# NOTE (2026-06-20): the collaboration model is "two separate clones, sync via
+# git" — claude clones projects into /srv/dev and works there; the human keeps a
+# private clone in their home. So this role NO LONGER punches ACL holes into the
+# human's home (no traverse ACLs, no in-place repo sharing) — that restores the
+# 0750 home to fully private. See docs/working-with-claude.md. For the rare case
+# of co-editing a path in the home, use the `claude-access` tool, not this role.

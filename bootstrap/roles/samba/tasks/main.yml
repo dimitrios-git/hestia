@@ -1,0 +1,90 @@
+---
+# Deploy the Samba-over-Tailscale share — a layer-(a) system config (copied to
+# /etc as root, NOT symlinked). Converts system/samba/README.md. All become.
+#
+# NOT automated: `smbpasswd -a/-e smbshare` (the Windows auth password) — it's
+# interactive and must not live in the repo. Run it once by hand (see README).
+
+- name: Install samba
+  ansible.builtin.apt:
+    name: samba
+    state: present
+  become: true
+
+- name: Create the smbshare group
+  ansible.builtin.group:
+    name: "{{ samba_principal }}"
+    system: true
+  become: true
+
+- name: Create the smbshare system account (no home, no login — Samba-only identity)
+  ansible.builtin.user:
+    name: "{{ samba_principal }}"
+    group: "{{ samba_principal }}"
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin
+  become: true
+
+- name: Grant the admin user local access (re-login to take effect)
+  ansible.builtin.user:
+    name: "{{ samba_admin_user }}"
+    groups: "{{ samba_principal }}"
+    append: true
+  become: true
+
+- name: Create the share directory (setgid → new files inherit the group)
+  ansible.builtin.file:
+    path: "{{ samba_share_path }}"
+    state: directory
+    owner: "{{ samba_principal }}"
+    group: "{{ samba_principal }}"
+    mode: "2770"
+  become: true
+
+- name: Set ACLs on the share (current access ACL + default ACL)
+  ansible.posix.acl:
+    path: "{{ samba_share_path }}"
+    etype: group
+    entity: "{{ samba_principal }}"
+    permissions: rwx
+    default: "{{ item }}"
+    state: present
+  loop: [false, true]
+  loop_control:
+    label: "{{ 'default' if item else 'access' }} ACL g:{{ samba_principal }}:rwx"
+  become: true
+
+- name: Back up the distro default smb.conf once
+  ansible.builtin.copy:
+    src: /etc/samba/smb.conf
+    dest: /etc/samba/smb.conf.orig
+    remote_src: true
+    force: false                 # first run only — preserves the true original
+  become: true
+
+- name: Deploy our smb.conf (syntax-validated before it is installed)
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/system/samba/smb.conf"
+    dest: /etc/samba/smb.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: testparm -s %s
+  become: true
+  notify: Restart smbd
+
+- name: Disable services a standalone file share doesn't need
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop: "{{ samba_unneeded_services }}"
+  become: true
+
+- name: Enable + start smbd
+  ansible.builtin.systemd:
+    name: smbd
+    enabled: true
+    state: started
+  become: true

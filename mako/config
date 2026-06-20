@@ -1,0 +1,16 @@
+background-color=#0a0a0a
+text-color=#e0e0e0
+border-color=#ce0056
+border-radius=0
+border-size=2
+default-timeout=5000
+max-visible=5
+sort=-time
+margin=8
+padding=10,14
+
+[urgency=high]
+background-color=#ce0056
+border-color=#9b0040
+text-color=#ffffff
+default-timeout=0

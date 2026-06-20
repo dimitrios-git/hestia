@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# claude-access — grant / revoke the dedicated `claude` agent user access to a
+# path OUTSIDE the auto-shared /srv/dev tree (e.g. a project in your home), and
+# keep a registry so grants aren't forgotten. See docs/working-with-claude.md.
+#
+# Mechanism (same as the claude_user role / Case B, automated):
+#   grant  -> traverse-only (u:claude:x) on each non-traversable ancestor so
+#             claude can REACH the path, + recursive devshare rwX access ACL and
+#             default ACL on the path itself (bidirectional rw; new files inherit).
+#   revoke -> remove the recursive devshare ACL from the path. Traverse ACLs on
+#             ancestors are LEFT (they grant no read/list and may be shared by
+#             another grant); the registry is the source of truth for what's live.
+set -euo pipefail
+
+CLAUDE_USER=claude
+SHARE_GROUP=devshare
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/claude-access"
+ACTIVE="$STATE_DIR/grants.tsv"     # current grants: <iso-ts>\t<path>
+HISTORY="$STATE_DIR/history.log"   # append-only audit: <iso-ts>\t<action>\t<path>
+
+usage() {
+    cat <<'EOF'
+Usage: claude-access <grant|revoke|list> [PATH]
+
+  grant PATH    Give `claude` traverse access along the chain to PATH and full
+                recursive (rwX) access to PATH and everything under it; record it.
+  revoke PATH   Remove `claude`'s recursive access to PATH (traverse-only ACLs on
+                parent dirs are left — they grant no read/list — and may be shared).
+  list          Show the paths claude currently has access to.
+
+Note: /srv/dev is auto-shared and needs NO grant — put collaborative projects
+there instead. This is for paths elsewhere. May prompt for sudo (mixed ownership
+once claude has created files, and claude's git safe.directory).
+EOF
+}
+
+ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+ensure_state() { mkdir -p "$STATE_DIR"; touch "$ACTIVE" "$HISTORY"; }
+
+# setfacl one dir, using sudo only if we don't own it.
+acl_dir() {
+    local dir=$1; shift
+    if [ -O "$dir" ]; then setfacl "$@" "$dir"; else sudo setfacl "$@" "$dir"; fi
+}
+# setfacl -R a tree: try as self (fast path, all-our-files), fall back to sudo
+# (mixed ownership once claude has written files there).
+acl_tree() {
+    local target=$1; shift
+    setfacl -R "$@" "$target" 2>/dev/null || sudo setfacl -R "$@" "$target"
+}
+
+grant() {
+    local target; target=$(readlink -f -- "$1") || { echo "no such path: $1" >&2; exit 1; }
+    [ -d "$target" ] || { echo "not a directory: $target" >&2; exit 1; }
+    ensure_state
+
+    # 1. traverse-only along the ancestor chain (skip already-traversable dirs)
+    local dir="$target"
+    while [ "$dir" != "/" ]; do
+        dir=$(dirname "$dir")
+        [ "$dir" = "/" ] && break
+        case "$(stat -c '%A' "$dir")" in
+            *[xts]) : ;;   # others can already traverse (x / sticky+x) -> skip
+            *)      acl_dir "$dir" -m "u:$CLAUDE_USER:x" ;;
+        esac
+    done
+
+    # 2. full recursive access on the target (current + default for new files)
+    acl_tree "$target" -m  "g:$SHARE_GROUP:rwX"
+    acl_tree "$target" -d -m "g:$SHARE_GROUP:rwx"
+
+    # 3. git multi-user hygiene if it's a repo (only claude needs safe.directory —
+    #    to dimitrios the repo is his own, so no dubious-ownership there)
+    if [ -d "$target/.git" ]; then
+        git -C "$target" config core.sharedRepository group
+        sudo -u "$CLAUDE_USER" git config --global --add safe.directory "$target"
+    fi
+
+    # 4. record (dedupe by path)
+    if ! cut -f2 "$ACTIVE" | grep -qxF "$target"; then
+        printf '%s\t%s\n' "$(ts)" "$target" >> "$ACTIVE"
+    fi
+    printf '%s\tgrant\t%s\n' "$(ts)" "$target" >> "$HISTORY"
+    echo "granted claude access to: $target"
+}
+
+revoke() {
+    local target; target=$(readlink -f -- "$1") || target="$1"
+    ensure_state
+    if [ -e "$target" ]; then
+        acl_tree "$target" -x  "g:$SHARE_GROUP" 2>/dev/null || true
+        acl_tree "$target" -d -x "g:$SHARE_GROUP" 2>/dev/null || true
+    else
+        echo "note: $target no longer exists; clearing it from the registry only" >&2
+    fi
+    if [ -s "$ACTIVE" ]; then
+        local tmp; tmp=$(mktemp)
+        awk -F'\t' -v p="$target" '$2 != p' "$ACTIVE" > "$tmp" && mv "$tmp" "$ACTIVE"
+    fi
+    printf '%s\trevoke\t%s\n' "$(ts)" "$target" >> "$HISTORY"
+    echo "revoked claude access to: $target"
+}
+
+list() {
+    ensure_state
+    if [ -s "$ACTIVE" ]; then
+        echo "claude currently has granted access to:"
+        sort -k2 "$ACTIVE" | awk -F'\t' '{printf "  %s  (granted %s)\n", $2, $1}'
+    else
+        echo "claude has no extra grants (only the auto-shared /srv/dev)."
+    fi
+}
+
+case "${1:-}" in
+    grant)  [ $# -eq 2 ] || { usage; exit 1; }; grant  "$2" ;;
+    revoke) [ $# -eq 2 ] || { usage; exit 1; }; revoke "$2" ;;
+    list)   list ;;
+    *)      usage; exit 1 ;;
+esac

@@ -1,0 +1,10 @@
+---
+# Samba-over-Tailscale share. See system/samba/README.md + docs/file-sharing-design.md.
+samba_share_path: /srv/share
+samba_principal: smbshare                         # dedicated user+group (no login)
+samba_admin_user: "{{ lookup('env', 'USER') }}"   # local user granted share access
+# Services the `samba` metapackage pulls in but a standalone file share doesn't
+# need — disabled to cut attack surface (AD domain controller + NetBIOS).
+samba_unneeded_services:
+  - samba-ad-dc
+  - nmbd

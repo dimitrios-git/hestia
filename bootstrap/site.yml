@@ -1,0 +1,24 @@
+---
+# Top-level bootstrap playbook. Run from the bootstrap/ dir:
+#   ansible-playbook site.yml --ask-become-pass            # full run
+#   ansible-playbook site.yml --tags dotfiles --check      # dry-run just the symlinks
+#
+# Tags let you run a slice. More roles get added per docs/repo-structure-design.md
+# (system configs, claude user, etc.) — this is the foundational slice.
+
+- name: Bootstrap this machine from the dotfiles repo
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  roles:
+    - role: packages   # apt installs (needs --ask-become-pass)
+      tags: [packages]
+    - role: dotfiles   # symlinks into $HOME (no root)
+      tags: [dotfiles]
+    - role: samba      # layer-(a) system config: Samba share to /etc (root)
+      tags: [system, samba]
+    - role: claude_user  # dedicated agent user + shared trees + repo ACLs
+      tags: [claude, claude_user]
+    - role: credentials  # login auto-unlock launcher-untangle (SSH + GPG)
+      tags: [credentials]

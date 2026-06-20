@@ -1,0 +1,8 @@
+---
+# Restart (not reload) — `enable --now` won't restart an already-running smbd, so
+# it would keep the old bind. Triggered only when smb.conf actually changes.
+- name: Restart smbd
+  ansible.builtin.systemd:
+    name: smbd
+    state: restarted
+  become: true

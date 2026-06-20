@@ -1,0 +1,45 @@
+# cmus startup commands — sourced after cmus restores saved options, so these win.
+# wildcharm-matched theme; accent tracks terminal color 1 (#ce0056).
+
+# command / messages
+set color_cmdline_bg=-1
+set color_cmdline_fg=253
+set color_error=204
+set color_info=1
+set color_separator=240
+
+# status line (bottom) — light text on dark bg for readability
+set color_statusline_bg=236
+set color_statusline_fg=253
+set color_statusline_progress_bg=1
+set color_statusline_progress_fg=231
+
+# title line (top, now-playing bar)
+set color_titleline_bg=1
+set color_titleline_fg=231
+
+# browser / library windows
+set color_win_bg=-1
+set color_win_fg=253
+set color_win_dir=39
+set color_win_cur=1
+set color_win_title_bg=1
+set color_win_title_fg=231
+
+# selections — accent for the active/current, grey for inactive
+set color_win_sel_bg=236
+set color_win_sel_fg=253
+set color_win_cur_sel_bg=1
+set color_win_cur_sel_fg=231
+set color_win_inactive_sel_bg=235
+set color_win_inactive_sel_fg=253
+set color_win_inactive_cur_sel_bg=236
+set color_win_inactive_cur_sel_fg=253
+
+# Open the file browser (view 5) here by default
+cd /mnt/cold-data/files/Music/Audio/
+
+# U = rescan the music folder for newly added tracks (library dedupes, so it's
+# safe to repeat). Overrides the rarely-used win-update-cache default.
+# (u still = update-cache: prune deleted / refresh changed tags.)
+bind -f common U add -l /mnt/cold-data/files/Music/Audio/

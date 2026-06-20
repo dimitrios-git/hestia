@@ -1,0 +1,72 @@
+/* wofi theme — matches sway / waybar / mako (accent #ce0056) */
+
+* {
+    font-family: "Lilex Nerd Font Mono";
+    font-size: 14px;
+}
+
+window {
+    background-color: #0a0a0a;
+    color: #e0e0e0;
+    border: 2px solid #ce0056;
+}
+
+#outer-box {
+    margin: 0;
+    padding: 12px;
+}
+
+#input {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background-color: #111111;
+    color: #e0e0e0;
+    border: 1px solid #1e1e1e;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none;
+}
+
+#input:focus {
+    border: 1px solid #ce0056;
+    outline: none;
+    box-shadow: none;
+}
+
+#input image {
+    color: #888888;
+}
+
+#scroll {
+    margin: 0;
+}
+
+#inner-box {
+    margin: 0;
+}
+
+#entry {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 0;
+}
+
+#entry image {
+    margin-right: 10px;
+}
+
+#text {
+    color: #c8c8c8;
+}
+
+#entry:selected {
+    background-color: #ce0056;
+}
+
+#entry:selected #text {
+    color: #ffffff;
+}
+
+#text:selected {
+    color: #ffffff;
+}

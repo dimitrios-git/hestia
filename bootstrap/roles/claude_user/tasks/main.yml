@@ -1,0 +1,69 @@
+---
+# Plumbing for the dedicated `claude` agent user (docs/claude-user-design.md §10).
+# All become. The trust boundary is kernel-enforced: claude is unprivileged, has
+# its own 0700 home, and is NOT in sudo — so it cannot read the human's secrets.
+
+- name: Create the devshare group (shared by the human + claude)
+  ansible.builtin.group:
+    name: "{{ devshare_group }}"
+  become: true
+
+- name: Create the claude user (own 0700 home, bash, in devshare, NOT sudo)
+  ansible.builtin.user:
+    name: "{{ claude_user }}"
+    groups: "{{ devshare_group }}"
+    append: true
+    shell: /bin/bash
+    create_home: true
+    password_lock: true          # no password login — reached via `sudo -iu claude`
+    comment: "Claude (dimitrios's agent)"
+  become: true
+
+- name: Lock down claude's home to 0700 (private to claude)
+  ansible.builtin.file:
+    path: "/home/{{ claude_user }}"
+    state: directory
+    mode: "0700"
+  become: true
+
+- name: Add the human to devshare (re-login to take effect)
+  ansible.builtin.user:
+    name: "{{ claude_admin_user }}"
+    groups: "{{ devshare_group }}"
+    append: true
+  become: true
+
+# --- Shared collaboration tree /srv/dev (root:devshare, setgid, default ACL) ----
+- name: Create the shared dev tree
+  ansible.builtin.file:
+    path: "{{ claude_shared_tree }}"
+    state: directory
+    owner: root
+    group: "{{ devshare_group }}"
+    mode: "2770"
+  become: true
+
+- name: ACLs on the shared dev tree (access + default, group devshare rwx)
+  ansible.posix.acl:
+    path: "{{ claude_shared_tree }}"
+    etype: group
+    entity: "{{ devshare_group }}"
+    permissions: rwx
+    default: "{{ item }}"
+    state: present
+  loop: [false, true]
+  loop_control:
+    label: "{{ 'default' if item else 'access' }} ACL"
+  become: true
+
+# Collaboration is clone-based (claude clones into /srv/dev, syncs via git), so
+# this role deliberately does NOT touch the human's home — no traverse ACLs, no
+# in-place repo sharing, no shared-working-copy git hygiene. The home stays 0750
+# private. (Ad-hoc co-editing of a home path is the `claude-access` tool's job.)
+
+# --- Let claude's user services run without an active login --------------------
+- name: Enable lingering for claude
+  ansible.builtin.command: "loginctl enable-linger {{ claude_user }}"
+  args:
+    creates: "/var/lib/systemd/linger/{{ claude_user }}"
+  become: true

@@ -1,0 +1,90 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 32,
+    "modules-left": ["sway/workspaces", "sway/mode"],
+    "modules-center": ["sway/window"],
+    "modules-right": ["tray", "cpu", "memory", "custom/gpu", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "clock", "custom/debian"],
+
+    "custom/gpu": {
+        "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
+        "return-type": "json",
+        "interval": 2,
+        "exec": "/home/dimitrios/Development/estia/waybar/scripts/gpu.sh",
+        "on-click": "pgrep -f 'watch.*nvidia-smi' >/dev/null && pkill -f 'watch.*nvidia-smi' || kitty --class floatterm -e watch -n 1 nvidia-smi"
+    },
+
+    "power-profiles-daemon": {
+        "format": "<span size='xx-large' rise='-3072'>{icon}</span>",
+        "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+        "tooltip": true,
+        "format-icons": {
+            "default": "󰓅",
+            "performance": "󰓅",
+            "balanced": "󰾅",
+            "power-saver": "󰌪"
+        }
+    },
+
+    "bluetooth": {
+        "format": "<span size='x-large' rise='-2560'>󰂯</span>",
+        "format-disabled": "<span size='x-large' rise='-2560'>󰂲</span>",
+        "format-off": "<span size='x-large' rise='-2560'>󰂲</span>",
+        "format-connected": "<span size='x-large' rise='-2560'>󰂱</span> {num_connections}",
+        "tooltip-format": "{controller_alias}\t{status}",
+        "tooltip-format-connected": "{controller_alias}\t{status}\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}",
+        "on-click": "pgrep -x bluetuith >/dev/null && pkill -x bluetuith || kitty --class floatterm -e bluetuith",
+        "on-click-right": "rfkill toggle bluetooth"
+    },
+
+    "network": {
+        "format-wifi": "<span size='xx-large' rise='-3072'>󰖩</span> {signalStrength}%",
+        "format-ethernet": "<span size='xx-large' rise='-3072'>󰈀</span>",
+        "format-disconnected": "<span size='xx-large' rise='-3072'>󰖪</span>",
+        "tooltip-format-wifi": "{essid} ({signalStrength}%)\n{ipaddr}",
+        "tooltip-format-ethernet": "{ifname}: {ipaddr}",
+        "tooltip-format-disconnected": "Disconnected",
+        "on-click": "pgrep -x nmtui >/dev/null && pkill -x nmtui || kitty --class floatterm -e nmtui"
+    },
+
+    "sway/language": {
+        "format": "<span size='xx-large' rise='-3072'>󰗊</span> {short}",
+        "on-click": "swaymsg input type:keyboard xkb_switch_layout next"
+    },
+
+
+    "sway/workspaces": {
+        "disable-scroll": true
+    },
+
+    "cpu": {
+        "format": "<span size='xx-large' rise='-3072'>󰻠</span> {usage}%",
+        "interval": 2
+    },
+
+    "memory": {
+        "format": "<span size='xx-large' rise='-3072'>󰍛</span> {used:0.1f}G",
+        "interval": 2
+    },
+
+    "pulseaudio": {
+        "format": "<span size='xx-large' rise='-3072'>󰕾</span> {volume}%",
+        "format-muted": "<span size='xx-large' rise='-3072'>󰖁</span> muted",
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+    },
+
+    "clock": {
+        "format": "<span size='xx-large' rise='-3072'></span> {:%Y-%m-%d %H:%M %Z}",
+        "interval": 60
+    },
+
+    "custom/debian": {
+        "format": "<span size='xx-large' rise='-3072'></span>",
+        "tooltip": false
+    },
+
+    "tray": {
+        "spacing": 10
+    }
+}

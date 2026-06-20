@@ -1,0 +1,38 @@
+" wildcharm.vifm — vifm colorscheme matching the Vim 'wildcharm' theme.
+" Dark background, grey foreground, #d7005f magenta-red accent.
+
+highlight clear
+
+" frame
+highlight Win        cterm=none           ctermfg=252 ctermbg=16  guifg=#d0d0d0 guibg=#000000
+highlight OtherWin   cterm=none           ctermfg=252 ctermbg=16  guifg=#d0d0d0 guibg=#000000
+highlight Border     cterm=none           ctermfg=240 ctermbg=16  guifg=#585858 guibg=#000000
+highlight CmdLine    cterm=none           ctermfg=252 ctermbg=16  guifg=#d0d0d0 guibg=#000000
+
+" title / tab bar
+highlight TopLine    cterm=none           ctermfg=247 ctermbg=235 guifg=#9e9e9e guibg=#262626
+highlight TopLineSel cterm=bold           ctermfg=16  ctermbg=247 guifg=#000000 guibg=#9e9e9e
+highlight TabLine    cterm=none           ctermfg=252 ctermbg=236 guifg=#d0d0d0 guibg=#303030
+highlight TabLineSel cterm=bold           ctermfg=16  ctermbg=161 guifg=#000000 guibg=#d7005f
+
+" status line / messages
+highlight StatusLine cterm=bold           ctermfg=16  ctermbg=247 guifg=#000000 guibg=#9e9e9e
+highlight JobLine    cterm=bold           ctermfg=252 ctermbg=236 guifg=#d0d0d0 guibg=#303030
+highlight WildMenu   cterm=bold           ctermfg=16  ctermbg=161 guifg=#000000 guibg=#d7005f
+highlight SuggestBox cterm=none           ctermfg=252 ctermbg=236 guifg=#d0d0d0 guibg=#303030
+highlight ErrorMsg   cterm=bold           ctermfg=204 ctermbg=16  guifg=#ff5f87 guibg=#000000
+highlight LineNr     cterm=none           ctermfg=240 ctermbg=16  guifg=#585858 guibg=#000000
+
+" cursor / selection — accent bar, ties into the rest of the design
+highlight CurrLine   cterm=bold           ctermfg=231 ctermbg=161 guifg=#ffffff guibg=#d7005f
+highlight Selected   cterm=bold           ctermfg=213 ctermbg=16  guifg=#ff87ff guibg=#000000
+
+" file types
+highlight Directory  cterm=bold           ctermfg=39  ctermbg=default guifg=#00afff
+highlight Link       cterm=none           ctermfg=44  ctermbg=default guifg=#00d7d7
+highlight BrokenLink cterm=bold           ctermfg=204 ctermbg=default guifg=#ff5f87
+highlight HardLink   cterm=none           ctermfg=214 ctermbg=default guifg=#ffaf00
+highlight Socket     cterm=none           ctermfg=213 ctermbg=default guifg=#ff87ff
+highlight Device     cterm=none           ctermfg=172 ctermbg=default guifg=#d78700
+highlight Fifo       cterm=none           ctermfg=37  ctermbg=default guifg=#00afaf
+highlight Executable cterm=bold           ctermfg=41  ctermbg=default guifg=#00d75f

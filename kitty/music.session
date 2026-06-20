@@ -1,0 +1,6 @@
+# kitty session: cava visualizer on top, cmus below (focused) — launched via `kitty --session music.session`
+# Quitting cmus also kills cava, so the whole music view closes together.
+layout splits
+launch --title cava cava
+launch --location=hsplit --title cmus --bias 70 sh -c 'cmus; pkill -x cava'
+focus

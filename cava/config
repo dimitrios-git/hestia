@@ -1,0 +1,39 @@
+# cava — accent gradient (#ce0056) to match the rest of the system.
+
+[general]
+framerate = 60
+# 0 = auto-fit the number of bars to the terminal width
+bars = 0
+bar_width = 1
+bar_spacing = 0
+
+[input]
+# Talk to PipeWire directly (no PulseAudio layer on this system).
+# 'auto' captures the default sink's MONITOR (playback), not the mic.
+method = pipewire
+source = auto
+
+[output]
+method = noncurses
+channels = stereo
+
+[color]
+# inherit the terminal (kitty) background
+background = default
+gradient = 1
+gradient_count = 8
+gradient_color_1 = '#3a0019'
+gradient_color_2 = '#5d0027'
+gradient_color_3 = '#88003a'
+gradient_color_4 = '#b3004c'
+gradient_color_5 = '#ce0056'
+gradient_color_6 = '#e6447e'
+gradient_color_7 = '#f4779f'
+gradient_color_8 = '#ffaecb'
+
+[smoothing]
+# int 0-100 (was 0.77 ≈ no smoothing on this scale); higher = smoother
+noise_reduction = 88
+# horizontal smoothing — neighbouring bars influence each other for a flowing contour
+monstercat = 1.5
+waves = 0

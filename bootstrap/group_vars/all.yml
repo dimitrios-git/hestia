@@ -1,0 +1,55 @@
+---
+# Bootstrap manifest — the single source of truth the roles consume.
+# See docs/repo-structure-design.md (Ansible engine, YAML manifest).
+
+# Repo root, derived from where the playbook lives (bootstrap/ is one level down).
+# Generalises the hardcoded /home/dimitrios/Development/estia — this is the
+# path-generalisation the spin needs.
+repo_root: "{{ (playbook_dir + '/..') | realpath }}"
+target_home: "{{ lookup('env', 'HOME') }}"
+
+# --- Dotfile symlinks (repo path relative to repo_root -> absolute dest) -------
+# Mirrors CLAUDE.md's "Active symlinks" table; CLAUDE.md should be regenerated
+# from this list, not hand-maintained (kills doc-vs-reality drift).
+dotfile_links:
+  - { src: vim/.vimrc,                 dest: "{{ target_home }}/.vimrc" }
+  - { src: bash/.bashrc,               dest: "{{ target_home }}/.bashrc" }
+  - { src: git/.gitconfig,             dest: "{{ target_home }}/.gitconfig" }
+  - { src: git/.gitignore_global,      dest: "{{ target_home }}/.gitignore_global" }
+  - { src: gnupg/gpg-agent.conf,       dest: "{{ target_home }}/.gnupg/gpg-agent.conf" }
+  - { src: nvim/init.vim,              dest: "{{ target_home }}/.config/nvim/init.vim" }
+  - { src: nvim/lua/trees.lua,         dest: "{{ target_home }}/.config/nvim/lua/trees.lua" }
+  - { src: sway/config,                dest: "{{ target_home }}/.config/sway/config" }
+  - { src: waybar/config,              dest: "{{ target_home }}/.config/waybar/config" }
+  - { src: waybar/style.css,           dest: "{{ target_home }}/.config/waybar/style.css" }
+  - { src: mako/config,                dest: "{{ target_home }}/.config/mako/config" }
+  - { src: wofi/config,                dest: "{{ target_home }}/.config/wofi/config" }
+  - { src: wofi/style.css,             dest: "{{ target_home }}/.config/wofi/style.css" }
+  - { src: cava/config,                dest: "{{ target_home }}/.config/cava/config" }
+  - { src: cmus/rc,                    dest: "{{ target_home }}/.config/cmus/rc" }
+  - { src: kitty/kitty.conf,           dest: "{{ target_home }}/.config/kitty/kitty.conf" }
+  - { src: kitty/music.session,        dest: "{{ target_home }}/.config/kitty/music.session" }
+  - { src: imv/config,                 dest: "{{ target_home }}/.config/imv/config" }
+  - { src: vifm/vifmrc,                dest: "{{ target_home }}/.config/vifm/vifmrc" }
+  - { src: vifm/colors/wildcharm.vifm, dest: "{{ target_home }}/.config/vifm/colors/wildcharm.vifm" }
+  - { src: glow/glow.yml,              dest: "{{ target_home }}/.config/glow/glow.yml" }
+  - { src: glow/wildcharm.json,        dest: "{{ target_home }}/.config/glow/wildcharm.json" }
+  - { src: xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
+  - { src: bin/claude-access,          dest: "{{ target_home }}/.local/bin/claude-access" }
+
+# --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------
+# NOT exhaustive yet; extend as roles are added. Things that are NOT apt packages
+# are intentionally excluded and listed in README.md (manual steps): NVIDIA driver,
+# NVM/Node, vim-plug, the bluetuith binary, Nerd Fonts, Claude Code.
+apt_packages:
+  wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, playerctl]
+  portals:   [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk, pipewire, pipewire-pulse, wireplumber]
+  terminal:  [kitty, vifm, cmus, cava, glow, imv, zathura, mpv, chafa, poppler-utils, mediainfo]
+  editors:   [vim, neovim]
+  vcs_gpg:   [git, gnupg, pinentry-tty, gnome-keyring, libsecret-tools]
+  net_bt:    [network-manager, bluez]
+  power:     [power-profiles-daemon]
+  darkmode:  [dconf-cli, libglib2.0-bin, gsettings-desktop-schemas]
+  fonts:     [fonts-noto-color-emoji]
+  sharing:   [samba, acl]
+  misc:      [curl, dbus-bin, fontconfig]

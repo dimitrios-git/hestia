@@ -1,0 +1,11 @@
+---
+# Install apt packages from the manifest. Needs become (root). The apt_packages
+# dict is flattened to a single install call so apt resolves them together.
+
+- name: Install apt packages (all groups)
+  ansible.builtin.apt:
+    name: "{{ apt_packages.values() | list | flatten }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true

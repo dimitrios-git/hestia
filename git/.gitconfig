@@ -1,0 +1,14 @@
+[user]
+	email = dimitrios@charalampidis.pro
+	name = Dimitrios Charalampidis
+	signingkey = EB90A5A2D628F2A6
+[commit]
+	gpgsign = true
+[gpg]
+	program = /home/dimitrios/Development/estia/git/gpg-wrapper.sh
+[init]
+	defaultBranch = main
+[core]
+	excludesfile = /home/dimitrios/.gitignore_global
+	autocrlf = input
+	editor = vim

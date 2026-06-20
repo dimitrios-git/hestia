@@ -1,0 +1,35 @@
+---
+# Symlink every dotfile from the manifest into place. Idempotent: re-running is a
+# no-op when links already point correctly. Runs as the invoking user (no become)
+# — these live in $HOME. Replaces the manual `ln -s` steps in README/CLAUDE.md.
+
+# ~/.gnupg must be 0700 or gpg refuses to use it. Set explicitly (and only here —
+# the generic parent-dir task below does NOT manage mode, so it never downgrades
+# sensitive dirs like ~/.gnupg or the 0750 home).
+- name: Ensure ~/.gnupg exists with gpg-safe perms
+  ansible.builtin.file:
+    path: "{{ target_home }}/.gnupg"
+    state: directory
+    mode: "0700"
+
+# Create any missing parent dirs WITHOUT touching mode of existing ones. Omitting
+# `mode` is deliberate: existing dirs keep their perms (so the 0750 home and any
+# 0700 dirs are preserved); new dirs are created at the user's umask. Deduped so
+# shared parents (e.g. $HOME, ~/.config/waybar) aren't revisited.
+- name: Ensure parent directories of dotfiles exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop: "{{ dotfile_links | map(attribute='dest') | map('dirname') | unique | list }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Symlink dotfiles from the repo
+  ansible.builtin.file:
+    src: "{{ repo_root }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    force: true            # replace a pre-existing plain file/wrong link
+  loop: "{{ dotfile_links }}"
+  loop_control:
+    label: "{{ item.src }} -> {{ item.dest }}"

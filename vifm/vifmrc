@@ -1,0 +1,126 @@
+" vim: ft=vim
+
+" General
+
+colorscheme wildcharm
+
+set vicmd=vim
+set trash
+set trashdir=~/.local/share/Trash/files
+set history=100
+set followlinks
+set sortnumbers
+set undolevels=100
+set vimhelp
+set norunexec
+set timefmt='%Y/%m/%d %H:%M'
+set wildmenu
+set wildstyle=popup
+set ignorecase
+set smartcase
+set nohlsearch
+set incsearch
+set scrolloff=4
+
+" Marks
+
+mark h ~/
+mark D ~/Downloads/
+mark d ~/Documents/
+mark c ~/.config/
+mark v ~/Videos/
+mark p ~/Pictures/
+
+" File associations (filextype = Wayland/X11 GUI apps)
+
+" Images — open directory so you can navigate between files; -n jumps to selected
+filextype {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.tif,*.webp,*.avif,*.ico,*.svg}
+        \ imv-wayland -n %f %d/ 2>/dev/null &
+
+" Video
+filextype {*.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.mpeg,*.vob,
+          \*.m2v,*.mov,*.flv,*.ts,*.webm,*.m4v,*.m4b}
+        \ mpv %f &
+
+" Audio — play in cmus (falls back to mpv --no-video if cmus isn't running)
+filetype {*.wav,*.mp3,*.flac,*.ogg,*.m4a,*.opus,*.aac,*.wv}
+       \ {Play in cmus} sh -c 'if pgrep -x cmus >/dev/null; then cmus-remote -f "$@"; else mpv --no-video "$@"; fi' _ %f,
+       \ {Queue in cmus} cmus-remote -q %f,
+       \ {mpv (no video)} mpv --no-video %f
+
+" Markdown — render in glow (TUI pager); falls back to editing in vim
+filetype {*.md,*.markdown}
+       \ {Render in glow} glow -p %f,
+       \ {Edit in vim} vim %f
+
+" PDF
+filextype {*.pdf}
+        \ zathura %f 2>/dev/null &,
+        \ mupdf %f 2>/dev/null &
+
+" epub / djvu / comic books — all handled by zathura plugins
+filextype {*.epub,*.djvu,*.cbr,*.cbz}
+        \ zathura %f 2>/dev/null &
+
+" Office documents
+filextype {*.odt,*.ods,*.odp,*.docx,*.doc,*.xlsx,*.xls,*.pptx,*.ppt}
+        \ libreoffice %f &
+
+" Archives — list contents
+filetype {*.tar.gz,*.tgz,*.tar.bz2,*.tbz2,*.tar.xz,*.txz,*.tar.zst}
+       \ {View} tar tf %f | less
+filetype {*.zip}
+       \ {View} unzip -l %f | less,
+       \ {Extract} unzip %f
+filetype {*.rar}
+       \ {View} unrar l %f | less,
+       \ {Extract} unrar x %f
+filetype {*.7z}
+       \ {View} 7z l %f | less,
+       \ {Extract} 7z x %f
+
+" Preview pane (toggle with w)
+
+" Images — requires chafa
+fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif}
+         \ chafa --size %pwx%ph %f
+
+" Markdown — rendered preview (requires glow). Explicit -s: glow drops color
+" when piped (preview pane), so force the themed style through the pipe.
+fileviewer {*.md,*.markdown}
+         \ glow -s ~/.config/glow/wildcharm.json -w %pw %f
+
+" PDF — requires poppler-utils
+fileviewer {*.pdf}
+         \ pdftotext -l 10 -nopgbrk %f - 2>/dev/null
+
+" Audio / video metadata — requires mediainfo
+fileviewer {*.mp4,*.mkv,*.avi,*.mov,*.webm,*.flv,*.mp3,*.flac,*.ogg,*.m4a,*.opus}
+         \ mediainfo %f
+
+" Archives
+fileviewer {*.tar.gz,*.tgz,*.tar.bz2,*.tbz2,*.tar.xz,*.txz}
+         \ tar tf %f
+fileviewer {*.zip}
+         \ unzip -l %f
+fileviewer {*.7z}
+         \ 7z l %f
+
+" Key bindings
+
+" Open shell in current directory
+nnoremap s :shell<cr>
+
+" Toggle preview pane
+nnoremap w :view<cr>
+vnoremap w :view<cr>gv
+
+" Sort dialog
+nnoremap S :sort<cr>
+
+" Yank current dir/file path to Wayland clipboard (requires wl-clipboard)
+nnoremap yd :!echo -n %d | wl-copy<cr>
+nnoremap yf :!echo -n %c:p | wl-copy<cr>
+
+" Open with xdg-open as fallback
+nnoremap o :!xdg-open %f &<cr>

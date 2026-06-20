@@ -4,16 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository overview
 
-Personal dotfiles for a Debian-based Linux system running the **Sway (Wayland)** desktop. No build system, no tests, no linting — changes take effect by editing the files directly (the active ones are symlinked into `~` / `~/.config`). Reproducing the machine from scratch is driven by an Ansible bootstrap (`bootstrap/`); the ordered fresh-install runbook is `docs/install-runbook.md`. Claude Code runs as a dedicated, isolated `claude` user — day-to-day collaboration workflow in `docs/working-with-claude.md`.
+Personal dotfiles for a Debian-based Linux system running the **Sway (Wayland)** desktop. No build system, no tests, no linting — changes take effect by editing the files directly (the active ones are symlinked into `~` / `~/.config`). Reproducing the machine from scratch is driven by an **Ansible bootstrap** (`bootstrap/`, now five roles — see *Bootstrap & system reproduction*); the ordered fresh-install runbook is `docs/install-runbook.md`.
+
+The repo is growing from *one person's dotfiles* toward a **reproducible Debian spin** with multiple principals and `/etc` system configs; the target layered structure is `docs/repo-structure-design.md` (phased, not yet migrated).
 
 The configs are converging on one unified theme: near-black background `#0a0a0a`, accent **official Debian red `#ce0056`** (PANTONE Strong Red C), and a saturated 16-colour palette derived from the **`wildcharm`** vim colorscheme. Keep new theming consistent with this.
+
+## Running as the `claude` agent user
+
+Claude Code runs here as a dedicated, unprivileged **`claude`** Linux user (own `0700` home `/home/claude`, member of the **`devshare`** group, **not** in sudo) — a kernel-enforced trust boundary, not a behavioural one. Full design: `docs/claude-user-design.md` (implemented 2026-06-20); day-to-day workflow: `docs/working-with-claude.md`. What matters when working in this repo:
+
+- **This checkout (`/srv/devshare/estia`) is claude's own clone** in the shared `/srv/devshare` tree — claude's *workspace*, **not** the live system. The dotfiles are symlinked from **dimitrios's** clone at **`~/Development/estia`**, which is the deployment source. Edits made here reach the running system only when **dimitrios pulls** after reviewing a pushed branch — so an edit here is **not** live. Never treat `/srv/devshare/estia` as the deployment source. (This is why the hardcoded `/home/dimitrios/...` absolute paths in `git/.gitconfig` and `glow/glow.yml` are correct — they target dimitrios's deployment clone, not this one.)
+- **Collaboration is git-mediated, two principals.** claude commits and signs as **itself** and pushes a branch as the GitHub bot **`dimitrios-claude`** (commits show **Verified**); dimitrios reviews / merges / pulls. Don't co-edit the human's clone.
+- **claude's identity:** own SSH key `~/.ssh/id_claude`, own **passwordless** GPG key `4AA9DD310356AD0E`, git author `Claude (dimitrios's agent) <claude@charalampidis.pro>`.
+- **Signing is frictionless for claude** — the passwordless key needs **no pinentry, no agent cache, no `gpg-unlock`, and not `gpg-wrapper.sh`**. All that machinery in *Secrets & commit signing* below is **dimitrios's**; it does not apply when running as claude.
+- **Isolation:** claude **cannot** read dimitrios's home, `~/.ssh`, `~/.gnupg`, or `~/.bash_secrets` (different UID; `0750`/`0700`/`0600`). Confirm any time: `ls ~dimitrios` → Permission denied.
+- **`bin/claude-access`** (`grant|revoke|list`, symlinked to `~/.local/bin/`) is the escape hatch to give claude ACL access to a path **outside** `/srv/devshare` (e.g. a project in the human's home), with a tracked registry. Prefer the clone-and-sync model; reach for it only when in-place editing is truly needed.
+- **claude can install its own user-level tooling.** Because `claude` is a separate user with its own `/home/claude`, it can freely install whatever a task needs **into its own home** — npm/pip `--user`, cargo, a downloaded binary into `~/.local/bin`, etc. — without `sudo` and without touching dimitrios's environment. (System-wide `apt` installs still need the human; those stay dimitrios's job.)
 
 ## File layout and naming convention
 
 Each tool has its own subdirectory. Active configs are either:
 - **Dot-prefixed** in the repo, symlinked into `$HOME` — `vim/.vimrc` → `~/.vimrc`, `bash/.bashrc` → `~/.bashrc`, `git/.gitconfig` → `~/.gitconfig`.
 - **Plain files under the app dir**, symlinked into `~/.config/<app>/` — sway, waybar, mako, wofi, cava, cmus, kitty, imv, vifm, glow, nvim, xdg-desktop-portal.
-- **`system/`** — layer-(a) **system configs** (e.g. `system/samba/smb.conf`) deployed by **copy** to `/etc/` (root-owned, **not** symlinked). First piece of the Debian-spin restructure; see `docs/repo-structure-design.md` and each subdir's `README.md` runbook.
+- **`bin/`** — small helper scripts symlinked into `~/.local/bin/` (currently `claude-access`; see *Running as the `claude` agent user*).
+- **`system/`** — layer-(a) **system configs** (e.g. `system/samba/smb.conf`) deployed by **copy** to `/etc/` (root-owned, **not** symlinked), now driven by the `samba` Ansible role. The target four-layer model (system / defaults / per-user) is `docs/repo-structure-design.md`; each `system/` subdir keeps a `README.md` runbook.
+- **`bootstrap/`**, **`docs/`** — the Ansible installer + the design docs/runbooks (cross-cutting, not a per-tool config).
+
+Two `/srv` trees live outside the repo but are part of the setup: **`/srv/devshare`** (the human↔`claude` shared dev tree — group `devshare`, setgid + default ACLs; this clone lives here) and **`/srv/smbshare`** (the Samba share — group `smbshare`; `docs/file-sharing-design.md`).
 
 ### Active symlinks
 
@@ -52,14 +70,27 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 
 ## Secrets & commit signing
 
+> This section describes **dimitrios's** interactive setup (the passphrase-protected key + the pinentry-wedge machinery built around it). When running as the **`claude`** user, signing is **passwordless** and none of the wrapper / cache / `gpg-unlock` flow applies — see *Running as the `claude` agent user*.
+
 - **Secrets** (API tokens, etc.) live in **`~/.bash_secrets`** — untracked, mode 600, sourced at the end of `bash/.bashrc`. Never commit secret values; a bootstrap script must not carry this file.
 - **Commits are GPG-signed** (key `EB90A5A2D628F2A6`). Signing is routed through **`git/gpg-wrapper.sh`** (set as `gpg.program` by absolute path in `git/.gitconfig` — update if the repo moves). In a normal terminal it execs `gpg` untouched, using **`pinentry-tty`** (configured in **`gnupg/gpg-agent.conf`**, symlinked to `~/.gnupg/`) with a **~session-length cache TTL** (`34560000`) — because login auto-unlock (below) warms the agent at login, so the security boundary is the unlocked session + screen lock, not the TTL; GPG now matches ssh-agent's persist-until-logout.
 - **Why the wrapper:** inside Claude Code (`$CLAUDECODE` set) gpg-agent would launch pinentry on `GPG_TTY` — which is Claude's own terminal (`/dev/pts/0`), **not** the calling process's stdin — and **seize it** (you can't type the passphrase or control the prompt; `pinentry-tty` does *not* avoid this, the tty takeover is the problem). So under `$CLAUDECODE` the wrapper adds `--pinentry-mode error`: a **warm** cache signs silently, a **cold** cache fails fast (`gpg: signing failed: No pinentry`, exit 2) instead of wedging. When a harness commit fails this way, run **`gpg-unlock`** (a `bash/.bashrc` function — signs a throwaway message so gpg-agent prompts once via pinentry-tty; reads the key from git config, so no hash to remember; refuses to run under `$CLAUDECODE`) in a normal terminal, then the harness can sign again within the cache window.
 - **Bootstrap / pinentry default:** the tracked `gpg-agent.conf` forces `pinentry-tty` per-agent, but the *system* `pinentry` alternative defaults to **`pinentry-curses`** (leaks mouse-tracking escape codes). Pin it belt-and-suspenders with `sudo update-alternatives --set pinentry /usr/bin/pinentry-tty`. Avoid `pinentry-curses` and `pinentry-gnome3` (the latter falls back to curses outside GNOME).
 - **Login auto-unlock (SSH + GPG):** `pam_gnome_keyring` unlocks the gnome-keyring login keyring at login; the Sway-`exec` hook **`gnupg/credential-unlock.sh`** then loads the SSH key (via an SSH_ASKPASS helper reading the keyring) and warms gpg-agent (loopback sign), so **no per-boot `ssh-add`/`gpg-unlock`** — including for the harness. Passphrases live in the keyring (`secret-tool store … autounlock ssh/gpg …`). Full story incl. the gnome-keyring launcher-untangle needed to make PAM the sole unlocker: `docs/credential-autounlock-design.md` §10. The wrapper + `gpg-unlock` remain as fail-clean fallbacks for a cold cache.
 
+## Bootstrap & system reproduction (`bootstrap/`)
+
+A fresh machine is reproduced by an **Ansible** playbook (engine decision: `docs/repo-structure-design.md`). The ordered start-to-finish narrative — which role when, with the interactive/external manual steps interleaved — is **`docs/install-runbook.md`**; the per-role reference is `bootstrap/README.md`.
+
+- **Single source of truth: `bootstrap/group_vars/all.yml`** — the manifest listing every dotfile symlink (`dotfile_links`) and the apt package set (`apt_packages`). The "Active symlinks" table above is **generated** from it by `bootstrap/gen-symlink-table.py`; run that after editing `dotfile_links` rather than hand-editing the table.
+- **Roles** (`bootstrap/site.yml`, sliceable by `--tags`): `packages` (apt), `dotfiles` (symlink the manifest into `$HOME`, no root), `samba` (layer-(a) `/etc/samba/smb.conf` + `/srv/smbshare` share), `claude_user` (the `claude` user + `devshare` group + shared tree + repo ACLs — the *plumbing*; identity is manual), `credentials` (gnome-keyring launcher-untangle for login auto-unlock). Each is idempotent — re-run with `--check` to verify `changed=0`.
+- **Deliberately NOT Ansible-managed** (interactive, secret-handling, vendor, or per-user — all in the runbook): the NVIDIA driver, NVM/Node, vim-plug + `:PlugInstall`, Nerd Fonts, the bluetuith binary, Claude Code itself; the `smbpasswd` Windows password; claude's identity keys + GitHub bot; the keyring/passphrase storage for credential auto-unlock.
+- **Samba share** (`system/samba/`, `docs/file-sharing-design.md`): SMB-over-Tailscale to a Windows laptop, POSIX-ACL permission model. smbd listens on all interfaces (Samba 4.22 can't bind the Tailscale tun); access is confined at the SMB layer by `hosts allow/deny` (loopback + home LAN + Tailscale range) + SMB3 floor + a `nologin` `smbshare` principal.
+
 ## TODO / planned work
 
+- **Migrate to the layered structure.** `docs/repo-structure-design.md` Phase 2+ (move per-app dirs under `users/dimitrios/`, add `users/claude/`, then `defaults/` + theme templating) is **designed but not done** — the repo is still the flat per-app layout. Don't big-bang it; it's phased on purpose.
+- **Template host-specific paths.** The hardcoded absolutes (`smb.conf` Tailscale IP/subnet, `gitconfig` `excludesfile` + `gpg.program`, `waybar/gpu.sh`, `glow.yml` style path, cmus music dir) should be rendered from a host-vars file by Ansible rather than carried literally. Tracked in `docs/repo-structure-design.md` §5.
 - **Version-control systemd user services.** Other user services worth reproducing on a fresh install live only in `~/.config/systemd/user/` and aren't tracked here yet. Bring them into the repo under a `systemd/` dir, symlinked into `~/.config/systemd/user/`, and add them to the bootstrap manifest (`bootstrap/group_vars/all.yml` → `dotfile_links`; the Active symlinks table regenerates from it). (`ssh-agent` is **not** one of these — it uses Debian's shipped socket-activated unit, nothing custom; see the Bash section.)
 
 ## Tool configurations

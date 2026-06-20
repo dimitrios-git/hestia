@@ -1,8 +1,9 @@
 # Samba-over-Tailscale share — deploy runbook
 
-Native Windows Explorer access to a `thetower` folder, fast, reachable **only**
-over the Tailscale tunnel. Replaces the old SFTP-over-Tailscale share. Design
-rationale: `docs/file-sharing-design.md`.
+Native Windows Explorer access to a `thetower` folder, fast, reachable over the
+**trusted home LAN** (full gigabit) or **Tailscale** (encrypted, for remote) —
+confined to those at the SMB layer by `hosts allow/deny`. Replaces the old
+SFTP-over-Tailscale share. Design rationale: `docs/file-sharing-design.md`.
 
 This is a **layer-(a) system config**: deployed by **copy** to `/etc/` (not
 symlinked). The steps below are the manual precursor to the planned Ansible role.
@@ -57,11 +58,17 @@ sudo install -m 0644 system/samba/smb.conf /etc/samba/smb.conf
 sudo testparm -s                 # validate syntax (should print "Loaded services")
 ```
 
-## 6. Firewall — OPTIONAL (skip it; the interface bind is the real control)
+## 6. Firewall — OPTIONAL (skip it; `hosts allow/deny` is the real control)
 
-`bind interfaces only = yes` already confines `smbd` to `lo` + `tailscale0`, so
-it is never exposed on the LAN regardless of any firewall. A host firewall here
-is pure defense-in-depth and is **not required** for this share.
+Samba 4.22 **won't bind to the Tailscale tun** (`interfaces = lo <ip>/32` +
+`bind interfaces only` binds loopback only — the point-to-point `/32` has no
+broadcast), so `smbd` **listens on all interfaces** and access is confined at the
+**SMB layer** by `hosts allow = 127.0.0.1 192.168.0.0/24 100.64.0.0/10` +
+`hosts deny = 0.0.0.0/0` (loopback + home LAN + Tailscale may authenticate;
+everything else is rejected before auth). The LAN is **deliberately allowed** — on
+the trusted home network it gives full gigabit vs the tunnel's ~575 Mbit (see
+`docs/file-sharing-design.md` §3.2). A host firewall here is pure
+defense-in-depth and is **not required** for this share.
 
 Note: **don't install ufw** — it's an Ubuntu-origin frontend, not Debian-native.
 Debian's native framework is **nftables** (already installed; `nft`). Tailscale

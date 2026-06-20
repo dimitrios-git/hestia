@@ -82,3 +82,13 @@ Install vim-plug on a fresh system, then run `:PlugInstall` inside Vim:
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
      https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
+
+## License
+
+Copyright (C) 2026 Dimitrios Charalampidis
+
+estia is free software: you can redistribute it and/or modify it under the terms
+of the **GNU General Public License v3.0 or later** as published by the Free
+Software Foundation — see [LICENSE](LICENSE). It is distributed in the hope that
+it will be useful, but **without any warranty**; without even the implied
+warranty of merchantability or fitness for a particular purpose.

@@ -62,4 +62,4 @@ if [ -n "$cores" ]; then
     if [ -n "$row" ]; then [ -n "$grid" ] && grid="$grid\\n"; grid="$grid$row"; fi
     tip="$tip\\nper-core %:\\n<tt>$grid</tt>"
 fi
-printf '{"text":"%3d%%","tooltip":"%s"}\n' "$usage" "$tip"
+printf '{"text":"%2d%%","tooltip":"%s"}\n' "$usage" "$tip"

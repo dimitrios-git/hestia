@@ -4,27 +4,13 @@
     "height": 32,
     "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
-    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu0", "custom/gpu1", "custom/gpu2", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "custom/usb", "custom/notifications", "custom/weather", "clock", "custom/debian"],
+    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "custom/usb", "custom/notifications", "custom/weather", "clock", "custom/debian"],
 
-    "custom/gpu0": {
+    "custom/gpu": {
         "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
         "return-type": "json",
         "interval": 2,
-        "exec": "$HOME/.config/waybar/scripts/gpu.sh 0",
-        "on-click": "swaymsg -t get_tree | grep -q floatterm-gpu && swaymsg '[app_id=\"^floatterm-gpu$\"] kill' || kitty --class floatterm-gpu -o confirm_os_window_close=0 -e $HOME/.config/waybar/scripts/gpu-watch.sh"
-    },
-    "custom/gpu1": {
-        "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
-        "return-type": "json",
-        "interval": 2,
-        "exec": "$HOME/.config/waybar/scripts/gpu.sh 1",
-        "on-click": "swaymsg -t get_tree | grep -q floatterm-gpu && swaymsg '[app_id=\"^floatterm-gpu$\"] kill' || kitty --class floatterm-gpu -o confirm_os_window_close=0 -e $HOME/.config/waybar/scripts/gpu-watch.sh"
-    },
-    "custom/gpu2": {
-        "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
-        "return-type": "json",
-        "interval": 2,
-        "exec": "$HOME/.config/waybar/scripts/gpu.sh 2",
+        "exec": "$HOME/.config/waybar/scripts/gpu.sh",
         "on-click": "swaymsg -t get_tree | grep -q floatterm-gpu && swaymsg '[app_id=\"^floatterm-gpu$\"] kill' || kitty --class floatterm-gpu -o confirm_os_window_close=0 -e $HOME/.config/waybar/scripts/gpu-watch.sh"
     },
 
@@ -53,7 +39,7 @@
     },
 
     "network": {
-        "format-wifi": "<span size='xx-large' rise='-3072'>󰖩</span> {signalStrength:>3}%",
+        "format-wifi": "<span size='xx-large' rise='-3072'>󰖩</span> {signalStrength:>2}%",
         "format-ethernet": "<span size='xx-large' rise='-3072'>󰈀</span>",
         "format-disconnected": "<span size='xx-large' rise='-3072'>󰖪</span>",
         "tooltip-format-wifi": "{essid} ({signalStrength}%)\n{ipaddr}",
@@ -88,14 +74,14 @@
     },
 
     "pulseaudio": {
-        "format": "<span size='xx-large' rise='-3072'>󰕾</span> {volume:>3}%",
+        "format": "<span size='xx-large' rise='-3072'>󰕾</span> {volume:>2}%",
         "format-muted": "<span size='xx-large' rise='-3072'>󰖁</span> muted",
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
         "on-click-right": "pgrep -x pulsemixer >/dev/null && pkill -x pulsemixer || kitty --class floatterm -e pulsemixer"
     },
 
     "clock": {
-        "format": "<span size='xx-large' rise='-3072'></span> {:%Y-%m-%d %H:%M:%S %Z}",
+        "format": "<span size='xx-large' rise='-3072'></span> {:%a %d, %H:%M:%S}",
         "interval": 1,
         "tooltip-format": "{:%A, %d %B %Y}\n<tt><small>{calendar}</small></tt>",
         "calendar": {

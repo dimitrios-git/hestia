@@ -1,17 +1,10 @@
 #!/bin/sh
-# Waybar custom/gpu slot renderer — one bar widget PER GPU.
-#
-# The waybar config defines a fixed set of slots (custom/gpu0..gpu2), each running
-# this with its index. Behaviour:
-#   * up to 3 GPUs  -> slot i shows the i-th GPU (extra slots print nothing → hidden)
-#   * more than 3   -> slot 0 shows a MERGED summary, the rest hide
-# No argument == slot 0 (single-GPU friendly). Prints NOTHING when its slot is empty,
-# so Waybar hides that module entirely. GPUs are enumerated in a stable order (DRM
-# card number). Per vendor: NVIDIA via nvidia-smi, AMD via amdgpu sysfs, Intel via
-# sysfs (best-effort — no utilisation counter, so name+temp only).
-
-slot=${1:-0}
-merge_threshold=3
+# Waybar custom/gpu — ONE widget for all GPUs. The bar shows the **busiest** card's
+# utilisation (the MAX across cards, not an average — on a discrete+iGPU box, maxing the
+# dGPU should read 100%, not 50%); the tooltip lists every card (name · util · temp ·
+# VRAM). Prints NOTHING when no GPU is present, so Waybar hides the module. GPUs are
+# enumerated in a stable order (DRM card number). Per vendor: NVIDIA via nvidia-smi, AMD
+# via amdgpu sysfs, Intel via sysfs (best-effort — no util counter, so name+temp only).
 
 # first hwmon temp (°C, rounded) under a DRM device dir, or empty
 drm_temp() {
@@ -66,47 +59,27 @@ record_for() {
     esac
 }
 
-# emit_one RECORD -> the JSON object for a single GPU
-emit_one() {
-    oldifs=$IFS; IFS='|'; set -- $1; IFS=$oldifs
-    util=$1; temp=$2; vu=$3; vt=$4; name=$5
-    if [ "$util" = "n/a" ] || [ -z "$util" ]; then text="GPU"; uline="util n/a"; else text="$(printf '%3d%%' "$util")"; uline="${util}%"; fi
-    tip="$name\\n$uline"
-    [ -n "$temp" ] && tip="$tip · ${temp}°C"
-    [ -n "$vu" ] && [ -n "$vt" ] && tip="$tip · ${vu} / ${vt} MiB"
-    printf '{"text":"%s","tooltip":"%s"}\n' "$text" "$tip"
-}
-
 list=$(enumerate)
-n=$(printf '%s' "$list" | grep -c .)
-[ "$n" -eq 0 ] && exit 0
+[ "$(printf '%s' "$list" | grep -c .)" -eq 0 ] && exit 0  # no GPU -> hide
 
-if [ "$n" -gt "$merge_threshold" ]; then
-    # MERGED: only slot 0 renders; busiest util in the bar, all cards in the tooltip.
-    [ "$slot" -eq 0 ] || exit 0
-    maxutil=0; tip=""
-    oldifs=$IFS; IFS='
+maxutil=0
+tip=""
+oldifs=$IFS; IFS='
 '
-    for ln in $list; do
-        IFS='|'; set -- $ln; IFS='
+for ln in $list; do
+    IFS='|'; set -- $ln; IFS='
 '
-        rec=$(record_for "$1" "$2" "$3") || continue
-        IFS='|'; set -- $rec; IFS='
+    rec=$(record_for "$1" "$2" "$3") || continue
+    IFS='|'; set -- $rec; IFS='
 '
-        u=$1; t=$2; nm=$5
-        [ "$u" != "n/a" ] && [ -n "$u" ] && [ "$u" -gt "$maxutil" ] 2>/dev/null && maxutil=$u
-        line="$nm ${u}%"; [ "$u" = "n/a" ] && line="$nm"
-        [ -n "$t" ] && line="$line · ${t}°C"
-        tip="$tip$line\\n"
-    done
-    IFS=$oldifs
-    printf '{"text":"%3d%%","tooltip":"%s GPUs\\n%s"}\n' "$maxutil" "$n" "$tip"
-else
-    # One GPU per slot. Empty slot → print nothing (Waybar hides the module).
-    [ "$slot" -lt "$n" ] || exit 0
-    ln=$(printf '%s\n' "$list" | sed -n "$((slot + 1))p")
-    oldifs=$IFS; IFS='|'; set -- $ln; IFS=$oldifs
-    rec=$(record_for "$1" "$2" "$3") || exit 0
-    [ -n "$rec" ] || exit 0
-    emit_one "$rec"
-fi
+    u=$1; t=$2; vu=$3; vt=$4; nm=$5
+    [ "$u" != "n/a" ] && [ -n "$u" ] && [ "$u" -gt "$maxutil" ] 2>/dev/null && maxutil=$u
+    if [ "$u" = "n/a" ]; then line="$nm"; else line="$nm  ${u}%"; fi
+    [ -n "$t" ] && line="$line · ${t}°C"
+    [ -n "$vu" ] && [ -n "$vt" ] && line="$line · ${vu}/${vt} MiB"
+    tip="$tip$line\\n"
+done
+IFS=$oldifs
+tip=${tip%\\n}  # drop trailing newline
+
+printf '{"text":"%2d%%","tooltip":"%s"}\n' "$maxutil" "$tip"

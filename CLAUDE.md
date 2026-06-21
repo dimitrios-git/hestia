@@ -53,6 +53,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/sway/start-waybar.sh` | `~/.config/sway/scripts/start-waybar.sh` |
 | `user/waybar/config` | `~/.config/waybar/config` |
 | `user/waybar/style.css` | `~/.config/waybar/style.css` |
+| `user/waybar/scripts/cpu.sh` | `~/.config/waybar/scripts/cpu.sh` |
 | `user/waybar/scripts/gpu.sh` | `~/.config/waybar/scripts/gpu.sh` |
 | `user/waybar/scripts/gpu-watch.sh` | `~/.config/waybar/scripts/gpu-watch.sh` |
 | `user/mako/config` | `~/.config/mako/config` |
@@ -195,7 +196,7 @@ Top bar; files symlinked into `~/.config/waybar/`. Reload with `killall -SIGUSR2
 - **Font:** `BigBlueTerm437 Nerd Font Mono` at 16px (`style.css`). Bitmap-derived — keep sizes at integer pixel-grid values (16/24/32) for crispness.
 - **Icon alignment:** module icons are wrapped in inline Pango markup `<span size='xx-large' rise='-3072'>…</span>`. The `rise` is a hand-tuned vertical offset (Pango units, 1/1024 pt); re-tune if the font changes.
 - **PUA glyph caveat:** editing tools can silently strip Private-Use-Area (Nerd Font) glyphs, leaving an empty `<span></span>`. If an icon renders as blank space, insert the codepoint via a small Python write and verify, rather than re-typing it.
-- **Modules** (right side): `cpu`, `memory`, `custom/gpu0`/`gpu1`/`gpu2` (one per GPU — see below), `power-profiles-daemon`, `pulseaudio`, `user/sway/language`, `network`, `bluetooth`, `clock`, `custom/debian`. Right-side modules share styling via a grouped CSS selector — add new ones to that group.
+- **Modules** (right side): `custom/cpu`, `memory`, `custom/gpu0`/`gpu1`/`gpu2` (one per GPU — see below), `power-profiles-daemon`, `pulseaudio`, `user/sway/language`, `network`, `bluetooth`, `clock`, `custom/debian`. Right-side modules share styling via a grouped CSS selector — add new ones to that group.
 - **Click handlers** open floating TUIs as toggles (`pgrep … && pkill … || kitty --class floatterm -e …`) so a second click closes the popup:
   - `network` → `nmtui`; ethernet shows the icon only (device name/IP in the tooltip).
   - `bluetooth` → `bluetuith`; right-click toggles the radio via `rfkill`.
@@ -204,6 +205,7 @@ Top bar; files symlinked into `~/.config/waybar/`. Reload with `killall -SIGUSR2
   - `custom/gpu0`/`gpu1`/`gpu2` → each toggles a live GPU monitor (`gpu-watch.sh`) in a floatterm.
 - **`custom/gpu0`/`gpu1`/`gpu2`** are **one widget per GPU**, all backed by the same `user/waybar/scripts/gpu.sh` called with a slot index (`gpu.sh 0/1/2`); each emits JSON (util% + icon in the bar, card name / temp / VRAM in the tooltip). The script is **symlinked** into `~/.config/waybar/scripts/` (manifest) and `exec` references it via **`$HOME`** (waybar runs `exec`/`on-click` through `sh -c`, so the shell expands it — path generalisation, `docs/repo-structure-design.md` §5). **Per-GPU slots:** `gpu.sh` enumerates GPUs in a stable order (DRM card number); slot *i* renders the *i*-th GPU, and an empty slot **prints nothing** so Waybar hides that module — so a 1-GPU box shows one widget, a 2-GPU box two, etc. (three fixed slots). **More than 3 GPUs → merged:** slot 0 shows a combined summary (busiest util in the bar, every card in the tooltip) and the rest hide. **Multi-vendor** per card: **NVIDIA** (`nvidia-smi`, matched to the DRM card by PCI bus id), **AMD** (amdgpu **sysfs** — `gpu_busy_percent`/hwmon/`mem_info_vram_*`, no extra tool), **Intel** (sysfs, best-effort — i915 has no util counter, so name+temp only). The **`on-click`** runs the companion **`gpu-watch.sh`** (also symlinked), which picks the best live monitor available — `nvidia-smi`/`amdgpu_top`/`radeontop`/`intel_gpu_top`, falling back to a no-extra-tool sysfs poll — so the click works on any GPU; the toggle matches on the `gpu-watch.sh` path. To change the per-GPU-vs-merged cutoff, edit `merge_threshold` in `gpu.sh` and add/remove `custom/gpuN` slots in the waybar config + the CSS group.
 - **`custom/debian`** is a decorative Debian swirl pinned at the far right (accent red), non-interactive.
+- **`custom/cpu`** (`user/waybar/scripts/cpu.sh`, symlinked) shows overall usage% in the bar (icon in the config format) and, on hover, **CPU temperatures** + per-core usage. Usage is a `/proc/stat` delta vs the previous sample cached in tmpfs (`$XDG_RUNTIME_DIR/waybar-cpu.prev` — no `sleep`; first tick reads 0%). Temps come from the `k10temp`/`coretemp`/`zenpower` hwmon via **sysfs** (no lm-sensors): labelled `Tctl`/`Tccd*` on AMD (per-CCD), `Core N` on Intel (per-core). Replaced the built-in `cpu` module (which can't surface temps).
 - **Built-in tooltips:** `memory` hover shows used/total/free + swap (`tooltip-format` with `{avail}`/`{swap*}`); `clock` hover shows the full date (`%A, %d %B %Y`) + a **native month calendar** (`{calendar}`, today accented `#ce0056`, scroll to change month) — waybar v0.12, no external `cal`.
 
 **External dependencies** (install on a fresh system):

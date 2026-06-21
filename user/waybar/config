@@ -4,7 +4,7 @@
     "height": 32,
     "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
-    "modules-right": ["tray", "cpu", "memory", "custom/gpu0", "custom/gpu1", "custom/gpu2", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "clock", "custom/debian"],
+    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu0", "custom/gpu1", "custom/gpu2", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "clock", "custom/debian"],
 
     "custom/gpu0": {
         "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
@@ -72,9 +72,11 @@
         "disable-scroll": true
     },
 
-    "cpu": {
-        "format": "<span size='xx-large' rise='-3072'>󰻠</span> {usage}%",
-        "interval": 2
+    "custom/cpu": {
+        "format": "<span size='xx-large' rise='-3072'>󰻠</span> {}",
+        "return-type": "json",
+        "interval": 2,
+        "exec": "$HOME/.config/waybar/scripts/cpu.sh"
     },
 
     "memory": {

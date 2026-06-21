@@ -90,8 +90,7 @@ A fresh machine is reproduced by an **Ansible** playbook (engine decision: `docs
 
 ## TODO / planned work
 
-- **Migrate to the layered structure.** `docs/repo-structure-design.md` Phase 2+ (move per-app dirs under `users/dimitrios/`, add `users/claude/`, then `defaults/` + theme templating) is **designed but not done** — the repo is still the flat per-app layout. Don't big-bang it; it's phased on purpose.
-- **Template the remaining host-specific paths.** The Samba LAN subnet is now templated (`smb.conf.j2` ← `host_vars`); the other hardcoded absolutes (`gitconfig` `excludesfile` + `gpg.program`, `waybar/gpu.sh`, `glow.yml` style path, cmus music dir) should follow the same host-vars pattern rather than being carried literally. Tracked in `docs/repo-structure-design.md` §5.
+- **Repo → distributable spin roadmap.** The whole arc — path generalisation (the remaining hardcoded absolutes: `glow.yml` style, `gitconfig` `excludesfile`/`gpg.program`, `waybar/gpu.sh`, cmus music dir), role feature-flags + a configurable installer, and the layered `users/`/`defaults/` migration — is tracked in **`docs/repo-structure-design.md` §5–§7** (the single source; don't re-list it here). Phased on purpose — don't big-bang the structural move. First step done: the Samba LAN subnet is host_vars-templated.
 - **Version-control systemd user services.** Other user services worth reproducing on a fresh install live only in `~/.config/systemd/user/` and aren't tracked here yet. Bring them into the repo under a `systemd/` dir, symlinked into `~/.config/systemd/user/`, and add them to the bootstrap manifest (`bootstrap/group_vars/all.yml` → `dotfile_links`; the Active symlinks table regenerates from it). (`ssh-agent` is **not** one of these — it uses Debian's shipped socket-activated unit, nothing custom; see the Bash section.)
 
 ## Tool configurations

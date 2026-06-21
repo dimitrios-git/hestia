@@ -2,7 +2,7 @@
 
 > **Status:** Draft design — supersedes the current flat dotfiles layout *once
 > migrated*. Like the sibling docs, written to feed the bootstrap effort and a
-> future LinkedIn write-up. The migration is **phased on purpose** (see §6); do
+> future LinkedIn write-up. The migration is **phased on purpose** (see §7); do
 > not big-bang it.
 
 ## 1. Why restructure
@@ -49,13 +49,13 @@ system/                 # (a) /etc — copied as root by bootstrap
   samba/smb.conf
   ssh/sshd_config
   systemd/…
-defaults/               # (b) base — DEFERRED until a non-dimitrios consumer exists (§6)
+defaults/               # (b) base — DEFERRED until a non-dimitrios consumer exists (§7)
 users/
   dimitrios/            # (c) — today's app dirs move here verbatim
     vim/ bash/ git/ sway/ waybar/ …
   claude/               # (d) — minimal agent config (lands with the user)
 themes/                 # palette + assets (wildcharm); eventual templated
-                        #   theming system (§8.3) is deferred
+                        #   theming system (§9.3) is deferred
 docs/                   # design docs (already here)
 bootstrap/              # the installer (see §4) + the symlink/path manifest
 ```
@@ -103,7 +103,46 @@ path.
 Principle: template only what *must* be machine-specific; everything else stays
 plain and symlinked.
 
-## 6. Phased migration (no big-bang, no empty scaffolding)
+**Status:** started — the symlink *destinations* are already `$HOME`-based (the
+manifest's `target_home`), and the Samba LAN subnet is now host_vars-templated
+(`system/samba/smb.conf.j2` ← `bootstrap/host_vars/<host>.yml`), establishing the
+pattern the rest of the list (glow style path, `gitconfig` `excludesfile`/
+`gpg.program`, `waybar/gpu.sh`, cmus music dir) follows.
+
+## 6. The configurable installer (the end goal)
+
+Path generalisation (§5) makes the configs *portable*; this step makes the
+bootstrap *consumable by someone who isn't `dimitrios`* — an installer driven by
+**user-entered inputs** and **feature toggles** instead of assumptions about this
+one machine. That is what turns "my reproducible setup" into a distributable spin.
+Three layers, each building on what already exists:
+
+1. **Path generalisation (§5) — the prerequisite.** Nothing host-specific is baked
+   into rendered output; it all comes from vars. (Started — see above.)
+2. **Role feature-flags.** Each role becomes optional behind a boolean —
+   `enable_samba`, `enable_claude_user`, `enable_screensharing`, … — gating it with
+   `when:`. The roles are already cleanly separable (sliceable by `--tags` today),
+   so this is mostly wiring + sensible defaults: *"Include the Samba share?"* /
+   *"Set up the `claude` agent user?"* become **config, not edits to the playbook**.
+3. **An inputs front-end.** Collect the answers once — username/`$HOME`, GPG key id
+   + keygrip, Tailscale/LAN, music dir, plus the toggles above — and feed them to
+   Ansible. Options (open — not yet decided):
+   - **`vars_prompt`** in the playbook — zero extra tooling, interactive, but not
+     re-runnable unattended.
+   - **An answers file** (`host_vars/<host>.yml`, or `-e @answers.yml`) — idempotent,
+     re-runnable, diffable; the interactive part is a one-time `configure` step that
+     writes it. **Leaning here:** it extends the host_vars pattern already in use
+     (the Samba subnet lives there) and preserves unattended re-runs.
+   - **A small TUI** wrapping the answers file — nicer UX, more to maintain; a later
+     nicety, not the foundation.
+
+**Ties to the layered model:** feature-flags + an answers file are exactly what
+make a real `defaults/` layer (§3; deferred per §9.4) worthwhile — defaults ship
+the base, the answers override per install. Until a non-`dimitrios` consumer exists
+this stays a *goal*; but path generalisation (§5) is the concrete first step and is
+worth doing regardless (it also de-personalises the now-public repo).
+
+## 7. Phased migration (no big-bang, no empty scaffolding)
 
 Each phase is tied to a **concrete need** — we don't create layers before
 something fills them.
@@ -121,7 +160,7 @@ something fills them.
   to a **non-`dimitrios`** target. Until then `users/dimitrios/` *is* the de
   facto default; a separate `defaults/` would be empty ceremony (**YAGNI**).
 
-## 7. Migration mechanics & safety
+## 8. Migration mechanics & safety
 
 - `git mv` preserves history across the moves.
 - The **re-link script** reads the manifest, repoints each symlink, and
@@ -133,7 +172,7 @@ something fills them.
 - CLAUDE.md's "File layout" section and "Active symlinks" table are rewritten to
   describe layers and (ideally) generated from the manifest.
 
-## 8. Decisions (resolved 2026-06-19)
+## 9. Decisions (resolved 2026-06-19)
 
 1. **Engine — Ansible.** ✅ Already in use; covers apt/users/groups/ACLs/`/etc`/
    templating/symlinks/services idempotently.
@@ -148,7 +187,7 @@ something fills them.
 4. **`defaults/` — deferred.** ✅ Not created until a non-`dimitrios` consumer
    exists (YAGNI); `users/dimitrios/` is the de facto default until then.
 
-## 9. Relationship to the other docs
+## 10. Relationship to the other docs
 
 - `claude-user-design.md` — defines **layer (d)** and the shared-tree/ACL model.
 - `file-sharing-design.md` — the **first instance of layer (a)** (`/etc`) and the

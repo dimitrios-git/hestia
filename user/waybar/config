@@ -101,7 +101,12 @@
             "format": {
                 "today": "<span color='#ce0056'><b>{}</b></span>"
             }
-        }
+        },
+        "actions": {
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        },
+        "on-click": "pgrep -f 'python3 -m calendar' >/dev/null && pkill -f 'python3 -m calendar' || kitty --class floatterm -e sh -c 'python3 -m calendar | less -R'"
     },
 
     "custom/weather": {

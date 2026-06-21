@@ -103,6 +103,8 @@ python3 gen-symlink-table.py
 - **NVM + Node** — installed per-user, not from apt.
 - **vim-plug** + `:PlugInstall`; **Claude Code** native installer.
 - **Nerd Fonts** (`~/.local/share/fonts` + `fc-cache`); **bluetuith** binary.
+- **Tailscale** (own apt repo) — the Samba share's remote reach; **libreoffice**
+  (heavy, optional) — vifm's office-doc opener. (Full list: install-runbook §8.)
 - **System configs** under `../system/` — deployed by copy as root (see those
   runbooks); a `system` role will wrap them.
 - **`claude` identity** (the `claude_user` role does the user/group/ACL plumbing;

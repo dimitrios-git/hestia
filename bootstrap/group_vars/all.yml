@@ -84,16 +84,17 @@ templated_configs:
 cmus_music_dir: "{{ target_home }}/Music"
 
 # --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------
-# NOT exhaustive yet; extend as roles are added. Things that are NOT apt packages
-# are intentionally excluded and listed in README.md (manual steps): NVIDIA driver,
-# NVM/Node, vim-plug, the bluetuith binary, Nerd Fonts, Claude Code.
+# Dependency-audited 2026-06-21 (swept every config for invoked binaries). Things
+# that are NOT apt packages, or are heavy/optional, are listed in README.md /
+# docs/install-runbook.md §8 (manual): NVIDIA driver, NVM/Node, vim-plug,
+# bluetuith, Nerd Fonts, Claude Code, **Tailscale** (own repo), **libreoffice** (heavy).
 apt_packages:
-  wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, playerctl]
+  wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, playerctl, xwayland]
   portals:   [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk, pipewire, pipewire-pulse, wireplumber]
-  terminal:  [kitty, vifm, cmus, cava, glow, imv, zathura, mpv, chafa, poppler-utils, mediainfo]
-  editors:   [vim, neovim]
+  terminal:  [kitty, vifm, cmus, cava, glow, imv, zathura, mpv, chafa, poppler-utils, mediainfo, 7zip, unzip]
+  editors:   [vim, neovim, build-essential]   # build-essential: nvim treesitter compiles parsers on first run
   vcs_gpg:   [git, gnupg, pinentry-tty]
-  net_bt:    [network-manager, bluez]
+  net_bt:    [network-manager, bluez, rfkill]   # rfkill: waybar bluetooth right-click toggle
   power:     [power-profiles-daemon]
   darkmode:  [dconf-cli, libglib2.0-bin, gsettings-desktop-schemas]
   fonts:     [fonts-noto-color-emoji]

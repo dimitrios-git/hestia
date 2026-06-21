@@ -154,13 +154,19 @@ with no prompt.
 
 ## 8. Remaining manual / external bits — `[manual]`
 
-Not Ansible-managed (vendor, per-user, or interactive):
+Not Ansible-managed (vendor, per-user, interactive, or deliberately heavy/optional):
 - **NVIDIA driver** (for `nvidia-smi` / the waybar GPU module) — host-specific.
 - **NVM + Node** — per-user installer; needed by `markdown-preview.nvim`'s build.
 - **vim-plug**: `curl -fLo ~/.vim/autoload/plug.vim --create-dirs <url>`, then
-  `:PlugInstall` in vim/nvim; treesitter parsers need `gcc`.
-- **Nerd Fonts** (BigBlueTerm437 / Lilex) into `~/.local/share/fonts`, then
-  `fc-cache -f`.
+  `:PlugInstall` in vim/nvim. (Treesitter parsers compile on first run — the
+  needed compiler, `build-essential`, is now an apt dep, so no extra step.)
+- **Nerd Fonts** (BigBlueTerm437 → waybar, Lilex → kitty) into
+  `~/.local/share/fonts`, then `fc-cache -f`.
+- **Tailscale** — for the Samba share's remote (off-LAN) reach. Not apt-native:
+  add its own apt repo (`pkgs.tailscale.com`) or run the install script, then
+  `tailscale up`. (On-LAN Samba works without it.)
+- **LibreOffice** (`libreoffice`) — *optional, heavy* (~hundreds of MB): vifm opens
+  office docs with it. Install only if you want that; everything else works without.
 - **bluetuith** binary into `~/.local/bin` (not in apt).
 - **Claude Code** for your own user (native installer) if not already present.
 - Enable services: `sudo systemctl enable --now bluetooth power-profiles-daemon`.

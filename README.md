@@ -1,12 +1,32 @@
 # estia
 
-Personal configuration files for a Debian-based Linux system running the **Sway (Wayland)** desktop.
+> **Reproducible, themed Debian/Sway workstation-as-code — built collaboratively by a human and an AI-as-user.**
 
-Unified theme: near-black background `#0a0a0a`, accent **official Debian red `#ce0056`**, and a 16-colour palette derived from the `wildcharm` vim colorscheme.
+**estia** (Greek **Εστία** — *Hestia*, goddess of the **hearth**) is the hearth of
+one personal machine: a whole **Debian + Sway (Wayland)** workstation captured as
+code and rebuilt from scratch by an **Ansible bootstrap** — not just dotfiles, but
+packages, system (`/etc`) configs, users, ACLs, and services. Two things make it
+more than a config repo:
+
+- **Workstation-as-code.** `git clone` + one playbook reconstructs the machine —
+  the Wayland desktop, terminal tooling, a Samba-over-Tailscale share, headless
+  login credential auto-unlock — converging toward a distributable Debian spin
+  (`docs/repo-structure-design.md`).
+- **Human + AI-as-user.** Claude Code runs as its **own unprivileged Linux user**
+  (`claude`) — its own SSH key, GPG signature, and GitHub identity. It's a
+  collaborator behind a **kernel-enforced** trust boundary, not a process wearing
+  my account. We work through git: it opens pull requests, I review and merge.
+
+Everything sits on one **unified theme**: near-black `#0a0a0a`, accent **official
+Debian red `#ce0056`** (PANTONE Strong Red C), and a saturated 16-colour palette
+from the `wildcharm` vim colorscheme.
 
 ## Configs included
 
-| Directory | Tool | Symlink target |
+User-layer configs are symlinked into `~`/`~/.config`; system configs are deployed
+to `/etc` by the bootstrap (copied/templated, not symlinked).
+
+| Directory | Tool | Deployed to |
 |---|---|---|
 | `vim/` | Vim (vim-plug, CoC, Copilot) | `~/.vimrc` |
 | `nvim/` | Neovim (shares the Vim config) | `~/.config/nvim/` |
@@ -24,7 +44,10 @@ Unified theme: near-black background `#0a0a0a`, accent **official Debian red `#c
 | `imv/` | imv image viewer | `~/.config/imv/config` |
 | `glow/` | Glow markdown renderer + theme | `~/.config/glow/` |
 | `xdg-desktop-portal/` | Screen-sharing portal routing | `~/.config/xdg-desktop-portal/` |
-| `system/` | System configs (e.g. Samba) | copied to `/etc/` (not symlinked) |
+| `bin/` | Helper scripts (e.g. `claude-access`) | `~/.local/bin/` |
+| `system/` | System configs (e.g. Samba) | `/etc/` (root, not symlinked) |
+| `bootstrap/` | The Ansible installer + manifest | — |
+| `docs/` | Design docs + the install runbook | — |
 
 The authoritative symlink list is the bootstrap manifest (`bootstrap/group_vars/all.yml`); CLAUDE.md's table is generated from it.
 
@@ -66,12 +89,17 @@ security boundary is the unlocked session + screen lock. Full mechanism:
 
 ## Claude Code as a dedicated user
 
-Claude Code runs as its own unprivileged, kernel-isolated **`claude`** Linux user
-— its own SSH key, git identity, and passwordless GPG signing, committing and
-pushing as a separate GitHub bot account (commits show **Verified**), unable to
-read this account's secrets. Design + rationale:
+The distinctive part of estia: Claude Code runs as its own unprivileged,
+kernel-isolated **`claude`** Linux user — own SSH key, git identity, and
+passwordless GPG signing, committing and pushing as a separate GitHub **bot
+account** (commits show **Verified**), unable to read this account's secrets.
+
+We collaborate **through git, as two principals**: `claude` works in its own clone
+under `/srv/devshare`, opens pull requests as the bot, and I review and merge —
+`main` is branch-protected so **only I can merge** (the boundary is enforced by the
+platform, not by trust). Design + rationale:
 [`docs/claude-user-design.md`](docs/claude-user-design.md); day-to-day workflow
-(entering its context, sharing a project):
+(entering its context, the PR loop, sharing a project):
 [`docs/working-with-claude.md`](docs/working-with-claude.md).
 
 ## Vim plugins

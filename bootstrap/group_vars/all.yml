@@ -14,7 +14,6 @@ target_home: "{{ lookup('env', 'HOME') }}"
 dotfile_links:
   - { src: vim/.vimrc,                 dest: "{{ target_home }}/.vimrc" }
   - { src: bash/.bashrc,               dest: "{{ target_home }}/.bashrc" }
-  - { src: git/.gitconfig,             dest: "{{ target_home }}/.gitconfig" }
   - { src: git/.gitignore_global,      dest: "{{ target_home }}/.gitignore_global" }
   - { src: gnupg/gpg-agent.conf,       dest: "{{ target_home }}/.gnupg/gpg-agent.conf" }
   - { src: nvim/init.vim,              dest: "{{ target_home }}/.config/nvim/init.vim" }
@@ -43,6 +42,7 @@ dotfile_links:
 # template; vars come from this manifest (e.g. target_home). Keep this set SMALL —
 # rendering loses direct-edit; symlink everything that doesn't truly need it.
 templated_configs:
+  - { src: git/.gitconfig.j2,          dest: "{{ target_home }}/.gitconfig" }
   - { src: glow/glow.yml.j2,           dest: "{{ target_home }}/.config/glow/glow.yml" }
 
 # --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------

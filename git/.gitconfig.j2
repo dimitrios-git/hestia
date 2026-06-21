@@ -1,0 +1,20 @@
+# RENDERED by Ansible (bootstrap `dotfiles` role) to ~/.gitconfig — NOT symlinked.
+# Path-generalisation (docs/repo-structure-design.md §5): gpg.program is a path
+# INSIDE the clone, so it's templated from {{ repo_root }} (follows the clone, no
+# manual edit on move). excludesfile uses git-native ~ expansion. Identity fields
+# stay literal for now (they become installer inputs later, §6). Edit this .j2 and
+# re-run the dotfiles role to apply.
+[user]
+	email = dimitrios@charalampidis.pro
+	name = Dimitrios Charalampidis
+	signingkey = EB90A5A2D628F2A6
+[commit]
+	gpgsign = true
+[gpg]
+	program = {{ repo_root }}/git/gpg-wrapper.sh
+[init]
+	defaultBranch = main
+[core]
+	excludesfile = ~/.gitignore_global
+	autocrlf = input
+	editor = vim

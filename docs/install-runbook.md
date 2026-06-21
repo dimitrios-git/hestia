@@ -70,7 +70,9 @@ Generate/import your **own** keys (the repo carries none). Then:
 - Note your **GPG key id** and **keygrip** (`gpg --list-secret-keys --with-keygrip`).
 - **Update the host-specific values** in `gnupg/credential-unlock.sh` — `KEYGRIP`,
   `SIGNKEY`, and the `id_dimitrios` filename — to match your new key, and the
-  `signingkey`/`gpg.program` paths in `git/.gitconfig`.
+  `signingkey` (identity) in `git/.gitconfig.j2`. `gpg.program` and `excludesfile`
+  there are now path-generalised (templated from `repo_root` / git-native `~`), so
+  no manual path edit.
 
 ## 5. Samba share — `[ansible]` + `[manual]`
 

@@ -104,12 +104,13 @@ Principle: template only what *must* be machine-specific; everything else stays
 plain and symlinked.
 
 **Status:** started — the symlink *destinations* are already `$HOME`-based (the
-manifest's `target_home`). **Done:** the Samba LAN subnet (host_vars →
-`system/samba/smb.conf.j2`), and **glow's style path** (`glow/glow.yml.j2`,
-rendered by the `dotfiles` role from `{{ target_home }}` — the first user-config
-moved from symlink to render, via the manifest's `templated_configs`). **Remaining:**
-`gitconfig` `excludesfile`/`gpg.program`, `waybar/gpu.sh`, cmus music dir — same
-pattern (template only what can't expand `~`/`$VARS`).
+manifest's `target_home`). **Done** (all via the manifest's `templated_configs`,
+rendered by the `dotfiles` role): the Samba LAN subnet (host_vars →
+`system/samba/smb.conf.j2`); **glow's style path** (`glow/glow.yml.j2` ←
+`target_home`); and the **git config** (`git/.gitconfig.j2` — `gpg.program` ←
+`repo_root`, while `excludesfile` uses git-native `~`: both mechanisms in one
+file). **Remaining:** `waybar/gpu.sh`'s exec path, cmus music dir — same pattern
+(template only what can't expand `~`/`$VARS`).
 
 ## 6. The configurable installer (the end goal)
 

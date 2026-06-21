@@ -58,6 +58,7 @@ dotfile_links:
   - { src: user/waybar/scripts/gpu-watch.sh, dest: "{{ target_home }}/.config/waybar/scripts/gpu-watch.sh" }
   - { src: user/waybar/scripts/weather.sh,   dest: "{{ target_home }}/.config/waybar/scripts/weather.sh" }
   - { src: user/waybar/scripts/notifications.sh, dest: "{{ target_home }}/.config/waybar/scripts/notifications.sh" }
+  - { src: user/waybar/scripts/usb.sh,        dest: "{{ target_home }}/.config/waybar/scripts/usb.sh" }
   - { src: user/mako/config,                dest: "{{ target_home }}/.config/mako/config" }
   - { src: user/wofi/config,                dest: "{{ target_home }}/.config/wofi/config" }
   - { src: user/wofi/style.css,             dest: "{{ target_home }}/.config/wofi/style.css" }
@@ -132,7 +133,7 @@ apt_packages:
   fonts:     [fonts-noto-color-emoji]
   # acl is base, not in `sharing`: used by samba AND claude_user (shared-tree ACLs)
   # AND the claude-access tool, so it must survive `enable_samba=false`.
-  misc:      [curl, dbus-bin, fontconfig, acl]
+  misc:      [curl, dbus-bin, fontconfig, acl, udisks2]   # udisks2: waybar usb widget mount/unmount (udisksctl)
   # --- feature-gated groups (installed only when their toggle is on, see below) ---
   sharing:      [samba]                        # enable_samba
   credentials:  [gnome-keyring, libsecret-tools]  # enable_credentials

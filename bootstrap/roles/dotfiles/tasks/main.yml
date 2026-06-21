@@ -29,15 +29,22 @@
 # dest. ONE TIME — on the very first deploy to this machine — copy each pre-existing
 # REAL file (a user's own config, not a symlink) to <file>.bak next to itself, then
 # drop a marker so it never runs again (no accumulation, no backing up our own
-# renders later). Toggle with `dotfiles_backup` (default true). The marker means
-# exactly one .bak per pre-existing config, ever.
+# renders later). Toggle the *copy* with `dotfiles_backup` (default true).
+#
+# The whole block is gated only on the MARKER (first deploy), and the marker is
+# dropped UNCONDITIONALLY at the end — even when `dotfiles_backup` is false. That's
+# the fix for the original bug: if the copy step were what dropped the marker, a
+# first deploy run with `--no-backup` would skip it, leaving the one-time window
+# OPEN — so the next normal run would "back up" our own freshly-rendered configs
+# (.gitconfig, glow.yml, …) to <file>.bak. Closing the window regardless prevents
+# that. Net: exactly one .bak per pre-existing config, and only ever on first deploy.
 - name: Has the one-time pre-estia config backup already run?
   ansible.builtin.stat:
     path: "{{ target_home }}/.local/state/estia/.dotfiles-backed-up"
   register: _backup_marker
 
-- name: One-time backup of pre-existing real configs (-> <file>.bak)
-  when: (dotfiles_backup | default(true) | bool) and not _backup_marker.stat.exists
+- name: One-time pre-estia config backup (first deploy only — marker-gated)
+  when: not _backup_marker.stat.exists
   block:
     - name: Stat every config destination
       ansible.builtin.stat:
@@ -47,6 +54,8 @@
         label: "{{ item.dest }}"
       register: _all_dests
 
+    # Gated on dotfiles_backup: with `--no-backup` this is skipped, but the marker
+    # below still drops, so the one-time window closes either way.
     - name: Copy any pre-existing real config to <file>.bak (never clobber one)
       ansible.builtin.copy:
         src: "{{ item.item.dest }}"
@@ -57,14 +66,16 @@
       loop: "{{ _all_dests.results }}"
       loop_control:
         label: "{{ item.item.dest }} -> {{ item.item.dest }}.bak"
-      when: item.stat.exists and item.stat.isreg and not item.stat.islnk
+      when:
+        - dotfiles_backup | default(true) | bool
+        - item.stat.exists and item.stat.isreg and not item.stat.islnk
 
     - name: Ensure the estia state dir exists (for the marker)
       ansible.builtin.file:
         path: "{{ target_home }}/.local/state/estia"
         state: directory
 
-    - name: Drop the one-time backup marker
+    - name: Drop the one-time backup marker (always — even with --no-backup)
       ansible.builtin.file:
         path: "{{ target_home }}/.local/state/estia/.dotfiles-backed-up"
         state: touch

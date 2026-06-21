@@ -67,6 +67,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/kitty/kitty.conf` | `~/.config/kitty/kitty.conf` |
 | `user/kitty/music.session` | `~/.config/kitty/music.session` |
 | `user/imv/config` | `~/.config/imv/config` |
+| `user/zathura/zathurarc` | `~/.config/zathura/zathurarc` |
 | `user/vifm/vifmrc` | `~/.config/vifm/vifmrc` |
 | `user/vifm/colors/wildcharm.vifm` | `~/.config/vifm/colors/wildcharm.vifm` |
 | `user/glow/wildcharm.json` | `~/.config/glow/wildcharm.json` |
@@ -163,6 +164,9 @@ Terminal Markdown renderer (apt: `glow`). Used by Vim (`:Glow`/`<leader>md`) and
 
 ### imv (`user/imv/config`)
 Minimal image viewer config — shrink-to-fit scaling, vim-style `hjkl`/`np` navigation, `HJKL` to pan when zoomed.
+
+### Zathura (`user/zathura/zathurarc`)
+Document viewer (PDF/EPUB/DjVu/CBZ — vifm's PDF/comic opener). Themed through `docs/theming.md` (colours from `themes/wildcharm/palette.yml`; zathura takes `"#RRGGBB"` and `rgba(...)`). The **UI chrome** is mapped to the palette: statusbar/inputbar/completion/notifications on `bg`/`surface`/`text`, completion + index active rows on `accent`/`white`, error notification `accent_dark`, warning `yellow`; search highlights are translucent (all matches `blue`, the active match `accent`). **Document recolouring is ON by default** — `recolor true` with `recolor-lightcolor #0a0a0a` / `recolor-darkcolor #e0e0e0` flips white pages to near-black and black text to light; `recolor-keephue true` keeps coloured text/links readable and images stay natural (reverse-video left off). Press **`r`** to toggle recolour per-document (e.g. for a colour-critical figure or an already-dark PDF). Like swaylock, annotations are kept on their **own lines** (no trailing inline comments).
 
 ### Git (`user/git/`)
 Default branch `main`, editor `vim`, commits GPG-signed. Global excludes at `~/.gitignore_global` (`user/git/.gitignore_global`, symlinked): the Claude `settings.local.json` and common macOS/Node/Vim/VS Code artefacts. It deliberately does **not** exclude `.gitignore`/`.editorconfig` — those are meant to be committed and shared per-repo, and a global exclude only applies on this machine so it wouldn't travel to clones/collaborators/CI anyway. Rule of thumb: only *never-commit-anywhere* noise goes in the global file; project ignores belong in a committed `.gitignore` (e.g. this repo's, protecting `bootstrap/host_vars/*.yml`); "just this clone" ignores go in `.git/info/exclude`. `core.excludesfile` uses git-native `~` expansion (`~/.gitignore_global`), and the gitconfig is **rendered** (`user/git/.gitconfig.j2`, not symlinked) so `gpg.program` templates from `{{ repo_root }}` — neither needs a manual edit on a home/repo move (`docs/repo-structure-design.md` §5). No HTTPS credential helper is configured — auth is over SSH (`git@github.com`), so an HTTPS remote would simply prompt; add `helper = cache` for an in-memory, no-plaintext fallback if ever needed (avoid `helper = store`, which writes plaintext to `~/.git-credentials`). The local `file://` transport is left at Git's CVE-2022-39253-safe default (`protocol.file = user`); if a local-submodule operation ever needs it, scope it per-command with `git -c protocol.file.allow=always …` rather than enabling it globally.

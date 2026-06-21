@@ -56,7 +56,7 @@ Legend: ✅ themed · 🟡 partial · ⬜ not yet.
 | vifm | `.vifm` colorscheme | ✅ | file-type colours from the ANSI set |
 | glow | glamour JSON | ✅ | markdown render theme |
 | vim / nvim | `wildcharm` scheme | ✅ | external plugin + render-markdown accent |
-| zathura | key=value config | ⬜ | PDF viewer (apt `zathura`); no config yet — good next candidate |
+| zathura | key=value config | ✅ | `user/zathura/zathurarc`; UI chrome + document recolour (dark mode on, `r` toggles) |
 | GNOME / Adwaita | libadwaita / `gtk.css` | ⬜ | **the hard one** — a named-colour Adwaita variant; its own future sub-design |
 | Firefox / PWAs | userChrome / theme | ⬜ | later |
 

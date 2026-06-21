@@ -67,6 +67,7 @@ dotfile_links:
   - { src: user/kitty/kitty.conf,           dest: "{{ target_home }}/.config/kitty/kitty.conf" }
   - { src: user/kitty/music.session,        dest: "{{ target_home }}/.config/kitty/music.session" }
   - { src: user/imv/config,                 dest: "{{ target_home }}/.config/imv/config" }
+  - { src: user/zathura/zathurarc,          dest: "{{ target_home }}/.config/zathura/zathurarc" }
   - { src: user/vifm/vifmrc,                dest: "{{ target_home }}/.config/vifm/vifmrc" }
   - { src: user/vifm/colors/wildcharm.vifm, dest: "{{ target_home }}/.config/vifm/colors/wildcharm.vifm" }
   - { src: user/glow/wildcharm.json,        dest: "{{ target_home }}/.config/glow/wildcharm.json" }

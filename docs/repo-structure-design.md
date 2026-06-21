@@ -139,14 +139,18 @@ bootstrap *consumable by someone who isn't `dimitrios`* — an installer driven 
 one machine. That is what turns "my reproducible setup" into a distributable spin.
 Three layers, each building on what already exists:
 
-1. **Path generalisation (§5) — the prerequisite.** Nothing host-specific is baked
-   into rendered output; it all comes from vars. (Started — see above.)
-2. **Role feature-flags.** Each role becomes optional behind a boolean —
-   `enable_samba`, `enable_claude_user`, `enable_screensharing`, … — gating it with
-   `when:`. The roles are already cleanly separable (sliceable by `--tags` today),
-   so this is mostly wiring + sensible defaults: *"Include the Samba share?"* /
-   *"Set up the `claude` agent user?"* become **config, not edits to the playbook**.
-3. **An inputs front-end.** Collect the answers once — username/`$HOME`, GPG key id
+1. **Path generalisation (§5) — the prerequisite. ✅ DONE.** Nothing host-specific
+   is baked into rendered output; it all comes from vars.
+2. **Role feature-flags. ✅ DONE.** The optional roles are gated by `enable_*`
+   booleans in `site.yml` (`when: enable_samba | default(true) | bool`, …); defaults
+   live in the manifest (`group_vars/all.yml`), all `true` = the full setup. Set one
+   false — in host_vars or ad-hoc `-e enable_samba=false` — and the role skips:
+   *"Include the Samba share?"* / *"Set up the `claude` agent user?"* are now config,
+   not playbook edits. (`packages` + `dotfiles` are core, always run. Gotcha learned:
+   `-e` passes **strings**, and ansible-core 2.19 rejects non-boolean conditionals —
+   hence the `| bool` coercion. Package-group gating, e.g. skipping the `samba` apt
+   group when `enable_samba=false`, is a small follow-up.)
+3. **An inputs front-end — ⬜ next.** Collect the answers once — username/`$HOME`, GPG key id
    + keygrip, Tailscale/LAN, music dir, plus the toggles above — and feed them to
    Ansible. Options (open — not yet decided):
    - **`vars_prompt`** in the playbook — zero extra tooling, interactive, but not

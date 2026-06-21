@@ -41,8 +41,13 @@ re-runnable, and passes extra args through to `ansible-playbook`):
 
 ```sh
 cd bootstrap && ./setup.sh
-./setup.sh --tags dotfiles --check     # extra args flow through
+./setup.sh --check --diff              # true DRY-RUN: preview everything, change nothing
+./setup.sh --tags dotfiles --check     # preview just the dotfiles re-link
 ```
+
+Extra args flow through to `ansible-playbook`. With **`--check`**, `setup.sh` writes
+your answers to a *temp* file (not the real `host_vars`) and only previews — so a
+dry-run changes nothing on the system *or* in the repo.
 
 Or drive Ansible directly:
 

@@ -19,6 +19,11 @@ dotfile_links:
   - { src: nvim/init.vim,              dest: "{{ target_home }}/.config/nvim/init.vim" }
   - { src: nvim/lua/trees.lua,         dest: "{{ target_home }}/.config/nvim/lua/trees.lua" }
   - { src: sway/config,                dest: "{{ target_home }}/.config/sway/config" }
+  # sway-launched session scripts — referenced via $HOME in sway/config `exec`
+  # (sway runs exec through `sh -c`), so they need a stable ~ path. credential-
+  # unlock.sh self-locates its sibling keyring-ssh-askpass.sh via `readlink -f`.
+  - { src: sway/start-waybar.sh,       dest: "{{ target_home }}/.config/sway/scripts/start-waybar.sh" }
+  - { src: gnupg/credential-unlock.sh, dest: "{{ target_home }}/.config/sway/scripts/credential-unlock.sh" }
   - { src: waybar/config,              dest: "{{ target_home }}/.config/waybar/config" }
   - { src: waybar/style.css,           dest: "{{ target_home }}/.config/waybar/style.css" }
   - { src: waybar/scripts/gpu.sh,      dest: "{{ target_home }}/.config/waybar/scripts/gpu.sh" }

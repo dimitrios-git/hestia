@@ -107,8 +107,9 @@ paths (`gnupg/credential-unlock.sh`, `sway/start-waybar.sh`) — the last found 
 Principle: template only what *must* be machine-specific; everything else stays
 plain and symlinked.
 
-**Status: nearly complete.** The symlink *destinations* were already `$HOME`-based
-(the manifest's `target_home`), and the inventory above is done — each resolved
+**Status: COMPLETE** (verified by a repo-wide `grep` sweep — no clone/home
+absolutes remain in any deployed config). The symlink *destinations* were already
+`$HOME`-based (the manifest's `target_home`); every host-specific path now resolves
 from a var at deploy time:
 
 | Item | Mechanism | How |
@@ -119,19 +120,16 @@ from a var at deploy time:
 | git `excludesfile` | 1 (native `~`) | git tilde-expands its pathname configs |
 | waybar `gpu.sh` exec | 1 (`$HOME`) | script symlinked into `~`; waybar runs `exec` via `sh -c` |
 | cmus music dir | 2 (host_vars) | `cmus/rc.j2` ← `cmus_music_dir` (default `~/Music`) |
+| sway `exec` scripts | 1 (`$HOME`) | `credential-unlock.sh` + `start-waybar.sh` symlinked into `~`; sway runs `exec` via `sh -c` |
 
-Lesson worth keeping: the two cases first *assumed* to need templating (git
-`excludesfile`, waybar `exec`) both expand natively — reach for mechanism 1 first
-and verify before reaching for a `.j2`. Templating was only truly needed for paths
-no format expands: a clone-internal path (`repo_root`) and host-specific data
-(`host_vars`).
-
-**Remaining (the original inventory missed these — found by a `grep` sweep):**
-`sway/config` has two clone-absolute `exec` paths — `gnupg/credential-unlock.sh`
-and `sway/start-waybar.sh`. sway runs `exec`/`exec_always` via `sh -c`, so these
-are the **same mechanism-1 fix as waybar `gpu.sh`**: symlink the two scripts into
-`~` (manifest) and reference them via `$HOME`. (Lesson: inventory by `grep`, not
-memory.)
+Two lessons worth keeping:
+- **Reach for mechanism 1 first, verify, *then* template.** Of the cases first
+  *assumed* to need templating, three turned out to expand natively (git
+  `excludesfile`, waybar `exec`, sway `exec`). Templating was only truly needed for
+  paths no format expands: a clone-internal path (`repo_root`) and host-specific
+  data (`host_vars`).
+- **Inventory by `grep`, not memory.** The original list above missed the two sway
+  `exec` paths; a sweep caught them. Re-sweep before declaring "done".
 
 ## 6. The configurable installer (the end goal)
 

@@ -14,7 +14,7 @@ The configs are converging on one unified theme: near-black background `#0a0a0a`
 
 Claude Code runs here as a dedicated, unprivileged **`claude`** Linux user (own `0700` home `/home/claude`, member of the **`devshare`** group, **not** in sudo) — a kernel-enforced trust boundary, not a behavioural one. Full design: `docs/claude-user-design.md` (implemented 2026-06-20); day-to-day workflow: `docs/working-with-claude.md`. What matters when working in this repo:
 
-- **This checkout (`/srv/devshare/estia`) is claude's own clone** in the shared `/srv/devshare` tree — claude's *workspace*, **not** the live system. The dotfiles are symlinked from **dimitrios's** clone at **`~/Development/estia`**, which is the deployment source. Edits made here reach the running system only when **dimitrios pulls** after reviewing a pushed branch — so an edit here is **not** live. Never treat `/srv/devshare/estia` as the deployment source. (The `/home/dimitrios/...` literals still baked into a deployed config are `sway/config`'s two `exec` paths — clone-absolute script paths targeting dimitrios's deployment clone; they're the last path-generalisation items, `docs/repo-structure-design.md` §5.)
+- **This checkout (`/srv/devshare/estia`) is claude's own clone** in the shared `/srv/devshare` tree — claude's *workspace*, **not** the live system. The dotfiles are symlinked from **dimitrios's** clone at **`~/Development/estia`**, which is the deployment source. Edits made here reach the running system only when **dimitrios pulls** after reviewing a pushed branch — so an edit here is **not** live. Never treat `/srv/devshare/estia` as the deployment source. (No `/home/dimitrios/...` literals remain in any deployed config — every host-specific path resolves from `target_home`/`repo_root`/`$HOME`/host_vars at deploy time. Path generalisation is **complete**, `docs/repo-structure-design.md` §5.)
 - **Collaboration is git-mediated, two principals.** claude commits and signs as **itself**, pushes a topic branch, and opens a **pull request** as the GitHub bot **`dimitrios-claude`** (`gh pr create`; commits show **Verified**); dimitrios reviews, **merge-commits** (preserves the signed commits; via `gh pr merge --admin`), and pulls to deploy. claude **never** self-merges — and *cannot*: a `main` ruleset (*Restrict updates*, admin-only bypass) blocks the agent from pushing to or merging `main` server-side, so its only route is opening a PR. The concrete loop (and the `gh`/PAT auth) is in `docs/working-with-claude.md`.
 - **claude's identity:** own SSH key `~/.ssh/id_claude`, own **passwordless** GPG key `4AA9DD310356AD0E`, git author `Claude (dimitrios's agent) <claude@charalampidis.pro>`.
 - **Signing is frictionless for claude** — the passwordless key needs **no pinentry, no agent cache, no `gpg-unlock`, and not `gpg-wrapper.sh`**. All that machinery in *Secrets & commit signing* below is **dimitrios's**; it does not apply when running as claude.
@@ -48,6 +48,8 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `nvim/init.vim` | `~/.config/nvim/init.vim` |
 | `nvim/lua/trees.lua` | `~/.config/nvim/lua/trees.lua` |
 | `sway/config` | `~/.config/sway/config` |
+| `sway/start-waybar.sh` | `~/.config/sway/scripts/start-waybar.sh` |
+| `gnupg/credential-unlock.sh` | `~/.config/sway/scripts/credential-unlock.sh` |
 | `waybar/config` | `~/.config/waybar/config` |
 | `waybar/style.css` | `~/.config/waybar/style.css` |
 | `waybar/scripts/gpu.sh` | `~/.config/waybar/scripts/gpu.sh` |
@@ -101,7 +103,7 @@ A fresh machine is reproduced by an **Ansible** playbook (engine decision: `docs
 
 ## TODO / planned work
 
-- **Repo → distributable spin roadmap.** Path generalisation (§5) is nearly done — Samba subnet, glow, git config, waybar `gpu.sh`, cmus music dir all resolve from vars; **`sway/config`'s two `exec` paths remain** (same `$HOME`+symlink fix as waybar). Then role **feature-flags** + a **configurable installer**, and the layered `users/`/`defaults/` migration — tracked in **`docs/repo-structure-design.md` §5–§7** (the single source; don't re-list it here). Phased on purpose — don't big-bang the structural move.
+- **Repo → distributable spin roadmap.** Path generalisation (§5) is **done** — every host-specific path now resolves from a var at deploy time (a `grep` sweep finds no clone/home absolutes left in deployed configs). What remains: role **feature-flags** + a **configurable installer**, and the layered `users/`/`defaults/` migration — tracked in **`docs/repo-structure-design.md` §6–§7** (the single source; don't re-list it here). Phased on purpose — don't big-bang the structural move.
 - **Version-control systemd user services.** Other user services worth reproducing on a fresh install live only in `~/.config/systemd/user/` and aren't tracked here yet. Bring them into the repo under a `systemd/` dir, symlinked into `~/.config/systemd/user/`, and add them to the bootstrap manifest (`bootstrap/group_vars/all.yml` → `dotfile_links`; the Active symlinks table regenerates from it). (`ssh-agent` is **not** one of these — it uses Debian's shipped socket-activated unit, nothing custom; see the Bash section.)
 
 ## Tool configurations
@@ -161,6 +163,7 @@ Wayland compositor config. Notable points:
 - **XWayland:** `xwayland enable` (needs the `xwayland` package). Changing it requires a **full sway restart**, not a reload.
 - `for_window [app_id="floatterm"] floating enable, resize set 800 600` makes Waybar widget popups (`kitty --class floatterm -e <tui>`) open floating.
 - **Screen-sharing env export:** `exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE` pushes the session env into the D-Bus/systemd user activation environment so `xdg-desktop-portal` activates with the right context. Required for screen sharing — see the **Screen sharing** section. `exec` (not `exec_always`) runs once at login; it does **not** re-run on `swaymsg reload`, so apply live after editing with the same command.
+- **Session-script `exec` paths are path-generalised:** `exec …/credential-unlock.sh` and `exec_always …/start-waybar.sh` reference **`$HOME/.config/sway/scripts/…`** (sway runs `exec` via `sh -c`, so `$HOME` expands), and the two scripts are **symlinked** there by the manifest — no clone-absolute path. `credential-unlock.sh` finds its sibling `keyring-ssh-askpass.sh` via `readlink -f "$0"` (resolves the symlink back to the repo `gnupg/`).
 
 Apply most config changes with `swaymsg reload`.
 

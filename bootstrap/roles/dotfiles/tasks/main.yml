@@ -43,7 +43,7 @@
     src: "{{ repo_root }}/{{ item.src }}"
     dest: "{{ item.dest }}"
     force: true
-    mode: "0644"
+    mode: "{{ item.mode | default('0644') }}"   # scripts that get executed need 0755
   loop: "{{ templated_configs }}"
   loop_control:
     label: "{{ item.src }} -> {{ item.dest }}"

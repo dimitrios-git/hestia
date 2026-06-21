@@ -18,3 +18,12 @@ samba_lan_subnet: "192.0.2.0/24"    # e.g. 192.168.1.0/24
 # Where your music library lives (cmus browser default + the `U` rescan binding).
 # Defaults to ~/Music if unset — override only if your library is elsewhere.
 cmus_music_dir: "/mnt/storage/Music"   # e.g. an external mount
+
+# Identity — rendered into ~/.gitconfig + the login credential-unlock scripts.
+# setup.sh auto-detects these (git config / first GPG secret key + keygrip /
+# ~/.ssh/id_*); set them here only to override.
+git_user_name: "Your Name"
+git_user_email: "you@example.com"
+git_signingkey: ""           # GPG key id; blank → commit signing off
+gpg_keygrip: ""              # keygrip of that key (gpg --list-secret-keys --with-keygrip)
+ssh_key_file: "id_ed25519"   # private key in ~/.ssh loaded by the login hook

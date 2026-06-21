@@ -157,10 +157,16 @@ Three layers, each building on what already exists:
    then runs the playbook. Re-runnable (it pre-fills from the existing file). The
    **answers-file** approach won over `vars_prompt` (which would prompt every run,
    no unattended re-run) and a TUI (more to maintain) — it extends the host_vars
-   pattern already in use and stays diffable. Scope of this first cut: the toggles
-   + `samba_lan_subnet` + `cmus_music_dir`. **Not yet inputs (still hardcoded
-   literals):** git identity (`user.name`/`email`/`signingkey`) and
-   `credential-unlock.sh`'s keygrip — a follow-up that needs templating those.
+   pattern already in use and stays diffable. Inputs: the toggles, `samba_lan_subnet`,
+   `cmus_music_dir`, and **identity** — `git_user_name`/`git_user_email`/
+   `git_signingkey`, `gpg_keygrip`, `ssh_key_file` (rendered into `git/.gitconfig.j2`
+   and the two credential scripts; setup.sh auto-detects them from existing git
+   config, the first GPG secret key + its keygrip, and `~/.ssh/id_*`). With identity
+   parameterised, **no personal literals remain in the repo** — the de-personalisation
+   the public spin wants. (`credential-unlock.sh` + `keyring-ssh-askpass.sh` moved
+   symlink → rendered, both into `~/.config/sway/scripts/` so the `readlink -f`
+   sibling-lookup still resolves; the template task grew an optional `mode` so the
+   scripts render `0755`.)
 
 **Ties to the layered model:** feature-flags + an answers file are exactly what
 make a real `defaults/` layer (§3; deferred per §9.4) worthwhile — defaults ship

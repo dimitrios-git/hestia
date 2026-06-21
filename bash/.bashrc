@@ -152,7 +152,7 @@ claude-shell() {
 
 # SSH: point at the Debian socket-activated ssh-agent user service (ssh-agent.socket).
 # greetd doesn't source this file, so interactive shells (terminals, Ansible) set it here;
-# Sway sets it for itself. Load a key with: ssh-add ~/.ssh/id_dimitrios
+# Sway sets it for itself. Load a key with: ssh-add ~/.ssh/<your key>  (e.g. id_ed25519)
 export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/openssh_agent"
 
 # NVM

@@ -18,6 +18,16 @@ enable_samba: true          # Samba-over-Tailscale share (samba role → /etc, /
 enable_claude_user: true    # dedicated `claude` agent user + shared tree + ACLs (claude_user role)
 enable_credentials: true    # login auto-unlock of SSH + GPG (credentials role)
 
+# --- Identity (rendered into git config + the credential-unlock hook) ----------
+# Personal — these defaults are de-personalised placeholders, OVERRIDDEN per host
+# in host_vars/<host>.yml (setup.sh detects + prompts). Empty signing key → git
+# `gpgsign = false` and the GPG warm step in credential-unlock.sh no-ops.
+git_user_name: "Your Name"
+git_user_email: "you@example.com"
+git_signingkey: ""          # GPG signing key id (also SIGNKEY in credential-unlock)
+gpg_keygrip: ""             # keygrip of git_signingkey (`gpg --with-keygrip …`)
+ssh_key_file: "id_ed25519"  # private key in ~/.ssh that the login hook loads
+
 # --- Dotfile symlinks (repo path relative to repo_root -> absolute dest) -------
 # Mirrors CLAUDE.md's "Active symlinks" table; CLAUDE.md should be regenerated
 # from this list, not hand-maintained (kills doc-vs-reality drift).
@@ -30,10 +40,10 @@ dotfile_links:
   - { src: nvim/lua/trees.lua,         dest: "{{ target_home }}/.config/nvim/lua/trees.lua" }
   - { src: sway/config,                dest: "{{ target_home }}/.config/sway/config" }
   # sway-launched session scripts — referenced via $HOME in sway/config `exec`
-  # (sway runs exec through `sh -c`), so they need a stable ~ path. credential-
-  # unlock.sh self-locates its sibling keyring-ssh-askpass.sh via `readlink -f`.
+  # (sway runs exec through `sh -c`), so they need a stable ~ path.
+  # (credential-unlock.sh + keyring-ssh-askpass.sh carry identity values, so
+  # they're rendered — see templated_configs below — into the same dir.)
   - { src: sway/start-waybar.sh,       dest: "{{ target_home }}/.config/sway/scripts/start-waybar.sh" }
-  - { src: gnupg/credential-unlock.sh, dest: "{{ target_home }}/.config/sway/scripts/credential-unlock.sh" }
   - { src: waybar/config,              dest: "{{ target_home }}/.config/waybar/config" }
   - { src: waybar/style.css,           dest: "{{ target_home }}/.config/waybar/style.css" }
   - { src: waybar/scripts/gpu.sh,      dest: "{{ target_home }}/.config/waybar/scripts/gpu.sh" }
@@ -56,10 +66,16 @@ dotfile_links:
 # of symlinked — so they carry no /home/<user> literal. The src is a Jinja2
 # template; vars come from this manifest (e.g. target_home). Keep this set SMALL —
 # rendering loses direct-edit; symlink everything that doesn't truly need it.
+# Optional `mode:` per item (default 0644) — scripts that get executed need 0755.
 templated_configs:
   - { src: git/.gitconfig.j2,          dest: "{{ target_home }}/.gitconfig" }
   - { src: glow/glow.yml.j2,           dest: "{{ target_home }}/.config/glow/glow.yml" }
   - { src: cmus/rc.j2,                 dest: "{{ target_home }}/.config/cmus/rc" }
+  # credential scripts: carry identity values (ssh_key_file/keygrip/signingkey) and
+  # are executed (sway exec + SSH_ASKPASS), so rendered + 0755, both into the same
+  # dir so credential-unlock.sh finds its sibling via `readlink -f`.
+  - { src: gnupg/credential-unlock.sh.j2,   dest: "{{ target_home }}/.config/sway/scripts/credential-unlock.sh",   mode: "0755" }
+  - { src: gnupg/keyring-ssh-askpass.sh.j2, dest: "{{ target_home }}/.config/sway/scripts/keyring-ssh-askpass.sh", mode: "0755" }
 
 # --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
 # Sensible defaults so a fresh checkout renders without host_vars; real machines

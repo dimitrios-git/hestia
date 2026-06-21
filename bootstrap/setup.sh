@@ -67,6 +67,23 @@ def_samba=$(cur enable_samba);       def_samba=${def_samba:-true}
 def_claude=$(cur enable_claude_user); def_claude=${def_claude:-true}
 def_creds=$(cur enable_credentials);  def_creds=${def_creds:-true}
 
+# Identity defaults: existing host_vars -> existing git config -> gpg/ssh detect.
+def_gname=$(cur git_user_name);   [ -n "$def_gname" ]  || def_gname=$(git config --global user.name 2>/dev/null || true)
+[ -n "$def_gname" ]  || def_gname=$(getent passwd "$USER" 2>/dev/null | cut -d: -f5 | cut -d, -f1 || true)
+def_gmail=$(cur git_user_email);  [ -n "$def_gmail" ]  || def_gmail=$(git config --global user.email 2>/dev/null || true)
+def_skey=$(cur git_signingkey);   [ -n "$def_skey" ]   || def_skey=$(git config --global user.signingkey 2>/dev/null || true)
+[ -n "$def_skey" ] || def_skey=$(gpg --list-secret-keys --keyid-format=long 2>/dev/null | awk -F/ '/^sec/{split($2,a," ");print a[1];exit}' || true)
+def_grip=$(cur gpg_keygrip)
+[ -n "$def_grip" ] || [ -z "$def_skey" ] || def_grip=$(gpg --list-secret-keys --with-keygrip "$def_skey" 2>/dev/null | awk '/Keygrip/{print $3;exit}' || true)
+def_sshkey=$(cur ssh_key_file)
+if [ -z "$def_sshkey" ]; then
+    for _k in "$HOME"/.ssh/id_*; do
+        case "$_k" in *.pub) continue ;; esac
+        [ -f "$_k" ] && { def_sshkey=$(basename "$_k"); break; }
+    done
+fi
+[ -n "$def_sshkey" ] || def_sshkey=id_ed25519
+
 askyn enable_samba       "Set up the Samba-over-Tailscale share?"   "$def_samba"
 if [ "$enable_samba" = true ]; then
     ask samba_lan_subnet "  Home LAN subnet allowed to reach it"    "$def_lan"
@@ -77,6 +94,18 @@ askyn enable_claude_user "Create the dedicated 'claude' agent user?" "$def_claud
 askyn enable_credentials "Enable login auto-unlock of SSH + GPG?"    "$def_creds"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"
 
+echo
+echo "  Identity (commit author, signing, and the login key-unlock hook):"
+ask git_user_name  "  Git user name" "${def_gname:-Your Name}"
+ask git_user_email "  Git email"     "${def_gmail:-you@example.com}"
+ask git_signingkey "  GPG signing key id (blank = no commit signing)" "$def_skey"
+if [ -n "$git_signingkey" ]; then
+    ask gpg_keygrip "  GPG keygrip of that key (gpg --with-keygrip)" "$def_grip"
+else
+    gpg_keygrip=""
+fi
+ask ssh_key_file   "  SSH private key in ~/.ssh the login hook loads" "$def_sshkey"
+
 # --- 3. Confirm before writing/applying (catch a bad auto-detect here) ---------
 cat <<EOF
 
@@ -85,6 +114,8 @@ cat <<EOF
     enable_claude_user = $enable_claude_user
     enable_credentials = $enable_credentials
     cmus_music_dir     = $cmus_music_dir
+    git identity       = $git_user_name <$git_user_email>$( [ -n "$git_signingkey" ] && echo "   signing $git_signingkey" )
+    ssh login key      = ~/.ssh/$ssh_key_file
 EOF
 askyn _proceed "Proceed?" true
 [ "$_proceed" = true ] || { echo "Aborted — nothing written or changed."; exit 0; }
@@ -99,6 +130,11 @@ enable_claude_user: $enable_claude_user
 enable_credentials: $enable_credentials
 samba_lan_subnet: "$samba_lan_subnet"
 cmus_music_dir: "$cmus_music_dir"
+git_user_name: "$git_user_name"
+git_user_email: "$git_user_email"
+git_signingkey: "$git_signingkey"
+gpg_keygrip: "$gpg_keygrip"
+ssh_key_file: "$ssh_key_file"
 EOF
 echo "==> Wrote $HOSTVARS"
 

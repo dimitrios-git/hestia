@@ -1,0 +1,7 @@
+#!/bin/sh
+# SSH_ASKPASS helper for the login credential-unlock hook: print the SSH key's
+# passphrase from the gnome-keyring Secret Service (unlocked by PAM at login).
+# Used by credential-unlock.sh so `ssh-add` can load the key non-interactively.
+# RENDERED by Ansible (the keyfile attribute comes from `ssh_key_file`, set by
+# setup.sh) into ~/.config/sway/scripts/. See docs/credential-autounlock-design.md.
+exec secret-tool lookup autounlock ssh keyfile {{ ssh_key_file }}

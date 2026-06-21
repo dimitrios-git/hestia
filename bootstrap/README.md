@@ -119,8 +119,9 @@ python3 gen-symlink-table.py
      `mv ~/.local/share/keyrings/login.keyring{,.bak}` (+ `user.keystore`,
      `default`), then log out/in.
   2. Store the passphrases the hook reads (prompts silently — keep them out of the
-     repo): `secret-tool store --label='ssh: id_dimitrios' autounlock ssh keyfile id_dimitrios`
-     and `secret-tool store --label='gpg: signing' autounlock gpg keygrip <KEYGRIP>`.
+     repo). The `keyfile`/`keygrip` attributes must match your host_vars
+     `ssh_key_file`/`gpg_keygrip`: `secret-tool store --label='ssh key' autounlock ssh keyfile <ssh_key_file>`
+     and `secret-tool store --label='gpg signing' autounlock gpg keygrip <gpg_keygrip>`.
   See `../docs/credential-autounlock-design.md` §10.
 - **pinentry alternative**: `sudo update-alternatives --set pinentry /usr/bin/pinentry-tty`.
 - **Dark mode**: `gsettings set org.gnome.desktop.interface color-scheme prefer-dark`.

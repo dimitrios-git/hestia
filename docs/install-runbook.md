@@ -81,11 +81,11 @@ portal-aware apps (Firefox) honour dark mode.
 Generate/import your **own** keys (the repo carries none). Then:
 - Put the SSH public key on GitHub; confirm `ssh -T git@github.com`.
 - Note your **GPG key id** and **keygrip** (`gpg --list-secret-keys --with-keygrip`).
-- **Update the host-specific values** in `gnupg/credential-unlock.sh` — `KEYGRIP`,
-  `SIGNKEY`, and the `id_dimitrios` filename — to match your new key, and the
-  `signingkey` (identity) in `git/.gitconfig.j2`. `gpg.program` and `excludesfile`
-  there are now path-generalised (templated from `repo_root` / git-native `~`), so
-  no manual path edit.
+- **No file edits needed** — `setup.sh` collects your identity (git name/email,
+  `git_signingkey`, `gpg_keygrip`, `ssh_key_file`) into host_vars and renders it
+  into `git/.gitconfig` + the credential-unlock scripts. It auto-detects most of it
+  (existing git config, your first GPG secret key + keygrip, your `~/.ssh/id_*`),
+  so usually you just confirm. (Re-run `setup.sh` after generating keys.)
 
 ## 5. Samba share — `[ansible]` + `[manual]`
 
@@ -142,9 +142,11 @@ Untangles gnome-keyring's launchers so PAM is the sole unlocker. Then, one-time:
 # recreate the login keyring so PAM keys it to the LOGIN password:
 cd ~/.local/share/keyrings && for f in login.keyring user.keystore default; do
   [ -e "$f" ] && mv "$f" "$f.bak"; done
-# store the passphrases the login hook reads (silent prompts — kept out of the repo):
-secret-tool store --label='ssh: id_dimitrios' autounlock ssh keyfile id_dimitrios
-secret-tool store --label='gpg: signing'      autounlock gpg keygrip <YOUR-KEYGRIP>
+# store the passphrases the login hook reads (silent prompts — kept out of the repo).
+# The `keyfile` / `keygrip` attributes MUST match your host_vars `ssh_key_file` /
+# `gpg_keygrip` (what setup.sh wrote), since the rendered scripts look them up by that:
+secret-tool store --label='ssh key' autounlock ssh keyfile <ssh_key_file>     # e.g. id_ed25519
+secret-tool store --label='gpg signing' autounlock gpg keygrip <gpg_keygrip>
 ```
 **`[reboot]`** — on next login the keyring auto-unlocks and the Sway hook loads
 SSH + warms GPG. Verify: `ssh-add -l` shows your key and a `git commit -S` signs

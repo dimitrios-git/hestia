@@ -1,0 +1,7 @@
+# Per-host Ansible vars holding this machine's REAL IPs/subnets — must never reach
+# the public repo. The committed template is host_vars/*.yml.example.
+# (This .gitignore is force-added: the global excludesfile normally ignores
+#  .gitignore itself — see CLAUDE.md — but here it deliberately protects a secret-ish
+#  file across clones, so it is tracked.)
+bootstrap/host_vars/*.yml
+!bootstrap/host_vars/*.yml.example

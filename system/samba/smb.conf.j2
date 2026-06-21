@@ -1,14 +1,17 @@
 #
 # Samba config for thetower — file exchange with the Windows laptop over Tailscale.
-# Tracked in the dotfiles repo at system/samba/smb.conf; this is a LAYER-(a)
-# system config — DEPLOYED BY COPY to /etc/samba/smb.conf (never symlinked).
+# Tracked in the dotfiles repo as system/samba/smb.conf.j2; this is a LAYER-(a)
+# system config — RENDERED BY ANSIBLE (the `samba` role) and copied to
+# /etc/samba/smb.conf (never symlinked). The host-specific LAN subnet comes from
+# host_vars (samba_lan_subnet) — see bootstrap/host_vars/localhost.yml.example.
 # Full deploy runbook: system/samba/README.md. Design: docs/file-sharing-design.md.
 #
-# SECURITY MODEL: smbd listens ONLY on loopback + the Tailscale tunnel, never the
-# LAN. Tailscale (WireGuard) provides transport encryption + node authentication,
-# so the share is reachable only from the tailnet — mirroring the old "SFTP only
-# via Tailscale" posture. The precise per-node restriction lives in the Tailscale
-# ACL; this file is the coarse, on-host enforcement.
+# SECURITY MODEL: smbd listens on all interfaces (Samba 4.22 can't bind the
+# Tailscale tun), and access is confined at the SMB LAYER by hosts allow/deny —
+# only loopback, the home LAN, and the Tailscale CGNAT range may authenticate;
+# everything else is rejected before auth. The LAN is allowed deliberately (full
+# gigabit at home vs the tunnel's ~575 Mbit). Per-node restriction can live in the
+# Tailscale ACL; this file is the coarse, on-host enforcement.
 #
 
 [global]
@@ -20,7 +23,7 @@
    # LAN, mapping the share by LAN IP gives full gigabit, whereas Tailscale always
    # WireGuard-encrypts (even on a same-LAN path) and caps ~575 Mbit. Use the LAN
    # IP when home, the Tailscale IP when remote (two Windows drive mappings).
-   hosts allow = 127.0.0.1 192.168.0.0/24 100.64.0.0/10
+   hosts allow = 127.0.0.1 {{ samba_lan_subnet }} {{ samba_tailscale_cgnat }}
    hosts deny = 0.0.0.0/0
 
    # --- Protocol ---

@@ -5,17 +5,25 @@ Native Windows Explorer access to a `thetower` folder, fast, reachable over the
 confined to those at the SMB layer by `hosts allow/deny`. Replaces the old
 SFTP-over-Tailscale share. Design rationale: `docs/file-sharing-design.md`.
 
-This is a **layer-(a) system config**: deployed by **copy** to `/etc/` (not
-symlinked). The steps below are the manual precursor to the planned Ansible role.
+This is a **layer-(a) system config**: rendered from `smb.conf.j2` and copied to
+`/etc/` (not symlinked). The canonical deploy is the **`samba` Ansible role**
+(`ansible-playbook site.yml --tags samba --ask-become-pass`), which renders the
+template using `samba_lan_subnet` from host_vars. The steps below are the
+equivalent **manual** path (and the role's source of truth).
 
 > Run as `dimitrios` from the repo root. Steps need `sudo` (privileged steps are
 > the human's job by design). Review before running.
 
 ## Facts (this host)
 
-- `thetower` Tailscale IP: **`100.91.148.26`**, interface **`tailscale0`**.
+Placeholders below are redacted — substitute this host's real values (the LAN
+subnet lives in `bootstrap/host_vars/localhost.yml`; find the IPs with
+`tailscale ip -4` and `ip -o -4 addr`):
+
+- `thetower` Tailscale IP: **`<tailscale-ip>`** (`tailscale ip -4`), interface **`tailscale0`**.
+- LAN IP / subnet: **`<lan-ip>`** / **`<lan-subnet>`** (e.g. `192.0.2.0/24`).
 - Share path: **`/srv/smbshare`**; dedicated principal: user+group **`smbshare`**.
-- Windows mounts: **`\\thetower\share`** (MagicDNS) or **`\\100.91.148.26\share`**
+- Windows mounts: **`\\thetower\share`** (MagicDNS) or **`\\<tailscale-ip>\share`**
   (by IP — use this if MagicDNS is flaky; see the resolv.conf health note).
 
 ## 1. Install Samba
@@ -52,9 +60,16 @@ sudo smbpasswd -e smbshare      # enable
 
 ## 5. Deploy this config
 
+`smb.conf.j2` is a template — substitute this host's LAN subnet for the
+`{{ samba_lan_subnet }}` placeholder as you install it (the Ansible role does this
+for you from host_vars):
+
 ```sh
 sudo cp -n /etc/samba/smb.conf /etc/samba/smb.conf.orig   # back up distro default once
-sudo install -m 0644 system/samba/smb.conf /etc/samba/smb.conf
+LAN_SUBNET=192.0.2.0/24          # <-- this host's LAN subnet
+sed -e "s#{{ samba_lan_subnet }}#$LAN_SUBNET#" \
+    -e "s#{{ samba_tailscale_cgnat }}#100.64.0.0/10#" \
+    system/samba/smb.conf.j2 | sudo install -m 0644 /dev/stdin /etc/samba/smb.conf
 sudo testparm -s                 # validate syntax (should print "Loaded services")
 ```
 
@@ -63,7 +78,7 @@ sudo testparm -s                 # validate syntax (should print "Loaded service
 Samba 4.22 **won't bind to the Tailscale tun** (`interfaces = lo <ip>/32` +
 `bind interfaces only` binds loopback only — the point-to-point `/32` has no
 broadcast), so `smbd` **listens on all interfaces** and access is confined at the
-**SMB layer** by `hosts allow = 127.0.0.1 192.168.0.0/24 100.64.0.0/10` +
+**SMB layer** by `hosts allow = 127.0.0.1 <lan-subnet> 100.64.0.0/10` +
 `hosts deny = 0.0.0.0/0` (loopback + home LAN + Tailscale may authenticate;
 everything else is rejected before auth). The LAN is **deliberately allowed** — on
 the trusted home network it gives full gigabit vs the tunnel's ~575 Mbit (see
@@ -105,8 +120,8 @@ allow/deny` confines who may authenticate (loopback + LAN + Tailscale).
 
 ```sh
 ss -tln 'sport = :445'                                             # expect 0.0.0.0:445
-timeout 3 bash -c 'cat </dev/null >/dev/tcp/192.168.0.100/445' && echo "LAN OPEN"
-timeout 3 bash -c 'cat </dev/null >/dev/tcp/100.91.148.26/445' && echo "tunnel OPEN"
+timeout 3 bash -c 'cat </dev/null >/dev/tcp/<lan-ip>/445' && echo "LAN OPEN"
+timeout 3 bash -c 'cat </dev/null >/dev/tcp/<tailscale-ip>/445' && echo "tunnel OPEN"
 ```
 
 Both should be OPEN; a client outside `hosts allow` is rejected before auth.
@@ -123,14 +138,14 @@ Only if you maintain a custom ACL (admin console → **Access controls**), add a
 grant for tcp/445 from the laptop to thetower:
 
 ```jsonc
-{ "action": "accept", "src": ["100.74.39.11"], "dst": ["100.91.148.26:445"] }
+{ "action": "accept", "src": ["<laptop-tailscale-ip>"], "dst": ["<tailscale-ip>:445"] }
 ```
 
 ## 10. Windows side
 
 Map **two** drives and use whichever fits:
-- **Home (full gigabit):** `\\192.168.0.100\share`
-- **Remote (over Tailscale):** `\\100.91.148.26\share`
+- **Home (full gigabit):** `\\<lan-ip>\share`
+- **Remote (over Tailscale):** `\\<tailscale-ip>\share`
 
 Credentials `smbshare` + the password from step 4. (RDP/Remmina is unaffected —
 this is only the file-transfer path.)

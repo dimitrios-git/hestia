@@ -159,9 +159,14 @@ if $first_run && ! $dry_run; then
 
   ⚠️  FIRST RUN ON THIS MACHINE
       estia deploys its configs by symlink/render and will REPLACE existing dotfiles
-      (~/.bashrc, ~/.vimrc, ~/.config/*, ~/.gitconfig, …). Any existing *real* file is
-      moved to <file>.bak first, but review/back up anything precious before continuing.
-      (Preview without changing anything:  ./setup.sh --check --diff)
+      (~/.bashrc, ~/.vimrc, ~/.config/*, ~/.gitconfig, …).
+
+      Backups are ON by default: each pre-existing file is copied to <file>.bak
+      (next to itself) before it's replaced — once, on this first run — so this is
+      reversible. To turn that off, re-run with  -e dotfiles_backup=false  — then
+      the configs being replaced are NOT saved anywhere.
+
+      Preview without changing anything:  ./setup.sh --check --diff
 EOF
     read -r -p "  Type 'yes' to proceed: " _ack
     [ "$_ack" = yes ] || { echo "Aborted — nothing written or changed."; exit 0; }

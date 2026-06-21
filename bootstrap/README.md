@@ -52,9 +52,10 @@ your answers to a *temp* file (not the real `host_vars`) and only previews — s
 dry-run changes nothing on the system *or* in the repo.
 
 > ⚠️ **Destructive on a fresh `$HOME`.** The `dotfiles` role force-replaces existing
-> dotfiles (`~/.bashrc`, `~/.config/*`, …). It **backs up** any pre-existing real file
-> first (`<file>.bak`, or a timestamped backup for rendered configs), and a **first
-> run** (no `host_vars` yet) warns and requires typing `yes`. Preview with `--check --diff`.
+> dotfiles (`~/.bashrc`, `~/.config/*`, …). On the **first deploy only** it copies any
+> pre-existing real config to `<file>.bak` next to it (one per file, ever — marker at
+> `~/.local/state/estia/.dotfiles-backed-up`; `dotfiles_backup=false` to skip), and a
+> **first run** (no `host_vars`) warns + requires typing `yes`. Preview with `--check --diff`.
 
 Or drive Ansible directly:
 

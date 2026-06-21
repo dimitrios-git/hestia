@@ -48,8 +48,8 @@ ansible-playbook site.yml --tags dotfiles                  # apply
 Symlinks the plain configs and **renders** the path-generalised ones
 (`templated_configs`) into `$HOME`. No root. On a configured machine this is
 `changed=0`. **Destructive on a populated `$HOME`:** it replaces existing dotfiles —
-but first backs up any pre-existing *real* file to `<file>.bak` (symlinked) or a
-timestamped backup (rendered), so nothing is silently lost. (`setup.sh` also warns +
+but **on the first deploy only** copies any pre-existing *real* file to `<file>.bak`
+next to it (one per file, ever; `dotfiles_backup=false` to skip). (`setup.sh` also warns +
 gates a first run; preview safely with `--check --diff`.)
 
 > **Per-host values:** a few configs read host-specific values with sensible

@@ -83,6 +83,11 @@ templated_configs:
 # Where the user keeps their music library — host-specific DATA, not a config path.
 cmus_music_dir: "{{ target_home }}/Music"
 
+# On the FIRST deploy to a machine, the dotfiles role copies any pre-existing real
+# config to <file>.bak before replacing it (one time only, marker-tracked). Set
+# false to skip backups entirely — then replaced configs are NOT saved.
+dotfiles_backup: true
+
 # --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------
 # Dependency-audited 2026-06-21 (swept every config for invoked binaries). Things
 # that are NOT apt packages, or are heavy/optional, are listed in README.md /

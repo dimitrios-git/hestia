@@ -26,27 +26,49 @@
     label: "{{ item }}"
 
 # Safety net: the symlink/template tasks below force-replace whatever sits at each
-# dest. First move any pre-existing REAL file (a user's own dotfile — not a symlink)
-# aside to <dest>.bak, so a first run on a populated $HOME is non-destructive.
-# `creates:` keeps it idempotent and never clobbers an earlier backup; on re-runs
-# the dests are our own symlinks (not regular files), so nothing is touched.
-# (templated_configs get the template module's own `backup:` below.)
-- name: Stat dotfile destinations (to find real files to back up)
+# dest. ONE TIME — on the very first deploy to this machine — copy each pre-existing
+# REAL file (a user's own config, not a symlink) to <file>.bak next to itself, then
+# drop a marker so it never runs again (no accumulation, no backing up our own
+# renders later). Toggle with `dotfiles_backup` (default true). The marker means
+# exactly one .bak per pre-existing config, ever.
+- name: Has the one-time pre-estia config backup already run?
   ansible.builtin.stat:
-    path: "{{ item.dest }}"
-  loop: "{{ dotfile_links }}"
-  loop_control:
-    label: "{{ item.dest }}"
-  register: _dotfile_dests
+    path: "{{ target_home }}/.local/state/estia/.dotfiles-backed-up"
+  register: _backup_marker
 
-- name: Back up any pre-existing real dotfile before replacing it
-  ansible.builtin.command:
-    cmd: "mv -- {{ item.item.dest | quote }} {{ (item.item.dest ~ '.bak') | quote }}"
-    creates: "{{ item.item.dest }}.bak"
-  loop: "{{ _dotfile_dests.results }}"
-  loop_control:
-    label: "{{ item.item.dest }} -> {{ item.item.dest }}.bak"
-  when: item.stat.exists and item.stat.isreg and not item.stat.islnk
+- name: One-time backup of pre-existing real configs (-> <file>.bak)
+  when: (dotfiles_backup | default(true) | bool) and not _backup_marker.stat.exists
+  block:
+    - name: Stat every config destination
+      ansible.builtin.stat:
+        path: "{{ item.dest }}"
+      loop: "{{ dotfile_links + templated_configs }}"
+      loop_control:
+        label: "{{ item.dest }}"
+      register: _all_dests
+
+    - name: Copy any pre-existing real config to <file>.bak (never clobber one)
+      ansible.builtin.copy:
+        src: "{{ item.item.dest }}"
+        dest: "{{ item.item.dest }}.bak"
+        remote_src: true
+        mode: preserve
+        force: false
+      loop: "{{ _all_dests.results }}"
+      loop_control:
+        label: "{{ item.item.dest }} -> {{ item.item.dest }}.bak"
+      when: item.stat.exists and item.stat.isreg and not item.stat.islnk
+
+    - name: Ensure the estia state dir exists (for the marker)
+      ansible.builtin.file:
+        path: "{{ target_home }}/.local/state/estia"
+        state: directory
+
+    - name: Drop the one-time backup marker
+      ansible.builtin.file:
+        path: "{{ target_home }}/.local/state/estia/.dotfiles-backed-up"
+        state: touch
+        mode: "0644"
 
 - name: Symlink dotfiles from the repo
   ansible.builtin.file:
@@ -66,7 +88,6 @@
     src: "{{ repo_root }}/{{ item.src }}"
     dest: "{{ item.dest }}"
     force: true
-    backup: true                                 # back up a pre-existing file on change
     mode: "{{ item.mode | default('0644') }}"   # scripts that get executed need 0755
   loop: "{{ templated_configs }}"
   loop_control:

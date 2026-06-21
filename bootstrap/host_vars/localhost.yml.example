@@ -31,3 +31,8 @@ git_user_email: "you@example.com"
 git_signingkey: ""           # GPG key id; blank → commit signing off
 gpg_keygrip: ""              # keygrip of that key (gpg --list-secret-keys --with-keygrip)
 ssh_key_file: "id_ed25519"   # private key in ~/.ssh loaded by the login hook
+
+# Tip: you can wholesale-override any manifest list here too (e.g. your own
+# `nerd_fonts:` / `localbin_binaries:` / `apt_packages:`). For installing extra
+# software / running your own tasks, use bootstrap/local.yml — see
+# ../../docs/personalizing.md.

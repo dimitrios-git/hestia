@@ -25,6 +25,7 @@ bootstrap/
   inventory.ini         # localhost, local connection
   group_vars/all.yml    # THE MANIFEST — toggles + packages + dotfile symlinks + templated configs + paths
   host_vars/            # per-host answers (localhost.yml — untracked; .example committed)
+  local.yml.example     # template for the untracked local.yml personalization seam (docs/personalizing.md)
   roles/
     packages/           # apt install (become)
     dotfiles/           # symlink plain configs + render templated_configs into $HOME (no root)
@@ -128,6 +129,19 @@ ansible-playbook site.yml -e enable_samba=false --ask-become-pass
 # or set it per host (persistent) in host_vars/<host>.yml:
 #   enable_claude_user: false
 ```
+
+## Personalizing (making it your own system)
+
+Running estia as *your* machine, not dimitrios's? Three layers, none of which touch
+`roles/` or `site.yml` (full story: `../docs/personalizing.md`):
+
+1. **host_vars** — flip the toggles above, set your values, or wholesale-override any
+   manifest list (`apt_packages:`, `nerd_fonts:`, `localbin_binaries:`).
+2. **`bootstrap/local.yml`** — an untracked (gitignored) Ansible *tasks* file for
+   installing anything else (apps, repos, flatpaks, binaries, services). `site.yml`
+   runs it **last** if present; `become:` tasks reuse setup.sh's sudo password. Start
+   from `local.yml.example`. Run it with the rest, or alone via `--tags local`.
+3. **`../user/`** — fork the app configs themselves.
 
 After editing `dotfile_links` or `templated_configs`, regenerate CLAUDE.md's
 symlink + rendered-template tables so the docs can't drift from the manifest:

@@ -1,0 +1,64 @@
+---
+# bootstrap/local.yml — SITE-LOCAL CUSTOMISATIONS (this is the committed .example).
+#
+# Copy this to `bootstrap/local.yml` (same dir) and edit it. That file is GITIGNORED,
+# so your customisations never reach the tracked/public repo. `site.yml` includes it
+# LAST — after the base system — as a TASKS file on localhost, so write bare tasks
+# here (no `- hosts:`/play header). Tasks needing root use `become: true`; they reuse
+# the sudo password setup.sh already collected (no extra prompt).
+#
+#   cp local.yml.example local.yml
+#   $EDITOR local.yml
+#   ./setup.sh --yes                       # or:  ansible-playbook site.yml --tags local
+#
+# This is the "install anything" seam (docs/personalizing.md, layer 2). The examples
+# below are illustrative — keep only what you want; the file needs at least one task.
+
+# --- Extra apt packages (e.g. GIMP) -------------------------------------------
+- name: Install my extra apt packages
+  ansible.builtin.apt:
+    name:
+      - gimp
+      - htop
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+# --- A Flatpak app from Flathub -----------------------------------------------
+# Needs the `flatpak` package + the `community.general` collection
+# (ansible-galaxy collection install community.general).
+# - name: Inkscape via Flathub
+#   become: true
+#   block:
+#     - name: Ensure flatpak is installed
+#       ansible.builtin.apt: { name: flatpak, state: present }
+#     - name: Add the Flathub remote
+#       community.general.flatpak_remote:
+#         name: flathub
+#         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+#     - name: Install Inkscape
+#       community.general.flatpak:
+#         name: org.inkscape.Inkscape
+#         state: present
+
+# --- A third-party apt repo, then a package -----------------------------------
+# - name: Some vendor repo + package
+#   become: true
+#   block:
+#     - ansible.builtin.deb822_repository:
+#         name: vendor
+#         uris: https://repo.vendor.example/debian
+#         suites: stable
+#         components: main
+#         signed_by: https://repo.vendor.example/key.asc
+#     - ansible.builtin.apt: { name: vendor-app, state: present, update_cache: true }
+
+# --- A prebuilt binary into ~/.local/bin (no root) ----------------------------
+# (For a pinned, checksum-verified release binary, prefer adding an entry to
+#  localbin_binaries in host_vars instead — see docs/personalizing.md.)
+# - name: Install a tool into ~/.local/bin
+#   ansible.builtin.get_url:
+#     url: https://example.com/tool/v1.2.3/tool-linux-amd64
+#     dest: "{{ ansible_env.HOME }}/.local/bin/tool"
+#     mode: "0755"

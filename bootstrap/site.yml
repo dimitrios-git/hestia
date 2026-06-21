@@ -31,3 +31,23 @@
     - role: credentials  # login auto-unlock launcher-untangle (SSH + GPG)
       tags: [credentials]
       when: enable_credentials | default(true) | bool
+
+# Site-local customisations — the personalization seam (docs/personalizing.md).
+# Runs LAST, after the base system is in place. `bootstrap/local.yml` is an untracked
+# (gitignored) Ansible TASKS file the user drops in to install their own software /
+# add repos / run any task — see bootstrap/local.yml.example. Absent = no-op. Tasks
+# with `become: true` reuse the sudo password setup.sh collected.
+- name: Site-local customisations (untracked bootstrap/local.yml)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tags: [local]
+  tasks:
+    - name: Look for bootstrap/local.yml
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/local.yml"
+      register: _local_tasks
+
+    - name: Include site-local customisations if present
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/local.yml"
+      when: _local_tasks.stat.exists

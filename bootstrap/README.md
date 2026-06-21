@@ -58,12 +58,15 @@ no saved answers yet), and **`-h`/`--help`**; everything else flows through to
 the real `host_vars`) and only previews — so a dry-run changes nothing on the system
 *or* in the repo (the destructive-replace notice still shows, since it's a simulation).
 
-**Sudo:** `setup.sh` authenticates sudo **up front** (`sudo -v`, which retries on a
-wrong password) and keeps the timestamp warm for the whole run, then runs ansible
-*without* `--ask-become-pass`. So a mistyped password just re-prompts instead of
-aborting the play (ansible's `--ask-become-pass` is single-shot). The password is
-never handled by the script or written to disk — ansible escalates via the cached
-sudo credential. (Driving Ansible directly, below, still uses `--ask-become-pass`.)
+**Sudo:** `setup.sh` prompts for the sudo password **up front** with its own retry
+loop (validating each try via `sudo -S -v`, 3 attempts) and hands it to ansible
+through a **kernel pipe** — `--become-password-file <(…)`, so the password never
+touches disk and isn't visible in `ps`. A mistyped password just re-prompts instead
+of aborting the play (ansible's `--ask-become-pass` is single-shot — one typo kills
+the whole run). NOPASSWD/passwordless sudo skips the prompt entirely. (A cached
+`sudo -v` timestamp is *not* enough — sudo's `tty_tickets` keys it to the shell's
+tty, but ansible's become runs on a different tty, so it would still ask for a
+password.) Driving Ansible directly, below, still uses `--ask-become-pass`.
 
 > ⚠️ **Destructive on a fresh `$HOME`.** The `dotfiles` role force-replaces existing
 > dotfiles (`~/.bashrc`, `~/.config/*`, …). On the **first deploy only** it copies any

@@ -42,9 +42,11 @@ Any other arguments pass through to ansible-playbook, e.g.:
   ./setup.sh --check --diff     Dry-run: simulate everything, change nothing.
   ./setup.sh --tags dotfiles    Run only the dotfiles role.
 
-setup.sh authenticates sudo up front (`sudo -v`, which retries on a wrong password)
-and keeps the timestamp warm for the whole run, so one mistyped password no longer
-aborts the playbook the way ansible's single-shot --ask-become-pass does.
+setup.sh prompts for the sudo password up front with its own retry loop (3 tries),
+then hands it to ansible through a kernel pipe (--become-password-file <(…) — never
+on disk, never in `ps`). So one mistyped password just re-prompts instead of aborting
+the playbook the way ansible's single-shot --ask-become-pass does. NOPASSWD sudo skips
+the prompt.
 
 On the FIRST run on a machine, setup.sh warns that it replaces existing dotfiles.
 Interactive/external follow-ups (SSH/GPG identity, Samba password, …) stay manual —
@@ -124,20 +126,42 @@ ssh_key_file: "$ssh_key_file"
 EOF
 }
 
-# preauth_sudo -> authenticate sudo UP FRONT, then keep the timestamp warm.
-# Why: ansible's --ask-become-pass is single-shot — one wrong password aborts the
-# whole play ("Duplicate become password prompt … Sorry, try again"). `sudo -v`
-# instead prompts with sudo's own retry (3 tries) and validates before we run or
-# write anything; a background keep-alive refreshes the timestamp every 50s so a
-# long playbook can't expire mid-run. ansible then escalates via the cached
-# credential (no --ask-become-pass), so we never handle or store the password.
-sudo_keepalive_pid=""
-preauth_sudo() {
-    echo "==> Authorising sudo (needed for package installs / system roles)…"
-    sudo -v || { echo "Aborted — sudo authentication failed. Nothing written or changed." >&2; exit 1; }
-    ( while true; do sudo -n true 2>/dev/null || exit; sleep 50; done ) &
-    sudo_keepalive_pid=$!
-    trap 'kill "$sudo_keepalive_pid" 2>/dev/null || true' EXIT
+# get_become_pw -> capture + validate the sudo password ourselves (with retries),
+# stored in BECOME_PW for run_playbook to hand to ansible.
+#
+# Why we capture it instead of `sudo -v` + a cached timestamp: ansible's become runs
+# sudo on a DIFFERENT tty than this shell, and sudo's tty_tickets (the Debian
+# default) keys the timestamp to the tty — so the cached credential doesn't apply and
+# ansible still fails with "sudo: a password is required". We must give ansible the
+# password. Why not ansible's --ask-become-pass: it's SINGLE-SHOT (one typo aborts the
+# whole play). Capturing it here lets us retry like sudo does (3 tries), validating
+# each attempt with `sudo -S -v` so ansible only ever gets a known-good password.
+BECOME_PW=""
+get_become_pw() {
+    # Passwordless sudo (NOPASSWD)? Then ansible needs no become password.
+    if sudo -n true 2>/dev/null; then BECOME_PW=""; return 0; fi
+    echo "==> Authenticating sudo (needed for package installs / system roles)…"
+    local pw tries=0
+    while :; do
+        read -rsp "  [sudo] password for $USER: " pw; echo
+        if printf '%s\n' "$pw" | sudo -S -v 2>/dev/null; then BECOME_PW=$pw; return 0; fi
+        tries=$((tries + 1))
+        [ "$tries" -ge 3 ] && { echo "Aborted — sudo authentication failed. Nothing written or changed." >&2; exit 1; }
+        echo "  Sorry, try again."
+    done
+}
+
+# run_playbook ARGS… -> run the playbook, handing ansible the captured become
+# password via `--become-password-file <(…)`. Process substitution delivers it
+# through a kernel pipe (path is /dev/fd/N), so the password never touches disk and
+# isn't visible in the process list (unlike `-e ansible_become_pass=…`). The `<(…)`
+# is inlined in the ansible command so the pipe stays alive for the whole run.
+run_playbook() {
+    if [ -n "$BECOME_PW" ]; then
+        ansible-playbook "$HERE/site.yml" "$@" --become-password-file <(printf '%s\n' "$BECOME_PW")
+    else
+        ansible-playbook "$HERE/site.yml" "$@"
+    fi
 }
 
 # finish_notice -> closing message, tailored to dry-run vs a real apply.
@@ -167,8 +191,8 @@ if $reuse; then
     echo "==> Reusing $HOSTVARS as-is (--yes: questionnaire skipped)."
     extra=()
     if $no_backup; then extra+=(-e dotfiles_backup=false); fi
-    preauth_sudo
-    ansible-playbook "$HERE/site.yml" "${extra[@]}" "${pass[@]}"
+    get_become_pw
+    run_playbook "${extra[@]}" "${pass[@]}"
     finish_notice
     exit 0
 fi
@@ -275,16 +299,16 @@ fi
 extra=()
 if $no_backup; then extra+=(-e dotfiles_backup=false); fi
 
-# Authenticate sudo FIRST — so a failed login aborts before we write host_vars or a
+# Capture sudo creds FIRST — so a failed login aborts before we write host_vars or a
 # temp file (keeping the abort message honest), not after.
-preauth_sudo
+get_become_pw
 
 if $dry_run; then
     # DRY-RUN: don't touch the real host_vars; preview the answers via -e (highest
     # precedence, so it overrides the on-disk host_vars for this check only).
     _tmp=$(mktemp); write_answers "$_tmp"
     echo "==> DRY-RUN (--check): not writing $HOSTVARS; previewing your answers via -e."
-    ansible-playbook "$HERE/site.yml" "${extra[@]}" -e "@$_tmp" "${pass[@]}"
+    run_playbook "${extra[@]}" -e "@$_tmp" "${pass[@]}"
     rm -f "$_tmp"
     finish_notice
     exit 0
@@ -294,5 +318,5 @@ mkdir -p "$HERE/host_vars"
 write_answers "$HOSTVARS"
 echo "==> Wrote $HOSTVARS"
 echo "==> Running the bootstrap…"
-ansible-playbook "$HERE/site.yml" "${extra[@]}" "${pass[@]}"
+run_playbook "${extra[@]}" "${pass[@]}"
 finish_notice

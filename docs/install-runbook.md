@@ -21,10 +21,11 @@ Assumed already installed (out of scope for this repo):
 - Debian (trixie) with the **Sway** session reachable via **greetd + tuigreet**.
 - A working network; `git`, `sudo`, and your user account.
 
-> The Sway **launcher** `/usr/local/bin/start-sway` *is* reproduced — the
-> `sway_session` role deploys it (NVIDIA env applied only when an NVIDIA GPU is live).
-> Only the greetd `config.toml` line that calls it (`tuigreet … --cmd start-sway`)
-> stays manual; see `../system/sway-session/README.md`.
+> The Sway **launch chain** *is* reproduced — the `sway_session` role deploys both
+> `/usr/local/bin/start-sway` (NVIDIA env applied only when an NVIDIA GPU is live) and
+> the greetd `/etc/greetd/config.toml` that calls it. Only installing greetd + tuigreet
+> themselves is the prereq here; the greetd config change applies on next login (the
+> role doesn't restart greetd). See `../system/sway-session/README.md`.
 
 ```sh
 sudo apt update && sudo apt install -y git ansible

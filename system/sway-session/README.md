@@ -1,12 +1,17 @@
-# Sway session launcher (`start-sway`)
+# Sway session launch chain (`greetd` → `start-sway`)
 
-`start-sway` is what greetd actually runs to start the desktop
-(`/etc/greetd/config.toml` → `tuigreet … --cmd start-sway`). It sets the Wayland
-session environment and `exec`s sway.
+greetd starts the desktop by running `tuigreet … --cmd start-sway`; `start-sway` then
+sets the Wayland session environment and `exec`s sway. Both files are tracked here and
+deployed by the **`sway_session`** bootstrap role
+(`ansible-playbook site.yml --tags sway_session`):
 
-- **Tracked file:** `system/sway-session/start-sway`
-- **Deployed to:** `/usr/local/bin/start-sway` (root, `0755`) by the **`sway_session`**
-  bootstrap role (`ansible-playbook site.yml --tags sway_session`).
+| Tracked file | Deployed to | Mode |
+|---|---|---|
+| `system/sway-session/start-sway` | `/usr/local/bin/start-sway` | `0755` |
+| `system/sway-session/greetd-config.toml` | `/etc/greetd/config.toml` | `0644` |
+
+Changing the greetd config takes effect on the **next login** — the role does **not**
+restart greetd (that would kill the running session). Reboot / re-login to apply.
 
 ## NVIDIA workarounds are conditional
 
@@ -23,6 +28,6 @@ guard is on the *running* hardware, not the install toggle.
 
 ## Still manual
 
-`/etc/greetd/config.toml` (the `--cmd start-sway` line) is **not** tracked yet — set
-it up by hand when installing greetd/tuigreet (runbook §0). Everything else about the
-launcher is reproduced by the role.
+Installing greetd + tuigreet themselves (the apt packages) and enabling the greetd
+service are out of scope (base-system prereq, runbook §0). Once they're present, the
+role reproduces the whole launch chain (greetd config + launcher).

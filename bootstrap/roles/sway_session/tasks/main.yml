@@ -1,10 +1,11 @@
 ---
-# Deploy the Sway session launcher to /usr/local/bin (root-owned, on PATH for the
-# session user that greetd starts). Mirrors the samba role's copy-a-system-file
-# pattern. Idempotent: copies only when the tracked script changes.
-#
-# NOT managed here: /etc/greetd/config.toml (the `tuigreet … --cmd start-sway` line)
-# stays a manual step — see system/sway-session/README.md.
+# Deploy the Sway session launch chain (root). Mirrors the samba role's
+# copy-a-system-file pattern. Idempotent: copies only when the tracked files change.
+#   * start-sway -> /usr/local/bin (the launcher greetd runs; on PATH for the session
+#     user). Applies NVIDIA workarounds only when an NVIDIA GPU is live.
+#   * greetd config.toml -> /etc/greetd (the `tuigreet … --cmd start-sway` line).
+# Changing the greetd config takes effect on the NEXT login — we don't restart greetd
+# (that would kill the running session); reboot / re-login to apply.
 
 - name: Install the Sway session launcher (start-sway)
   ansible.builtin.copy:
@@ -13,4 +14,22 @@
     owner: root
     group: root
     mode: "0755"
+  become: true
+
+- name: Ensure /etc/greetd exists
+  ansible.builtin.file:
+    path: /etc/greetd
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Install the greetd config (launches tuigreet -> start-sway)
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/system/sway-session/greetd-config.toml"
+    dest: /etc/greetd/config.toml
+    owner: root
+    group: root
+    mode: "0644"
   become: true

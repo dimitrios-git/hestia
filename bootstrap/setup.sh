@@ -7,9 +7,11 @@
 # It (1) installs Ansible if missing, (2) asks a few questions — auto-detecting
 # sensible defaults — and writes your answers to the untracked host_vars file,
 # then (3) runs the playbook. Re-runnable: it pre-fills from your last answers.
-# Flags: --no-backup (don't back up replaced configs), -h/--help. Any other args
-# pass through to ansible-playbook; `--check` makes it a true DRY-RUN (simulate,
-# change nothing). Run `./setup.sh --help` for details.
+# Flags: --no-backup (don't back up replaced configs), --yes (reuse saved answers,
+# skip the questionnaire — resume a failed run), -h/--help. Any other args pass
+# through to ansible-playbook; `--check` makes it a true DRY-RUN (simulate, change
+# nothing). It authenticates sudo up front (with retries) rather than ansible's
+# single-shot become prompt. Run `./setup.sh --help` for details.
 #
 # This is the configurable-installer front-end (docs/repo-structure-design.md §6).
 # Interactive / external follow-ups stay manual — your SSH/GPG identity, the Samba
@@ -31,11 +33,18 @@ Usage:  ./setup.sh [options] [ansible-playbook args...]
 Options:
   --no-backup   Do NOT back up existing config files before replacing them.
                 Default: each replaced file is first copied in place to <file>.bak.
+  -y, --yes     Skip the questionnaire and reuse the saved answers in host_vars
+                as-is — handy to resume after a failed run. (Errors if you have
+                not run setup.sh on this machine yet — there are no saved answers.)
   -h, --help    Show this help and exit.
 
 Any other arguments pass through to ansible-playbook, e.g.:
   ./setup.sh --check --diff     Dry-run: simulate everything, change nothing.
   ./setup.sh --tags dotfiles    Run only the dotfiles role.
+
+setup.sh authenticates sudo up front (`sudo -v`, which retries on a wrong password)
+and keeps the timestamp warm for the whole run, so one mistyped password no longer
+aborts the playbook the way ansible's single-shot --ask-become-pass does.
 
 On the FIRST run on a machine, setup.sh warns that it replaces existing dotfiles.
 Interactive/external follow-ups (SSH/GPG identity, Samba password, …) stay manual —
@@ -44,12 +53,14 @@ EOF
 }
 
 no_backup=false
+reuse=false                              # --yes: skip Q&A, reuse saved host_vars
 pass=()                                  # args forwarded to ansible-playbook
 for _a in "$@"; do
     case "$_a" in
-        -h|--help)   usage; exit 0 ;;
-        --no-backup) no_backup=true ;;
-        *)           pass+=("$_a") ;;
+        -h|--help)        usage; exit 0 ;;
+        --no-backup)      no_backup=true ;;
+        -y|--yes|--reuse) reuse=true ;;
+        *)                pass+=("$_a") ;;
     esac
 done
 
@@ -61,6 +72,13 @@ for _a in "${pass[@]}"; do [ "$_a" = --check ] && dry_run=true; done
 # No answers file yet = first run on this machine = the destructive case.
 first_run=false
 [ -f "$HOSTVARS" ] || first_run=true
+
+# --yes reuses saved answers — meaningless on a first run (there are none yet).
+if $reuse && $first_run; then
+    echo "Error: --yes/-y reuses the saved answers in $HOSTVARS, but none exist yet." >&2
+    echo "       Run ./setup.sh once (answer the questions) before using --yes." >&2
+    exit 1
+fi
 
 # --- helpers ------------------------------------------------------------------
 # cur KEY -> the current value of a flat `key: value` (or `key: "value"`) line.
@@ -106,10 +124,53 @@ ssh_key_file: "$ssh_key_file"
 EOF
 }
 
+# preauth_sudo -> authenticate sudo UP FRONT, then keep the timestamp warm.
+# Why: ansible's --ask-become-pass is single-shot — one wrong password aborts the
+# whole play ("Duplicate become password prompt … Sorry, try again"). `sudo -v`
+# instead prompts with sudo's own retry (3 tries) and validates before we run or
+# write anything; a background keep-alive refreshes the timestamp every 50s so a
+# long playbook can't expire mid-run. ansible then escalates via the cached
+# credential (no --ask-become-pass), so we never handle or store the password.
+sudo_keepalive_pid=""
+preauth_sudo() {
+    echo "==> Authorising sudo (needed for package installs / system roles)…"
+    sudo -v || { echo "Aborted — sudo authentication failed. Nothing written or changed." >&2; exit 1; }
+    ( while true; do sudo -n true 2>/dev/null || exit; sleep 50; done ) &
+    sudo_keepalive_pid=$!
+    trap 'kill "$sudo_keepalive_pid" 2>/dev/null || true' EXIT
+}
+
+# finish_notice -> closing message, tailored to dry-run vs a real apply.
+finish_notice() {
+    if $dry_run; then
+        echo "==> Dry-run complete — nothing was changed. Re-run without --check to apply."
+    else
+        cat <<'EOF'
+
+==> Done. Remaining manual / external steps (see ../docs/install-runbook.md):
+    pinentry + dark mode; your SSH/GPG identity; the Samba password (smbpasswd);
+    the claude bot identity; and storing the credential-keyring passphrases.
+EOF
+    fi
+}
+
 # --- 1. Ansible ---------------------------------------------------------------
 if ! command -v ansible-playbook >/dev/null 2>&1; then
     echo "==> Installing Ansible (needs sudo)…"
     sudo apt-get update && sudo apt-get install -y ansible
+fi
+
+# --- reuse fast-path (--yes): skip the questionnaire, run the saved host_vars ---
+# Ansible auto-loads host_vars/localhost.yml, so we just run the playbook as-is.
+# Honours --no-backup and any passthrough args (e.g. --check, --tags).
+if $reuse; then
+    echo "==> Reusing $HOSTVARS as-is (--yes: questionnaire skipped)."
+    extra=()
+    if $no_backup; then extra+=(-e dotfiles_backup=false); fi
+    preauth_sudo
+    ansible-playbook "$HERE/site.yml" "${extra[@]}" "${pass[@]}"
+    finish_notice
+    exit 0
 fi
 
 # --- 2. Gather answers (existing value -> detected -> hardcoded fallback) ------
@@ -209,9 +270,14 @@ if ! $dry_run; then
 fi
 
 # --- 4. Write answers + run ----------------------------------------------------
-# Args we add: sudo prompt, and --no-backup -> `-e dotfiles_backup=false`.
-extra=(--ask-become-pass)
+# Only extra arg we add is --no-backup -> `-e dotfiles_backup=false`. No
+# --ask-become-pass: preauth_sudo (below) handles privilege escalation with retries.
+extra=()
 if $no_backup; then extra+=(-e dotfiles_backup=false); fi
+
+# Authenticate sudo FIRST — so a failed login aborts before we write host_vars or a
+# temp file (keeping the abort message honest), not after.
+preauth_sudo
 
 if $dry_run; then
     # DRY-RUN: don't touch the real host_vars; preview the answers via -e (highest
@@ -220,19 +286,13 @@ if $dry_run; then
     echo "==> DRY-RUN (--check): not writing $HOSTVARS; previewing your answers via -e."
     ansible-playbook "$HERE/site.yml" "${extra[@]}" -e "@$_tmp" "${pass[@]}"
     rm -f "$_tmp"
-    echo "==> Dry-run complete — nothing was changed. Re-run without --check to apply."
+    finish_notice
     exit 0
 fi
 
 mkdir -p "$HERE/host_vars"
 write_answers "$HOSTVARS"
 echo "==> Wrote $HOSTVARS"
-echo "==> Running the bootstrap (sudo for package installs / system roles)…"
+echo "==> Running the bootstrap…"
 ansible-playbook "$HERE/site.yml" "${extra[@]}" "${pass[@]}"
-
-cat <<'EOF'
-
-==> Done. Remaining manual / external steps (see ../docs/install-runbook.md):
-    pinentry + dark mode; your SSH/GPG identity; the Samba password (smbpasswd);
-    the claude bot identity; and storing the credential-keyring passphrases.
-EOF
+finish_notice

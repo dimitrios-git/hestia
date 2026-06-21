@@ -116,7 +116,7 @@
         "return-type": "json",
         "interval": 5,
         "exec": "$HOME/.config/waybar/scripts/usb.sh",
-        "on-click": "swaymsg -t get_tree | grep -q floatterm-usb && swaymsg '[app_id=\"^floatterm-usb$\"] kill' || kitty --class floatterm-usb -o confirm_os_window_close=0 -e $HOME/.config/waybar/scripts/usb.sh show"
+        "on-click": "$HOME/.config/waybar/scripts/usb.sh menu"
     },
 
     "custom/notifications": {

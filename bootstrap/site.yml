@@ -3,8 +3,10 @@
 #   ansible-playbook site.yml --ask-become-pass            # full run
 #   ansible-playbook site.yml --tags dotfiles --check      # dry-run just the symlinks
 #
-# Tags let you run a slice. More roles get added per docs/repo-structure-design.md
-# (system configs, claude user, etc.) — this is the foundational slice.
+# `packages` + `dotfiles` are the core (always run). The optional roles are gated
+# by `enable_*` feature toggles (group_vars/all.yml; the configurable-installer
+# surface, docs/repo-structure-design.md §6) — set one false (host_vars or
+# `-e enable_samba=false`) to skip it. Tags still let you run a slice.
 
 - name: Bootstrap this machine from the dotfiles repo
   hosts: localhost
@@ -14,11 +16,14 @@
   roles:
     - role: packages   # apt installs (needs --ask-become-pass)
       tags: [packages]
-    - role: dotfiles   # symlinks into $HOME (no root)
+    - role: dotfiles   # symlinks + rendered templates into $HOME (no root)
       tags: [dotfiles]
     - role: samba      # layer-(a) system config: Samba share to /etc (root)
       tags: [system, samba]
+      when: enable_samba | default(true) | bool
     - role: claude_user  # dedicated agent user + shared trees + repo ACLs
       tags: [claude, claude_user]
+      when: enable_claude_user | default(true) | bool
     - role: credentials  # login auto-unlock launcher-untangle (SSH + GPG)
       tags: [credentials]
+      when: enable_credentials | default(true) | bool

@@ -51,6 +51,27 @@ On an already-configured machine, `--tags dotfiles` should report **no changes**
 (every link already correct) — that's the validation that the manifest matches
 reality.
 
+## Feature toggles
+
+`packages` + `dotfiles` are core (always run). The optional roles are gated by
+`enable_*` booleans (defaults in `group_vars/all.yml`, all `true`), so you choose
+the setup without editing the playbook — the first slice of the configurable
+installer (`../docs/repo-structure-design.md` §6):
+
+| Toggle | Role | What it sets up |
+|---|---|---|
+| `enable_samba` | `samba` | Samba-over-Tailscale share (`/etc`, `/srv/smbshare`) |
+| `enable_claude_user` | `claude_user` | dedicated `claude` agent user + shared tree + ACLs |
+| `enable_credentials` | `credentials` | login auto-unlock of SSH + GPG |
+
+```sh
+# skip a role for this run (string is coerced via `| bool`):
+ansible-playbook site.yml -e enable_samba=false --ask-become-pass
+
+# or set it per host (persistent) in host_vars/<host>.yml:
+#   enable_claude_user: false
+```
+
 After editing `dotfile_links` or `templated_configs`, regenerate CLAUDE.md's
 symlink + rendered-template tables so the docs can't drift from the manifest:
 

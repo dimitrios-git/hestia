@@ -8,6 +8,16 @@
 repo_root: "{{ (playbook_dir + '/..') | realpath }}"
 target_home: "{{ lookup('env', 'HOME') }}"
 
+# --- Feature toggles (the configurable-installer surface, §6) ------------------
+# Each gates an OPTIONAL role in site.yml via `when:`. `packages` + `dotfiles` are
+# core and always run. Defaults are `true` = the full setup (dimitrios's host);
+# set one false to skip its role — per host in host_vars, or ad-hoc with
+# `-e enable_samba=false`. The eventual installer (docs/repo-structure-design.md
+# §6) just writes these from the user's answers.
+enable_samba: true          # Samba-over-Tailscale share (samba role → /etc, /srv/smbshare)
+enable_claude_user: true    # dedicated `claude` agent user + shared tree + ACLs (claude_user role)
+enable_credentials: true    # login auto-unlock of SSH + GPG (credentials role)
+
 # --- Dotfile symlinks (repo path relative to repo_root -> absolute dest) -------
 # Mirrors CLAUDE.md's "Active symlinks" table; CLAUDE.md should be regenerated
 # from this list, not hand-maintained (kills doc-vs-reality drift).

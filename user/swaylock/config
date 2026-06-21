@@ -1,50 +1,53 @@
-# swaylock — wildcharm-themed lockscreen. Colours come from themes/wildcharm/palette.yml
-# (swaylock wants bare RRGGBB, so the leading '#' is stripped). Sway invokes `swaylock -f`
-# with no -c flag, so the background below is the single source for the lock colour.
+# swaylock — wildcharm-themed lockscreen. Colours come from themes/wildcharm/palette.yml.
 #
-# Indicator states: idle (no input) / typing (key + backspace highlights) / verifying /
-# wrong / cleared / caps-lock. Each ring+inside+text is mapped to a palette role or ANSI
-# colour so the lock matches the rest of the desktop.
+# IMPORTANT: swaylock's config parser only supports WHOLE-LINE `#` comments — it does
+# NOT strip trailing/inline comments, so `color=0a0a0a  # bg` would parse the value as
+# "0a0a0a  # bg" and silently fall back to the default (white). Keep every annotation on
+# its own line; values are bare RRGGBB (no leading '#').
+#
+# Sway invokes `swaylock -f` (no -c flag), so `color` below is the single source for the
+# lock background. `indicator-idle-visible` keeps the themed ring on screen even when idle.
 
-# --- background + indicator geometry ---
-color=0a0a0a                       # role: bg
+color=0a0a0a
 font=Lilex Nerd Font Mono
 indicator-radius=110
 indicator-thickness=8
+indicator-idle-visible
+indicator-caps-lock
 show-failed-attempts
 
-# --- idle (no input) ---
-inside-color=111111                # role: surface
-ring-color=1e1e1e                  # role: border
-line-color=0a0a0a                  # role: bg (seam between ring + inside)
-separator-color=0a0a0a             # role: bg
-text-color=e0e0e0                  # role: text
+# idle (no input): inside=surface, ring=border, text=text, line/separator=bg
+inside-color=111111
+ring-color=1e1e1e
+line-color=0a0a0a
+separator-color=0a0a0a
+text-color=e0e0e0
 
-# --- typing (per-keystroke highlights) ---
-key-hl-color=ce0056                # role: accent (Debian red)
-bs-hl-color=ff5f87                 # ansi: bright_red (backspace)
+# typing: key highlight = accent, backspace = bright_red
+key-hl-color=ce0056
+bs-hl-color=ff5f87
 
-# --- verifying (checking the password) ---
-inside-ver-color=111111            # role: surface
-ring-ver-color=0087d7              # ansi: blue
-line-ver-color=0a0a0a              # role: bg
-text-ver-color=e0e0e0              # role: text
+# verifying (checking password): ring = blue
+inside-ver-color=111111
+ring-ver-color=0087d7
+line-ver-color=0a0a0a
+text-ver-color=e0e0e0
 
-# --- wrong password ---
-inside-wrong-color=9b0040          # role: accent_dark
-ring-wrong-color=ff5f87            # ansi: bright_red
-line-wrong-color=0a0a0a            # role: bg
-text-wrong-color=ffffff            # role: white
+# wrong password: ring = bright_red, inside = accent_dark, text = white
+inside-wrong-color=9b0040
+ring-wrong-color=ff5f87
+line-wrong-color=0a0a0a
+text-wrong-color=ffffff
 
-# --- cleared (input wiped) ---
-inside-clear-color=111111          # role: surface
-ring-clear-color=ce0056            # role: accent
-line-clear-color=0a0a0a            # role: bg
-text-clear-color=e0e0e0            # role: text
+# cleared (input wiped): ring = accent
+inside-clear-color=111111
+ring-clear-color=ce0056
+line-clear-color=0a0a0a
+text-clear-color=e0e0e0
 
-# --- caps lock on ---
-inside-caps-lock-color=111111      # role: surface
-ring-caps-lock-color=ffaf00        # ansi: bright_yellow (warning)
-caps-lock-key-hl-color=ffaf00      # ansi: bright_yellow
-caps-lock-bs-hl-color=ff5f87       # ansi: bright_red
-text-caps-lock-color=e0e0e0        # role: text
+# caps lock on: ring + highlight = bright_yellow (warning), backspace = bright_red
+inside-caps-lock-color=111111
+ring-caps-lock-color=ffaf00
+caps-lock-key-hl-color=ffaf00
+caps-lock-bs-hl-color=ff5f87
+text-caps-lock-color=e0e0e0

@@ -155,6 +155,13 @@ claude-shell() {
 # Sway sets it for itself. Load a key with: ssh-add ~/.ssh/<your key>  (e.g. id_ed25519)
 export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/openssh_agent"
 
+# kitty advertises TERM=xterm-kitty, which most servers' terminfo db lacks → garbled
+# keys (backspace inserts a space, etc.) over plain ssh. Advertise a universally-present
+# TERM for ssh so keys work AND the server's normal login MOTD still shows (unlike
+# `kitty +kitten ssh`, which bootstraps via a remote command and skips the MOTD).
+# Run `kitty +kitten ssh <host>` explicitly when you want full kitty integration remotely.
+[ "$TERM" = xterm-kitty ] && alias ssh='TERM=xterm-256color ssh'
+
 # NVM
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"

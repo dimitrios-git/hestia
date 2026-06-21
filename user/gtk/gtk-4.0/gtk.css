@@ -1,8 +1,16 @@
-/* GTK 4 / libadwaita accent recolour — wildcharm (themes/wildcharm/palette.yml).
- * libadwaita exposes named colours that recolour every Adwaita app; we override only the
- * accent for this first, gradual pass (the dark base is Adwaita-dark via the portal
- * color-scheme). accent_color is for accented text/icons on a normal bg, so it uses the
- * lighter bright_red for contrast; accent_bg_color is the button fill (white text on it). */
-@define-color accent_color #ff5f87;      /* accent text/icons (lighter, for contrast) */
-@define-color accent_bg_color #ce0056;   /* accent fill: buttons, switches, selection */
-@define-color accent_fg_color #ffffff;   /* text on the accent fill */
+/* GTK 4 / libadwaita accent — wildcharm #ce0056 (themes/wildcharm/palette.yml).
+ *
+ * libadwaita 1.6+ (this box runs 1.7) recolours via CSS custom-property variables
+ * on :root, NOT the legacy `@define-color accent_bg_color` form. The old form still
+ * parses but no longer reaches the refactored widgets — which is exactly why the
+ * first cut (@define-color) left gnome-calculator on its default accent. The system
+ * accent (gsettings/portal `accent-color`) can't carry an arbitrary hex at all
+ * (libadwaita snaps it to nine named colours), but user CSS always wins over it.
+ * Read at app startup — restart the app to apply. */
+:root {
+  --accent-bg-color: #ce0056;   /* accent fill: buttons, switches, selection */
+  --accent-fg-color: #ffffff;   /* text / icons on the accent fill */
+  /* standalone accent (accented text/icons on a normal bg) — a contrast-adjusted
+   * tint libadwaita derives from the fill colour for the active light/dark mode. */
+  --accent-color: oklab(from var(--accent-bg-color) var(--standalone-color-oklab));
+}

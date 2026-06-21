@@ -1,16 +1,13 @@
 /* GTK 4 / libadwaita accent — wildcharm #ce0056 (themes/wildcharm/palette.yml).
  *
  * libadwaita 1.6+ (this box runs 1.7) recolours via CSS custom-property variables
- * on :root, NOT the legacy `@define-color accent_bg_color` form. The old form still
- * parses but no longer reaches the refactored widgets — which is exactly why the
- * first cut (@define-color) left gnome-calculator on its default accent. The system
- * accent (gsettings/portal `accent-color`) can't carry an arbitrary hex at all
- * (libadwaita snaps it to nine named colours), but user CSS always wins over it.
- * Read at app startup — restart the app to apply. */
+ * on :root; the legacy `@define-color accent_bg_color` form no longer reaches the
+ * refactored widgets. Per the official docs, setting the accent FILL + FG is enough
+ * — libadwaita derives the standalone accent (accented text/icons) automatically,
+ * so we do NOT hand-roll it (an `oklab(from …)` line here just risks a parse error
+ * that voids the whole rule). The system/portal accent can't carry arbitrary hex,
+ * but user CSS always wins. Read at app startup — restart the app to apply. */
 :root {
   --accent-bg-color: #ce0056;   /* accent fill: buttons, switches, selection */
   --accent-fg-color: #ffffff;   /* text / icons on the accent fill */
-  /* standalone accent (accented text/icons on a normal bg) — a contrast-adjusted
-   * tint libadwaita derives from the fill colour for the active light/dark mode. */
-  --accent-color: oklab(from var(--accent-bg-color) var(--standalone-color-oklab));
 }

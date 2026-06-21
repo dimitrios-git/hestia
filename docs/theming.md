@@ -58,7 +58,8 @@ Legend: ✅ themed · 🟡 partial · ⬜ not yet.
 | glow | glamour JSON | ✅ | markdown render theme |
 | vim / nvim | `wildcharm` scheme | ✅ | external plugin + render-markdown accent |
 | zathura | key=value config | ✅ | `user/zathura/zathurarc`; UI chrome + document recolour (dark mode on, `r` toggles) |
-| GNOME / Adwaita | libadwaita / `gtk.css` | ⬜ | **the hard one** — a named-colour Adwaita variant; its own future sub-design |
+| GTK / Adwaita | `settings.ini` + `gtk.css` | 🟡 | `user/gtk/`; dark base (Adwaita-dark + `color-scheme prefer-dark`) + Debian-red accent. **Gradual** — bg recolour / forked theme still to come |
+| Breeze (Qt apps) | Qt theme / `kdeglobals` | ⬜ | the Qt/KDE companion to Adwaita — later |
 | Firefox / PWAs | userChrome / theme | ⬜ | later |
 
 Add a row when you start a new app; flip it to ✅ when it passes step 5.

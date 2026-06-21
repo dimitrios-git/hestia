@@ -73,6 +73,10 @@ dotfile_links:
   - { src: user/vifm/colors/wildcharm.vifm, dest: "{{ target_home }}/.config/vifm/colors/wildcharm.vifm" }
   - { src: user/glow/wildcharm.json,        dest: "{{ target_home }}/.config/glow/wildcharm.json" }
   - { src: user/xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
+  - { src: user/gtk/gtk-3.0/settings.ini,   dest: "{{ target_home }}/.config/gtk-3.0/settings.ini" }
+  - { src: user/gtk/gtk-3.0/gtk.css,        dest: "{{ target_home }}/.config/gtk-3.0/gtk.css" }
+  - { src: user/gtk/gtk-4.0/settings.ini,   dest: "{{ target_home }}/.config/gtk-4.0/settings.ini" }
+  - { src: user/gtk/gtk-4.0/gtk.css,        dest: "{{ target_home }}/.config/gtk-4.0/gtk.css" }
   - { src: user/bin/claude-access,          dest: "{{ target_home }}/.local/bin/claude-access" }
 
 # --- Rendered (templated) user configs ----------------------------------------

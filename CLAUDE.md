@@ -73,6 +73,10 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/vifm/colors/wildcharm.vifm` | `~/.config/vifm/colors/wildcharm.vifm` |
 | `user/glow/wildcharm.json` | `~/.config/glow/wildcharm.json` |
 | `user/xdg-desktop-portal/sway-portals.conf` | `~/.config/xdg-desktop-portal/sway-portals.conf` |
+| `user/gtk/gtk-3.0/settings.ini` | `~/.config/gtk-3.0/settings.ini` |
+| `user/gtk/gtk-3.0/gtk.css` | `~/.config/gtk-3.0/gtk.css` |
+| `user/gtk/gtk-4.0/settings.ini` | `~/.config/gtk-4.0/settings.ini` |
+| `user/gtk/gtk-4.0/gtk.css` | `~/.config/gtk-4.0/gtk.css` |
 | `user/bin/claude-access` | `~/.local/bin/claude-access` |
 <!-- END active-symlinks -->
 
@@ -198,7 +202,7 @@ Wayland screen sharing (Teams/Edge, OBS, etc.) goes through **PipeWire** + **xdg
 - **`sway-portals.conf`** routes interfaces per backend (matched to this session via `XDG_CURRENT_DESKTOP=sway`): `ScreenCast`/`Screenshot` → `wlr`, everything else `default=gtk`. Without explicit routing the portal can misroute screencast to gtk (which can't capture on wlroots) and silently fail. If gtk is ever uninstalled, the `default` must change (wlr only implements ScreenCast/Screenshot — no file picker).
 - **Session env:** the portal must inherit `WAYLAND_DISPLAY`/`XDG_CURRENT_DESKTOP` via the Sway `dbus-update-activation-environment` exec line (see Sway section). The portal is **D-Bus-activated on demand** (first screencast request), so the env must be exported *before* it first activates — a fresh login handles this.
 - **Monitor-only capture:** the wlr backend reports `AvailableSourceTypes=1` (MONITOR only) — **per-window sharing is not supported** on Sway; share a whole output. Workaround: isolate the app on the second monitor and share that output. May change once the `wlr` portal adopts `ext-image-copy-capture` toplevel sources.
-- **Dark mode (color-scheme):** the gtk backend exposes `org.freedesktop.appearance color-scheme` via the **Settings** portal, which Firefox and other portal-aware apps read. Force dark with `gsettings set org.gnome.desktop.interface color-scheme prefer-dark` (needs `dconf-cli` + `libglib2.0-bin`); without it the portal reports `0` (no preference) and apps default to **light**. This surfaced right after the portal was first installed — Firefox flipped to a light theme until the setting was applied.
+- **Dark mode (color-scheme):** the gtk backend exposes `org.freedesktop.appearance color-scheme` via the **Settings** portal, which Firefox and other portal-aware apps read. Force dark with `gsettings set org.gnome.desktop.interface color-scheme prefer-dark` (needs `dconf-cli` + `libglib2.0-bin`); without it the portal reports `0` (no preference) and apps default to **light**. This surfaced right after the portal was first installed — Firefox flipped to a light theme until the setting was applied. **Now set at login** by a sway `exec` (D-Bus/portals section), so it's reproducible — see the **GTK / Adwaita** section.
 
 **External dependencies** (install on a fresh system):
 - `pipewire`, `pipewire-pulse`, `wireplumber` (usually present; the audio stack).
@@ -250,3 +254,10 @@ Spectrum visualiser. PipeWire input (monitor of the default sink). 8-stop accent
 
 ### mako (`user/mako/config`) / wofi (`user/wofi/config`, `user/wofi/style.css`)
 Notification daemon and app launcher (`$mod+d`), both on the unified `#0a0a0a` / `#ce0056` theme. Reload mako with `makoctl reload`; wofi restyles on next launch. `max-history=100` (up from mako's default 5) so the waybar notification widget (`custom/notifications` → `makoctl history`) has a deeper buffer — still in-memory only (lost on a mako restart/reboot; mako has no on-disk persistence).
+
+### GTK / Adwaita (`user/gtk/`)
+Theming for **GTK apps** — the start of the big "everything Adwaita" effort (`docs/theming.md`), deliberately **gradual**: this first pass is **dark base + Debian-red accent only**, not a forked theme. Two mechanisms, both tracked & symlinked:
+- **Dark base.** `gtk-3.0/settings.ini` sets `gtk-theme-name=Adwaita-dark` + `gtk-application-prefer-dark-theme=1`; `gtk-4.0/settings.ini` sets prefer-dark (libadwaita ignores `gtk-theme-name`). The cross-cutting dark switch for **portal-aware** apps (Firefox, libadwaita) is the gsettings `color-scheme prefer-dark`, now set at **login** by a sway `exec` (see the D-Bus/portals section) — previously a manual step.
+- **Accent recolour** via `@define-color` in `gtk.css`: **GTK3** keys off `theme_selected_bg_color` (→ `accent` `#ce0056`, fg white); **GTK4/libadwaita** overrides `accent_bg_color` (`#ce0056`, white fg) + `accent_color` (`bright_red` `#ff5f87`, lighter for text contrast).
+- **Firefox is a GTK3 app**, so its file chooser / native widgets pick up `gtk-3.0/` — the most visible early win (dark picker, red selection). Its *web-content* dark theme comes from the `color-scheme` portal value.
+- **Deferred (gradual):** pushing window/view backgrounds toward `#0a0a0a` (a fuller Adwaita variation), a proper forked GTK theme, **Breeze** (the Qt/KDE-app companion), and Firefox *chrome* theming (userChrome — the separate `Firefox/PWAs` row). Each is its own later step; status table in `docs/theming.md`.

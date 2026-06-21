@@ -194,6 +194,13 @@ bindsym $mod+r mode "resize"
 # startup (a relogin re-runs it); see also ~/.config/xdg-desktop-portal/.
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
 
+# Dark appearance for GTK / portal-aware apps (Firefox, libadwaita): the Settings
+# portal exposes `org.freedesktop.appearance color-scheme` from this gsettings key,
+# so without prefer-dark those apps default to light. Setting it at login makes dark
+# reproducible (was a manual step). dconf persists it; needs gsettings-desktop-schemas.
+# The accent recolour + GTK theme live in ~/.config/gtk-3.0 / gtk-4.0 (see user/gtk/).
+exec gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+
 ### Credentials — auto-unlock SSH + GPG from the login keyring
 # pam_gnome_keyring unlocks the gnome-keyring Secret Service at login; this hook
 # reads the SSH + GPG passphrases from it and loads them into the ssh-agent /

@@ -1,0 +1,8 @@
+/* GTK 4 / libadwaita accent recolour — wildcharm (themes/wildcharm/palette.yml).
+ * libadwaita exposes named colours that recolour every Adwaita app; we override only the
+ * accent for this first, gradual pass (the dark base is Adwaita-dark via the portal
+ * color-scheme). accent_color is for accented text/icons on a normal bg, so it uses the
+ * lighter bright_red for contrast; accent_bg_color is the button fill (white text on it). */
+@define-color accent_color #ff5f87;      /* accent text/icons (lighter, for contrast) */
+@define-color accent_bg_color #ce0056;   /* accent fill: buttons, switches, selection */
+@define-color accent_fg_color #ffffff;   /* text on the accent fill */

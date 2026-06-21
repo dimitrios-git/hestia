@@ -14,7 +14,7 @@ The configs are converging on one unified theme: near-black background `#0a0a0a`
 
 Claude Code runs here as a dedicated, unprivileged **`claude`** Linux user (own `0700` home `/home/claude`, member of the **`devshare`** group, **not** in sudo) — a kernel-enforced trust boundary, not a behavioural one. Full design: `docs/claude-user-design.md` (implemented 2026-06-20); day-to-day workflow: `docs/working-with-claude.md`. What matters when working in this repo:
 
-- **This checkout (`/srv/devshare/estia`) is claude's own clone** in the shared `/srv/devshare` tree — claude's *workspace*, **not** the live system. The dotfiles are symlinked from **dimitrios's** clone at **`~/Development/estia`**, which is the deployment source. Edits made here reach the running system only when **dimitrios pulls** after reviewing a pushed branch — so an edit here is **not** live. Never treat `/srv/devshare/estia` as the deployment source. (The one `/home/dimitrios/...`-style literal still left in a config is cmus's music dir — a fixed mount path; it targets dimitrios's setup, not this clone, and is the last path-generalisation item per `docs/repo-structure-design.md` §5.)
+- **This checkout (`/srv/devshare/estia`) is claude's own clone** in the shared `/srv/devshare` tree — claude's *workspace*, **not** the live system. The dotfiles are symlinked from **dimitrios's** clone at **`~/Development/estia`**, which is the deployment source. Edits made here reach the running system only when **dimitrios pulls** after reviewing a pushed branch — so an edit here is **not** live. Never treat `/srv/devshare/estia` as the deployment source. (The `/home/dimitrios/...` literals still baked into a deployed config are `sway/config`'s two `exec` paths — clone-absolute script paths targeting dimitrios's deployment clone; they're the last path-generalisation items, `docs/repo-structure-design.md` §5.)
 - **Collaboration is git-mediated, two principals.** claude commits and signs as **itself**, pushes a topic branch, and opens a **pull request** as the GitHub bot **`dimitrios-claude`** (`gh pr create`; commits show **Verified**); dimitrios reviews, **merge-commits** (preserves the signed commits; via `gh pr merge --admin`), and pulls to deploy. claude **never** self-merges — and *cannot*: a `main` ruleset (*Restrict updates*, admin-only bypass) blocks the agent from pushing to or merging `main` server-side, so its only route is opening a PR. The concrete loop (and the `gh`/PAT auth) is in `docs/working-with-claude.md`.
 - **claude's identity:** own SSH key `~/.ssh/id_claude`, own **passwordless** GPG key `4AA9DD310356AD0E`, git author `Claude (dimitrios's agent) <claude@charalampidis.pro>`.
 - **Signing is frictionless for claude** — the passwordless key needs **no pinentry, no agent cache, no `gpg-unlock`, and not `gpg-wrapper.sh`**. All that machinery in *Secrets & commit signing* below is **dimitrios's**; it does not apply when running as claude.
@@ -27,7 +27,7 @@ Claude Code runs here as a dedicated, unprivileged **`claude`** Linux user (own 
 Each tool has its own subdirectory. Active configs are either:
 - **Dot-prefixed** in the repo, symlinked into `$HOME` — `vim/.vimrc` → `~/.vimrc`, `bash/.bashrc` → `~/.bashrc`, `git/.gitignore_global` → `~/.gitignore_global`.
 - **Plain files under the app dir**, symlinked into `~/.config/<app>/` — sway, waybar, mako, wofi, cava, cmus, kitty, imv, vifm, glow (`wildcharm.json`), nvim, xdg-desktop-portal.
-- **Rendered (not symlinked)** — a small **path-generalised** set rendered from `.j2` by the bootstrap (`git/.gitconfig`, `glow/glow.yml`); see *Rendered (templated) configs* below.
+- **Rendered (not symlinked)** — a small **path-generalised** set rendered from `.j2` by the bootstrap (`git/.gitconfig`, `glow/glow.yml`, `cmus/rc`); see *Rendered (templated) configs* below.
 - **`bin/`** — small helper scripts symlinked into `~/.local/bin/` (currently `claude-access`; see *Running as the `claude` agent user*).
 - **`system/`** — layer-(a) **system configs** (e.g. `system/samba/smb.conf`) deployed by **copy** to `/etc/` (root-owned, **not** symlinked), now driven by the `samba` Ansible role. The target four-layer model (system / defaults / per-user) is `docs/repo-structure-design.md`; each `system/` subdir keeps a `README.md` runbook.
 - **`bootstrap/`**, **`docs/`** — the Ansible installer + the design docs/runbooks (cross-cutting, not a per-tool config).
@@ -55,7 +55,6 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `wofi/config` | `~/.config/wofi/config` |
 | `wofi/style.css` | `~/.config/wofi/style.css` |
 | `cava/config` | `~/.config/cava/config` |
-| `cmus/rc` | `~/.config/cmus/rc` |
 | `kitty/kitty.conf` | `~/.config/kitty/kitty.conf` |
 | `kitty/music.session` | `~/.config/kitty/music.session` |
 | `imv/config` | `~/.config/imv/config` |
@@ -75,6 +74,7 @@ _Path-generalised configs (`docs/repo-structure-design.md` §5): rendered from a
 |---|---|
 | `git/.gitconfig.j2` | `~/.gitconfig` |
 | `glow/glow.yml.j2` | `~/.config/glow/glow.yml` |
+| `cmus/rc.j2` | `~/.config/cmus/rc` |
 <!-- END rendered-templates -->
 
 `git/.gitconfig` points the global excludes file at `~/.gitignore_global`.
@@ -101,7 +101,7 @@ A fresh machine is reproduced by an **Ansible** playbook (engine decision: `docs
 
 ## TODO / planned work
 
-- **Repo → distributable spin roadmap.** The whole arc — path generalisation (only cmus's music dir left), role feature-flags + a configurable installer, and the layered `users/`/`defaults/` migration — is tracked in **`docs/repo-structure-design.md` §5–§7** (the single source; don't re-list it here). Phased on purpose — don't big-bang the structural move. Done so far: Samba LAN subnet (host_vars), **glow's style path**, **git config** (`git/.gitconfig.j2`), and **waybar's `gpu.sh` exec** (symlinked + referenced via `$HOME`).
+- **Repo → distributable spin roadmap.** Path generalisation (§5) is nearly done — Samba subnet, glow, git config, waybar `gpu.sh`, cmus music dir all resolve from vars; **`sway/config`'s two `exec` paths remain** (same `$HOME`+symlink fix as waybar). Then role **feature-flags** + a **configurable installer**, and the layered `users/`/`defaults/` migration — tracked in **`docs/repo-structure-design.md` §5–§7** (the single source; don't re-list it here). Phased on purpose — don't big-bang the structural move.
 - **Version-control systemd user services.** Other user services worth reproducing on a fresh install live only in `~/.config/systemd/user/` and aren't tracked here yet. Bring them into the repo under a `systemd/` dir, symlinked into `~/.config/systemd/user/`, and add them to the bootstrap manifest (`bootstrap/group_vars/all.yml` → `dotfile_links`; the Active symlinks table regenerates from it). (`ssh-agent` is **not** one of these — it uses Debian's shipped socket-activated unit, nothing custom; see the Bash section.)
 
 ## Tool configurations
@@ -205,7 +205,7 @@ Top bar; files symlinked into `~/.config/waybar/`. Reload with `killall -SIGUSR2
 Terminal. Font `Lilex Nerd Font Mono` at 11pt; `ctrl+shift+=/-/0` adjust size. **Color emoji** (e.g. `✅` in program output) need **`fonts-noto-color-emoji`** (apt) — Nerd Fonts don't carry the Unicode emoji set, so without it emoji render as tofu (double-width empty boxes). kitty reaches it via fontconfig fallback and is presentation-aware (text glyphs like `✓`/`✗` stay in the primary font), so **no `symbol_map`** is set — a broad one would wrongly force those text symbols into the emoji font. 16-colour palette from `wildcharm`; cursor/selection/active-tab/ANSI-red use accent `#ce0056`. `music.session` (bound to `$mod+m` in Sway) lays out **cava** as a short visualiser bar on top and **cmus** below (focused via the `focus` directive); the cmus launch is wrapped so quitting cmus also closes cava, tearing down the whole window.
 
 ### cmus (`cmus/rc`)
-Startup commands sourced after cmus restores its saved options. wildcharm-matched 256-colour theme; accent tracks terminal colour `1` (`#ce0056`). The file browser opens at `/mnt/cold-data/files/Music/Audio/`. The library is **not** auto-synced: `U` re-scans that folder for newly added tracks (re-add, dedupes), `u` = `update-cache` (prune deleted / refresh changed tags).
+Startup commands sourced after cmus restores its saved options. wildcharm-matched 256-colour theme; accent tracks terminal colour `1` (`#ce0056`). The `rc` is **rendered** (`cmus/rc.j2`, not symlinked): the music-library path is host-specific data, so the browser default + the `U` rescan binding come from **`cmus_music_dir`** (default `~/Music`, overridden per host in `bootstrap/host_vars/<host>.yml`; `docs/repo-structure-design.md` §5). The library is **not** auto-synced: `U` re-scans that folder for newly added tracks (re-add, dedupes), `u` = `update-cache` (prune deleted / refresh changed tags).
 
 ### cava (`cava/config`)
 Spectrum visualiser. PipeWire input (monitor of the default sink). 8-stop accent gradient in the `#ce0056` family, fine bars (`bar_width 1` / `bar_spacing 0`), `noise_reduction = 88` (int 0–100 scale) + `monstercat` smoothing. A `method = sdl` GPU window (smooth pixel bars + GLSL shaders) is available — cava here is built with SDL2 — if a fancier visualiser is ever wanted.

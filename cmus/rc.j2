@@ -1,5 +1,10 @@
 # cmus startup commands — sourced after cmus restores saved options, so these win.
 # wildcharm-matched theme; accent tracks terminal color 1 (#ce0056).
+#
+# RENDERED by Ansible (bootstrap `dotfiles` role) to ~/.config/cmus/rc — NOT
+# symlinked. The music-library path is host-specific data (not a config/home path),
+# so it comes from `cmus_music_dir` (default ~/Music; override per host in
+# bootstrap/host_vars/<host>.yml). Path generalisation — docs/repo-structure-design.md §5.
 
 # command / messages
 set color_cmdline_bg=-1
@@ -37,9 +42,9 @@ set color_win_inactive_cur_sel_bg=236
 set color_win_inactive_cur_sel_fg=253
 
 # Open the file browser (view 5) here by default
-cd /mnt/cold-data/files/Music/Audio/
+cd {{ cmus_music_dir }}
 
 # U = rescan the music folder for newly added tracks (library dedupes, so it's
 # safe to repeat). Overrides the rarely-used win-update-cache default.
 # (u still = update-cache: prune deleted / refresh changed tags.)
-bind -f common U add -l /mnt/cold-data/files/Music/Audio/
+bind -f common U add -l {{ cmus_music_dir }}

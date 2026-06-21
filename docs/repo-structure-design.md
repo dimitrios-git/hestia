@@ -90,8 +90,9 @@ the doc-vs-reality drift we keep hand-patching.
 
 Hardcoded absolutes to fix (all currently `/home/dimitrios` or fixed mounts):
 cmus music dir, `gitconfig` `excludesfile`, `waybar/gpu.sh` path, the
-`gpg.program` wrapper path, the `gpg-agent.conf` symlink target, glow's style
-path.
+`gpg.program` wrapper path, glow's style path, and `sway/config`'s two `exec`
+paths (`gnupg/credential-unlock.sh`, `sway/start-waybar.sh`) — the last found by a
+`grep` sweep, not this list, so treat this inventory as a starting point.
 
 **Mechanism, in priority order:**
 1. **Runtime `$HOME`/XDG/native expansion** where the format allows it — no
@@ -106,16 +107,31 @@ path.
 Principle: template only what *must* be machine-specific; everything else stays
 plain and symlinked.
 
-**Status:** started — the symlink *destinations* are already `$HOME`-based (the
-manifest's `target_home`). **Done:** the Samba LAN subnet (host_vars →
-`system/samba/smb.conf.j2`, rendered); **glow's style path** (`glow/glow.yml.j2` ←
-`target_home`, rendered); the **git config** (`git/.gitconfig.j2` — `gpg.program` ←
-`repo_root` rendered, while `excludesfile` uses git-native `~`); and **waybar's
-`gpu.sh` exec** (the script is now symlinked into `~` and the config references it
-via `$HOME` — mechanism 1, no templating). Notably the two cases first *assumed* to
-need templating (git `excludesfile`, waybar `exec`) both turned out to expand
-natively. **Remaining:** cmus's music dir — a fixed *mount* path, so likely a
-`host_vars` value (like the Samba subnet) rather than `$HOME`/`repo_root`.
+**Status: nearly complete.** The symlink *destinations* were already `$HOME`-based
+(the manifest's `target_home`), and the inventory above is done — each resolved
+from a var at deploy time:
+
+| Item | Mechanism | How |
+|---|---|---|
+| Samba LAN subnet | 2 (host_vars) | `system/samba/smb.conf.j2` ← `samba_lan_subnet` |
+| glow style path | 2 (`target_home`) | `glow/glow.yml.j2`, rendered |
+| git `gpg.program` | 2 (`repo_root`) | `git/.gitconfig.j2` (a path *inside the clone*) |
+| git `excludesfile` | 1 (native `~`) | git tilde-expands its pathname configs |
+| waybar `gpu.sh` exec | 1 (`$HOME`) | script symlinked into `~`; waybar runs `exec` via `sh -c` |
+| cmus music dir | 2 (host_vars) | `cmus/rc.j2` ← `cmus_music_dir` (default `~/Music`) |
+
+Lesson worth keeping: the two cases first *assumed* to need templating (git
+`excludesfile`, waybar `exec`) both expand natively — reach for mechanism 1 first
+and verify before reaching for a `.j2`. Templating was only truly needed for paths
+no format expands: a clone-internal path (`repo_root`) and host-specific data
+(`host_vars`).
+
+**Remaining (the original inventory missed these — found by a `grep` sweep):**
+`sway/config` has two clone-absolute `exec` paths — `gnupg/credential-unlock.sh`
+and `sway/start-waybar.sh`. sway runs `exec`/`exec_always` via `sh -c`, so these
+are the **same mechanism-1 fix as waybar `gpu.sh`**: symlink the two scripts into
+`~` (manifest) and reference them via `$HOME`. (Lesson: inventory by `grep`, not
+memory.)
 
 ## 6. The configurable installer (the end goal)
 

@@ -38,8 +38,15 @@ Installs the apt set (Wayland stack, terminal tools, samba, gnome-keyring, …).
 ansible-playbook site.yml --tags dotfiles --check --diff   # preview
 ansible-playbook site.yml --tags dotfiles                  # apply
 ```
-Symlinks every config from the manifest into `$HOME`. No root. On a configured
-machine this is `changed=0`.
+Symlinks the plain configs and **renders** the path-generalised ones
+(`templated_configs`) into `$HOME`. No root. On a configured machine this is
+`changed=0`.
+
+> **Per-host values:** a few configs read host-specific values with sensible
+> defaults — `cmus_music_dir` (default `~/Music`) and the Samba `samba_lan_subnet`.
+> Override what differs in an untracked `bootstrap/host_vars/localhost.yml` (copy
+> `…/localhost.yml.example`); otherwise the defaults render. host_vars > group_vars,
+> so your override always wins.
 
 > **Git ignore model** (the `git/.gitignore_global` this step just symlinked is
 > layer 1 of three — know which layer a new ignore belongs in):

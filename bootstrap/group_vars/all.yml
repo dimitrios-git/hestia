@@ -26,7 +26,6 @@ dotfile_links:
   - { src: wofi/config,                dest: "{{ target_home }}/.config/wofi/config" }
   - { src: wofi/style.css,             dest: "{{ target_home }}/.config/wofi/style.css" }
   - { src: cava/config,                dest: "{{ target_home }}/.config/cava/config" }
-  - { src: cmus/rc,                    dest: "{{ target_home }}/.config/cmus/rc" }
   - { src: kitty/kitty.conf,           dest: "{{ target_home }}/.config/kitty/kitty.conf" }
   - { src: kitty/music.session,        dest: "{{ target_home }}/.config/kitty/music.session" }
   - { src: imv/config,                 dest: "{{ target_home }}/.config/imv/config" }
@@ -45,6 +44,13 @@ dotfile_links:
 templated_configs:
   - { src: git/.gitconfig.j2,          dest: "{{ target_home }}/.gitconfig" }
   - { src: glow/glow.yml.j2,           dest: "{{ target_home }}/.config/glow/glow.yml" }
+  - { src: cmus/rc.j2,                 dest: "{{ target_home }}/.config/cmus/rc" }
+
+# --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
+# Sensible defaults so a fresh checkout renders without host_vars; real machines
+# override what differs. host_vars > group_vars, so the override always wins.
+# Where the user keeps their music library — host-specific DATA, not a config path.
+cmus_music_dir: "{{ target_home }}/Music"
 
 # --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------
 # NOT exhaustive yet; extend as roles are added. Things that are NOT apt packages

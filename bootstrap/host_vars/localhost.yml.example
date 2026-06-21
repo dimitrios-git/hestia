@@ -13,3 +13,7 @@
 # Home LAN subnet allowed to reach the Samba share (smb.conf `hosts allow`).
 # Find it with: ip -o -4 addr show | awk '{print $4}'
 samba_lan_subnet: "192.0.2.0/24"    # e.g. 192.168.1.0/24
+
+# Where your music library lives (cmus browser default + the `U` rescan binding).
+# Defaults to ~/Music if unset — override only if your library is elsewhere.
+cmus_music_dir: "/mnt/storage/Music"   # e.g. an external mount

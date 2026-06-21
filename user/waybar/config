@@ -4,7 +4,7 @@
     "height": 32,
     "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
-    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu0", "custom/gpu1", "custom/gpu2", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "custom/weather", "clock", "custom/debian"],
+    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu0", "custom/gpu1", "custom/gpu2", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "custom/notifications", "custom/weather", "clock", "custom/debian"],
 
     "custom/gpu0": {
         "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
@@ -109,6 +109,12 @@
             "on-scroll-up": "shift_up",
             "on-scroll-down": "shift_down"
         }
+    },
+
+    "custom/notifications": {
+        "format": "<span size='xx-large' rise='-3072'>󰂜</span>",
+        "tooltip": "Notification history (click)",
+        "on-click": "swaymsg -t get_tree | grep -q floatterm-notify && swaymsg '[app_id=\"^floatterm-notify$\"] kill' || kitty --class floatterm-notify -o confirm_os_window_close=0 -e $HOME/.config/waybar/scripts/notifications.sh show"
     },
 
     "custom/weather": {

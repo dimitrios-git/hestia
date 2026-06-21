@@ -57,6 +57,7 @@ dotfile_links:
   - { src: user/waybar/scripts/gpu.sh,      dest: "{{ target_home }}/.config/waybar/scripts/gpu.sh" }
   - { src: user/waybar/scripts/gpu-watch.sh, dest: "{{ target_home }}/.config/waybar/scripts/gpu-watch.sh" }
   - { src: user/waybar/scripts/weather.sh,   dest: "{{ target_home }}/.config/waybar/scripts/weather.sh" }
+  - { src: user/waybar/scripts/notifications.sh, dest: "{{ target_home }}/.config/waybar/scripts/notifications.sh" }
   - { src: user/mako/config,                dest: "{{ target_home }}/.config/mako/config" }
   - { src: user/wofi/config,                dest: "{{ target_home }}/.config/wofi/config" }
   - { src: user/wofi/style.css,             dest: "{{ target_home }}/.config/wofi/style.css" }

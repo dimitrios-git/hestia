@@ -55,10 +55,15 @@ merged it (the audit trail this whole setup exists for). The loop:
    gh pr checkout <n>                    # in ~/Development/estia
    ```
    Need changes? claude pushes more commits to the same branch; the PR updates.
-3. **you** — merge with a **merge commit** (the strategy that keeps claude's
-   individual GPG-signed commits intact — squash and rebase both re-write the
-   commits and drop the signatures). claude **never** merges its own PR — that is
-   the review gate.
+3. **you** — merge with a **merge commit**, using the admin bypass:
+   ```sh
+   gh pr merge <n> --merge --admin       # or the UI's "merge without waiting / bypass rules"
+   ```
+   A merge commit keeps claude's individual GPG-signed commits intact (squash and
+   rebase both re-write the commits and drop the signatures). The `--admin` flag is
+   required — see the ruleset note below; plain `gh pr merge` is refused with
+   *"base branch policy prohibits the merge."* claude **never** merges its own PR —
+   that is the review gate, and the ruleset enforces it.
 4. **you** — make it live:
    ```sh
    git checkout main && git pull         # in ~/Development/estia
@@ -67,10 +72,17 @@ merged it (the audit trail this whole setup exists for). The loop:
    configs. Other repos have no deploy step.
 5. delete the merged branch (local + remote).
 
-`main` is **branch-protected** so changes go through a reviewed PR. The protection
-gates the *agent*: claude (non-admin collaborator) is forced through PRs, while
-you (admin) keep direct-push for your own live dotfile edits in
-`~/Development/estia`.
+`main` is protected by a GitHub **ruleset** (*Restrict updates*) whose only bypass
+actor is **Repository admin** — i.e. you. So **only you can update `main`**: claude
+(a non-admin collaborator) is blocked from **both** direct pushes *and* PR merges
+(verified — both are rejected server-side), and its sole route is opening a PR for
+you to merge. Because *Restrict updates* routes every write through the bypass,
+even your own merges go through the admin override — hence the `--admin` flag. That
+override needs real admin rights, which claude doesn't have, so it is structurally
+unavailable to the agent. (Trade-off accepted on purpose: the alternative,
+*Require a pull request before merging*, drops the per-merge `--admin` but would let
+any write-collaborator — including claude — merge, breaking "only dimitrios writes
+`main`.")
 
 claude's `gh` is authenticated as the bot via a classic PAT (`repo` + `read:org`)
 in `~claude/.config/gh/` — distinct from the SSH push key `id_claude`: the token

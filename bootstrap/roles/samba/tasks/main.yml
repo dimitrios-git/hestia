@@ -63,9 +63,9 @@
     force: false                 # first run only — preserves the true original
   become: true
 
-- name: Deploy our smb.conf (syntax-validated before it is installed)
-  ansible.builtin.copy:
-    src: "{{ repo_root }}/system/samba/smb.conf"
+- name: Render + deploy our smb.conf (syntax-validated before it is installed)
+  ansible.builtin.template:
+    src: "{{ repo_root }}/system/samba/smb.conf.j2"
     dest: /etc/samba/smb.conf
     owner: root
     group: root

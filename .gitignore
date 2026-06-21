@@ -1,0 +1,4 @@
+# Per-host Ansible vars holding this machine's REAL IPs/subnets — must never reach
+# the public repo. The committed template is host_vars/*.yml.example.
+bootstrap/host_vars/*.yml
+!bootstrap/host_vars/*.yml.example

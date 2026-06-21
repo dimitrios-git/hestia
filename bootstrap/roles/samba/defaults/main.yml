@@ -3,6 +3,16 @@
 samba_share_path: /srv/smbshare
 samba_principal: smbshare                         # dedicated user+group (no login)
 samba_admin_user: "{{ lookup('env', 'USER') }}"   # local user granted share access
+
+# --- hosts allow ranges (rendered into smb.conf.j2) ---------------------------
+# Generic, safe to commit: the Tailscale CGNAT range is identical for every tailnet.
+samba_tailscale_cgnat: "100.64.0.0/10"
+# Host-specific (personal): the home LAN subnet allowed to reach the share. This
+# default is an RFC 5737 documentation placeholder — OVERRIDE it per host in an
+# untracked bootstrap/host_vars/<host>.yml (see host_vars/localhost.yml.example),
+# so the real subnet never lands in the public repo.
+samba_lan_subnet: "192.0.2.0/24"
+
 # Services the `samba` metapackage pulls in but a standalone file share doesn't
 # need — disabled to cut attack surface (AD domain controller + NetBIOS).
 samba_unneeded_services:

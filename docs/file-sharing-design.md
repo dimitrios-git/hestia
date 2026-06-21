@@ -42,15 +42,15 @@ ACLs** as the permission model.
 to bind to the Tailscale tun device (`interfaces = lo <ip>/32` + `bind interfaces
 only` binds loopback only, point-to-point `/32`, no broadcast). So:
 - **smbd listens on all interfaces**, and access is confined at the **SMB layer**
-  by `hosts allow = 127.0.0.1 192.168.0.0/24 100.64.0.0/10` + `hosts deny =
+  by `hosts allow = 127.0.0.1 <lan-subnet> 100.64.0.0/10` + `hosts deny =
   0.0.0.0/0`: only loopback, the **trusted home LAN**, and the **Tailscale** range
   may authenticate; everything else is rejected before auth.
 - **Why the LAN is allowed (decision, 2026-06-19):** Tailscale *always*
   WireGuard-encrypts, even on a same-LAN path, capping throughput (~575 Mbit vs
   the LAN's 950 — proven by iperf3). On the controlled home LAN the security cost
   of direct SMB is minimal and the speed win is ~2×, so we map **two Windows
-  drives**: the LAN IP (`\\192.168.0.100\share`, full gigabit) when home, the
-  Tailscale IP (`\\100.91.148.26\share`) when remote.
+  drives**: the LAN IP (`\\<lan-ip>\share`, full gigabit) when home, the
+  Tailscale IP (`\\<tailscale-ip>\share`) when remote.
 - A tunnel-only variant (block the LAN with an `nftables` `445` drop) was built
   and then **dropped** with this decision — the LAN is wanted, not blocked.
 - **Tailscale ACL:** nothing to do (default allow-all between your own nodes).

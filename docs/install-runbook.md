@@ -66,8 +66,10 @@ ansible-playbook site.yml --tags samba --check --ask-become-pass   # preview
 ansible-playbook site.yml --tags samba --ask-become-pass           # apply
 sudo smbpasswd -a smbshare && sudo smbpasswd -e smbshare           # [manual] Windows auth pw
 ```
-Edit `system/samba/smb.conf` first if this host's Tailscale IP / LAN subnet differ
-(still hardcoded — templating is a TODO).
+First set this host's LAN subnet so the share's `hosts allow` is right: copy
+`bootstrap/host_vars/localhost.yml.example` to `localhost.yml` and set
+`samba_lan_subnet` (untracked — the real value stays out of the repo). The role
+renders `smb.conf.j2` from it.
 
 ## 6. Dedicated `claude` user — `[ansible]` + `[manual]` + `[relogin]`
 

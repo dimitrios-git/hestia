@@ -3,11 +3,11 @@
 # Keep Claude Code's local settings (permissions, etc.) out of commits
 **/.claude/settings.local.json
 
-# Exclude .gitignore itself so per-project ignore files aren't accidentally
-# committed via the global config
-.gitignore
-# Personal editorconfig preference, not imposed on shared repos
-.editorconfig
+# NOTE: .gitignore and .editorconfig are deliberately NOT excluded here — they are
+# meant to be committed and shared per-repo (a global exclude only applies on this
+# machine, so the rule wouldn't travel to clones/collaborators/CI anyway). Project
+# ignores belong in a committed .gitignore; "just this clone" ignores go in
+# .git/info/exclude. Only put truly never-commit-anywhere noise in this file.
 
 ### vim ###
 *.swp

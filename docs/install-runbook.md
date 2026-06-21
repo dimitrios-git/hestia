@@ -9,6 +9,12 @@ top-to-bottom on a fresh Debian box.
 > `[manual]` = a one-time human step. `[reboot]` / `[relogin]` = session restart
 > required before the next step works. Run everything from the repo unless noted.
 
+> **Shortcut:** `bootstrap/setup.sh` does all the `[ansible]` steps in one go —
+> installs Ansible, asks the feature/host questions (§1–§2 here), and runs the
+> playbook. The `[manual]` steps below (identity, Samba password, pinentry, dark
+> mode, credential keyring) still have to be done by hand; this runbook is the
+> authoritative order for them. Use `setup.sh` for the easy path, this for detail.
+
 ## 0. Prerequisites (base system) — `[manual]`
 
 Assumed already installed (out of scope for this repo):

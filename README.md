@@ -54,16 +54,22 @@ The authoritative symlink list is the bootstrap manifest (`bootstrap/group_vars/
 ## Setup
 
 Reproduced from scratch by an **Ansible bootstrap** (no more hand-run `ln -s`).
-The ordered fresh-install narrative — which role when, with the manual steps
-interleaved — is **[`docs/install-runbook.md`](docs/install-runbook.md)**. In short:
+One entry point — `setup.sh` installs Ansible, asks a few questions (auto-detecting
+sensible defaults), and runs the playbook:
 
 ```sh
-sudo apt install -y git ansible
+sudo apt install -y git
 git clone git@github.com:dimitrios-git/estia.git ~/Development/estia
-cd ~/Development/estia/bootstrap
-ansible-playbook site.yml --tags dotfiles --check --diff   # preview the symlinks
-ansible-playbook site.yml --ask-become-pass                # full run
+cd ~/Development/estia/bootstrap && ./setup.sh
 ```
+
+`setup.sh` writes your answers (which features to include, LAN subnet, music dir)
+to an untracked `host_vars/` file and is re-runnable. Prefer the raw playbook?
+`ansible-playbook site.yml --tags dotfiles --check --diff` previews just the
+symlinks; `… --ask-become-pass` does a full run. The ordered fresh-install
+narrative — which role when, with the **interactive/external manual steps**
+(identity keys, Samba password, …) interleaved — is
+**[`docs/install-runbook.md`](docs/install-runbook.md)**.
 
 Roles: `packages` (apt), `dotfiles` (symlinks), `samba` (the `/etc` system layer),
 `claude_user` + `credentials` (see below). Each is idempotent — re-run with

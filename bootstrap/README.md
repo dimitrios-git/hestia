@@ -17,10 +17,12 @@ docs/claude-user-design.md; identity is a manual step, below), and `credentials`
 
 ```
 bootstrap/
+  setup.sh              # ONE-SHOT ENTRY POINT — installs Ansible, asks questions, runs the playbook
   site.yml              # top-level playbook
   ansible.cfg           # inventory + roles_path
   inventory.ini         # localhost, local connection
-  group_vars/all.yml    # THE MANIFEST — packages + dotfile symlinks + templated configs + paths
+  group_vars/all.yml    # THE MANIFEST — toggles + packages + dotfile symlinks + templated configs + paths
+  host_vars/            # per-host answers (localhost.yml — untracked; .example committed)
   roles/
     packages/           # apt install (become)
     dotfiles/           # symlink plain configs + render templated_configs into $HOME (no root)
@@ -32,6 +34,17 @@ bootstrap/
 ```
 
 ## Use
+
+**Easiest — `setup.sh`** (installs Ansible if missing, asks a few questions with
+auto-detected defaults, writes `host_vars/localhost.yml`, runs the playbook;
+re-runnable, and passes extra args through to `ansible-playbook`):
+
+```sh
+cd bootstrap && ./setup.sh
+./setup.sh --tags dotfiles --check     # extra args flow through
+```
+
+Or drive Ansible directly:
 
 ```sh
 sudo apt install ansible          # one-time

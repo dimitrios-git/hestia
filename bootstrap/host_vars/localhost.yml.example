@@ -1,9 +1,10 @@
 ---
 # Per-host Ansible variables for `localhost` (this machine).
 #
-# Copy this file to `localhost.yml` (same dir) and fill in this host's REAL
-# values. `localhost.yml` is gitignored so the personal values never reach the
-# public repo; this `.example` is the committed, redacted template.
+# Normally you don't write this by hand — **`bootstrap/setup.sh` generates it**
+# interactively. This `.example` documents the format; copy it to `localhost.yml`
+# (same dir) only if you prefer to fill it in manually. `localhost.yml` is
+# gitignored so the personal values never reach the public repo.
 #
 #   cp localhost.yml.example localhost.yml   # then edit
 #

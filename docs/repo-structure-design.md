@@ -150,17 +150,17 @@ Three layers, each building on what already exists:
    `-e` passes **strings**, and ansible-core 2.19 rejects non-boolean conditionals —
    hence the `| bool` coercion. Package-group gating, e.g. skipping the `samba` apt
    group when `enable_samba=false`, is a small follow-up.)
-3. **An inputs front-end — ⬜ next.** Collect the answers once — username/`$HOME`, GPG key id
-   + keygrip, Tailscale/LAN, music dir, plus the toggles above — and feed them to
-   Ansible. Options (open — not yet decided):
-   - **`vars_prompt`** in the playbook — zero extra tooling, interactive, but not
-     re-runnable unattended.
-   - **An answers file** (`host_vars/<host>.yml`, or `-e @answers.yml`) — idempotent,
-     re-runnable, diffable; the interactive part is a one-time `configure` step that
-     writes it. **Leaning here:** it extends the host_vars pattern already in use
-     (the Samba subnet lives there) and preserves unattended re-runs.
-   - **A small TUI** wrapping the answers file — nicer UX, more to maintain; a later
-     nicety, not the foundation.
+3. **An inputs front-end. ✅ DONE (`bootstrap/setup.sh`).** The chosen shape: a
+   small **bash `setup.sh`** that is the *single entry point* — it installs Ansible,
+   asks the questions (auto-detecting defaults: LAN subnet from `ip route`, music
+   dir `~/Music`, …), writes the answers to the untracked **`host_vars/localhost.yml`**,
+   then runs the playbook. Re-runnable (it pre-fills from the existing file). The
+   **answers-file** approach won over `vars_prompt` (which would prompt every run,
+   no unattended re-run) and a TUI (more to maintain) — it extends the host_vars
+   pattern already in use and stays diffable. Scope of this first cut: the toggles
+   + `samba_lan_subnet` + `cmus_music_dir`. **Not yet inputs (still hardcoded
+   literals):** git identity (`user.name`/`email`/`signingkey`) and
+   `credential-unlock.sh`'s keygrip — a follow-up that needs templating those.
 
 **Ties to the layered model:** feature-flags + an answers file are exactly what
 make a real `defaults/` layer (§3; deferred per §9.4) worthwhile — defaults ship

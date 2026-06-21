@@ -46,14 +46,24 @@ cd bootstrap && ./setup.sh
 ./setup.sh --help                      # flags + usage
 ./setup.sh --check --diff              # true DRY-RUN: preview everything, change nothing
 ./setup.sh --no-backup                 # don't back up configs it replaces
+./setup.sh --yes                       # reuse saved answers, skip Q&A (resume a failed run)
 ./setup.sh --tags dotfiles --check     # preview just the dotfiles re-link
 ```
 
 `setup.sh`'s own flags are **`--no-backup`** (skip backing up replaced configs —
-i.e. `-e dotfiles_backup=false`) and **`-h`/`--help`**; everything else flows through
-to `ansible-playbook`. With **`--check`** it writes your answers to a *temp* file (not
+i.e. `-e dotfiles_backup=false`), **`-y`/`--yes`** (skip the questionnaire and reuse
+the saved `host_vars` as-is — handy to resume after a failed run; errors if there are
+no saved answers yet), and **`-h`/`--help`**; everything else flows through to
+`ansible-playbook`. With **`--check`** it writes your answers to a *temp* file (not
 the real `host_vars`) and only previews — so a dry-run changes nothing on the system
 *or* in the repo (the destructive-replace notice still shows, since it's a simulation).
+
+**Sudo:** `setup.sh` authenticates sudo **up front** (`sudo -v`, which retries on a
+wrong password) and keeps the timestamp warm for the whole run, then runs ansible
+*without* `--ask-become-pass`. So a mistyped password just re-prompts instead of
+aborting the play (ansible's `--ask-become-pass` is single-shot). The password is
+never handled by the script or written to disk — ansible escalates via the cached
+sudo credential. (Driving Ansible directly, below, still uses `--ask-become-pass`.)
 
 > ⚠️ **Destructive on a fresh `$HOME`.** The `dotfiles` role force-replaces existing
 > dotfiles (`~/.bashrc`, `~/.config/*`, …). On the **first deploy only** it copies any

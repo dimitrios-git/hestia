@@ -145,7 +145,7 @@ if [ -z "$def_sshkey" ]; then
 fi
 [ -n "$def_sshkey" ] || def_sshkey=id_ed25519
 
-askyn enable_samba       "Set up the Samba-over-Tailscale share?"   "$def_samba"
+askyn enable_samba       "Set up the Samba share?"                  "$def_samba"
 if [ "$enable_samba" = true ]; then
     ask samba_lan_subnet "  Home LAN subnet allowed to reach it"    "$def_lan"
 else

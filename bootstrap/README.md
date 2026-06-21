@@ -93,10 +93,14 @@ installer (`../docs/repo-structure-design.md` §6):
 | `enable_samba` | `samba` | `sharing: [samba]` | Samba-over-Tailscale share (`/etc`, `/srv/smbshare`) |
 | `enable_claude_user` | `claude_user` | — | dedicated `claude` agent user + shared tree + ACLs |
 | `enable_credentials` | `credentials` | `credentials: [gnome-keyring, libsecret-tools]` | login auto-unlock of SSH + GPG |
+| `enable_libreoffice` | *(none — package-only)* | `office: [libreoffice]` | LibreOffice for vifm's office-doc opener (**default off** — heavy) |
 
 Disabling a feature also **skips its apt packages** (via `package_group_features`
 in the manifest) — so `enable_samba=false` installs no `samba`. (`acl` stays in the
-base set; `claude_user`/`claude-access` need it regardless.)
+base set; `claude_user`/`claude-access` need it regardless.) `enable_libreoffice`
+is the odd one out — it gates **only** the `office` apt group (no role) and is the
+sole toggle that defaults **off**, since libreoffice is heavy (~hundreds of MB) and
+purely optional.
 
 ```sh
 # skip a role for this run (string is coerced via `| bool`):
@@ -120,8 +124,9 @@ python3 gen-symlink-table.py
 - **NVM + Node** — installed per-user, not from apt.
 - **vim-plug** + `:PlugInstall`; **Claude Code** native installer.
 - **bluetuith** binary (`~/.local/bin`, not in apt). (Nerd Fonts are now the `fonts` role.)
-- **Tailscale** (own apt repo) — the Samba share's remote reach; **libreoffice**
-  (heavy, optional) — vifm's office-doc opener. (Full list: install-runbook §8.)
+- **Tailscale** (own apt repo) — the Samba share's remote reach. (Full list:
+  install-runbook §8.) (LibreOffice is no longer manual — it's the opt-in
+  `enable_libreoffice` toggle above, default off.)
 - **System configs** under `../system/` — deployed by copy as root (see those
   runbooks); a `system` role will wrap them.
 - **`claude` identity** (the `claude_user` role does the user/group/ACL plumbing;

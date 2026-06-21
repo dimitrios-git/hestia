@@ -37,7 +37,10 @@ ansible-playbook site.yml --tags packages --ask-become-pass
 ```
 Installs the apt set (Wayland stack, terminal tools, samba, gnome-keyring, …).
 **Not** apt: NVIDIA driver, NVM/Node, bluetuith, Claude Code — see §8. (Nerd Fonts
-are installed by the `fonts` role.)
+are installed by the `fonts` role.) Feature-gated groups are skipped when their
+toggle is off (`enable_samba`/`enable_credentials`); **`enable_libreoffice`**
+(default **off**, heavy) opts into LibreOffice for vifm's office-doc opener —
+`setup.sh` asks, or set it in host_vars.
 
 ## 2. Dotfiles (symlinks) — `[ansible]`
 
@@ -167,8 +170,6 @@ Not Ansible-managed (vendor, per-user, interactive, or deliberately heavy/option
 - **Tailscale** — for the Samba share's remote (off-LAN) reach. Not apt-native:
   add its own apt repo (`pkgs.tailscale.com`) or run the install script, then
   `tailscale up`. (On-LAN Samba works without it.)
-- **LibreOffice** (`libreoffice`) — *optional, heavy* (~hundreds of MB): vifm opens
-  office docs with it. Install only if you want that; everything else works without.
 - **bluetuith** binary into `~/.local/bin` (not in apt).
 - **Claude Code** for your own user (native installer) if not already present.
 - Enable services: `sudo systemctl enable --now bluetooth power-profiles-daemon`.

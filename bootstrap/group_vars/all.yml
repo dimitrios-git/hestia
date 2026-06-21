@@ -17,6 +17,10 @@ target_home: "{{ lookup('env', 'HOME') }}"
 enable_samba: true          # Samba-over-Tailscale share (samba role → /etc, /srv/smbshare)
 enable_claude_user: true    # dedicated `claude` agent user + shared tree + ACLs (claude_user role)
 enable_credentials: true    # login auto-unlock of SSH + GPG (credentials role)
+# Package-only toggle (no role): gates the `office` apt group below via
+# package_group_features. Default OFF — libreoffice is heavy (~hundreds of MB) and
+# only vifm's office-doc opener needs it; turn on per host if you want it.
+enable_libreoffice: false   # install libreoffice (vifm opens office docs with it)
 
 # --- Identity (rendered into git config + the credential-unlock hook) ----------
 # Personal — these defaults are de-personalised placeholders, OVERRIDDEN per host
@@ -92,8 +96,8 @@ dotfiles_backup: true
 # Dependency-audited 2026-06-21 (swept every config for invoked binaries). Things
 # that are NOT apt packages, or are heavy/optional, are listed in README.md /
 # docs/install-runbook.md §8 (manual): NVIDIA driver, NVM/Node, vim-plug,
-# bluetuith, Claude Code, **Tailscale** (own repo), **libreoffice** (heavy).
-# (Nerd Fonts are no longer manual — the `fonts` role fetches them.)
+# bluetuith, Claude Code, **Tailscale** (own repo). (libreoffice is heavy but now
+# an opt-in toggle — the gated `office` group below; Nerd Fonts are the `fonts` role.)
 apt_packages:
   wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, playerctl, xwayland]
   portals:   [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk, pipewire, pipewire-pulse, wireplumber]
@@ -110,6 +114,7 @@ apt_packages:
   # --- feature-gated groups (installed only when their toggle is on, see below) ---
   sharing:      [samba]                        # enable_samba
   credentials:  [gnome-keyring, libsecret-tools]  # enable_credentials
+  office:       [libreoffice]                   # enable_libreoffice (heavy, default off)
 
 # Maps a feature-gated apt group -> its toggle. The `packages` role skips a group
 # whose toggle is false, so a disabled feature doesn't drag in its packages.
@@ -117,3 +122,4 @@ apt_packages:
 package_group_features:
   sharing:     "{{ enable_samba | bool }}"
   credentials: "{{ enable_credentials | bool }}"
+  office:      "{{ enable_libreoffice | bool }}"

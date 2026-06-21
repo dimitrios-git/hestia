@@ -11,6 +11,10 @@
 # Ansible auto-loads host_vars/<inventory_hostname>.yml, so the override applies
 # with no extra flags.
 
+# Install LibreOffice (vifm's office-doc opener)? Heavy (~hundreds of MB) and
+# off by default — everything else works without it. Set true to opt in.
+enable_libreoffice: false
+
 # Home LAN subnet allowed to reach the Samba share (smb.conf `hosts allow`).
 # Find it with: ip -o -4 addr show | awk '{print $4}'
 samba_lan_subnet: "192.0.2.0/24"    # e.g. 192.168.1.0/24

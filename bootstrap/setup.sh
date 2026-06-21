@@ -95,6 +95,7 @@ write_answers() {
 enable_samba: $enable_samba
 enable_claude_user: $enable_claude_user
 enable_credentials: $enable_credentials
+enable_libreoffice: $enable_libreoffice
 samba_lan_subnet: "$samba_lan_subnet"
 cmus_music_dir: "$cmus_music_dir"
 git_user_name: "$git_user_name"
@@ -127,6 +128,7 @@ def_music=$(cur cmus_music_dir);     def_music=${def_music:-$HOME/Music}
 def_samba=$(cur enable_samba);       def_samba=${def_samba:-true}
 def_claude=$(cur enable_claude_user); def_claude=${def_claude:-true}
 def_creds=$(cur enable_credentials);  def_creds=${def_creds:-true}
+def_office=$(cur enable_libreoffice); def_office=${def_office:-false}
 
 # Identity defaults: existing host_vars -> existing git config -> gpg/ssh detect.
 def_gname=$(cur git_user_name);   [ -n "$def_gname" ]  || def_gname=$(git config --global user.name 2>/dev/null || true)
@@ -153,6 +155,7 @@ else
 fi
 askyn enable_claude_user "Create the dedicated 'claude' agent user?" "$def_claude"
 askyn enable_credentials "Enable login auto-unlock of SSH + GPG?"    "$def_creds"
+askyn enable_libreoffice "Install LibreOffice? (heavy — vifm opens office docs)" "$def_office"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"
 
 echo
@@ -175,6 +178,7 @@ cat <<EOF
     enable_samba       = $enable_samba$( [ "$enable_samba" = true ] && echo "   (LAN: $samba_lan_subnet)" )
     enable_claude_user = $enable_claude_user
     enable_credentials = $enable_credentials
+    enable_libreoffice = $enable_libreoffice
     cmus_music_dir     = $cmus_music_dir
     git identity       = $git_user_name <$git_user_email>$( [ -n "$git_signingkey" ] && echo "   signing $git_signingkey" )
     ssh login key      = ~/.ssh/$ssh_key_file

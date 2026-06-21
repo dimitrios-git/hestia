@@ -194,11 +194,11 @@ exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DE
 # reads the SSH + GPG passphrases from it and loads them into the ssh-agent /
 # gpg-agent, so neither needs a per-boot ssh-add / gpg-unlock. See
 # docs/credential-autounlock-design.md.
-exec /home/dimitrios/Development/estia/gnupg/credential-unlock.sh
+exec $HOME/.config/sway/scripts/credential-unlock.sh
 
 ### Bar, notifications, idle
 
-exec_always /home/dimitrios/Development/estia/sway/start-waybar.sh
+exec_always $HOME/.config/sway/scripts/start-waybar.sh
 exec_always pkill mako; mako
 
 bindsym $mod+ctrl+l exec swaylock -f -c 000000

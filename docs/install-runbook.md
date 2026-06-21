@@ -41,6 +41,19 @@ ansible-playbook site.yml --tags dotfiles                  # apply
 Symlinks every config from the manifest into `$HOME`. No root. On a configured
 machine this is `changed=0`.
 
+> **Git ignore model** (the `git/.gitignore_global` this step just symlinked is
+> layer 1 of three — know which layer a new ignore belongs in):
+> 1. **`~/.gitignore_global`** (`core.excludesfile`) — only *never-commit-anywhere*
+>    noise: OS/editor cruft + `.claude/settings.local.json`. It applies on **this
+>    machine only**, so it never travels to clones/collaborators/CI.
+> 2. **committed `.gitignore`** — shared *project* ignores that everyone with the
+>    repo should get (e.g. estia's `bootstrap/host_vars/*.yml`).
+> 3. **`.git/info/exclude`** — *this clone only*, e.g. keeping your agent's files
+>    out of a repo you don't own (`printf '.claude/\nCLAUDE.md\n' >> .git/info/exclude`).
+>
+> Consequence: `.gitignore` and `.editorconfig` are **deliberately not** in the
+> global file — they're meant to be committed and shared per-repo.
+
 ## 3. Pinentry + dark mode — `[manual]`
 
 ```sh

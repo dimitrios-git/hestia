@@ -25,6 +25,29 @@
   loop_control:
     label: "{{ item }}"
 
+# Safety net: the symlink/template tasks below force-replace whatever sits at each
+# dest. First move any pre-existing REAL file (a user's own dotfile — not a symlink)
+# aside to <dest>.bak, so a first run on a populated $HOME is non-destructive.
+# `creates:` keeps it idempotent and never clobbers an earlier backup; on re-runs
+# the dests are our own symlinks (not regular files), so nothing is touched.
+# (templated_configs get the template module's own `backup:` below.)
+- name: Stat dotfile destinations (to find real files to back up)
+  ansible.builtin.stat:
+    path: "{{ item.dest }}"
+  loop: "{{ dotfile_links }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: _dotfile_dests
+
+- name: Back up any pre-existing real dotfile before replacing it
+  ansible.builtin.command:
+    cmd: "mv -- {{ item.item.dest | quote }} {{ (item.item.dest ~ '.bak') | quote }}"
+    creates: "{{ item.item.dest }}.bak"
+  loop: "{{ _dotfile_dests.results }}"
+  loop_control:
+    label: "{{ item.item.dest }} -> {{ item.item.dest }}.bak"
+  when: item.stat.exists and item.stat.isreg and not item.stat.islnk
+
 - name: Symlink dotfiles from the repo
   ansible.builtin.file:
     src: "{{ repo_root }}/{{ item.src }}"
@@ -43,6 +66,7 @@
     src: "{{ repo_root }}/{{ item.src }}"
     dest: "{{ item.dest }}"
     force: true
+    backup: true                                 # back up a pre-existing file on change
     mode: "{{ item.mode | default('0644') }}"   # scripts that get executed need 0755
   loop: "{{ templated_configs }}"
   loop_control:

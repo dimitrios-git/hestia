@@ -29,6 +29,11 @@ HOSTVARS="$HERE/host_vars/localhost.yml"        # gitignored; this host's answer
 dry_run=false
 for _a in "$@"; do [ "$_a" = --check ] && dry_run=true; done
 
+# No answers file yet = first run on this machine = the destructive case (a
+# populated $HOME whose dotfiles we're about to replace). Gated harder below.
+first_run=false
+[ -f "$HOSTVARS" ] || first_run=true
+
 # --- helpers ------------------------------------------------------------------
 # cur KEY -> the current value of a flat `key: value` (or `key: "value"`) line.
 # Always returns 0 (empty if the file/key is absent) so `set -e` doesn't abort the
@@ -146,8 +151,24 @@ cat <<EOF
     git identity       = $git_user_name <$git_user_email>$( [ -n "$git_signingkey" ] && echo "   signing $git_signingkey" )
     ssh login key      = ~/.ssh/$ssh_key_file
 EOF
-askyn _proceed "Proceed?" true
-[ "$_proceed" = true ] || { echo "Aborted — nothing written or changed."; exit 0; }
+
+if $first_run && ! $dry_run; then
+    # Fresh machine + real apply: this REPLACES existing dotfiles. Make it unmissable
+    # and require an explicit `yes` (not a bare Enter). Re-runs skip this.
+    cat <<'EOF'
+
+  ⚠️  FIRST RUN ON THIS MACHINE
+      estia deploys its configs by symlink/render and will REPLACE existing dotfiles
+      (~/.bashrc, ~/.vimrc, ~/.config/*, ~/.gitconfig, …). Any existing *real* file is
+      moved to <file>.bak first, but review/back up anything precious before continuing.
+      (Preview without changing anything:  ./setup.sh --check --diff)
+EOF
+    read -r -p "  Type 'yes' to proceed: " _ack
+    [ "$_ack" = yes ] || { echo "Aborted — nothing written or changed."; exit 0; }
+else
+    askyn _proceed "Proceed?" true
+    [ "$_proceed" = true ] || { echo "Aborted — nothing written or changed."; exit 0; }
+fi
 
 # --- 4. Write answers + run ----------------------------------------------------
 if $dry_run; then

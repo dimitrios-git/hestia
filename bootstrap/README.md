@@ -51,6 +51,11 @@ Extra args flow through to `ansible-playbook`. With **`--check`**, `setup.sh` wr
 your answers to a *temp* file (not the real `host_vars`) and only previews — so a
 dry-run changes nothing on the system *or* in the repo.
 
+> ⚠️ **Destructive on a fresh `$HOME`.** The `dotfiles` role force-replaces existing
+> dotfiles (`~/.bashrc`, `~/.config/*`, …). It **backs up** any pre-existing real file
+> first (`<file>.bak`, or a timestamped backup for rendered configs), and a **first
+> run** (no `host_vars` yet) warns and requires typing `yes`. Preview with `--check --diff`.
+
 Or drive Ansible directly:
 
 ```sh

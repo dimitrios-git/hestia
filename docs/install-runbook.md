@@ -47,7 +47,10 @@ ansible-playbook site.yml --tags dotfiles                  # apply
 ```
 Symlinks the plain configs and **renders** the path-generalised ones
 (`templated_configs`) into `$HOME`. No root. On a configured machine this is
-`changed=0`.
+`changed=0`. **Destructive on a populated `$HOME`:** it replaces existing dotfiles —
+but first backs up any pre-existing *real* file to `<file>.bak` (symlinked) or a
+timestamped backup (rendered), so nothing is silently lost. (`setup.sh` also warns +
+gates a first run; preview safely with `--check --diff`.)
 
 > **Per-host values:** a few configs read host-specific values with sensible
 > defaults — `cmus_music_dir` (default `~/Music`) and the Samba `samba_lan_subnet`.

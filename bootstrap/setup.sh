@@ -43,10 +43,10 @@ Any other arguments pass through to ansible-playbook, e.g.:
   ./setup.sh --tags dotfiles    Run only the dotfiles role.
 
 setup.sh prompts for the sudo password up front with its own retry loop (3 tries),
-then hands it to ansible through a kernel pipe (--become-password-file <(…) — never
-on disk, never in `ps`). So one mistyped password just re-prompts instead of aborting
-the playbook the way ansible's single-shot --ask-become-pass does. NOPASSWD sudo skips
-the prompt.
+then hands it to ansible via --become-password-file (a 0600 tmpfs file in
+$XDG_RUNTIME_DIR or /dev/shm, removed right after the run). So one mistyped password
+just re-prompts instead of aborting the playbook the way ansible's single-shot
+--ask-become-pass does. NOPASSWD sudo skips the prompt.
 
 On the FIRST run on a machine, setup.sh warns that it replaces existing dotfiles.
 Interactive/external follow-ups (SSH/GPG identity, Samba password, …) stay manual —
@@ -129,16 +129,19 @@ EOF
 # get_become_pw -> capture + validate the sudo password ourselves (with retries),
 # stored in BECOME_PW for run_playbook to hand to ansible.
 #
-# Why we capture it instead of `sudo -v` + a cached timestamp: ansible's become runs
-# sudo on a DIFFERENT tty than this shell, and sudo's tty_tickets (the Debian
-# default) keys the timestamp to the tty — so the cached credential doesn't apply and
-# ansible still fails with "sudo: a password is required". We must give ansible the
-# password. Why not ansible's --ask-become-pass: it's SINGLE-SHOT (one typo aborts the
-# whole play). Capturing it here lets us retry like sudo does (3 tries), validating
-# each attempt with `sudo -S -v` so ansible only ever gets a known-good password.
+# Why we capture it instead of relying on a cached `sudo -v` timestamp: ansible's
+# become runs sudo on a DIFFERENT tty than this shell, and sudo's tty_tickets (the
+# Debian default) keys the timestamp to the tty — so the cached credential doesn't
+# apply and ansible still fails with "sudo: a password is required". We must give
+# ansible the password. Why not ansible's --ask-become-pass: it's SINGLE-SHOT (one
+# typo aborts the whole play). Capturing it here lets us retry like sudo does (3
+# tries), validating each attempt with `sudo -S -v` so ansible only gets a good one.
 BECOME_PW=""
 get_become_pw() {
-    # Passwordless sudo (NOPASSWD)? Then ansible needs no become password.
+    # Truly passwordless (NOPASSWD)? Then ansible needs no become password. `sudo -k`
+    # first drops any cached timestamp, so a warm cache can't masquerade as NOPASSWD
+    # (that false positive left ansible with no password -> "a password is required").
+    sudo -k 2>/dev/null || true
     if sudo -n true 2>/dev/null; then BECOME_PW=""; return 0; fi
     echo "==> Authenticating sudo (needed for package installs / system roles)…"
     local pw tries=0
@@ -152,16 +155,25 @@ get_become_pw() {
 }
 
 # run_playbook ARGS… -> run the playbook, handing ansible the captured become
-# password via `--become-password-file <(…)`. Process substitution delivers it
-# through a kernel pipe (path is /dev/fd/N), so the password never touches disk and
-# isn't visible in the process list (unlike `-e ansible_become_pass=…`). The `<(…)`
-# is inlined in the ansible command so the pipe stays alive for the whole run.
+# password via `--become-password-file <file>`.
+#
+# The file lives in tmpfs ($XDG_RUNTIME_DIR or /dev/shm — RAM-backed, so the password
+# never touches a physical disk), is mode 0600, and is removed immediately after the
+# run (plus a belt-and-braces EXIT trap). NOT process substitution `<(…)`: ansible
+# re-opens the path BY NAME, and /dev/fd/N resolves to an unopenable "pipe:[inode]"
+# pseudo-path ("password file … was not found"). A real tmpfs file is what works.
+_become_pwfile=""
+trap '[ -n "$_become_pwfile" ] && rm -f "$_become_pwfile"' EXIT
 run_playbook() {
-    if [ -n "$BECOME_PW" ]; then
-        ansible-playbook "$HERE/site.yml" "$@" --become-password-file <(printf '%s\n' "$BECOME_PW")
-    else
+    if [ -z "$BECOME_PW" ]; then
         ansible-playbook "$HERE/site.yml" "$@"
+        return
     fi
+    _become_pwfile=$(mktemp "${XDG_RUNTIME_DIR:-/dev/shm}/estia-become.XXXXXX" 2>/dev/null || mktemp)
+    chmod 600 "$_become_pwfile"
+    printf '%s\n' "$BECOME_PW" > "$_become_pwfile"
+    ansible-playbook "$HERE/site.yml" "$@" --become-password-file "$_become_pwfile"
+    rm -f "$_become_pwfile"; _become_pwfile=""
 }
 
 # finish_notice -> closing message, tailored to dry-run vs a real apply.

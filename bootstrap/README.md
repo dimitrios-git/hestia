@@ -59,14 +59,18 @@ the real `host_vars`) and only previews — so a dry-run changes nothing on the 
 *or* in the repo (the destructive-replace notice still shows, since it's a simulation).
 
 **Sudo:** `setup.sh` prompts for the sudo password **up front** with its own retry
-loop (validating each try via `sudo -S -v`, 3 attempts) and hands it to ansible
-through a **kernel pipe** — `--become-password-file <(…)`, so the password never
-touches disk and isn't visible in `ps`. A mistyped password just re-prompts instead
-of aborting the play (ansible's `--ask-become-pass` is single-shot — one typo kills
-the whole run). NOPASSWD/passwordless sudo skips the prompt entirely. (A cached
-`sudo -v` timestamp is *not* enough — sudo's `tty_tickets` keys it to the shell's
-tty, but ansible's become runs on a different tty, so it would still ask for a
-password.) Driving Ansible directly, below, still uses `--ask-become-pass`.
+loop (validating each try via `sudo -S -v`, 3 attempts) and hands it to ansible via
+`--become-password-file` pointing at a **tmpfs file** (`$XDG_RUNTIME_DIR` or
+`/dev/shm` — RAM-backed so it never touches a physical disk; mode `0600`; removed
+immediately after the run). A mistyped password just re-prompts instead of aborting
+the play (ansible's `--ask-become-pass` is single-shot — one typo kills the whole
+run). NOPASSWD/passwordless sudo skips the prompt (the probe runs `sudo -k` first so
+a warm timestamp can't pass as passwordless). Two approaches that *don't* work, for
+the record: a cached `sudo -v` timestamp (sudo's `tty_tickets` keys it to the shell's
+tty, but ansible's become runs on a different tty), and a process-substitution
+password file `<(…)` (ansible re-opens the path by name and `/dev/fd/N` resolves to an
+unopenable `pipe:[inode]`). Driving Ansible directly, below, still uses
+`--ask-become-pass`.
 
 > ⚠️ **Destructive on a fresh `$HOME`.** The `dotfiles` role force-replaces existing
 > dotfiles (`~/.bashrc`, `~/.config/*`, …). On the **first deploy only** it copies any

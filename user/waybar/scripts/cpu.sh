@@ -47,5 +47,19 @@ for h in /sys/class/hwmon/hwmon*; do
 done
 
 tip="${temps:-CPU}"
-[ -n "$cores" ] && tip="$tip\\ncores: $cores"
+if [ -n "$cores" ]; then
+    # Lay the per-core %s out in a monospace grid (8 per row, right-aligned) so the
+    # tooltip doesn't become one long line that wraps.
+    row=""; grid=""; i=0
+    for c in $cores; do
+        row="$row$(printf '%4d' "$c")"
+        i=$((i + 1))
+        if [ $((i % 8)) -eq 0 ]; then
+            [ -n "$grid" ] && grid="$grid\\n"
+            grid="$grid$row"; row=""
+        fi
+    done
+    if [ -n "$row" ]; then [ -n "$grid" ] && grid="$grid\\n"; grid="$grid$row"; fi
+    tip="$tip\\nper-core %:\\n<tt>$grid</tt>"
+fi
 printf '{"text":"%s%%","tooltip":"%s"}\n' "$usage" "$tip"

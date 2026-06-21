@@ -95,16 +95,12 @@
     "clock": {
         "format": "<span size='xx-large' rise='-3072'></span> {:%Y-%m-%d %H:%M %Z}",
         "interval": 60,
-        "tooltip-format": "<big>{:%A, %d %B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+        "tooltip-format": "<b>{:%A, %d %B %Y}</b>\n<tt>{calendar}</tt>",
         "calendar": {
             "mode": "month",
             "format": {
                 "today": "<span color='#ce0056'><b>{}</b></span>"
             }
-        },
-        "actions": {
-            "on-scroll-up": "shift_up",
-            "on-scroll-down": "shift_down"
         }
     },
 

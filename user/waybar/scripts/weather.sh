@@ -10,7 +10,9 @@
 cache="${XDG_RUNTIME_DIR:-/tmp}/waybar-weather.json"
 
 if [ "$1" = show ]; then
-    exec sh -c 'curl -s "wttr.in" | less -R'
+    # Full forecast in a pager. Guard the empty case (no network / rate-limited): pipe
+    # less an empty stream and it exits instantly, flashing the floatterm shut.
+    exec sh -c 'f=$(curl -s --max-time 15 "wttr.in"); if [ -n "$f" ]; then printf "%s\n" "$f" | less -R; else printf "weather unavailable (network?)\n"; sleep 3; fi'
 fi
 
 esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
@@ -24,7 +26,10 @@ case "$data" in
         cond=$(printf '%s' "$1" | sed 's/ *$//')   # drop wttr.in's trailing space
         temp=$2; ctext=$3; feels=$4; hum=$5; wind=$6; loc=$7
         if [ -n "$temp" ]; then
-            text="$(esc "$cond") $(esc "$temp")"
+            # Wrap the condition emoji in the same icon span the other bar modules use
+            # (xx-large + rise) so the temperature lines up with their text by
+            # construction. Re-tune the rise / drop xx-large if the emoji looks off.
+            text="<span size='xx-large' rise='-3072'>$(esc "$cond")</span> $(esc "$temp")"
             tip="$(esc "$loc")\\n$(esc "$ctext"), $(esc "$temp") (feels $(esc "$feels"))\\n$(esc "$hum") humidity · $(esc "$wind")"
             json=$(printf '{"text":"%s","tooltip":"%s"}' "$text" "$tip")
             printf '%s\n' "$json" > "$cache"

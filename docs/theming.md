@@ -61,6 +61,6 @@ Legend: ✅ themed · 🟡 partial · ⬜ not yet.
 | GTK3 apps (Remmina, GIMP, FF file chooser) | recoloured adw-gtk3 theme | ✅ | `gtk_theme` role builds `estia-dark` (adw-gtk3 + `#ce0056`); dark + exact red |
 | GTK4 / libadwaita apps (gnome-calculator, nautilus) | libadwaita | 🟡 | dark only — accent **locked on libadwaita 1.7**; `gtk-4.0/gtk.css` `:root` override is ready for libadwaita 1.8+ |
 | Breeze (Qt apps) | Qt theme / `kdeglobals` | ⬜ | the Qt/KDE companion to Adwaita — later |
-| Firefox / PWAs | userChrome / theme | ⬜ | later |
+| Firefox + firefoxpwa PWAs | GTK3 (via `GTK_THEME`) | ✅ | chrome/menus/file chooser follow estia-dark; only in-page web form controls might need `userContent` (if ever) |
 
 Add a row when you start a new app; flip it to ✅ when it passes step 5.

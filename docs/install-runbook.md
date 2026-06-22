@@ -43,7 +43,8 @@ ansible-playbook site.yml --tags packages --ask-become-pass
 ```
 Installs the apt set (Wayland stack, terminal tools, samba, gnome-keyring, …).
 **Not** apt: NVM/Node, Claude Code — see §8. (Nerd Fonts are installed by the `fonts`
-role; **bluetuith** by the `localbin` role — both core, no root.) Feature-gated groups
+role; **bluetuith** by the `localbin` role; the **estia GTK theme** — recoloured
+adw-gtk3 — by the `gtk_theme` role — all core, no root.) Feature-gated groups
 are skipped when their
 toggle is off (`enable_samba`/`enable_credentials`); **`enable_libreoffice`**
 (default **off**, heavy) opts into LibreOffice for vifm's office-doc opener, and

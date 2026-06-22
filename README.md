@@ -19,7 +19,9 @@ more than a config repo:
 
 Everything sits on one **unified theme**: near-black `#0a0a0a`, accent **official
 Debian red `#ce0056`** (PANTONE Strong Red C), and a saturated 16-colour palette
-from the `wildcharm` vim colorscheme.
+from the `wildcharm` vim colorscheme — defined once in `themes/wildcharm/palette.yml`
+and applied app-by-app via the process in [`docs/theming.md`](docs/theming.md)
+(terminal apps, sway, waybar, swaylock/swaynag, zathura, and a custom GTK theme).
 
 ## Configs included
 
@@ -37,17 +39,22 @@ to `/etc` by the bootstrap (copied/templated, not symlinked).
 | `user/waybar/` | Waybar status bar (+ `scripts/`) | `~/.config/waybar/` |
 | `user/mako/` | Mako notifications | `~/.config/mako/config` |
 | `user/wofi/` | Wofi launcher | `~/.config/wofi/` |
+| `user/swaylock/` | Swaylock lockscreen | `~/.config/swaylock/config` |
+| `user/swaynag/` | Swaynag dialogs (exit/warn/error) | `~/.config/swaynag/config` |
 | `user/kitty/` | Kitty terminal (+ music session) | `~/.config/kitty/` |
 | `user/cmus/` | cmus music player | `~/.config/cmus/rc` |
 | `user/cava/` | cava audio visualiser | `~/.config/cava/config` |
 | `user/vifm/` | Vifm file manager | `~/.config/vifm/` |
 | `user/imv/` | imv image viewer | `~/.config/imv/config` |
+| `user/zathura/` | Zathura document viewer (PDF/EPUB/…) | `~/.config/zathura/zathurarc` |
 | `user/glow/` | Glow markdown renderer + theme | `~/.config/glow/` |
 | `user/xdg-desktop-portal/` | Screen-sharing portal routing | `~/.config/xdg-desktop-portal/` |
+| `user/gtk/` | GTK 3/4 theme settings + accent overlay | `~/.config/gtk-3.0/`, `~/.config/gtk-4.0/` |
 | `user/bin/` | Helper scripts (e.g. `claude-access`) | `~/.local/bin/` |
-| `system/` | System configs (e.g. Samba) | `/etc/` (root, not symlinked) |
+| `system/` | System configs (e.g. Samba, the Sway launcher) | `/etc/`, `/usr/local/bin/` (root, not symlinked) |
+| `themes/` | Theme single-source-of-truth (`wildcharm/palette.yml`) | — (consumed by `docs/theming.md`) |
 | `bootstrap/` | The Ansible installer + manifest | — |
-| `docs/` | Design docs + the install runbook | — |
+| `docs/` | Design docs + the install runbook + theming guide | — |
 
 The authoritative symlink list is the bootstrap manifest (`bootstrap/group_vars/all.yml`); CLAUDE.md's table is generated from it.
 
@@ -71,9 +78,12 @@ narrative — which role when, with the **interactive/external manual steps**
 (identity keys, Samba password, …) interleaved — is
 **[`docs/install-runbook.md`](docs/install-runbook.md)**.
 
-Roles: `packages` (apt), `dotfiles` (symlinks), `samba` (the `/etc` system layer),
-`claude_user` + `credentials` (see below). Each is idempotent — re-run with
-`--check` to verify. Details: [`bootstrap/README.md`](bootstrap/README.md).
+Roles: `packages` (apt), `dotfiles` (symlinks + templated configs), `fonts` (Nerd
+Fonts), `localbin` (pinned release binaries, e.g. bluetuith), `gtk_theme` (the
+**estia GTK theme** — recoloured adw-gtk3), `sway_session` (the greetd→sway
+launcher), `samba` (the `/etc` system layer), `claude_user` + `credentials` (see
+below), plus opt-in `nvidia`. Each is idempotent — re-run with `--check` to verify.
+Details: [`bootstrap/README.md`](bootstrap/README.md).
 
 Secrets are **not** in this repo — they live in `~/.bash_secrets` (untracked), sourced by `.bashrc`.
 

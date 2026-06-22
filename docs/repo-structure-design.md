@@ -229,6 +229,12 @@ sketched because §6 absorbed most of it.
    Jinja2 templating chosen in §4/§5, so it's a natural later extension, not a new
    mechanism. For now `themes/` just organises theme assets; the templated system
    is its own sub-design, picked up after the structural migration.
+   **Update:** the *lightweight* form now exists — `themes/wildcharm/palette.yml`
+   is the central palette SSOT, and `docs/theming.md` is the documented per-app
+   process (applied by hand, one app per PR; terminal apps, sway, waybar,
+   swaylock/swaynag/zathura, and a custom GTK theme are done). The **automated
+   render** of the palette into configs is still deferred — `palette.yml` is shaped
+   to feed it if/when built.
 4. **`defaults/` — deferred.** ✅ Not created until a non-`dimitrios` consumer
    exists (YAGNI); `users/dimitrios/` is the de facto default until then.
 

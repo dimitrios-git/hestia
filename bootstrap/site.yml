@@ -22,6 +22,8 @@
       tags: [fonts]
     - role: localbin   # pinned prebuilt binaries (bluetuith) into ~/.local/bin (no root)
       tags: [localbin]
+    - role: gtk_theme  # estia GTK3 theme (recoloured adw-gtk3) into ~/.local/share/themes (no root)
+      tags: [gtk_theme]
     - role: sway_session  # deploy /usr/local/bin/start-sway launcher (root)
       tags: [system, sway_session]
     - role: samba      # layer-(a) system config: Samba share to /etc (root)

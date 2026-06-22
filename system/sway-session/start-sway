@@ -16,7 +16,13 @@ export XDG_SESSION_TYPE=wayland
 export XDG_SESSION_DESKTOP=sway
 export XDG_CURRENT_DESKTOP=sway
 export MOZ_ENABLE_WAYLAND=1
-export GTK_THEME=Adwaita:dark
+# Force the estia GTK3 theme session-wide. GTK_THEME is the HIGHEST-priority theme
+# source — it overrides gsettings org.gnome.desktop.interface gtk-theme AND
+# ~/.config/gtk-3.0/settings.ini — so in-process GTK3 apps (Remmina, GIMP, etc.) in a
+# non-GNOME sway session pick the theme up from here, not from those files. estia-dark is
+# the recoloured adw-gtk3 built by the gtk_theme role (#ce0056 accent). libadwaita apps
+# ignore GTK_THEME (their accent is locked on 1.7 — see docs/theming.md).
+export GTK_THEME=estia-dark
 
 # --- NVIDIA-only workarounds (applied only when an NVIDIA GPU is in use) -------
 sway_args=()

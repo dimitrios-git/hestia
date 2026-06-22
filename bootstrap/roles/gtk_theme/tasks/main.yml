@@ -1,0 +1,93 @@
+---
+# Install the estia GTK3 theme: the pinned adw-gtk3 release with its accent recoloured to
+# gtk_theme_accent, installed as ~/.local/share/themes/estia and estia-dark. The theme is
+# selected via gsettings gtk-theme=estia-dark (a sway exec at login); this role only
+# builds/installs it. No root, no compiler. See docs/theming.md.
+#
+# Idempotent: re-installs only when the dark variant is missing OR the (version, accent)
+# marker is absent — so bumping gtk_theme_adw_version or gtk_theme_accent forces a rebuild,
+# and a manual `rm` of the theme also re-installs.
+
+- name: Install the estia GTK theme (adw-gtk3 recoloured to the estia accent)
+  vars:
+    _gt_marker: "{{ target_home }}/.local/state/estia/gtk-theme/estia-adw{{ gtk_theme_adw_version }}-{{ gtk_theme_accent | regex_replace('#', '') }}"
+  block:
+    - name: Is the estia-dark theme + (version, accent) marker present?
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ target_home }}/.local/share/themes/estia-dark/gtk-3.0/gtk.css"
+        - "{{ _gt_marker }}"
+      register: _gt_present
+
+    - name: Download, recolour + install the estia GTK theme
+      when: not (_gt_present.results | map(attribute='stat.exists') | min)
+      block:
+        - name: Temp workdir
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: estia-gtk-theme
+          register: _gt_tmp
+
+        - name: Download adw-gtk3 v{{ gtk_theme_adw_version }} (sha256-verified)
+          ansible.builtin.get_url:
+            url: "{{ gtk_theme_adw_url }}"
+            dest: "{{ _gt_tmp.path }}/adw-gtk3.tar.xz"
+            checksum: "sha256:{{ gtk_theme_adw_sha256 }}"
+            mode: "0644"
+
+        - name: Extract adw-gtk3
+          ansible.builtin.unarchive:
+            src: "{{ _gt_tmp.path }}/adw-gtk3.tar.xz"
+            dest: "{{ _gt_tmp.path }}"
+            remote_src: true
+
+        - name: Ensure ~/.local/share/themes exists
+          ansible.builtin.file:
+            path: "{{ target_home }}/.local/share/themes"
+            state: directory
+            mode: "0755"
+
+        - name: Install the adw-gtk3 variants as estia / estia-dark
+          ansible.builtin.copy:
+            src: "{{ _gt_tmp.path }}/{{ item.src }}/"
+            dest: "{{ target_home }}/.local/share/themes/{{ item.dest }}/"
+            remote_src: true
+            mode: preserve
+          loop:
+            - { src: adw-gtk3, dest: estia }
+            - { src: adw-gtk3-dark, dest: estia-dark }
+
+        - name: Recolour the accent to the estia palette ({{ gtk_theme_accent }})
+          ansible.builtin.replace:
+            path: "{{ target_home }}/.local/share/themes/{{ item }}"
+            regexp: '@define-color accent_bg_color @blue_3;'
+            replace: "@define-color accent_bg_color {{ gtk_theme_accent }};"
+          loop:
+            - estia/gtk-3.0/gtk.css
+            - estia/gtk-3.0/gtk-dark.css
+            - estia-dark/gtk-3.0/gtk.css
+            - estia-dark/gtk-3.0/gtk-dark.css
+
+        - name: Verify the accent baked in (catches an upstream CSS format change on bump)
+          ansible.builtin.command: >-
+            grep -q '{{ gtk_theme_accent }}' "{{ target_home }}/.local/share/themes/estia-dark/gtk-3.0/gtk.css"
+          changed_when: false
+
+        - name: Ensure the gtk-theme state dir exists (for the marker)
+          ansible.builtin.file:
+            path: "{{ _gt_marker | dirname }}"
+            state: directory
+            mode: "0755"
+
+        - name: Record the (version, accent) marker
+          ansible.builtin.file:
+            path: "{{ _gt_marker }}"
+            state: touch
+            mode: "0644"
+      always:
+        - name: Remove the temp workdir
+          ansible.builtin.file:
+            path: "{{ _gt_tmp.path | default('') }}"
+            state: absent
+          when: _gt_tmp.path is defined

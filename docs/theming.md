@@ -58,7 +58,8 @@ Legend: ✅ themed · 🟡 partial · ⬜ not yet.
 | glow | glamour JSON | ✅ | markdown render theme |
 | vim / nvim | `wildcharm` scheme | ✅ | external plugin + render-markdown accent |
 | zathura | key=value config | ✅ | `user/zathura/zathurarc`; UI chrome + document recolour (dark mode on, `r` toggles) |
-| GTK / Adwaita | `settings.ini` + `gtk.css` | 🟡 | `user/gtk/`; dark base (Adwaita-dark + `color-scheme prefer-dark`) + Debian-red accent. **Gradual** — bg recolour / forked theme still to come |
+| GTK3 apps (Remmina, GIMP, FF file chooser) | recoloured adw-gtk3 theme | ✅ | `gtk_theme` role builds `estia-dark` (adw-gtk3 + `#ce0056`); dark + exact red |
+| GTK4 / libadwaita apps (gnome-calculator, nautilus) | libadwaita | 🟡 | dark only — accent **locked on libadwaita 1.7**; `gtk-4.0/gtk.css` `:root` override is ready for libadwaita 1.8+ |
 | Breeze (Qt apps) | Qt theme / `kdeglobals` | ⬜ | the Qt/KDE companion to Adwaita — later |
 | Firefox / PWAs | userChrome / theme | ⬜ | later |
 

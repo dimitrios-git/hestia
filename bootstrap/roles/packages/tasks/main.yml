@@ -39,10 +39,14 @@
   register: _editor_alt
   changed_when: false
 
+# Run only when vim is registered as an alternative (so a vim-less spin doesn't
+# fail) AND the current selection isn't already a vim* — keeps re-runs at changed=0.
+# Single folded string: ansible-core 2.19 rejects a bare unquoted `not (...)` list
+# item ("Conditional expressions must be strings").
 - name: Set vim as the system default editor (Debian defaults to nano)
   ansible.builtin.command: update-alternatives --set editor /usr/bin/vim.basic
   become: true
   changed_when: true
-  when:
-    - "'/usr/bin/vim.basic' in _editor_alt.stdout"          # vim is installed (alternative registered)
-    - not (_editor_alt.stdout is search('Value: /usr/bin/vim'))  # not already a vim*
+  when: >-
+    '/usr/bin/vim.basic' in _editor_alt.stdout
+    and 'Value: /usr/bin/vim' not in _editor_alt.stdout

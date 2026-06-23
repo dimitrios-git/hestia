@@ -30,3 +30,19 @@
     state: stopped
   become: true
   when: "'iperf3' in apt_packages.misc"
+
+# Debian points the `editor` alternative (used by sensible-editor, `crontab -e`,
+# `sudoedit`, etc.) at nano. We install full vim — make it the system default. (git
+# already uses core.editor=vim; .bashrc also exports EDITOR/VISUAL=vim for the shell.)
+- name: Query the current editor alternative
+  ansible.builtin.command: update-alternatives --query editor
+  register: _editor_alt
+  changed_when: false
+
+- name: Set vim as the system default editor (Debian defaults to nano)
+  ansible.builtin.command: update-alternatives --set editor /usr/bin/vim.basic
+  become: true
+  changed_when: true
+  when:
+    - "'/usr/bin/vim.basic' in _editor_alt.stdout"          # vim is installed (alternative registered)
+    - not (_editor_alt.stdout is search('Value: /usr/bin/vim'))  # not already a vim*

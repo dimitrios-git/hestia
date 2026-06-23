@@ -121,6 +121,12 @@ case ":$PATH:" in
     *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
 
+# Default editor: vim (Debian's `editor` alternative defaults to nano). Covers tools
+# that honour $EDITOR/$VISUAL (git uses core.editor=vim regardless; the system-wide
+# `editor` alternative is set to vim by the bootstrap's packages role).
+export EDITOR=vim
+export VISUAL=vim
+
 # GPG: tell gpg-agent which terminal to prompt on (needed for signing in the shell)
 export GPG_TTY=$(tty)
 

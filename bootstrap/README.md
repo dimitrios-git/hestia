@@ -9,7 +9,7 @@ file is the per-role reference.
 
 **Status: growing.** Implemented: `packages` (apt), `dotfiles` (symlinks from the
 manifest), `fonts` (Nerd Fonts → `~/.local/share/fonts`), `localbin` (pinned prebuilt
-release binaries → `~/.local/bin`: bluetuith, hcloud, tofu/OpenTofu), `gtk_theme` (the hestia GTK3 theme
+release binaries → `~/.local/bin`: bluetuith, hcloud, tofu/OpenTofu, cf-terraforming), `gtk_theme` (the hestia GTK3 theme
 — recoloured adw-gtk3 → `~/.local/share/themes/hestia[-dark]`), `sway_session` (the
 `/usr/local/bin/start-sway` launcher — NVIDIA flags applied only when an NVIDIA GPU is
 live), `samba` (the layer-(a)

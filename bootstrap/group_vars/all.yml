@@ -143,6 +143,15 @@ localbin_binaries:
       amd64: "46b48c3438c65cf479fc076c9281422ffa2f493548d1e813d154c835c5986a08"
       arm64: "b2110d1ce46e366ce861b7f53d293dad99080075629aed7fb50d7328916d91c2"
 
+  - name: cf-terraforming  # export existing Cloudflare config -> Terraform/OpenTofu .tf (pairs with tofu); not in apt
+    version: "0.27.0"
+    url: "https://github.com/cloudflare/cf-terraforming/releases/download/v{ver}/cf-terraforming_{ver}_linux_{arch}.tar.gz"
+    member: cf-terraforming
+    arch_map: { x86_64: amd64, aarch64: arm64 }   # cf-terraforming names x86_64 as `amd64`
+    checksums:
+      amd64: "b0673abb7cd7ceda64146756917c99c36f234bb8e900c852a9901d9bfa4b66b4"
+      arm64: "228e87760c24a571bd390acd77f9f272338d69a62c1605bd0015994489f9547d"
+
 # --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------
 # Dependency-audited 2026-06-21 (swept every config for invoked binaries). Things
 # that are NOT apt packages, or are heavy/optional, are listed in README.md /

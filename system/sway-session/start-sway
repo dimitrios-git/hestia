@@ -24,6 +24,15 @@ export MOZ_ENABLE_WAYLAND=1
 # ignore GTK_THEME (their accent is locked on 1.7 — see docs/theming.md).
 export GTK_THEME=estia-dark
 
+# Make the SSH agent reachable by every app sway `exec`s (wofi launches, GUI git
+# clients, IDEs pushing over ssh, …). The credential-unlock hook warms id_dimitrios
+# into the agent at this deterministic socket; exporting the var HERE — before sway,
+# and even before the socket exists — means GUI apps inherit it. Without this, the
+# var only lives in ~/.bashrc, so terminal ssh works but sway-launched apps silently
+# fall back to "no agent" (the bug behind the Zabbix-PWA launcher needing its own
+# SSH_AUTH_SOCK line).
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/openssh_agent"
+
 # --- NVIDIA-only workarounds (applied only when an NVIDIA GPU is in use) -------
 sway_args=()
 if [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; then

@@ -1,5 +1,5 @@
 #
-# Samba config for thetower — file exchange with the Windows laptop over Tailscale.
+# Samba config for {{ system_hostname | default('estia') }} — file exchange with the Windows laptop over Tailscale.
 # Tracked in the dotfiles repo as system/samba/smb.conf.j2; this is a LAYER-(a)
 # system config — RENDERED BY ANSIBLE (the `samba` role) and copied to
 # /etc/samba/smb.conf (never symlinked). The host-specific LAN subnet comes from
@@ -39,14 +39,14 @@
 
    # --- Hygiene: SMB/445 only, no legacy NetBIOS browsing on the LAN ---
    workgroup = WORKGROUP
-   server string = thetower
+   server string = {{ system_hostname | default('estia') }}
    disable netbios = yes
    smb ports = 445
    log file = /var/log/samba/log.%m
    max log size = 1000
 
 [share]
-   comment = thetower <-> windows file exchange (Tailscale only)
+   comment = {{ system_hostname | default('estia') }} <-> windows file exchange (Tailscale only)
    path = /srv/smbshare
    valid users = @smbshare
    read only = no

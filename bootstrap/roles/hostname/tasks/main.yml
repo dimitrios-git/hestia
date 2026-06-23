@@ -1,0 +1,16 @@
+---
+# Set the machine's hostname (pantheon scheme — e.g. hephaestus). Reproducible:
+# a fresh install converges to the same name. Skipped unless `system_hostname` is
+# set (host_vars/localhost.yml). Mirrors what infra does for the cloud hosts.
+
+- name: Set the system hostname
+  ansible.builtin.hostname:
+    name: "{{ system_hostname }}"
+  become: true
+
+- name: Map the hostname in /etc/hosts (so sudo and tools resolve it)
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1\b'
+    line: "127.0.1.1 {{ system_hostname }}"
+  become: true

@@ -11,6 +11,11 @@
 # Ansible auto-loads host_vars/<inventory_hostname>.yml, so the override applies
 # with no extra flags.
 
+# Machine hostname (the `hostname` role sets /etc/hostname + /etc/hosts). estia
+# names machines after the Greek pantheon, mapped to role — e.g. hephaestus (the
+# forge/dev box), hermes (the cloud host). Omit to leave the hostname unmanaged.
+system_hostname: "hephaestus"
+
 # Install LibreOffice (vifm's office-doc opener)? Heavy (~hundreds of MB) and
 # off by default — everything else works without it. Set true to opt in.
 enable_libreoffice: false

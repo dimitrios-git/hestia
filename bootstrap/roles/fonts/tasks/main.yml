@@ -1,6 +1,6 @@
 ---
 # Install the Nerd Fonts the desktop configs reference (kitty Lilex, waybar
-# BigBlueTerm437). User-level (no become), into ~/.local/share/fonts. Idempotent
+# BigBlueTermPlus). User-level (no become), into ~/.local/share/fonts. Idempotent
 # via `creates:` (skips the download+extract entirely once installed). Needs
 # `unzip` (apt — installed by the packages role) to extract the .zip archives.
 

@@ -33,7 +33,7 @@ bootstrap/
   roles/
     packages/           # apt install (become)
     dotfiles/           # symlink plain configs + render templated_configs into $HOME (no root)
-    fonts/              # Nerd Fonts (Lilex, BigBlueTerm437) into ~/.local/share/fonts (no root)
+    fonts/              # Nerd Fonts (Lilex, BigBlueTermPlus) into ~/.local/share/fonts (no root)
     localbin/           # pinned GitHub-release binaries (bluetuith) into ~/.local/bin (no root)
     gtk_theme/          # hestia GTK3 theme: recoloured adw-gtk3 into ~/.local/share/themes (no root)
     sway_session/       # deploy system/sway-session/start-sway -> /usr/local/bin (become)

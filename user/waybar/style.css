@@ -1,5 +1,5 @@
 * {
-    font-family: "BigBlueTerm437 Nerd Font Mono";
+    font-family: "BigBlueTermPlus Nerd Font Mono";
     font-size: 16px;
     border: none;
     border-radius: 0;
@@ -97,7 +97,11 @@ window#waybar {
 }
 
 /* Tooltips use Lilex (scalable) rather than the bar's bitmap BigBlueTerm font.
-   The bar (the `*` rule above) stays BigBlueTerm. */
+   The bar (the `*` rule above) stays BigBlueTerm — the `Plus` variant, not
+   `437`: `437` is the literal DOS code-page-437 build (only ~12 Greek *symbol*
+   glyphs — α π Σ Ω …, no alphabet), so a Greek window title rendered its ε as a
+   euro-like lunate-epsilon and fell back mid-word for the rest. `Plus` is the
+   same bitmap typeface with full Greek (and more), so titles render cleanly. */
 tooltip {
     font-family: "Lilex Nerd Font Mono";
     font-size: 17px;

@@ -1,9 +1,12 @@
 ---
 # Nerd Fonts the desktop configs reference — kitty uses `Lilex Nerd Font Mono`,
-# waybar uses `BigBlueTerm437 Nerd Font Mono`. Not in apt; fetched from the
+# waybar uses `BigBlueTermPlus Nerd Font Mono`. Not in apt; fetched from the
 # ryanoasis/nerd-fonts release (pinned) into ~/.local/share/fonts. `marker` is a
 # file shipped in each archive, used as the idempotency `creates:` guard.
+# The `BigBlueTerminal` archive ships both the `Plus` and `437` variants; waybar
+# uses `Plus` because `437` is code-page-437-limited (no Greek alphabet, only a
+# dozen DOS Greek/math symbols) and mangles non-Latin window titles.
 nerd_fonts_version: "v3.4.0"
 nerd_fonts:
   - { archive: Lilex,           marker: LilexNerdFontMono-Regular.ttf }
-  - { archive: BigBlueTerminal, marker: BigBlueTerm437NerdFontMono-Regular.ttf }
+  - { archive: BigBlueTerminal, marker: BigBlueTermPlusNerdFontMono-Regular.ttf }

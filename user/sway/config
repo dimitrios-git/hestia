@@ -252,11 +252,16 @@ for_window [app_id="^FFPWA-"]  inhibit_idle fullscreen
 # wlroots resets the gamma ramp the instant the setting client disconnects, so
 # gammastep stays alive to *hold* the dim. swayidle -w waits for each timeout
 # command to finish, so a foreground gammastep would wedge swayidle forever (no
-# resume, no lock). Backgrounding lets the notify-send return; `resume` then just
-# `pkill`s gammastep and the disconnect restores brightness.
+# resume, no lock). Backgrounding lets the notify-send return; `resume` then
+# `pkill`s gammastep (the disconnect restores brightness) AND dismisses the
+# warning. The -t 30000 timeout would otherwise leave the "Locking in 30 seconds"
+# notice on screen for the full 30s after input already cancelled the lock, so on
+# resume we dismiss it by id: notify-send -p prints the id (stashed in tmpfs) and
+# makoctl dismiss -n <id> clears that one notification (not -a, which would also
+# drop unrelated notifications on every wake).
 exec_always pkill swayidle; swayidle -w \
-    timeout 270 'pkill -x gammastep; gammastep -O 6500 -b 0.4 & notify-send -u critical -t 30000 "Locking in 30 seconds"' \
-        resume 'pkill -x gammastep' \
+    timeout 270 'pkill -x gammastep; gammastep -O 6500 -b 0.4 & notify-send -p -u critical -t 30000 "Locking in 30 seconds" > "$XDG_RUNTIME_DIR/lock-warn.id"' \
+        resume 'pkill -x gammastep; id=$(cat "$XDG_RUNTIME_DIR/lock-warn.id" 2>/dev/null); [ -n "$id" ] && makoctl dismiss -n "$id"; rm -f "$XDG_RUNTIME_DIR/lock-warn.id"' \
     timeout 300 'swaylock -f' \
     timeout 600 'swaymsg "output * dpms off"' \
     resume 'swaymsg "output * dpms on"' \

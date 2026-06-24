@@ -240,8 +240,28 @@ for_window [app_id="chromium"] inhibit_idle fullscreen
 for_window [app_id="mpv"]      inhibit_idle fullscreen
 for_window [app_id="^FFPWA-"]  inhibit_idle fullscreen
 
+# 30s before the lock, dim *all* outputs to 40% (gammastep software gamma, not
+# backlight — this desktop's external DP monitors expose no /sys/class/backlight,
+# so brightnessctl can't touch them) and raise a persistent red notice. The dim
+# is the unmissable cue across both 32" screens regardless of which one has focus;
+# any input before 300s fires the `resume`, which kills gammastep and restores
+# full brightness (lock never happens). Temp 6500 = neutral, so it's a pure
+# brightness drop, no colour shift.
+#
+# gammastep MUST be backgrounded (&): on Wayland its -O "one-shot" doesn't exit —
+# wlroots resets the gamma ramp the instant the setting client disconnects, so
+# gammastep stays alive to *hold* the dim. swayidle -w waits for each timeout
+# command to finish, so a foreground gammastep would wedge swayidle forever (no
+# resume, no lock). Backgrounding lets the notify-send return; `resume` then
+# `pkill`s gammastep (the disconnect restores brightness) AND dismisses the
+# warning. The -t 30000 timeout would otherwise leave the "Locking in 30 seconds"
+# notice on screen for the full 30s after input already cancelled the lock, so on
+# resume we dismiss it by id: notify-send -p prints the id (stashed in tmpfs) and
+# makoctl dismiss -n <id> clears that one notification (not -a, which would also
+# drop unrelated notifications on every wake).
 exec_always pkill swayidle; swayidle -w \
-    timeout 270 'notify-send "Locking in 30 seconds"' \
+    timeout 270 'pkill -x gammastep; gammastep -O 6500 -b 0.4 & notify-send -p -u critical -t 30000 "Locking in 30 seconds" > "$XDG_RUNTIME_DIR/lock-warn.id"' \
+        resume 'pkill -x gammastep; id=$(cat "$XDG_RUNTIME_DIR/lock-warn.id" 2>/dev/null); [ -n "$id" ] && makoctl dismiss -n "$id"; rm -f "$XDG_RUNTIME_DIR/lock-warn.id"' \
     timeout 300 'swaylock -f' \
     timeout 600 'swaymsg "output * dpms off"' \
     resume 'swaymsg "output * dpms on"' \

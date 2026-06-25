@@ -59,8 +59,9 @@ Legend: ✅ themed · 🟡 partial · ⬜ not yet.
 | vim / nvim | `wildcharm` scheme | ✅ | external plugin + render-markdown accent |
 | zathura | key=value config | ✅ | `user/zathura/zathurarc`; UI chrome + document recolour (dark mode on, `r` toggles) |
 | GTK3 apps (Remmina, GIMP, FF file chooser) | recoloured adw-gtk3 theme | ✅ | `gtk_theme` role builds `hestia-dark` (adw-gtk3 + `#ce0056`); dark + exact red |
-| GTK4 / libadwaita apps (gnome-calculator, nautilus) | libadwaita | 🟡 | dark only — accent **locked on libadwaita 1.7**; `gtk-4.0/gtk.css` `:root` override is ready for libadwaita 1.8+ |
-| Breeze (Qt apps) | Qt theme / `kdeglobals` | ⬜ | the Qt/KDE companion to Adwaita — later |
+| GTK4 / libadwaita apps (gnome-calculator, nautilus) | libadwaita | 🟡 | dark only — accent **locked on libadwaita 1.7** (trixie is frozen at 1.7.6); libadwaita **≥1.8** accepts an arbitrary-hex `:root { --accent-bg-color }`, which `gtk-4.0/gtk.css` already stages → exact red **auto-activates on the move to Debian 14** (forky/sid carry 1.9.1). Not a Yaru-fixable gap; see CLAUDE.md GTK section |
+| Icons (app / folder / places) | Yaru (Suru) icon theme | ⬜ | **planned**: custom **`#ce0056` Yaru icon flavor** via a bootstrap role (SCSS/meson accent build), mirroring `gtk_theme`/`localbin`. The icons gap — adw-gtk3 themes none, and icons are immune to the libadwaita accent lock. Yaru evaluated 2026-06 and scoped to icons only (widgets stay adw-gtk3) |
+| Qt / KDE apps | Kvantum / `kdeglobals` | ⬜ | the Qt companion to Adwaita — **Kvantum** is the custom-`#ce0056`-accent route (or a recoloured Breeze); separate track, later |
 | Firefox + firefoxpwa PWAs | GTK3 (via `GTK_THEME`) | ✅ | chrome/menus/file chooser follow hestia-dark; only in-page web form controls might need `userContent` (if ever) |
 
 Add a row when you start a new app; flip it to ✅ when it passes step 5.

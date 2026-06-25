@@ -1,99 +1,51 @@
 ---
-# Build + install a #ce0056-recoloured Yaru icon theme. Idempotent via a
-# (version, accent) marker — the render is the expensive step, so the marker
-# short-circuits the whole block on re-run. See defaults/main.yml for the why.
+# Download + install the prebuilt Yaru-hestia icon theme (no root, no build deps —
+# the render happened once, off-machine; see README.md). Idempotent via a
+# per-release marker. Uses target_home (not ansible_env) because the play runs
+# gather_facts: false.
 
-- name: Install Yaru icon build dependencies (build-only; heavy — inkscape etc.)
-  ansible.builtin.apt:
-    name: "{{ yaru_icons_build_deps }}"
-    state: present
-  become: true
-
-- name: Check the Yaru-icons build marker
+- name: Check the Yaru-icons marker
   ansible.builtin.stat:
     path: "{{ yaru_icons_marker }}"
   register: yaru_icons_marker_stat
 
-- name: Build and install the recoloured Yaru icon theme
+- name: Install the Yaru-hestia icon theme
   when: not yaru_icons_marker_stat.stat.exists
-  vars:
-    yaru_src: "{{ yaru_icons_build_root }}/yaru-{{ yaru_icons_version }}"
   block:
-    - name: Ensure build + state directories
+    - name: Ensure the icons, cache and state dirs exist
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
         mode: "0755"
       loop:
-        - "{{ yaru_icons_build_root }}"
+        - "{{ yaru_icons_dir }}"
+        - "{{ yaru_icons_dl | dirname }}"
         - "{{ yaru_icons_marker | dirname }}"
 
-    - name: Download the pinned Yaru source (sha256-verified)
+    - name: Download the theme tarball (sha256-verified)
       ansible.builtin.get_url:
-        url: "https://github.com/ubuntu/yaru/archive/refs/tags/{{ yaru_icons_version }}.tar.gz"
-        dest: "{{ yaru_icons_build_root }}/yaru-{{ yaru_icons_version }}.tar.gz"
+        url: "{{ yaru_icons_url }}"
+        dest: "{{ yaru_icons_dl }}"
         checksum: "sha256:{{ yaru_icons_sha256 }}"
         mode: "0644"
 
-    - name: Extract the source
+    - name: Extract the theme into ~/.local/share/icons
       ansible.builtin.unarchive:
-        src: "{{ yaru_icons_build_root }}/yaru-{{ yaru_icons_version }}.tar.gz"
-        dest: "{{ yaru_icons_build_root }}"
+        src: "{{ yaru_icons_dl }}"
         remote_src: true
-        creates: "{{ yaru_src }}/meson.build"
+        dest: "{{ yaru_icons_dir }}"
+        creates: "{{ yaru_icons_dir }}/{{ yaru_icons_theme }}/index.theme"
 
-    # Add a `hestia` accent flavour to the source. Two edits, each anchored on the
-    # unique 'bark' line (re.MULTILINE, so ^$ are per-line): (1) inject a branch in
-    # the accent SSoT mapping 'hestia' -> #ce0056 just before the 'bark' branch; (2)
-    # add 'hestia' to the meson accent-colors `choices` (else meson rejects the
-    # -Daccent-colors=hestia value). yaru_flavours then picks it up as Yaru-hestia.
-    - name: Add the hestia accent branch to the accent SSoT
-      ansible.builtin.replace:
-        path: "{{ yaru_src }}/common/accent-colors.scss.in"
-        regexp: "^    \\} @else if \\$accent_color == 'bark' \\{$"
-        replace: "    } @else if $accent_color == '{{ yaru_icons_flavour }}' {\n        $color: {{ yaru_icons_accent }};\n    } @else if $accent_color == 'bark' {"
-
-    - name: Add hestia to the meson accent-colors choices
-      ansible.builtin.replace:
-        path: "{{ yaru_src }}/meson_options.txt"
-        regexp: "^        'bark',$"
-        replace: "        '{{ yaru_icons_flavour }}',\n        'bark',"
-
-    # icons-only, into ~/.local. -Dgtk=true is mandatory: the icon colouriser reuses
-    # the GTK-compiled accent CSS, so accent generation is hard-gated on it.
-    - name: meson setup (icons only, prefix ~/.local)
+    # Best-effort: the theme works without a cache (GTK reads index.theme), but the
+    # cache speeds lookups. Skip cleanly if gtk-update-icon-cache isn't installed.
+    - name: Refresh the icon caches
       ansible.builtin.command:
-        cmd: >-
-          meson setup build --prefix={{ yaru_icons_prefix }}
-          -Dgtk=true -Dicons=true -Ddefault=true -Ddark=true
-          -Dgnome-shell=false -Dgtksourceview=false -Dmetacity=false
-          -Dsounds=false -Dsessions=false
-          -Daccent-colors={{ yaru_icons_flavour }}
-        chdir: "{{ yaru_src }}"
-        creates: "{{ yaru_src }}/build/build.ninja"
-
-    # The slow part: inkscape rasterises every accented SVG at every size. Needs a
-    # display, hence xvfb-run. (If inkscape complains about D-Bus on a headless box,
-    # wrap with `dbus-run-session --`.) Rendering all enabled flavours guarantees the
-    # Yaru-hestia folders are generated from our patched source, not committed PNGs.
-    - name: Render icons (inkscape under xvfb — several minutes)
-      ansible.builtin.command:
-        cmd: xvfb-run -a ninja -C build render-icons
-        chdir: "{{ yaru_src }}"
+        cmd: "gtk-update-icon-cache -qtf {{ yaru_icons_dir }}/{{ item }}"
+      loop: "{{ yaru_icons_bundled }}"
       changed_when: true
+      failed_when: false
 
-    - name: Install the icon theme into ~/.local/share/icons
-      ansible.builtin.command:
-        cmd: ninja -C build install
-        chdir: "{{ yaru_src }}"
-      changed_when: true
-
-    - name: Refresh the icon cache for {{ yaru_icons_theme }}
-      ansible.builtin.command:
-        cmd: "gtk-update-icon-cache -qtf {{ yaru_icons_prefix }}/share/icons/{{ yaru_icons_theme }}"
-      changed_when: true
-
-    - name: Mark the build complete
+    - name: Mark the theme installed
       ansible.builtin.file:
         path: "{{ yaru_icons_marker }}"
         state: touch

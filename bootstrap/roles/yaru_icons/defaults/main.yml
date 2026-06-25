@@ -1,39 +1,17 @@
 ---
-# Build a custom-accent **Yaru icon theme** recoloured to Debian red #ce0056 and
-# install it (no root) into ~/.local/share/icons. There is no sed-shortcut like the
-# gtk_theme role uses for adw-gtk3 — Yaru ships its accented folder icons as
-# rasterised PNGs, so the accent must be *rendered* from source. That pulls in a
-# build toolchain (meson/ninja/sassc/inkscape/optipng + xvfb for headless inkscape)
-# and is slow, so this role is **opt-in** (enable_yaru_icons, default false). See
-# docs/theming.md and the GTK/Adwaita section of CLAUDE.md.
-#
-# Approach: add a proper `hestia` accent flavour to Yaru's source — a branch in the
-# accent SSoT (get_accent_color → #ce0056) + the name into the meson `accent-colors`
-# choices — then build just that flavour. It installs as `Yaru-hestia` (+ a
-# `Yaru-hestia-dark`); base `Yaru`/`Yaru-dark` install too (the accent flavour
-# inherits them for every non-accent icon).
-#
-# NOTE (contrast): Yaru runs the accent through `optimize-contrast()` for legibility
-# (e.g. its orange #E95420 paints as #d6430a), so the rendered folders are a
-# contrast-adjusted #ce0056, not byte-exact. Verify on-target.
-yaru_icons_version: "26.10.1"
-yaru_icons_sha256: "93e96ce884020266cf860dee3462d77c9473eb5186cca6f21af4e7d069049717"
-yaru_icons_accent: "#ce0056"            # the hestia accent -> Debian red
-yaru_icons_flavour: "hestia"            # the accent flavour we add + build
-yaru_icons_theme: "Yaru-hestia"         # resulting installed theme name
+# Install the prebuilt **Yaru-hestia** icon theme (Debian-red #ce0056 accent) into
+# ~/.local/share/icons — no root, no build toolchain on the target. The theme is
+# built on demand by the `claude` agent and published as a hestia GitHub release;
+# this role just downloads + sha256-verifies + extracts it (the same pull pattern
+# as the localbin/fonts roles). See docs/theming.md and the GTK/Adwaita section of
+# CLAUDE.md. The build/maintenance recipe lives in this role's README.md.
+yaru_icons_release: "yaru-hestia-v1"        # the hestia release tag holding the asset
+yaru_icons_url: "https://github.com/dimitrios-git/hestia/releases/download/{{ yaru_icons_release }}/Yaru-hestia-icons.tar.gz"
+yaru_icons_sha256: "5f6a487a9e67a4232f4a31305bf57e0cef7d850dd69269ca4261dcd4b165ca94"
 
-yaru_icons_prefix: "{{ ansible_env.HOME }}/.local"
-yaru_icons_build_root: "{{ ansible_env.HOME }}/.cache/hestia/yaru-build"
-yaru_icons_marker: "{{ ansible_env.HOME }}/.local/state/hestia/.yaru-icons-{{ yaru_icons_version }}-ce0056"
+yaru_icons_theme: "Yaru-hestia"             # the active icon theme (settings.ini / gsettings select this)
+yaru_icons_bundled: [Yaru, Yaru-hestia]     # dirs the tarball extracts (base + accent overlay)
 
-# Build-only apt deps (heavy — inkscape especially). Removable after a successful
-# build if you want the space back (they're not needed at runtime).
-yaru_icons_build_deps:
-  - meson
-  - ninja-build
-  - sassc
-  - inkscape
-  - optipng
-  - xvfb
-  - dbus-x11
-  - libgtk-3-bin        # gtk-update-icon-cache
+yaru_icons_dir: "{{ target_home }}/.local/share/icons"
+yaru_icons_dl: "{{ target_home }}/.cache/hestia/Yaru-hestia-icons-{{ yaru_icons_release }}.tar.gz"
+yaru_icons_marker: "{{ target_home }}/.local/state/hestia/.yaru-icons-{{ yaru_icons_release }}"

@@ -37,7 +37,7 @@ bootstrap/
     fonts/              # Nerd Fonts (Lilex, BigBlueTermPlus) into ~/.local/share/fonts (no root)
     localbin/           # pinned GitHub-release binaries (bluetuith, hcloud, tofu) into ~/.local/bin (no root)
     gtk_theme/          # hestia GTK3 theme: recoloured adw-gtk3 into ~/.local/share/themes (no root)
-    yaru_icons/         # opt-in: build the #ce0056 Yaru icon theme into ~/.local/share/icons (heavy; build deps via become)
+    yaru_icons/         # opt-in: install the prebuilt #ce0056 Yaru icon theme into ~/.local/share/icons (sha256 download, no root)
     sway_session/       # deploy system/sway-session/start-sway -> /usr/local/bin (become)
     tailscale/          # Tailscale mesh VPN from its own apt repo (become; `tailscale up` manual)
     samba/              # Samba share: /etc/samba/smb.conf + /srv/smbshare (become)
@@ -125,7 +125,7 @@ installer (`../docs/repo-structure-design.md` §6):
 | `enable_claude_user` | `claude_user` | — | dedicated `claude` agent user + shared trees (`/srv/devshare` + `/srv/clipshare` screenshot drop) + ACLs |
 | `enable_credentials` | `credentials` | `credentials: [gnome-keyring, libsecret-tools]` | login auto-unlock of SSH + GPG |
 | `enable_libreoffice` | *(none — package-only)* | `office: [libreoffice]` | LibreOffice for vifm's office-doc opener (**default off** — heavy) |
-| `enable_yaru_icons` | `yaru_icons` | — (role installs its own build deps) | build the `#ce0056` Yaru **icon** theme from source (**default off** — heavy: pulls inkscape/xvfb/meson, renders for minutes; installs to `~/.local`, no root) |
+| `enable_yaru_icons` | `yaru_icons` | — | install the prebuilt `#ce0056` Yaru **icon** theme (**default off**) — a sha256-verified ~27 MB download into `~/.local`, no root, no build toolchain (the theme is built on demand by the `claude` agent and published as a hestia release; see the role README) |
 | `enable_nvidia` | `nvidia` | — | proprietary NVIDIA driver from non-free (**default off** — host-specific, needs a reboot; setup.sh detects a card) |
 
 Disabling a feature also **skips its apt packages** (via `package_group_features`

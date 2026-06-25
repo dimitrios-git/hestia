@@ -50,17 +50,33 @@ prompt_exit_status_color() {
     fi
 }
 
+# Username segment: prepended only for elevated / agent identities, so a normal
+# login prompt stays "path branch $". Root → red, the `claude` agent → orange.
+# This is ONE adaptive rc sourced by each user, colouring itself by $EUID/$USER
+# — which is why `sudo su` shows red: root sources THIS file, not the caller's
+# bashrc (a "go red when root" check in the caller's prompt never fires, since
+# you're running root's shell once elevated). Empty for a normal login user.
+if [ "${EUID:-$(id -u)}" -eq 0 ]; then
+    prompt_user_color='1;31'        # root: red
+elif [ "$(id -un)" = claude ]; then
+    prompt_user_color='38;5;208'    # claude agent: orange
+else
+    prompt_user_color=''            # normal user: no username segment
+fi
+
 if [ "$color_prompt" = yes ]; then
-PS1="${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\w"
+PS1="${debian_chroot:+($debian_chroot)}"
+[ -n "$prompt_user_color" ] && PS1+="\[\033[${prompt_user_color}m\]\u "
+PS1+="\[\033[1;34m\]\w"
 PS1+="\[\033[1;33m\]\$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ \1/')"
 PS1+="\[\033[1;32m\]\$(staged_changes=\$(git diff --cached --numstat 2>/dev/null | wc -l); [[ \$staged_changes -gt 0 ]] && echo \" +\$staged_changes\")"
 PS1+="\[\033[1;31m\]\$(unstaged_changes=\$(git diff --numstat 2>/dev/null | wc -l); [[ \$unstaged_changes -gt 0 ]] && echo \" !\$unstaged_changes\")"
 PS1+="\[\033[1;31m\]\$(untracked_files=\$(git ls-files --others --exclude-standard 2>/dev/null | wc -l); [[ \$untracked_files -gt 0 ]] && echo \" ?\$untracked_files\")"
 PS1+="\[\033[\$(prompt_exit_status_color)\] \\$\[\033[00m\] "
 else
-    PS1="${debian_chroot:+($debian_chroot)}\w\$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ \1/') \\$ "
+    PS1="${debian_chroot:+($debian_chroot)}${prompt_user_color:+\u }\w\$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ \1/') \\$ "
 fi
-unset color_prompt force_color_prompt
+unset color_prompt force_color_prompt prompt_user_color
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in

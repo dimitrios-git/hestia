@@ -264,7 +264,7 @@ askyn enable_tailscale   "Install Tailscale? (mesh VPN; the share's remote reach
 askyn enable_claude_user "Create the dedicated 'claude' agent user?" "$def_claude"
 askyn enable_credentials "Enable login auto-unlock of SSH + GPG?"    "$def_creds"
 askyn enable_libreoffice "Install LibreOffice? (heavy — vifm opens office docs)" "$def_office"
-askyn enable_yaru_icons  "Build the #ce0056 Yaru icon theme? (heavy — pulls inkscape, slow render)" "$def_yaruicons"
+askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"
 

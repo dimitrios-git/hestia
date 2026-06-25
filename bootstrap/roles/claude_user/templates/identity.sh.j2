@@ -1,0 +1,73 @@
+#!/bin/bash
+# RENDERED by the claude_user role from templates/identity.sh.j2 — do not edit the
+# rendered copy. Sets up claude's LOCAL identity: a passwordless SSH push key{% if claude_sign_commits %} +
+# a passwordless GPG signing key{% endif %} + git config, all in claude's own 0700 home. The role
+# runs this AS claude (`sudo -H -u {{ claude_user }}`). Idempotent — re-running won't
+# duplicate keys. Passwordless is deliberate: claude is a headless, no-login service
+# account, so there's no pinentry/agent-unlock to deal with. See claude-user-design.md.
+set -e
+
+NAME="{{ claude_git_name }}"
+EMAIL="{{ claude_git_email }}"
+changed=0
+
+# --- SSH key (push authentication) ---
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+if [ ! -f ~/.ssh/{{ claude_ssh_key }} ]; then
+    ssh-keygen -t ed25519 -N "" -f ~/.ssh/{{ claude_ssh_key }} -C "$EMAIL"
+    changed=1
+fi
+
+# --- SSH config: pin this identity for github (IdentitiesOnly avoids offering others) ---
+cat > ~/.ssh/config <<EOF
+Host github.com
+    IdentityFile ~/.ssh/{{ claude_ssh_key }}
+    IdentitiesOnly yes
+EOF
+chmod 600 ~/.ssh/config
+
+# --- git identity ---
+git config --global user.name        "$NAME"
+git config --global user.email       "$EMAIL"
+git config --global init.defaultBranch main
+git config --global gpg.program      gpg
+
+{% if claude_sign_commits %}
+# --- GPG signing key (passwordless) ---
+if ! gpg --list-secret-keys "$EMAIL" >/dev/null 2>&1; then
+    gpg --batch --pinentry-mode loopback --passphrase "" \
+        --quick-generate-key "$NAME <$EMAIL>" ed25519 sign 0
+    changed=1
+fi
+KEYID=$(gpg --list-secret-keys --keyid-format=long --with-colons "$EMAIL" \
+        | awk -F: '/^sec:/{print $5; exit}')
+git config --global user.signingkey "$KEYID"
+git config --global commit.gpgsign  true
+{% else %}
+# signing disabled (claude_sign_commits=false)
+git config --global --unset commit.gpgsign 2>/dev/null || true
+{% endif %}
+
+[ "$changed" = 1 ] && echo "IDENTITY_CHANGED"
+
+# ====== the remaining steps a human must do on GitHub (values filled in) ======
+cat <<EOF
+
+================ claude identity: local part done — GitHub part (manual) ================
+Local identity is set in $HOME{% if claude_sign_commits %} (GPG signing key $KEYID){% endif %}. The GitHub side needs a
+human — an account + key uploads + a PAT can't be automated. On the bot account
+'{{ claude_github_bot }}' (https://github.com/settings/keys):
+
+1) Add this as an SSH *Authentication* key:
+$(cat ~/.ssh/{{ claude_ssh_key }}.pub)
+{% if claude_sign_commits %}
+2) Add this as a *GPG* key:
+$(gpg --armor --export "$KEYID")
+{% endif %}
+3) Sign claude's gh in as the bot, then invite it to a repo you own:
+     sudo -H -u {{ claude_user }} gh auth login      # choose SSH/HTTPS; paste a classic PAT (scopes: repo, read:org)
+     gh api -X PUT repos/OWNER/REPO/collaborators/{{ claude_github_bot }} -f permission=push
+   …then accept the invite as the bot:
+     sudo -H -u {{ claude_user }} gh api -X PATCH user/repository_invitations/INVITATION_ID
+========================================================================================
+EOF

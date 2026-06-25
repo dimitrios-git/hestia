@@ -1,0 +1,36 @@
+---
+# claude's LOCAL identity — keys + git config in claude's own home. Rendered from a
+# template and run AS claude via `sudo -H -u claude` (the same command the runbook
+# used by hand), invoked from root so it sidesteps the unprivileged-become temp-file
+# gotcha. Idempotent. The GitHub half (bot account, key uploads, PAT, repo invites)
+# is irreducibly interactive — the script ends by printing exactly those steps with
+# the keys + commands filled in.
+
+- name: Ensure claude's hestia cache dir exists
+  ansible.builtin.file:
+    path: "{{ claude_home }}/.cache/hestia"
+    state: directory
+    owner: "{{ claude_user }}"
+    group: "{{ claude_user }}"
+    mode: "0700"
+  become: true
+
+- name: Render claude's identity script
+  ansible.builtin.template:
+    src: identity.sh.j2
+    dest: "{{ claude_home }}/.cache/hestia/identity.sh"
+    owner: "{{ claude_user }}"
+    group: "{{ claude_user }}"
+    mode: "0700"
+  become: true
+
+- name: Set up claude's local identity (SSH/GPG keys + git config) as claude
+  ansible.builtin.command: "sudo -H -u {{ claude_user }} bash {{ claude_home }}/.cache/hestia/identity.sh"
+  become: true
+  register: claude_identity
+  changed_when: "'IDENTITY_CHANGED' in claude_identity.stdout"
+
+- name: Show the remaining (manual) GitHub onboarding steps
+  ansible.builtin.debug:
+    msg: "{{ claude_identity.stdout_lines | reject('equalto', 'IDENTITY_CHANGED') | list }}"
+  when: claude_identity.stdout_lines is defined   # the command is skipped under --check

@@ -122,18 +122,13 @@ renders `smb.conf.j2` from it.
 ansible-playbook site.yml --tags claude_user --check --ask-become-pass   # preview
 ansible-playbook site.yml --tags claude_user --ask-become-pass           # apply
 ```
-Then claude's identity (interactive / external — see `claude-user-design.md` §10):
-```sh
-sudo -u claude bash setup-claude-identity.sh        # keys + git config; prints 2 pubkeys
-sudo -u claude tee /home/claude/.ssh/config >/dev/null <<'EOF'
-Host github.com
-    IdentityFile ~/.ssh/id_claude
-    IdentitiesOnly yes
-EOF
-sudo -u claude chmod 600 /home/claude/.ssh/config
-```
-- Create the GitHub **bot account**, upload claude's SSH (auth) + GPG keys, add it
-  as a repo collaborator.
+The role now also sets up claude's **local identity** — passwordless SSH push key,
+passwordless GPG signing key (when `claude_sign_commits: true`, the setup.sh default),
+`~/.ssh/config`, and git config — and **prints the remaining GitHub steps** (the two
+pubkeys + the invite command) at the end of the run. So the only manual part left is
+the GitHub side, which can't be automated (account + key uploads + PAT need a human):
+- Create the GitHub **bot account**, upload the SSH (auth) + GPG keys the run printed,
+  and invite it as a push collaborator (`gh api -X PUT repos/OWNER/REPO/collaborators/dimitrios-claude -f permission=push`).
 - Authenticate claude's `gh` as the bot (for the PR workflow — see
   `working-with-claude.md`). Signed in as the bot, make a classic PAT with scopes
   `repo` + `read:org`, then, as claude:

@@ -1,13 +1,26 @@
 ---
 # Dedicated unprivileged agent user. See docs/claude-user-design.md (§4 design,
-# §10 the as-built record). This role does the filesystem/user/group plumbing;
-# the identity (keys, GitHub bot, Claude Code login) is interactive/external and
-# stays a documented manual step — see bootstrap/README.md.
+# §10 the as-built record). This role does the filesystem/user/group plumbing AND
+# the local half of claude's identity (keys + git config — tasks/identity.yml);
+# the GitHub half (bot account, key uploads, PAT, repo invites) is irreducibly
+# interactive and stays manual — the role prints exactly what to do.
 claude_user: claude
 devshare_group: devshare
 claude_admin_user: "{{ lookup('env', 'USER') }}"   # the human who shares /srv/devshare with claude
 claude_shared_tree: /srv/devshare                        # neutral root-owned collaboration tree
 claude_clipshare_tree: /srv/clipshare                    # shared screenshot drop (human -> claude)
+
+# --- claude's identity (tasks/identity.yml) ---------------------------------
+# The agent's git author + key identity. Defaults are this deployment's; override
+# in host_vars for a fork (a different agent identity / GitHub bot). The keys are
+# generated passwordless into claude's 0700 home — deliberate: claude is a headless,
+# no-login service account, so there's no pinentry/agent-unlock to deal with.
+claude_home: "/home/{{ claude_user }}"
+claude_git_name: "Claude (dimitrios's agent)"
+claude_git_email: "claude@charalampidis.pro"
+claude_sign_commits: true                # generate a GPG key + sign claude's commits ("if gpg is wanted")
+claude_ssh_key: "id_claude"              # ed25519 push-auth key in ~claude/.ssh
+claude_github_bot: "dimitrios-claude"    # the GitHub bot account that carries claude's keys (for the invite cmd)
 
 # NOTE (2026-06-20): the collaboration model is "two separate clones, sync via
 # git" — claude clones projects into /srv/devshare and works there; the human keeps a

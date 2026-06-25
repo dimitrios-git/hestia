@@ -94,3 +94,7 @@
   args:
     creates: "/var/lib/systemd/linger/{{ claude_user }}"
   become: true
+
+# --- claude's local identity (keys + git config; prints the manual GitHub steps) --
+- name: Set up claude's identity
+  ansible.builtin.import_tasks: identity.yml

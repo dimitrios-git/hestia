@@ -115,6 +115,7 @@ write_answers() {
 enable_samba: $enable_samba
 enable_tailscale: $enable_tailscale
 enable_claude_user: $enable_claude_user
+claude_sign_commits: $claude_sign_commits
 enable_credentials: $enable_credentials
 enable_libreoffice: $enable_libreoffice
 enable_yaru_icons: $enable_yaru_icons
@@ -228,6 +229,7 @@ def_music=$(cur cmus_music_dir);     def_music=${def_music:-$HOME/Music}
 def_samba=$(cur enable_samba);       def_samba=${def_samba:-true}
 def_tailscale=$(cur enable_tailscale); def_tailscale=${def_tailscale:-true}
 def_claude=$(cur enable_claude_user); def_claude=${def_claude:-true}
+def_claudesign=$(cur claude_sign_commits); def_claudesign=${def_claudesign:-true}
 def_creds=$(cur enable_credentials);  def_creds=${def_creds:-true}
 def_office=$(cur enable_libreoffice); def_office=${def_office:-false}
 def_yaruicons=$(cur enable_yaru_icons); def_yaruicons=${def_yaruicons:-false}
@@ -262,6 +264,11 @@ else
 fi
 askyn enable_tailscale   "Install Tailscale? (mesh VPN; the share's remote reach)" "$def_tailscale"
 askyn enable_claude_user "Create the dedicated 'claude' agent user?" "$def_claude"
+if [ "$enable_claude_user" = true ]; then
+    askyn claude_sign_commits "  Generate a passwordless GPG key so claude signs its commits?" "$def_claudesign"
+else
+    claude_sign_commits=$def_claudesign
+fi
 askyn enable_credentials "Enable login auto-unlock of SSH + GPG?"    "$def_creds"
 askyn enable_libreoffice "Install LibreOffice? (heavy — vifm opens office docs)" "$def_office"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
@@ -287,7 +294,7 @@ cat <<EOF
   Answers to $_verb:
     enable_samba       = $enable_samba$( [ "$enable_samba" = true ] && echo "   (LAN: $samba_lan_subnet)" )
     enable_tailscale   = $enable_tailscale
-    enable_claude_user = $enable_claude_user
+    enable_claude_user = $enable_claude_user$( [ "$enable_claude_user" = true ] && echo "   (claude signs commits: $claude_sign_commits)" )
     enable_credentials = $enable_credentials
     enable_libreoffice = $enable_libreoffice
     enable_nvidia      = $enable_nvidia

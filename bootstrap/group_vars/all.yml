@@ -183,6 +183,7 @@ apt_packages:
   sharing:      [samba]                        # enable_samba
   credentials:  [gnome-keyring, libsecret-tools]  # enable_credentials
   office:       [libreoffice]                   # enable_libreoffice (heavy, default off)
+  claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
 
 # Maps a feature-gated apt group -> its toggle. The `packages` role skips a group
 # whose toggle is false, so a disabled feature doesn't drag in its packages.
@@ -191,3 +192,4 @@ package_group_features:
   sharing:     "{{ enable_samba | bool }}"
   credentials: "{{ enable_credentials | bool }}"
   office:      "{{ enable_libreoffice | bool }}"
+  claude:      "{{ enable_claude_user | bool }}"

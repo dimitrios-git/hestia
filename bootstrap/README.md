@@ -15,8 +15,8 @@ release binaries → `~/.local/bin`: bluetuith, hcloud, tofu/OpenTofu, cf-terraf
 live), `tailscale` (the Tailscale mesh VPN from its own apt repo — `tailscale up` stays
 manual), `samba` (the layer-(a)
 Samba share — adds the Tailscale range to `hosts allow` only when `enable_tailscale` is also on), `claude_user`
-(the dedicated agent user + shared trees + repo ACLs — the *plumbing* of
-docs/claude-user-design.md; identity is a manual step, below), `credentials`
+(the dedicated agent user + shared trees + repo ACLs + claude's local identity —
+keys + git config; only the GitHub onboarding stays manual, below), `credentials`
 (the gnome-keyring launcher-untangle for login auto-unlock of SSH + GPG), and the
 opt-in `nvidia` (proprietary driver from non-free — default off, needs a reboot).
 
@@ -41,11 +41,10 @@ bootstrap/
     sway_session/       # deploy system/sway-session/start-sway -> /usr/local/bin (become)
     tailscale/          # Tailscale mesh VPN from its own apt repo (become; `tailscale up` manual)
     samba/              # Samba share: /etc/samba/smb.conf + /srv/smbshare (become)
-    claude_user/        # dedicated `claude` agent user + /srv/devshare + /srv/clipshare + repo ACLs (become)
+    claude_user/        # `claude` agent user + /srv/devshare + /srv/clipshare + ACLs + identity (keys, git config) (become)
     credentials/        # login auto-unlock: gnome-keyring launcher-untangle (become)
     nvidia/             # opt-in proprietary NVIDIA driver from non-free (become; default off)
   gen-symlink-table.py  # regenerate CLAUDE.md's symlink + rendered-template tables from the manifest
-  setup-claude-identity.sh   # Phase 4 of the claude-user setup (to become a role)
 ```
 
 ## Use
@@ -122,7 +121,7 @@ installer (`../docs/repo-structure-design.md` §6):
 |---|---|---|---|
 | `enable_samba` | `samba` | `sharing: [samba]` | Samba file share (`/etc`, `/srv/smbshare`); allows the Tailscale range when `enable_tailscale` is also on, else LAN-only |
 | `enable_tailscale` | `tailscale` | — (own apt repo, not an apt-group package) | Tailscale mesh VPN — the share's transport + remote reach; `tailscale up` auth stays manual |
-| `enable_claude_user` | `claude_user` | — | dedicated `claude` agent user + shared trees (`/srv/devshare` + `/srv/clipshare` screenshot drop) + ACLs |
+| `enable_claude_user` | `claude_user` | `claude: [gh]` | dedicated `claude` agent user + shared trees (`/srv/devshare` + `/srv/clipshare` screenshot drop) + ACLs + local identity (SSH/GPG keys + git config; GPG gated by `claude_sign_commits`) + `gh` for the PR workflow |
 | `enable_credentials` | `credentials` | `credentials: [gnome-keyring, libsecret-tools]` | login auto-unlock of SSH + GPG |
 | `enable_libreoffice` | *(none — package-only)* | `office: [libreoffice]` | LibreOffice for vifm's office-doc opener (**default off** — heavy) |
 | `enable_yaru_icons` | `yaru_icons` | — | install the prebuilt `#ce0056` Yaru **icon** theme (**default off**) — a sha256-verified ~27 MB download into `~/.local`, no root, no build toolchain (the theme is built on demand by the `claude` agent and published as a hestia release; see the role README) |
@@ -177,14 +176,14 @@ python3 gen-symlink-table.py
   longer manual either — the opt-in `enable_libreoffice` toggle above, default off.)
 - **System configs** under `../system/` — deployed by copy as root (see those
   runbooks); a `system` role will wrap them.
-- **`claude` identity** (the `claude_user` role does the user/group/ACL plumbing;
-  these stay manual — interactive or external):
-  1. `sudo -u claude bash bootstrap/setup-claude-identity.sh` — generates claude's
-     SSH + passwordless GPG keys and git config; prints the two public keys.
-  2. Create the GitHub **bot account**, upload the SSH (auth) + GPG keys, add it as
-     a repo collaborator.
-  3. `claude`'s `~/.ssh/config`: pin `IdentityFile ~/.ssh/id_claude` + `IdentitiesOnly yes`.
-  4. Install Claude Code as claude (native installer) and `claude` once to log in
+- **`claude` identity** — the `claude_user` role now does the **local** half (SSH +
+  passwordless GPG keys, `~/.ssh/config`, git config — `tasks/identity.yml`, gated by
+  `claude_sign_commits` for the GPG part) and **prints** the remaining steps. Only the
+  **GitHub side** stays manual (account + key uploads + PAT need a human):
+  1. Create the GitHub **bot account**, upload the SSH (auth) + GPG keys the run printed,
+     and invite it as a push collaborator (the run prints the `gh api … collaborators` command).
+  2. Authenticate claude's `gh` as the bot (classic PAT, scopes `repo` + `read:org`).
+  3. Install Claude Code as claude (native installer) and `claude` once to log in
      (headless device-code flow). See `../docs/claude-user-design.md` §10.
 - **Samba share password**: the `samba` role does everything *except* the
   interactive `sudo smbpasswd -a smbshare && sudo smbpasswd -e smbshare` (the

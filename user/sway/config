@@ -86,8 +86,9 @@ input type:keyboard {
     # Music: cmus + cava visualizer side by side
     bindsym $mod+m exec kitty --session music.session
     # Calculator: qalc (Qalculate CLI) in a floatterm — the floatterm app_id
-    # triggers the `floating enable, resize set 800 600` rule above.
-    bindsym $mod+c exec kitty --class floatterm -e qalc
+    # triggers the `floating enable, resize set 800 600` rule above. Toggles like
+    # the waybar widgets (pgrep -x): a second $mod+c closes it instead of stacking.
+    bindsym $mod+c exec pgrep -x qalc >/dev/null && pkill -x qalc || kitty --class floatterm -e qalc
 
     # Drag floating windows with $mod + left mouse, resize with $mod + right.
     floating_modifier $mod normal

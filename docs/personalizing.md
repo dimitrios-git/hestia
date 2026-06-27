@@ -23,6 +23,14 @@ Three layers, increasing in depth. You never touch `bootstrap/roles/` or `site.y
 
 Re-run `./setup.sh` (or `--yes` to reuse saved answers) to apply.
 
+> **The `apt` wrapper nudges you here.** hestia's `.bashrc` wraps `apt` so that
+> after `apt install <pkg>`, any package **not** already under `apt_packages:`
+> prints a one-line reminder to add it (so it survives a rebuild) and re-run
+> `./setup.sh --tags packages`. Packages already in the manifest install
+> silently — that's the signal you did it the reproducible way. The wrapper also
+> auto-elevates the root-only sub-commands, so you can drop the `sudo`; a plain
+> `sudo apt …` still works and simply bypasses the reminder.
+
 ## 2. Install anything else — `bootstrap/local.yml` (untracked)
 
 For software and tweaks beyond the defaults — extra apps, a third-party apt repo, a

@@ -172,6 +172,55 @@ claude-shell() {
     sudo -iu claude bash -c 'cd /srv/devshare 2>/dev/null; exec bash -l'
 }
 
+# ── hestia apt wrapper: keep the machine reproducible ────────────────────────
+# Installing a package by hand is fine for a quick try, but it won't survive a
+# rebuild. So after `apt install`, any package that ISN'T in the hestia manifest
+# gets a one-line reminder to track it. The wrapper also auto-elevates the
+# root-only sub-commands, so you can drop `sudo` (plain `sudo apt …` still works
+# and simply bypasses the guard). The repo is located from the ~/.bashrc symlink
+# target; override with $HESTIA_DIR if your checkout lives elsewhere.
+if command -v apt >/dev/null 2>&1; then
+    HESTIA_DIR="${HESTIA_DIR:-$( _b=$(readlink -f ~/.bashrc 2>/dev/null); printf '%s' "${_b%/user/bash/.bashrc}" )}"
+
+    apt() {
+        local sub="${1:-}" rc pfx=''
+        [ "$(id -u)" -ne 0 ] && pfx='sudo'
+        case "$sub" in
+            install|reinstall|remove|purge|autoremove|autopurge|update|upgrade|full-upgrade|dist-upgrade|clean|autoclean|edit-sources)
+                command $pfx apt "$@"; rc=$? ;;
+            *)
+                command apt "$@"; rc=$? ;;
+        esac
+        if [ "$rc" -eq 0 ] && { [ "$sub" = install ] || [ "$sub" = reinstall ]; }; then
+            _hestia_apt_untracked "${@:2}"
+        fi
+        return "$rc"
+    }
+
+    # Reminder for any just-installed package not listed under apt_packages in the
+    # manifest. The match is scoped to that block, so a name in a comment elsewhere
+    # won't count as "tracked"; if the manifest can't be found we warn anyway.
+    _hestia_apt_untracked() {
+        local manifest="$HESTIA_DIR/bootstrap/group_vars/all.yml" pkg untracked=()
+        for pkg in "$@"; do
+            case "$pkg" in -*) continue ;; esac          # skip option flags
+            if [ -r "$manifest" ] \
+               && awk '/^apt_packages:/{f=1;next} f&&/^[^[:space:]]/{f=0} f' "$manifest" \
+                  | grep -oE '\[[^]]*\]' | grep -qw -- "$pkg"; then
+                continue                                  # already tracked → no warning
+            fi
+            untracked+=("$pkg")
+        done
+        [ ${#untracked[@]} -eq 0 ] && return 0
+        printf '\n\033[1;33m⚠ hestia\033[0m  not tracked by hestia: \033[1m%s\033[0m\n' "${untracked[*]}"
+        printf "  Installed by hand — it won't survive a rebuild. To make it reproducible:\n"
+        printf '    1. add it to \033[1mbootstrap/group_vars/all.yml\033[0m → \033[1mapt_packages\033[0m (pick a group)\n'
+        printf '    2. re-run:  \033[1m./setup.sh --tags packages\033[0m\n'
+        [ -d "$HESTIA_DIR" ] && printf '  (repo: %s)\n' "$HESTIA_DIR"
+        printf '\n'
+    }
+fi
+
 # SSH: point at the Debian socket-activated ssh-agent user service (ssh-agent.socket).
 # greetd doesn't source this file, so interactive shells (terminals, Ansible) set it here;
 # Sway sets it for itself. Load a key with: ssh-add ~/.ssh/<your key>  (e.g. id_ed25519)

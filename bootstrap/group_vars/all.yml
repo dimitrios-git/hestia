@@ -180,7 +180,7 @@ localbin_binaries:
 apt_packages:
   wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, gammastep, playerctl, xwayland]   # gammastep: software gamma dim of all outputs as the pre-lock warning cue (no hardware backlight on this desktop)
   portals:   [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk, pipewire, pipewire-pulse, wireplumber]
-  terminal:  [kitty, vifm, cmus, cava, glow, imv, zathura, mpv, bat, poppler-utils, mediainfo, 7zip, unzip, pulsemixer, htop, qalc]   # bat: syntax-highlighted file preview in vifm (Debian installs it as `batcat`). chafa dropped — vifm no longer renders images in-pane (mediainfo info + imv to open)
+  terminal:  [kitty, vifm, tree, cmus, cava, glow, imv, zathura, mpv, bat, poppler-utils, mediainfo, 7zip, unzip, pulsemixer, htop, qalc]   # bat: syntax-highlighted file preview in vifm (Debian installs it as `batcat`). chafa dropped — vifm no longer renders images in-pane (mediainfo info + imv to open). tree: directory tree viewer (companion to vifm)
   editors:   [vim, neovim, build-essential, shellcheck]   # build-essential: nvim treesitter compiles parsers on first run; shellcheck: shell-script linter (neovim shell diagnostics + manual `shellcheck`)
   vcs_gpg:   [git, gnupg, pinentry-tty]
   net_bt:    [network-manager, bluez, rfkill]   # rfkill: waybar bluetooth right-click toggle

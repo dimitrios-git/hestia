@@ -51,6 +51,7 @@ dotfile_links:
   # Vim and Neovim find it (nvim prepends ~/.vim to its runtimepath).
   - { src: user/vim/colors/hestia.vim,      dest: "{{ target_home }}/.vim/colors/hestia.vim" }
   - { src: user/bash/.bashrc,               dest: "{{ target_home }}/.bashrc" }
+  - { src: user/bash/.dircolors,            dest: "{{ target_home }}/.dircolors" }
   - { src: user/git/.gitignore_global,      dest: "{{ target_home }}/.gitignore_global" }
   - { src: user/gnupg/gpg-agent.conf,       dest: "{{ target_home }}/.gnupg/gpg-agent.conf" }
   - { src: user/nvim/init.vim,              dest: "{{ target_home }}/.config/nvim/init.vim" }

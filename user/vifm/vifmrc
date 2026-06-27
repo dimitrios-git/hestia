@@ -22,11 +22,6 @@ set nohlsearch
 set incsearch
 set scrolloff=4
 
-" Graphics preview tuning. hardgraphicsclear redraws the screen to remove a
-" sixel image when moving off it (otherwise it lingers); graphicsdelay is the
-" terminal's draw timeout (kept at vifm's default).
-set previewoptions=graphicsdelay:50000,hardgraphicsclear
-
 " Show a live preview of the selected file in the other (right) pane on startup.
 " `w` (mapped below) toggles it off/on. `view!` is idempotent — it ensures quick
 " view is ON rather than toggling, so it sticks when vifmrc runs at launch.
@@ -91,15 +86,13 @@ filetype {*.7z}
 
 " Preview pane (toggle with w)
 
-" Images — true graphics preview via chafa sixels (requires chafa; kitty has
-" sixel support). %pd marks this as a command that draws graphics directly to
-" the terminal (without it vifm captures the escape sequence as text and shows
-" nothing). Sized to the pane (%pwx%ph) so it's fast — the old slowness was
-" full-resolution rendering. Sixel (not -f kitty) so vifm's hardgraphicsclear
-" redraw actually wipes the image when you move to the next file (kitty's native
-" protocol persists and ghosts). --animate off shows GIFs as a still frame.
+" Images — text info only (mediainfo: dimensions, format, colour depth). In-pane
+" image *rendering* was tried (chafa sixels, kitty icat) and dropped: the
+" graphics didn't display in vifm's pane on this kitty, and rendering on every
+" cursor move made scrolling an image folder laggy (keystroke backlog). Press
+" Enter to open the actual image in imv — fast, separate window (filextype above).
 fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}
-         \ chafa -f sixels -s %pwx%ph --animate off --polite on %f %pd
+         \ mediainfo %f
 
 " Markdown — rendered preview (requires glow). Explicit -s: glow drops color
 " when piped (preview pane), so force the themed style through the pipe.

@@ -54,7 +54,7 @@ Legend: ✅ themed · 🟡 partial · ⬜ not yet.
 | wofi | GTK CSS | ✅ | launcher |
 | cava | gradient config | ✅ | 8-stop accent gradient |
 | cmus | cterm slots (rc) | ✅ | accent tracks ANSI red |
-| vifm | `.vifm` colorscheme | ✅ | file-type colours from the ANSI set; preview pane on by default (`view!`, `w` toggles); catch-all `fileviewer` runs `scripts/preview.sh` for syntax-highlighted code preview (bat, wildcharm) with binary/dir fallback; images preview as chafa sixels (`%pd` graphics + `previewoptions=hardgraphicsclear`) |
+| vifm | `.vifm` colorscheme | ✅ | file-type colours from the ANSI set; preview pane on by default (`view!`, `w` toggles); catch-all `fileviewer` runs `scripts/preview.sh` for syntax-highlighted code preview (bat, wildcharm) with binary/dir fallback; images show text info (mediainfo) — in-pane rendering was dropped (kitty graphics didn't display in vifm and made scrolling laggy); open in imv instead |
 | bat | `.tmTheme` syntax theme | ✅ | `user/bat/themes/wildcharm.tmTheme` (scopes mapped from `palette.yml`); compiled into bat's cache by the dotfiles role (`bat cache --build`); drives vifm's code preview. Debian ships the binary as `batcat` |
 | glow | glamour JSON | ✅ | markdown render theme |
 | vim / nvim | `wildcharm` scheme | ✅ | external plugin + render-markdown accent |

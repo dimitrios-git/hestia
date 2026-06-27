@@ -27,3 +27,40 @@
 [safe]
 	directory = {{ claude_shared_tree | default('/srv/devshare') }}/*
 {% endif %}
+
+# --- hestia colours (wildcharm palette) ---------------------------------------
+# git's named defaults (red/green/cyan) already map to the wildcharm ANSI set via
+# the terminal — but that puts deletions on "red" == color1 == the brand accent
+# #d7005f, which is loud and conflates accent with deletion. So pin explicit hex:
+# diff content on clean bright red/green, and the accent #d7005f reserved for
+# branch identity (current branch / HEAD). git 2.26+ renders #hex as 24-bit truecolor.
+# Values with '#' must be quoted (git treats a bare '#' as a comment).
+[color]
+	ui = auto
+[color "branch"]
+	current = "#d7005f bold"   ; accent — the branch you're on
+	local = "#00af5f"          ; green
+	remote = "#ff5f87"         ; bright red
+	upstream = "#00afaf"       ; cyan
+[color "status"]
+	branch = "#d7005f bold"    ; accent
+	header = "#767676"         ; dim
+	added = "#00d75f"          ; staged → bright green
+	changed = "#ffaf00"        ; unstaged → yellow
+	untracked = "#ff5f87"      ; bright red
+	nobranch = "#ff5f87 bold"
+[color "diff"]
+	meta = "#767676 bold"      ; the "diff --git" header, de-emphasised
+	frag = "#00afaf"           ; @@ hunk headers (cyan)
+	func = "#9e9e9e"           ; function/context line (muted)
+	old = "#ff5f87"            ; removed → clean bright red (NOT the accent)
+	new = "#00d75f"            ; added → bright green
+	commit = "#ffaf00"         ; commit hash lines (yellow)
+	whitespace = "#ff5f87 reverse"
+[color "decorate"]
+	branch = "#d7005f bold"    ; accent — local branch in `git log --decorate`
+	remoteBranch = "#ff5f87"
+	tag = "#ffaf00"            ; yellow
+	stash = "#d787d7"          ; magenta
+	HEAD = "#00d7d7 bold"      ; bright cyan
+	grafted = "#767676"

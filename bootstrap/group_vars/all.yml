@@ -47,6 +47,9 @@ ssh_key_file: "id_ed25519"  # private key in ~/.ssh that the login hook loads
 # from this list, not hand-maintained (kills doc-vs-reality drift).
 dotfile_links:
   - { src: user/vim/.vimrc,                 dest: "{{ target_home }}/.vimrc" }
+  # hestia editor colorscheme (wildcharm + near-black bg). In ~/.vim/colors so both
+  # Vim and Neovim find it (nvim prepends ~/.vim to its runtimepath).
+  - { src: user/vim/colors/hestia.vim,      dest: "{{ target_home }}/.vim/colors/hestia.vim" }
   - { src: user/bash/.bashrc,               dest: "{{ target_home }}/.bashrc" }
   - { src: user/git/.gitignore_global,      dest: "{{ target_home }}/.gitignore_global" }
   - { src: user/gnupg/gpg-agent.conf,       dest: "{{ target_home }}/.gnupg/gpg-agent.conf" }

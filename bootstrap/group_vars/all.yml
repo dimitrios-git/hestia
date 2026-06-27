@@ -170,7 +170,7 @@ apt_packages:
   wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, gammastep, playerctl, xwayland]   # gammastep: software gamma dim of all outputs as the pre-lock warning cue (no hardware backlight on this desktop)
   portals:   [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk, pipewire, pipewire-pulse, wireplumber]
   terminal:  [kitty, vifm, cmus, cava, glow, imv, zathura, mpv, chafa, poppler-utils, mediainfo, 7zip, unzip, pulsemixer, htop, qalc]
-  editors:   [vim, neovim, build-essential]   # build-essential: nvim treesitter compiles parsers on first run
+  editors:   [vim, neovim, build-essential, shellcheck]   # build-essential: nvim treesitter compiles parsers on first run; shellcheck: shell-script linter (neovim shell diagnostics + manual `shellcheck`)
   vcs_gpg:   [git, gnupg, pinentry-tty]
   net_bt:    [network-manager, bluez, rfkill]   # rfkill: waybar bluetooth right-click toggle
   power:     [power-profiles-daemon]

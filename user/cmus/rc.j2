@@ -31,9 +31,12 @@ set color_win_cur=1
 set color_win_title_bg=1
 set color_win_title_fg=231
 
-# selections — accent for the active/current, grey for inactive
-set color_win_sel_bg=236
-set color_win_sel_fg=253
+# selections — active cursor uses the brighter grey 247 (#9e9e9e, matching vifm's
+# cursor line) with bold dark text; accent red for the playing track; dimmer greys
+# for the inactive window so it still reads as unfocused.
+set color_win_sel_bg=247
+set color_win_sel_fg=16
+set color_win_sel_attr=bold
 set color_win_cur_sel_bg=1
 set color_win_cur_sel_fg=231
 set color_win_inactive_sel_bg=235

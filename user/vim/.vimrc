@@ -98,7 +98,7 @@ call plug#end()
 
 " --- Theme ---
 set background=dark
-colo wildcharm
+colo hestia   " wildcharm + hestia's near-black bg (user/vim/colors/hestia.vim)
 
 " --- CoC.nvim Configuration ---
 " Use Tab for completion and navigation

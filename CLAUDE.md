@@ -8,7 +8,7 @@ Personal dotfiles for a Debian-based Linux system running the **Sway (Wayland)**
 
 The repo is growing from *one person's dotfiles* toward a **reproducible Debian spin** with multiple principals and `/etc` system configs; the target layered structure is `docs/repo-structure-design.md` (phased, not yet migrated).
 
-The configs are converging on one unified theme: near-black background `#0a0a0a`, accent **wildcharm red `#d7005f`** (ANSI color01), and a saturated 16-colour palette derived from the **`wildcharm`** vim colorscheme (the accent was Debian red `#d7005f` until 2026-06; dropped so the theme is uniform with the scheme it is built on). The palette is now defined once in **`themes/wildcharm/palette.yml`** (the single source of truth — semantic roles + the 16 ANSI colours), and the **per-app theming process** (+ a themed/not-yet status table) is **`docs/theming.md`**. Keep new theming consistent with this — and when theming an app, follow that process.
+The configs are converging on one unified theme: near-black background `#0a0a0a`, accent **wildcharm red `#d7005f`** (ANSI color01), and a saturated 16-colour palette derived from the **`wildcharm`** vim colorscheme (the accent was Debian red `#ce0056` until 2026-06; dropped so the theme is uniform with the scheme it is built on). Vim/Neovim use the **`hestia`** colorscheme — a thin wrapper (`user/vim/colors/hestia.vim`) that loads built-in `wildcharm` and overrides only the background to `#0a0a0a`. The palette is now defined once in **`themes/wildcharm/palette.yml`** (the single source of truth — semantic roles + the 16 ANSI colours), and the **per-app theming process** (+ a themed/not-yet status table) is **`docs/theming.md`**. Keep new theming consistent with this — and when theming an app, follow that process.
 
 ## Running as the `claude` agent user
 
@@ -44,6 +44,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | Repo file | Symlinked to |
 |---|---|
 | `user/vim/.vimrc` | `~/.vimrc` |
+| `user/vim/colors/hestia.vim` | `~/.vim/colors/hestia.vim` |
 | `user/bash/.bashrc` | `~/.bashrc` |
 | `user/git/.gitignore_global` | `~/.gitignore_global` |
 | `user/gnupg/gpg-agent.conf` | `~/.gnupg/gpg-agent.conf` |

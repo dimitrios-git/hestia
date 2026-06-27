@@ -7,6 +7,14 @@
 # account, so there's no pinentry/agent-unlock to deal with. See claude-user-design.md.
 set -e
 
+# Run from claude's OWN home. Ansible invokes this with its playbook cwd (the
+# operator's hestia checkout, e.g. /home/<operator>/…/bootstrap), and the
+# operator's home is 0700 — so as the `claude` user, git's repository discovery
+# walks up from that cwd, can't stat the operator's tree, and dies with
+# "failed to stat …: Permission denied" (rc 128) before a single `git config
+# --global` lands. Anchoring cwd in claude's own home makes discovery harmless.
+cd "$HOME" || cd /
+
 NAME="{{ claude_git_name }}"
 EMAIL="{{ claude_git_email }}"
 changed=0

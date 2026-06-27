@@ -161,7 +161,7 @@ Fresh-install steps (Debian trixie ships **0.10.4**, recent enough — `apt inst
 - No Rust: a previous `curl … | sh` rustup auto-installer block was removed (it could silently reinstall on shell startup). Install toolchains explicitly, never from `.bashrc`.
 
 ### Vifm (`user/vifm/vifmrc`)
-Wayland-first file manager. Images → `imv-wayland`, video → `mpv`, PDFs → `zathura`, office docs → `libreoffice`, **Markdown** → **glow** (`:file` offers "Edit in vim"). **Audio** opens in **cmus** (`cmus-remote -f`, play-now) and falls back to `mpv --no-video` when cmus isn't running; `:file` offers queue / mpv alternatives. Preview pane (`w`) uses `chafa` / `pdftotext` / `mediainfo` / `glow` (markdown). Clipboard yank (`yd`/`yf`) uses `wl-copy`. Comment syntax is `"` (vim-style).
+Wayland-first file manager. Images → `imv-wayland`, video → `mpv`, PDFs → `zathura`, office docs → `libreoffice`, **Markdown** → **glow** (`:file` offers "Edit in vim"). **Audio** opens in **cmus** (`cmus-remote -f`, play-now) and falls back to `mpv --no-video` when cmus isn't running; `:file` offers queue / mpv alternatives. Preview pane (`w`, on by default) uses `bat` (code, wildcharm theme) / `mediainfo` (media + image info) / `pdftotext` (PDF) / `glow` (markdown); images are info-only in the pane and open in `imv`. Clipboard yank (`yd`/`yf`) uses `wl-copy`. Comment syntax is `"` (vim-style).
 
 The markdown **preview-pane** call passes `-s ~/.config/glow/wildcharm.json` explicitly: glow drops colour when its output is piped (notty mode), so the style must be forced through the pipe. The full-screen **open** action (`glow -p`) runs in a real TTY and picks up the default style from `glow.yml`.
 

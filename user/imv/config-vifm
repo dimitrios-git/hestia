@@ -16,15 +16,21 @@ fullscreen = false
 scaling_mode = shrink
 
 [binds]
-j = next 1
-k = prev 1
-l = next 1
-h = prev 1
-n = next 1
-N = prev 1
-p = prev 1
+# LIVE cursor sync (perf experiment): after each move, nudge vifm's cursor onto
+# the now-current image via --remote :goto (selects, doesn't open). One `;` only,
+# splitting the move from a single `exec` — nothing trailing for imv to misparse.
+# The -c arg is double-quoted so the shell expands $imv_current_file; the inner
+# single quotes are literal, quoting the path for vifm (spaces survive). If this
+# lags fast scrolling, drop the `; exec …` tails to go back to non-synced browse.
+j = next 1 ; exec vifm --remote -c "goto '$imv_current_file'"
+k = prev 1 ; exec vifm --remote -c "goto '$imv_current_file'"
+l = next 1 ; exec vifm --remote -c "goto '$imv_current_file'"
+h = prev 1 ; exec vifm --remote -c "goto '$imv_current_file'"
+n = next 1 ; exec vifm --remote -c "goto '$imv_current_file'"
+N = prev 1 ; exec vifm --remote -c "goto '$imv_current_file'"
+p = prev 1 ; exec vifm --remote -c "goto '$imv_current_file'"
 
-# pan when zoomed in
+# pan when zoomed in (no sync — same file)
 H = pan -50 0
 L = pan 50 0
 J = pan 0 50

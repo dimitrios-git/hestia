@@ -8,5 +8,9 @@ style: "{{ target_home }}/.config/glow/wildcharm.json"
 mouse: false
 # use pager to display markdown (vim :Glow and vifm pass -p explicitly anyway)
 pager: false
-# word-wrap at width
+# word-wrap at width — fallback for a bare `glow <file>` only. The two real
+# consumers override it: the full-screen pager (vim :Glow, vifm open) passes
+# -w "$(tput cols)" to wrap at the actual terminal width, and the vifm preview
+# pane passes -w %pw. glow's own built-in default also caps wrapping at 80, so
+# this just makes the bare-invocation width explicit.
 width: 80

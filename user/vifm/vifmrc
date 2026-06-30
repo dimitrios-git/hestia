@@ -53,9 +53,11 @@ filetype {*.wav,*.mp3,*.flac,*.ogg,*.m4a,*.opus,*.aac,*.wv}
        \ {Queue in cmus} cmus-remote -q %f,
        \ {mpv (no video)} mpv --no-video %f
 
-" Markdown — render in glow (TUI pager); falls back to editing in vim
+" Markdown — render in glow (TUI pager); falls back to editing in vim.
+" -w $(tput cols): glow's built-in default caps word-wrap at 80 cols even on a
+" wide terminal (spurious mid-paragraph breaks), so wrap at the real width.
 filetype {*.md,*.markdown}
-       \ {Render in glow} glow -p %f,
+       \ {Render in glow} glow -w $(tput cols) -p %f,
        \ {Edit in vim} vim %f
 
 " PDF

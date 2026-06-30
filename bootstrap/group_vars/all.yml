@@ -80,12 +80,18 @@ dotfile_links:
   - { src: user/kitty/kitty.conf,           dest: "{{ target_home }}/.config/kitty/kitty.conf" }
   - { src: user/kitty/music.session,        dest: "{{ target_home }}/.config/kitty/music.session" }
   - { src: user/imv/config,                 dest: "{{ target_home }}/.config/imv/config" }
+  # imv↔vifm integration (vifm `i` opens imv tiled, live cursor sync, q returns):
+  # the dedicated imv config + its on-quit/sync return script. Exec bit from src.
+  - { src: user/imv/config-vifm,            dest: "{{ target_home }}/.config/imv/config-vifm" }
+  - { src: user/imv/imv-vifm-return.sh,     dest: "{{ target_home }}/.config/imv/imv-vifm-return.sh" }
   - { src: user/zathura/zathurarc,          dest: "{{ target_home }}/.config/zathura/zathurarc" }
   - { src: user/vifm/vifmrc,                dest: "{{ target_home }}/.config/vifm/vifmrc" }
   - { src: user/vifm/colors/wildcharm.vifm, dest: "{{ target_home }}/.config/vifm/colors/wildcharm.vifm" }
   # vifm quick-view dispatcher (catch-all fileviewer) — syntax-highlighted code
   # preview via bat; executable bit comes from the source file.
   - { src: user/vifm/scripts/preview.sh,    dest: "{{ target_home }}/.config/vifm/scripts/preview.sh" }
+  # vifm `i` image-browse launcher (opens imv tiled, jumps the open imv on re-press)
+  - { src: user/vifm/scripts/imv-browse.sh, dest: "{{ target_home }}/.config/vifm/scripts/imv-browse.sh" }
   # bat — config + the wildcharm syntax theme. The theme is compiled into bat's
   # cache by the dotfiles role (`bat cache --build`) after this link is made.
   - { src: user/bat/config,                 dest: "{{ target_home }}/.config/bat/config" }

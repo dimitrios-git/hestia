@@ -153,6 +153,14 @@ nnoremap yf :!echo -n %c:p | wl-copy<cr>
 " Open with xdg-open as fallback
 nnoremap o :!xdg-open %f &<cr>
 
+" Image-browse — integrated imv on a tiling WM, via imv-browse.sh.
+" First `i`: collapse vifm to one pane + split sway + open imv tiled RIGHT on the
+" folder's images (config-vifm: live cursor sync on j/k, q returns to vifm).
+" Pressing `i` again from vifm doesn't stack a second pane — it jumps the open
+" imv to the cursor image (imv-msg goto) and focuses it. (Not on <cr>: filextype
+" handlers are shell-only and can't drive vifm panes.)
+nnoremap i :!imv-browse.sh %c:p %d &<cr>
+
 " Custom commands (:name [args])
 
 " git: diff the file under the cursor against a branch, in vimdiff — short for

@@ -71,10 +71,13 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/kitty/kitty.conf` | `~/.config/kitty/kitty.conf` |
 | `user/kitty/music.session` | `~/.config/kitty/music.session` |
 | `user/imv/config` | `~/.config/imv/config` |
+| `user/imv/config-vifm` | `~/.config/imv/config-vifm` |
+| `user/imv/imv-vifm-return.sh` | `~/.config/imv/imv-vifm-return.sh` |
 | `user/zathura/zathurarc` | `~/.config/zathura/zathurarc` |
 | `user/vifm/vifmrc` | `~/.config/vifm/vifmrc` |
 | `user/vifm/colors/wildcharm.vifm` | `~/.config/vifm/colors/wildcharm.vifm` |
 | `user/vifm/scripts/preview.sh` | `~/.config/vifm/scripts/preview.sh` |
+| `user/vifm/scripts/imv-browse.sh` | `~/.config/vifm/scripts/imv-browse.sh` |
 | `user/bat/config` | `~/.config/bat/config` |
 | `user/bat/themes/wildcharm.tmTheme` | `~/.config/bat/themes/wildcharm.tmTheme` |
 | `user/glow/wildcharm.json` | `~/.config/glow/wildcharm.json` |
@@ -175,6 +178,13 @@ Terminal Markdown renderer (apt: `glow`). Used by Vim (`:Glow`/`<leader>md`) and
 
 ### imv (`user/imv/config`)
 Minimal image viewer config — shrink-to-fit scaling, vim-style `hjkl`/`np` navigation, `HJKL` to pan when zoomed.
+
+**vifm↔imv integrated image browsing** (`user/vifm/scripts/imv-browse.sh`, `user/imv/config-vifm`, `user/imv/imv-vifm-return.sh`). In vifm, **`i`** on an image runs `imv-browse.sh`: it collapses vifm to one pane (`vifm --remote -c only`), `swaymsg split horizontal`, and opens **imv tiled to the right** on the folder's images, started at the cursor file — giving fast full-screen browsing next to vifm (since in-pane graphics never worked here: vifm's preview pane can't render the kitty graphics protocol on this sway/kitty, and previewing per cursor-move lags — so media stays text-info in the pane and *this* is the "see it" path). imv uses a **dedicated config** (`config-vifm`, separate so standalone imv is untouched) that wires it back to vifm over imv's IPC + vifm's client-server:
+- **Live cursor sync:** each `j/k` is `next/prev 1;exec …/imv-vifm-return.sh` — the script does `vifm --remote -c "goto '$imv_current_file'"`, so vifm's cursor tracks imv. **`:goto` selects without opening** (a plain `vifm --remote <file>` *opens* the file → would relaunch imv in a loop, and was observed to wedge the server). Two imv gotchas baked in: the `;` has **no leading space** (imv's INI parser strips ` ;…` as an inline comment, silently dropping the chained command), and the logic is in a **script** not inline (imv mangles inline shell quoting in a bind).
+- **`q`/`Escape`:** `…/imv-vifm-return.sh quit` — restore vifm's dual-pane preview (`vsplit`+`view!`), sync the cursor, then close imv (`imv-msg $imv_pid quit`, with a `kill` fallback — imv's `exec` swallows the rest of the bind line, so a trailing `;quit` never reaches imv).
+- **Idempotent / re-press:** pressing `i` again while imv is open doesn't stack a second pane — it `imv-msg $pid goto <index>`s the open imv to the new cursor image and focuses it. imv 4.5 can't sort, so imv-browse.sh launches imv on an **explicit `sort -V` list** (natural order, matching vifm's `set sortnumbers`; dotfiles excluded) — that fixes the index order so the live sync moves vifm's cursor **sequentially** rather than hopping. (vifm's exact view order isn't reachable — `expand("%a")` is empty over `--remote` — so we match its sort.)
+
+True single-window grouping (like the cmus+cava kitty session) isn't possible — imv is a separate Wayland app, not a kitty pane — so the idempotent guard is what keeps the layout from duplicating. Deps already present: `imv`/`imv-msg`, `swaymsg` (sway), `vifm` server (on by default; `vifm --remote` no-ops if absent).
 
 ### Zathura (`user/zathura/zathurarc`)
 Document viewer (PDF/EPUB/DjVu/CBZ — vifm's PDF/comic opener). Themed through `docs/theming.md` (colours from `themes/wildcharm/palette.yml`; zathura takes `"#RRGGBB"` and `rgba(...)`). The **UI chrome** is mapped to the palette: statusbar/inputbar/completion/notifications on `bg`/`surface`/`text`, completion + index active rows on `accent`/`white`, error notification `accent_dark`, warning `yellow`; search highlights are translucent (all matches `blue`, the active match `accent`). **Document recolouring is ON by default** — `recolor true` with `recolor-lightcolor #0a0a0a` / `recolor-darkcolor #e0e0e0` flips white pages to near-black and black text to light; `recolor-keephue true` keeps coloured text/links readable and images stay natural (reverse-video left off). Press **`r`** to toggle recolour per-document (e.g. for a colour-critical figure or an already-dark PDF). Like swaylock, annotations are kept on their **own lines** (no trailing inline comments).

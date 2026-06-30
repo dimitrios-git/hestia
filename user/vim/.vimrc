@@ -162,13 +162,20 @@ nnoremap <silent> <leader>g :CocList grep<CR>
 " normal-mode <C-n> = cursor-down).
 nnoremap <silent> <C-n> :NERDTreeToggle<CR>
 
-" Colour the vim-devicons folder glyph hestia accent red (#d7005f) to mirror the
-" GTK Yaru-hestia red folders — icon only, the folder name keeps its normal
-" colour (like the GUI). The match is built from devicons' own folder-symbol
-" variables, not a hardcoded codepoint, so it tracks whatever glyph the plugin
-" uses (or you override it to) across versions. ctermfg=161 is the 256-colour
-" cell for #d7005f, so the colour is exact with or without 'termguicolors'.
-function! s:HestiaFolderIconColour() abort
+" Colour NERDTree's vim-devicons icons to mirror the GTK file manager: folders
+" hestia accent red (#d7005f), every other icon a neutral grey — icon only, the
+" name keeps its normal colour. devicons injects the glyph into NERDTree's [...]
+" flag region, so ALL icons inherit `NERDTreeFlags` (which links to `Number` →
+" a wildcharm red — that's the stray red shade on file icons). Recolour that to
+" grey for the default, then a syntax match over the folder glyph overrides
+" folders back to accent red; it wins because containedin=ALL nests it inside
+" the flag region. The folder match is built from devicons' own folder-symbol
+" variables (no hardcoded codepoint), so it tracks whatever glyph the plugin
+" uses across versions. cterm cells are exact (247=#9e9e9e, 161=#d7005f), so the
+" colours hold with or without 'termguicolors'. (NERDTree colours via highlight
+" groups, not LS_COLORS/dircolors — those don't apply here.)
+function! s:HestiaNerdTreeIcons() abort
+  highlight NERDTreeFlags guifg=#9e9e9e ctermfg=247
   let l:syms = get(g:, 'WebDevIconsUnicodeDecorateFolderNodesDefaultSymbol', '')
         \   . get(g:, 'DevIconsDefaultFolderOpenSymbol', '')
   if empty(l:syms) | return | endif
@@ -177,7 +184,7 @@ function! s:HestiaFolderIconColour() abort
 endfunction
 augroup HestiaNerdTreeFolderIcon
   autocmd!
-  autocmd FileType nerdtree call s:HestiaFolderIconColour()
+  autocmd FileType nerdtree call s:HestiaNerdTreeIcons()
 augroup END
 
 " --- CtrlP Configuration ---

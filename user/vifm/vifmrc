@@ -98,10 +98,18 @@ filetype {*.7z}
 fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}
          \ mediainfo %f
 
-" Markdown — rendered preview (requires glow). Explicit -s: glow drops color
-" when piped (preview pane), so force the themed style through the pipe.
+" Markdown — rendered preview (requires glow). Two pipe/notty gotchas:
+"   * CLICOLOR_FORCE=1 forces colour. When piped (the preview pane is notty),
+"     glow drops colour AND emits malformed empty-param SGR (ESC[;;1m) for the
+"     bold-only bits, which vifm's ANSI parser can't read — it leaks them as
+"     literal "1m" in the pane. -s alone does NOT fix this (it only carries the
+"     style's bold, not colour). CLICOLOR_FORCE makes glow emit well-formed SGR
+"     (like bat --color=always), which vifm renders cleanly. Note: forced notty
+"     output is 16-colour (no truecolor), so it's an approximation of the
+"     wildcharm hex — the full-screen open (real TTY) still gets truecolor.
+"   * -s passes the wildcharm style so the 16-colour mapping stays on-theme.
 fileviewer {*.md,*.markdown}
-         \ glow -s ~/.config/glow/wildcharm.json -w %pw %f
+         \ CLICOLOR_FORCE=1 glow -s ~/.config/glow/wildcharm.json -w %pw %f
 
 " PDF — requires poppler-utils
 fileviewer {*.pdf}

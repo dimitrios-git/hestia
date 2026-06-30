@@ -1,6 +1,7 @@
 #!/bin/sh
 # vifm quick-view dispatcher — the catch-all `fileviewer {*}` in vifmrc.
-# Syntax-highlights text/code with bat (wildcharm theme), and degrades cleanly:
+# Syntax-highlights text/code with bat (wildcharm theme + git change gutter),
+# and degrades cleanly:
 # directory listing for dirs, file-type + hexdump peek for binaries, and plain
 # head(1) when bat isn't installed. Always exits 0 so vifm never shows an error.
 #
@@ -23,7 +24,14 @@ elif command -v batcat >/dev/null 2>&1; then
 fi
 
 bat_view() {
-    "$BAT" --color=always --style=plain --paging=never --wrap=never \
+    # --style=changes adds bat's git gutter (+ added, ~ modified) — a quick cue
+    # for UNCOMMITTED edits (working tree vs HEAD; NOT branch-vs-base — that's
+    # what :gd in vifmrc is for). Needs bat built with git support + the file in
+    # a repo; bat degrades to no gutter otherwise (incl. non-git files, so no
+    # wasted column). On the claude-owned /srv/devshare repos it relies on the
+    # same safe.directory whitelist as git (libgit2 reads it); if libgit2 can't
+    # read the repo it just omits the gutter — never errors.
+    "$BAT" --color=always --style=changes --paging=never --wrap=never \
            --theme=wildcharm --terminal-width="$w" --line-range=":$h" -- "$f"
 }
 

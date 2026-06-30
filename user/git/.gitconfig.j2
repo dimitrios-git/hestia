@@ -17,6 +17,19 @@
 	excludesfile = ~/.gitignore_global
 	autocrlf = input
 	editor = vim
+# `git difftool -t vimdiff` (and any vimdiff difftool) launches vim with git's
+# environment exported — including GIT_DIR / GIT_WORK_TREE pointing at the real
+# repo. But difftool's buffers are temp blobs checked out under /tmp, OUTSIDE
+# that work tree, so an in-editor git plugin (coc-git, fugitive, gitsigns…) that
+# runs `git` on a buffer hits `fatal: <tmp>/file is outside repository` and
+# reports e.g. "[coc.nvim] Failed to execute git" on every diffed file. Override
+# the builtin vimdiff tool to wrap vim in `env -u GIT_DIR …` so the temp blobs
+# resolve as "not a repo" and the plugins stay silent. The vim flags replicate
+# git's own mergetools/vimdiff diff_cmd (-R -f -d, focus the HEAD window); the
+# \" escapes keep $LOCAL/$REMOTE shell-quoted through git-config parsing (it
+# strips bare double quotes), so paths with spaces survive.
+[difftool "vimdiff"]
+	cmd = env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE vim -R -f -d -c 'wincmd l' \"$LOCAL\" \"$REMOTE\"
 {% if enable_claude_user | default(false) %}
 # The shared collaboration tree ({{ claude_shared_tree | default('/srv/devshare') }}) is
 # owned by the `claude` agent user, so git trips "dubious ownership" (CVE-2022-24765

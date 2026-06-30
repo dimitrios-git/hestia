@@ -17,18 +17,19 @@ scaling_mode = shrink
 
 [binds]
 # LIVE cursor sync (perf experiment): each move advances imv, then `exec`s the
-# return script with no arg, which nudges vifm's cursor onto the now-current
-# image (--remote :goto — selects, doesn't open). Routed through the script (not
-# an inline shell command) because inline quoting in an imv bind gets mangled —
-# that's why the earlier inline `exec vifm --remote …` never fired. If this lags
-# fast scrolling, drop the `; exec …` tails to go back to sync-on-quit only.
-j = next 1 ; exec $HOME/.config/imv/imv-vifm-return.sh
-k = prev 1 ; exec $HOME/.config/imv/imv-vifm-return.sh
-l = next 1 ; exec $HOME/.config/imv/imv-vifm-return.sh
-h = prev 1 ; exec $HOME/.config/imv/imv-vifm-return.sh
-n = next 1 ; exec $HOME/.config/imv/imv-vifm-return.sh
-N = prev 1 ; exec $HOME/.config/imv/imv-vifm-return.sh
-p = prev 1 ; exec $HOME/.config/imv/imv-vifm-return.sh
+# return script (no arg), which nudges vifm's cursor onto the now-current image
+# (--remote :goto — selects, doesn't open). NOTE the `;` has NO space before it:
+# imv's INI parser strips `<space>;…` as an inline comment, so `next 1 ; exec …`
+# silently dropped the exec — `next 1;exec …` survives to imv's command splitter.
+# Routed through the script (not inline) since inline shell quoting also mangles.
+# If this lags fast scrolling, drop the `;exec …` tails for sync-on-quit only.
+j = next 1;exec $HOME/.config/imv/imv-vifm-return.sh
+k = prev 1;exec $HOME/.config/imv/imv-vifm-return.sh
+l = next 1;exec $HOME/.config/imv/imv-vifm-return.sh
+h = prev 1;exec $HOME/.config/imv/imv-vifm-return.sh
+n = next 1;exec $HOME/.config/imv/imv-vifm-return.sh
+N = prev 1;exec $HOME/.config/imv/imv-vifm-return.sh
+p = prev 1;exec $HOME/.config/imv/imv-vifm-return.sh
 
 # pan when zoomed in (no sync — same file)
 H = pan -50 0

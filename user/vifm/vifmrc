@@ -148,19 +148,19 @@ nnoremap o :!xdg-open %f &<cr>
 "   :gd        vs the default branch's merge-base with HEAD; base auto-detected
 "              (main, else master) so the same command works in either repo.
 "   :gd <ref>  vs <ref> instead, e.g. :gd origin/main, :gd develop, :gd HEAD~3.
-" The file is taken automatically (the cursor file, %c:p) — do NOT pass it; the
-" optional argument (%a) is only the base ref. Guards: prints "no changes …"
-" instead of silently flashing when the file is unmodified on this branch, and
-" rejects an unknown base ref (e.g. a filename typed by mistake) with a clear
-" message rather than git's cryptic `bad revision`. Foreground — vifm suspends
-" until you :qa out of vimdiff.
-" The difftool is defined inline (-c difftool.gd.cmd) rather than -t vimdiff so
-" it can scrub GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE from the spawned vim: git
-" exports those into the editor it launches, but the diff buffers are temp
-" blobs OUTSIDE the work tree, so any in-editor git plugin (coc-git, fugitive,
-" gitsigns…) that runs `git` on them hits `fatal: … is outside repository` and
-" reports "Failed to execute git". Unsetting them makes the temp blobs resolve
-" as "not a repo", so the plugins stay quiet. The vim flags mirror git's own
-" builtin vimdiff (-R -f -d -c 'wincmd l': readonly, foreground, diff, focus
-" the HEAD side), so it looks identical to plain `-t vimdiff`.
-command! gd !git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "gd: not inside a git repository"; exit 1; }; b='%a'; [ -z "$b" ] && b=$(git rev-parse -q --verify main >/dev/null 2>&1 && echo main || echo master); git rev-parse -q --verify "$b" >/dev/null 2>&1 || { echo "gd: unknown base ref '$b' (:gd takes the file automatically; the optional arg is a base ref like origin/main)"; exit 1; }; git diff --quiet "$b"...HEAD -- %c:p && { echo "gd: no changes in %c:t vs $b...HEAD"; exit 0; }; git -c difftool.gd.cmd='env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE vim -R -f -d -c "wincmd l" "$LOCAL" "$REMOTE"' difftool -y -t gd "$b"...HEAD -- %c:p
+" The file is taken automatically (the cursor file) — do NOT pass it; the
+" optional argument (%a) is only the base ref. An unknown base ref (e.g. a
+" filename typed by mistake) is rejected with a clear message rather than git's
+" cryptic `bad revision`. Foreground — vifm suspends until you :qa out of vim.
+"
+" It does NOT use `git difftool`: difftool only launches the tool for files that
+" actually differ, so on an unmodified file it would just flash and do nothing.
+" Instead it extracts both sides itself — the merge-base blob (`$mb:./$f`) and
+" the HEAD blob — into a temp dir and opens `vim -d` on them, so :gd ALWAYS
+" opens a diff view: changed files show the diff, unmodified files show two
+" identical panes, a file new on the branch shows added-vs-empty. The temp
+" blobs live under /tmp, outside any repo, so in-editor git plugins (coc-git,
+" fugitive…) see "not a repo" and stay quiet — no GIT_DIR inheritance like the
+" difftool path had. Missing side (added/deleted) → empty file. Flags mirror
+" git's builtin vimdiff (-R -d, focus the HEAD pane).
+command! gd !git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "gd: not inside a git repository"; exit 1; }; b='%a'; [ -z "$b" ] && b=$(git rev-parse -q --verify main >/dev/null 2>&1 && echo main || echo master); git rev-parse -q --verify "$b" >/dev/null 2>&1 || { echo "gd: unknown base ref '$b' (:gd takes the file automatically; the optional arg is a base ref like origin/main)"; exit 1; }; f=%c:t; mb=$(git merge-base "$b" HEAD 2>/dev/null || echo "$b"); d=$(mktemp -d) || exit 1; mkdir -p "$d/base" "$d/head"; git show "$mb:./$f" > "$d/base/$f" 2>/dev/null || : > "$d/base/$f"; git show "HEAD:./$f" > "$d/head/$f" 2>/dev/null || : > "$d/head/$f"; vim -R -d -c "wincmd l" "$d/base/$f" "$d/head/$f"; rm -rf "$d"

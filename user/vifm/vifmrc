@@ -143,11 +143,15 @@ nnoremap o :!xdg-open %f &<cr>
 
 " Custom commands (:name [args])
 
-" git: diff the file(s) under the cursor against a branch, in vimdiff — short
-" for the verbose `git difftool -y -t vimdiff master...HEAD -- <file>`.
+" git: diff the file under the cursor against a branch, in vimdiff — short for
+" the verbose `git difftool -y -t vimdiff master...HEAD -- <file>`.
 "   :gd        vs the default branch's merge-base with HEAD; base auto-detected
 "              (main, else master) so the same command works in either repo.
 "   :gd <ref>  vs <ref> instead, e.g. :gd origin/main, :gd develop, :gd HEAD~3.
-" %a = the typed argument (empty if none); %f = selected file(s). Foreground —
-" vifm suspends until you :qa out of vimdiff.
-command! gd !b='%a'; [ -z "$b" ] && b="$(git rev-parse -q --verify main >/dev/null 2>&1 && echo main || echo master)"; git difftool -y -t vimdiff "$b"...HEAD -- %f
+" The file is taken automatically (the cursor file, %c:p) — do NOT pass it; the
+" optional argument (%a) is only the base ref. Guards: prints "no changes …"
+" instead of silently flashing when the file is unmodified on this branch, and
+" rejects an unknown base ref (e.g. a filename typed by mistake) with a clear
+" message rather than git's cryptic `bad revision`. Foreground — vifm suspends
+" until you :qa out of vimdiff.
+command! gd !git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "gd: not inside a git repository"; exit 1; }; b='%a'; [ -z "$b" ] && b=$(git rev-parse -q --verify main >/dev/null 2>&1 && echo main || echo master); git rev-parse -q --verify "$b" >/dev/null 2>&1 || { echo "gd: unknown base ref '$b' (:gd takes the file automatically; the optional arg is a base ref like origin/main)"; exit 1; }; git diff --quiet "$b"...HEAD -- %c:p && { echo "gd: no changes in %c:t vs $b...HEAD"; exit 0; }; git difftool -y -t vimdiff "$b"...HEAD -- %c:p

@@ -1,4 +1,5 @@
-# imv config for vifm's image-browse key (vifm `i` → imv-browse.sh).
+# imv config for vifm's image/video browse (filextype → imv-browse.sh). Videos
+# appear as ▶ poster thumbnails; Enter on one opens mpv.
 #
 # vifm's `i` (image-browse) launches imv with `imv_config` pointed here, so the
 # normal standalone imv config (user/imv/config) is left untouched. Same
@@ -30,8 +31,12 @@ n = next 1;exec $HOME/.config/imv/imv-vifm-return.sh
 N = prev 1;exec $HOME/.config/imv/imv-vifm-return.sh
 p = prev 1;exec $HOME/.config/imv/imv-vifm-return.sh
 # h = up/back, vim-style: close imv and take vifm UP one directory (cursor lands
-# on the folder you were in). j/k/l/n/N/p still cycle images; prev is on k.
+# on the folder you were in). j/k/l/n/N/p still cycle items; prev is on k.
 h = exec $HOME/.config/imv/imv-vifm-return.sh up
+# Enter on a VIDEO (shown as a ▶ thumbnail) promotes it to mpv; on an image it
+# does nothing (you're already viewing it). The return script resolves which via
+# imv's $imv_current_index + the session map.
+<Return> = exec $HOME/.config/imv/imv-vifm-return.sh play
 
 # pan when zoomed in (no sync — same file)
 H = pan -50 0

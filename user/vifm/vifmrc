@@ -48,10 +48,13 @@ mark p ~/Pictures/
 filextype {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.tif,*.webp,*.avif,*.ico,*.svg}
         \ imv-browse.sh %c:p %d &
 
-" Video
+" Video — opens the SAME integrated imv browser as images (imv-browse.sh): the
+" folder's videos appear as ▶ poster thumbnails alongside images, browsed with
+" j/k; Enter on a video promotes it to mpv. (Direct play is still `mpv` via the
+" {mpv} :file menu entry / the audio fallback.)
 filextype {*.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.mpeg,*.vob,
           \*.m2v,*.mov,*.flv,*.ts,*.webm,*.m4v,*.m4b}
-        \ mpv %f &
+        \ imv-browse.sh %c:p %d &
 
 " Audio — play in cmus (falls back to mpv --no-video if cmus isn't running)
 filetype {*.wav,*.mp3,*.flac,*.ogg,*.m4a,*.opus,*.aac,*.wv}

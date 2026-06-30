@@ -1,53 +1,111 @@
 #!/bin/sh
-# imv-browse.sh <cursor-file> <dir> — vifm's image-browse launcher (key `i`),
-# integrated with imv on a tiling WM.
+# imv-browse.sh <cursor-file> <dir> — vifm's image/video browse launcher, opened
+# by the image AND video filextype handlers (Enter/l, or vifm's builtin `i`).
 #
-# First press (no imv yet): collapse vifm to one pane, split sway, and open imv
-# tiled to the RIGHT, on the directory's images passed as an EXPLICIT, sorted
-# list (so imv's index order is known to us, since imv 4.5 can't sort), starting
-# at the cursor file.
+# Browses images AND videos in one imv window. imv can't play video, so each
+# video is shown as a cached **poster-frame thumbnail with a ▶ overlay**; imv
+# just sees images. A session map (one original path per line, line N = imv item
+# N) lets everything downstream resolve imv's `$imv_current_index` back to the
+# real file: the live cursor sync (imv-vifm-return.sh), and Enter→mpv on a video.
 #
-# Subsequent press (imv already open): jump that same imv to the cursor file —
-# imv-msg goto <index>, where the index is the file's position in the identical
-# sorted list — and focus imv. No second pane; it loads the image you pressed
-# `i` on, and continued j/k browsing still works (real index, not an append).
-#
-# Pairs with user/imv/config-vifm (live cursor sync on j/k; q returns to vifm).
-# Note: only tracks imv instances opened through here — an imv opened via Enter
-# uses a different (directory) order, so the index wouldn't match.
+# First open: collapse vifm to one pane, split sway, generate any missing video
+# thumbnails (cached by path+mtime, in parallel), then open imv tiled RIGHT on
+# the explicit, sorted DISPLAY list (real images + video thumbnails), at the
+# cursor file. Re-press while imv is open: jump it to the cursor file
+# (imv-msg goto <index>, index from the session map) and focus — no second pane.
 
 cur=$1
 dir=$2
 
-# Deterministic image list of $dir, one absolute path per line. Run identically
-# at launch and on re-press so the computed index matches imv's list. Ordered to
-# match vifm's view: `sort -V` is natural/numeric ordering (vifm has `set
-# sortnumbers`, so img2 sorts before img10 — a plain byte sort diverged and made
-# the synced cursor hop); dotfiles excluded since vifm hides them by default.
-# (vifm's exact list isn't reachable — expand("%a") is empty over --remote.)
-images() {
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/imv-vifm-thumbs"
+session="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-session.list"
+mkdir -p "$cache"
+
+vid_re='\.(mp4|mkv|avi|mov|webm|flv|m4v|mpe?g|wmv|ts|m2v|ogv|3gp|vob)$'
+img_re='\.(jpe?g|png|gif|bmp|tiff?|webp|avif|ico|svg)$'
+
+is_video() { printf '%s' "$1" | grep -qiE "$vid_re"; }
+
+# Ordered media list of $dir (images + videos), one path per line. Natural sort
+# (`sort -V`) + no dotfiles, to match vifm's view (`set sortnumbers`, hidden off).
+media() {
     find "$dir" -maxdepth 1 -type f ! -name '.*' 2>/dev/null \
-        | grep -iE '\.(jpe?g|png|gif|bmp|tiff?|webp|avif|ico|svg)$' \
-        | sort -V
+        | grep -iE "$img_re|$vid_re" | sort -V
+}
+
+# Cache path for a video's thumbnail (keyed on realpath + mtime).
+thumb_for() {
+    key=$(printf '%s\037%s' "$(readlink -f -- "$1")" "$(stat -c %Y -- "$1" 2>/dev/null)" \
+          | sha1sum | cut -c1-40)
+    printf '%s/%s.jpg' "$cache" "$key"
+}
+
+# Generate a video thumbnail (poster frame + ▶ overlay) if not already cached.
+gen_thumb() {
+    f=$1; t=$(thumb_for "$f")
+    [ -s "$t" ] && return
+    tmp="$t.$$.jpg"   # .jpg so ffmpeg/ffmpegthumbnailer infer the output format
+    if command -v ffmpegthumbnailer >/dev/null 2>&1; then
+        ffmpegthumbnailer -i "$f" -o "$tmp" -s 600 -q 8 2>/dev/null
+    else
+        # fallback: a frame ~1s in, else the very first frame (short clips)
+        ffmpeg -y -loglevel error -ss 1 -i "$f" -frames:v 1 \
+            -vf "scale='min(600,iw)':-2" "$tmp" </dev/null 2>/dev/null
+        [ -s "$tmp" ] || ffmpeg -y -loglevel error -i "$f" -frames:v 1 \
+            -vf "scale='min(600,iw)':-2" "$tmp" </dev/null 2>/dev/null
+    fi
+    [ -s "$tmp" ] || { rm -f "$tmp"; return; }
+    # centred ▶ play button so videos are distinguishable from images
+    magick "$tmp" \
+        \( -size 140x140 xc:none \
+           -fill 'rgba(0,0,0,0.45)' -draw 'circle 70,70 70,8' \
+           -fill 'rgba(255,255,255,0.9)' -draw 'polygon 54,42 54,98 104,70' \) \
+        -gravity center -compose over -composite "$t" 2>/dev/null || mv "$tmp" "$t"
+    rm -f "$tmp"
+}
+
+# Display path imv should show for a file: itself for images, its thumb (if it
+# generated) for videos.
+display_of() {
+    if is_video "$1"; then
+        t=$(thumb_for "$1"); [ -s "$t" ] && printf '%s' "$t" || printf '%s' "$1"
+    else
+        printf '%s' "$1"
+    fi
 }
 
 pid=$(pgrep -x imv-wayland | head -1)
 if [ -n "$pid" ]; then
-    # imv is open: select the cursor file by its 1-based index, then focus imv.
-    idx=$(images | grep -nxF -- "$cur" | head -1 | cut -d: -f1)
+    # imv already open: select the cursor file by its index in the session map.
+    idx=$(grep -nxF -- "$cur" "$session" 2>/dev/null | head -1 | cut -d: -f1)
     [ -n "$idx" ] && imv-msg "$pid" goto "$idx"
     swaymsg '[app_id="imv"] focus' >/dev/null 2>&1
     exit 0
 fi
 
-# First open: set up the integrated layout, then launch imv on the sorted list.
+origs=$(media)
+printf '%s\n' "$origs" > "$session"
+
+# Generate missing video thumbnails, up to 4 in parallel.
+n=0
+while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    is_video "$f" || continue
+    t=$(thumb_for "$f"); [ -s "$t" ] && continue
+    gen_thumb "$f" &
+    n=$((n + 1)); [ $((n % 4)) -eq 0 ] && wait
+done <<EOF
+$origs
+EOF
+wait
+
+# First open: integrated layout, then imv on the DISPLAY list at the cursor file.
 vifm --remote -c only
 swaymsg split horizontal
-# Build a space-safe argv from the sorted images (one per line).
 set --
 while IFS= read -r f; do
-    [ -n "$f" ] && set -- "$@" "$f"
+    [ -n "$f" ] && set -- "$@" "$(display_of "$f")"
 done <<EOF
-$(images)
+$origs
 EOF
-exec env imv_config="$HOME/.config/imv/config-vifm" imv-wayland -n "$cur" "$@"
+exec env imv_config="$HOME/.config/imv/config-vifm" imv-wayland -n "$(display_of "$cur")" "$@"

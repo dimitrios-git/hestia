@@ -27,6 +27,11 @@ enable_nvidia: false        # proprietary NVIDIA driver (Debian non-free)
 # package_group_features. Default OFF — libreoffice is heavy (~hundreds of MB) and
 # only vifm's office-doc opener needs it; turn on per host if you want it.
 enable_libreoffice: false   # install libreoffice (vifm opens office docs with it)
+# Package-only toggle (no role): gates the `video` apt group below via
+# package_group_features. Default OFF — kdenlive is heavy (pulls a large slice of
+# KDE Frameworks 6 + Qt6 multimedia libs) and host-specific; turn on per host. It's
+# also the reference Qt6/KF6 app for the Qt theming track (docs/theming.md row 69).
+enable_kdenlive: false      # install kdenlive (Qt6/KF6 video editor; Qt-theming test target)
 # Default OFF — installs the prebuilt #d7005f Yaru ICON theme (a ~27 MB sha256-verified
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
@@ -200,6 +205,7 @@ apt_packages:
   sharing:      [samba]                        # enable_samba
   credentials:  [gnome-keyring, libsecret-tools]  # enable_credentials
   office:       [libreoffice]                   # enable_libreoffice (heavy, default off)
+  video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
 
 # Maps a feature-gated apt group -> its toggle. The `packages` role skips a group
@@ -209,4 +215,5 @@ package_group_features:
   sharing:     "{{ enable_samba | bool }}"
   credentials: "{{ enable_credentials | bool }}"
   office:      "{{ enable_libreoffice | bool }}"
+  video:       "{{ enable_kdenlive | bool }}"
   claude:      "{{ enable_claude_user | bool }}"

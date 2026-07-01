@@ -118,6 +118,7 @@ enable_claude_user: $enable_claude_user
 claude_sign_commits: $claude_sign_commits
 enable_credentials: $enable_credentials
 enable_libreoffice: $enable_libreoffice
+enable_kdenlive: $enable_kdenlive
 enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
 samba_lan_subnet: "$samba_lan_subnet"
@@ -232,6 +233,7 @@ def_claude=$(cur enable_claude_user); def_claude=${def_claude:-true}
 def_claudesign=$(cur claude_sign_commits); def_claudesign=${def_claudesign:-true}
 def_creds=$(cur enable_credentials);  def_creds=${def_creds:-true}
 def_office=$(cur enable_libreoffice); def_office=${def_office:-false}
+def_kdenlive=$(cur enable_kdenlive); def_kdenlive=${def_kdenlive:-false}
 def_yaruicons=$(cur enable_yaru_icons); def_yaruicons=${def_yaruicons:-false}
 # NVIDIA: detect a card via lspci (pciutils), else the PCI vendor id 0x10de in sysfs.
 det_nvidia=false
@@ -271,6 +273,7 @@ else
 fi
 askyn enable_credentials "Enable login auto-unlock of SSH + GPG?"    "$def_creds"
 askyn enable_libreoffice "Install LibreOffice? (heavy — vifm opens office docs)" "$def_office"
+askyn enable_kdenlive    "Install Kdenlive? (heavy — Qt6/KF6 video editor)" "$def_kdenlive"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"
@@ -297,6 +300,7 @@ cat <<EOF
     enable_claude_user = $enable_claude_user$( [ "$enable_claude_user" = true ] && echo "   (claude signs commits: $claude_sign_commits)" )
     enable_credentials = $enable_credentials
     enable_libreoffice = $enable_libreoffice
+    enable_kdenlive    = $enable_kdenlive
     enable_nvidia      = $enable_nvidia
     cmus_music_dir     = $cmus_music_dir
     git identity       = $git_user_name <$git_user_email>$( [ -n "$git_signingkey" ] && echo "   signing $git_signingkey" )

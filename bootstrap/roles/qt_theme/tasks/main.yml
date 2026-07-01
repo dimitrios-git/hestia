@@ -1,0 +1,29 @@
+---
+# Install the hestia Qt/KDE colour scheme (the wildcharm palette as a KDE colour scheme).
+# No root, no Kvantum: KDE-Frameworks apps read colours from ~/.config/kdeglobals
+# (KColorScheme) and discover the named scheme in ~/.local/share/color-schemes
+# (KColorSchemeManager — e.g. Kdenlive's theme selector). One template renders to both
+# locations, so the palette stays the single source. Idempotent by nature — the template
+# module only rewrites on a content change. See docs/theming.md (Qt/KDE track).
+#
+# hestia OWNS kdeglobals for theming (like the other deployed configs): a re-run resets it
+# to the rendered scheme, so a colour changed inside a KDE app's settings won't persist —
+# change the palette here instead. Non-colour global KDE keys are not managed.
+
+- name: Ensure the KDE colour-scheme + config dirs exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ target_home }}/.config"
+    - "{{ target_home }}/.local/share/color-schemes"
+
+- name: Render the hestia colour scheme (kdeglobals + the selectable .colors)
+  ansible.builtin.template:
+    src: kdeglobals.j2
+    dest: "{{ item }}"
+    mode: "0644"
+  loop:
+    - "{{ target_home }}/.config/kdeglobals"
+    - "{{ target_home }}/.local/share/color-schemes/{{ qt_theme_scheme_name }}.colors"

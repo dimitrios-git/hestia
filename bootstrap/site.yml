@@ -24,6 +24,8 @@
       tags: [localbin]
     - role: gtk_theme  # hestia GTK3 theme (recoloured adw-gtk3) into ~/.local/share/themes (no root)
       tags: [gtk_theme]
+    - role: qt_theme   # hestia Qt/KDE colour scheme into ~/.config/kdeglobals + ~/.local/share/color-schemes (no root)
+      tags: [qt_theme]
     - role: yaru_icons # build + install the #d7005f Yaru icon theme into ~/.local/share/icons (opt-in, heavy)
       tags: [yaru_icons]
       when: enable_yaru_icons | bool

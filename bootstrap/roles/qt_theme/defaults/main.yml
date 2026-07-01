@@ -1,0 +1,27 @@
+---
+# The hestia Qt/KDE colour scheme — the wildcharm palette (themes/wildcharm/palette.yml)
+# expressed as a KDE colour scheme. It themes Qt / KDE-Frameworks apps (currently
+# Kdenlive) the way gtk_theme themes GTK3 apps: no root, no Kvantum, no env var. KDE apps
+# read the colours straight from ~/.config/kdeglobals (KColorScheme) and discover the
+# named scheme in ~/.local/share/color-schemes (KColorSchemeManager — e.g. Kdenlive's
+# theme menu). Bare-Qt (non-KDE) apps ignore kdeglobals and need a qt6ct follow-up.
+#
+# Values mirror themes/wildcharm/palette.yml (roles.* plus a few ansi.* for the semantic
+# foregrounds). Kept as hex here — like gtk_theme's gtk_theme_accent — and converted to
+# Breeze's "R,G,B" decimals in the template. Edit the palette first, then match here.
+qt_theme_scheme_name: "Hestia"
+
+qt_theme_bg:          "#0a0a0a"   # roles.bg          — window/canvas base (near-black)
+qt_theme_surface:     "#111111"   # roles.surface     — raised panels, inputs
+qt_theme_surface_alt: "#1a1a1a"   # roles.surface_alt — alternate rows, tooltips
+qt_theme_border:      "#1e1e1e"   # roles.border      — button alt, separators
+qt_theme_text:        "#e0e0e0"   # roles.text        — primary foreground
+qt_theme_dim:         "#8c8c8c"   # roles.dim         — inactive / tertiary text
+qt_theme_accent:      "#d7005f"   # roles.accent      — selection, focus, highlights
+qt_theme_accent_dark: "#9b0040"   # roles.accent_dark — alternate selection fill
+qt_theme_accent_fg:   "#ffffff"   # roles.accent_fg   — text ON the accent fill
+qt_theme_link:        "#ff5f87"   # roles.link        — links, hover decoration
+qt_theme_positive:    "#00af5f"   # ansi.green        — success foreground
+qt_theme_neutral:     "#d78700"   # ansi.yellow       — warning foreground
+qt_theme_negative:    "#da4453"   # a distinct error red, kept off the magenta-red accent
+qt_theme_visited:     "#d787d7"   # ansi.magenta      — visited-link foreground

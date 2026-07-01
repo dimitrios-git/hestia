@@ -55,19 +55,23 @@ case "$1" in
         # created synchronously here and removed only when mpv exits, is the gate
         # — no pgrep race. While it's held, just focus the existing mpv.
         is_video "$orig" || exit 0
-        if [ -e "$mpvlock" ]; then
+        # Single-instance AND stale-safe: the lock holds the wrapper's PID. If it
+        # is alive (mpv playing, or the post-close cooldown) just focus mpv. If the
+        # PID is dead/absent (mpv was force-killed → the wrapper never cleaned up)
+        # the lock is stale — ignore it and relaunch, so Enter never dead-ends.
+        if [ -e "$mpvlock" ] && kill -0 "$(cat "$mpvlock" 2>/dev/null)" 2>/dev/null; then
             swaymsg '[app_id="mpv"] focus' >/dev/null 2>&1
             exit 0
         fi
-        : > "$mpvlock"
+        rm -f "$mpvlock"
         # Open mpv UNDER the vifm+imv combo: focus the parent ([vifm|imv] split),
         # wrap it in a vertical split so mpv tiles below the pair. The wrapper
-        # (detached, so it outlives this exec) holds the lock until mpv quits AND
-        # a short cooldown passes — the cooldown swallows the stray Enter that
-        # fires as focus returns to imv on close (which would otherwise re-launch
-        # mpv → q → re-launch …). During it, re-fires just no-op-focus a gone mpv.
+        # (detached, so it outlives this exec) records its PID, plays, then holds
+        # the lock through a 1s cooldown after mpv exits — the cooldown swallows
+        # the stray Enter that fires as focus returns to imv on close (which would
+        # otherwise re-launch mpv → q → re-launch …).
         swaymsg 'focus parent, split vertical' >/dev/null 2>&1
-        setsid -f sh -c 'mpv -- "$1"; sleep 1; rm -f "$2"' _ "$orig" "$mpvlock" >/dev/null 2>&1
+        setsid -f sh -c 'echo $$ > "$2"; mpv -- "$1"; sleep 1; rm -f "$2"' _ "$orig" "$mpvlock" >/dev/null 2>&1
         ;;
     *)
         vifm --remote -c "goto '$orig'"

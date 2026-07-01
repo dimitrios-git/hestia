@@ -62,9 +62,12 @@ case "$1" in
         : > "$mpvlock"
         # Open mpv UNDER the vifm+imv combo: focus the parent ([vifm|imv] split),
         # wrap it in a vertical split so mpv tiles below the pair. The wrapper
-        # (detached, so it outlives this exec) clears the lock when mpv quits.
+        # (detached, so it outlives this exec) holds the lock until mpv quits AND
+        # a short cooldown passes — the cooldown swallows the stray Enter that
+        # fires as focus returns to imv on close (which would otherwise re-launch
+        # mpv → q → re-launch …). During it, re-fires just no-op-focus a gone mpv.
         swaymsg 'focus parent, split vertical' >/dev/null 2>&1
-        setsid -f sh -c 'mpv -- "$1"; rm -f "$2"' _ "$orig" "$mpvlock" >/dev/null 2>&1
+        setsid -f sh -c 'mpv -- "$1"; sleep 1; rm -f "$2"' _ "$orig" "$mpvlock" >/dev/null 2>&1
         ;;
     *)
         vifm --remote -c "goto '$orig'"

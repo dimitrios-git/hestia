@@ -36,6 +36,12 @@ enable_kdenlive: false      # install kdenlive (Qt6/KF6 video editor; Qt-theming
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
 enable_yaru_icons: false    # install the prebuilt Yaru-hestia icon theme (yaru_icons role)
+# Headless browser for front-end dev/testing (screenshots, cookie/network traces,
+# Playwright/Puppeteer targets). Debian's `chromium` package pulls the runtime libs
+# a headless engine needs (libnss3/libgbm1/libasound2/…), so a driver can drive it or
+# the agent can `chromium --headless --screenshot` directly. Heavy (~a few hundred MB)
+# but broadly useful, so it's part of the full host — a lean spin sets this false.
+enable_headless_browser: true   # install chromium for headless dev/testing (package-only)
 
 # --- Identity (rendered into git config + the credential-unlock hook) ----------
 # Personal — these defaults are de-personalised placeholders, OVERRIDDEN per host
@@ -227,6 +233,7 @@ apt_packages:
   credentials:  [gnome-keyring, libsecret-tools]  # enable_credentials
   office:       [libreoffice]                   # enable_libreoffice (heavy, default off)
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
+  browser:      [chromium]                       # enable_headless_browser (headless dev/testing; also satisfies Playwright/Puppeteer runtime libs)
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
 
 # Maps a feature-gated apt group -> its toggle. The `packages` role skips a group
@@ -237,4 +244,5 @@ package_group_features:
   credentials: "{{ enable_credentials | bool }}"
   office:      "{{ enable_libreoffice | bool }}"
   video:       "{{ enable_kdenlive | bool }}"
+  browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"

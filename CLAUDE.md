@@ -87,6 +87,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/gtk/gtk-4.0/settings.ini` | `~/.config/gtk-4.0/settings.ini` |
 | `user/gtk/gtk-4.0/gtk.css` | `~/.config/gtk-4.0/gtk.css` |
 | `user/bin/claude-access` | `~/.local/bin/claude-access` |
+| `user/claude/keybindings.json` | `~/.claude/keybindings.json` |
 <!-- END active-symlinks -->
 
 ### Rendered (templated) configs
@@ -101,6 +102,7 @@ _Path-generalised configs (`docs/repo-structure-design.md` §5): rendered from a
 | `user/cmus/rc.j2` | `~/.config/cmus/rc` |
 | `user/gnupg/credential-unlock.sh.j2` | `~/.config/sway/scripts/credential-unlock.sh` |
 | `user/gnupg/keyring-ssh-askpass.sh.j2` | `~/.config/sway/scripts/keyring-ssh-askpass.sh` |
+| `user/claude/settings.json.j2` | `~/.claude/settings.json` |
 <!-- END rendered-templates -->
 
 `user/git/.gitconfig` points the global excludes file at `~/.gitignore_global`.

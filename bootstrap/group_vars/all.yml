@@ -108,6 +108,14 @@ dotfile_links:
   - { src: user/gtk/gtk-4.0/settings.ini,   dest: "{{ target_home }}/.config/gtk-4.0/settings.ini" }
   - { src: user/gtk/gtk-4.0/gtk.css,        dest: "{{ target_home }}/.config/gtk-4.0/gtk.css" }
   - { src: user/bin/claude-access,          dest: "{{ target_home }}/.local/bin/claude-access" }
+  # Claude Code keybindings (docs/claude-user-design.md §10 — persist the agent's
+  # Claude Code config as workstation-as-code). Pure UI config, no secrets: unbinds
+  # `escape` in the Chat context so a vi-mode reflex (ESC to leave insert mode in the
+  # shell) can't interrupt a running agent — ^C stays the interrupt. Deployed to
+  # whichever home runs the bootstrap; it only has an effect where Claude Code runs
+  # (the `claude` user). settings.json is app-writable, so it is RENDERED (a real
+  # file, not this symlink) — see templated_configs below.
+  - { src: user/claude/keybindings.json,    dest: "{{ target_home }}/.claude/keybindings.json" }
 
 # --- Rendered (templated) user configs ----------------------------------------
 # Path-generalisation (docs/repo-structure-design.md §5): configs that hardcode an
@@ -125,6 +133,16 @@ templated_configs:
   # dir so credential-unlock.sh finds its sibling via `readlink -f`.
   - { src: user/gnupg/credential-unlock.sh.j2,   dest: "{{ target_home }}/.config/sway/scripts/credential-unlock.sh",   mode: "0755" }
   - { src: user/gnupg/keyring-ssh-askpass.sh.j2, dest: "{{ target_home }}/.config/sway/scripts/keyring-ssh-askpass.sh", mode: "0755" }
+  # Claude Code settings — the agent's permission policy (allow/deny) + UI prefs
+  # (docs/claude-user-design.md §10). No secrets/tokens (auth lives in claude's 0700
+  # home, never committed). RENDERED, not symlinked, for two reasons: Claude Code
+  # writes back to this file (theme/permission changes), so a symlink would dirty the
+  # repo clone; and `force: true` re-asserts the reviewed baseline on every deploy
+  # (drift control). Edit the .j2 + redeploy to change policy — on-box `/config`
+  # edits are transient. The kernel boundary (claude unprivileged, not in sudo) plus
+  # this deny-list (no sudo, no push to main, no `gh pr merge`, no `.env` reads) are
+  # the two halves of the trust model.
+  - { src: user/claude/settings.json.j2,    dest: "{{ target_home }}/.claude/settings.json" }
 
 # --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
 # Sensible defaults so a fresh checkout renders without host_vars; real machines

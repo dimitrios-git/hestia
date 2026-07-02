@@ -51,6 +51,7 @@ to `/etc` by the bootstrap (copied/templated, not symlinked).
 | `user/xdg-desktop-portal/` | Screen-sharing portal routing | `~/.config/xdg-desktop-portal/` |
 | `user/gtk/` | GTK 3/4 theme settings + accent overlay | `~/.config/gtk-3.0/`, `~/.config/gtk-4.0/` |
 | `user/bin/` | Helper scripts (e.g. `claude-access`) | `~/.local/bin/` |
+| `user/claude/` | Claude Code config (agent user): keybindings + permission policy | `~/.claude/keybindings.json`, `~/.claude/settings.json` |
 | `system/` | System configs (e.g. Samba, the Sway launcher) | `/etc/`, `/usr/local/bin/` (root, not symlinked) |
 | `themes/` | Theme single-source-of-truth (`wildcharm/palette.yml`) | — (consumed by `docs/theming.md`) |
 | `bootstrap/` | The Ansible installer + manifest | — |

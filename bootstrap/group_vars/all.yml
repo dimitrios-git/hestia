@@ -124,6 +124,8 @@ dotfile_links:
 # template; vars come from this manifest (e.g. target_home). Keep this set SMALL —
 # rendering loses direct-edit; symlink everything that doesn't truly need it.
 # Optional `mode:` per item (default 0644) — scripts that get executed need 0755.
+# Optional `force:` per item (default true) — set false to SEED ONCE: render only
+# when the dest is absent, never overwrite a user's own file on re-run.
 templated_configs:
   - { src: user/git/.gitconfig.j2,          dest: "{{ target_home }}/.gitconfig" }
   - { src: user/glow/glow.yml.j2,           dest: "{{ target_home }}/.config/glow/glow.yml" }
@@ -135,14 +137,15 @@ templated_configs:
   - { src: user/gnupg/keyring-ssh-askpass.sh.j2, dest: "{{ target_home }}/.config/sway/scripts/keyring-ssh-askpass.sh", mode: "0755" }
   # Claude Code settings — the agent's permission policy (allow/deny) + UI prefs
   # (docs/claude-user-design.md §10). No secrets/tokens (auth lives in claude's 0700
-  # home, never committed). RENDERED, not symlinked, for two reasons: Claude Code
-  # writes back to this file (theme/permission changes), so a symlink would dirty the
-  # repo clone; and `force: true` re-asserts the reviewed baseline on every deploy
-  # (drift control). Edit the .j2 + redeploy to change policy — on-box `/config`
-  # edits are transient. The kernel boundary (claude unprivileged, not in sudo) plus
-  # this deny-list (no sudo, no push to main, no `gh pr merge`, no `.env` reads) are
-  # the two halves of the trust model.
-  - { src: user/claude/settings.json.j2,    dest: "{{ target_home }}/.claude/settings.json" }
+  # home, never committed). RENDERED (not symlinked) because Claude Code writes back
+  # to this file (theme/permission changes) — a symlink would dirty the repo clone.
+  # `force: false` = SEED ONCE: lay our reviewed baseline down on a clean install, but
+  # NEVER overwrite an existing settings.json — this is a file users personalise, and
+  # the bootstrap re-runs must leave their edits alone. To change the shipped baseline,
+  # edit the .j2; existing installs keep whatever they have. The kernel boundary
+  # (claude unprivileged, not in sudo) plus this deny-list (no sudo, no push to main,
+  # no `gh pr merge`, no `.env` reads) are the two halves of the trust model.
+  - { src: user/claude/settings.json.j2,    dest: "{{ target_home }}/.claude/settings.json", force: false }
 
 # --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
 # Sensible defaults so a fresh checkout renders without host_vars; real machines

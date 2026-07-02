@@ -69,6 +69,9 @@
       when:
         - dotfiles_backup | default(true) | bool
         - item.stat.exists and item.stat.isreg and not item.stat.islnk
+        # Skip seed-once (force:false) items: we never replace them, so backing up
+        # the user's own file would leave a puzzling .bak of an untouched config.
+        - item.item.force | default(true) | bool
 
     - name: Ensure the hestia state dir exists (for the marker)
       ansible.builtin.file:
@@ -92,13 +95,16 @@
     label: "{{ item.src }} -> {{ item.dest }}"
 
 # Path-generalised configs (docs/repo-structure-design.md §5): rendered from a .j2
-# so no /home/<user> literal is baked in. `force: true` replaces a pre-existing
-# symlink (e.g. an older deploy that symlinked glow.yml) with the rendered file.
+# so no /home/<user> literal is baked in. `force` defaults to true — replaces a
+# pre-existing file/symlink (e.g. an older deploy that symlinked glow.yml) with the
+# rendered file. An item can set `force: false` to SEED ONCE instead: render only
+# when the dest is absent, and never overwrite a user's own file on re-run (the
+# `claude` settings.json, which users personalise — see the manifest note).
 - name: Render templated configs from the manifest
   ansible.builtin.template:
     src: "{{ repo_root }}/{{ item.src }}"
     dest: "{{ item.dest }}"
-    force: true
+    force: "{{ item.force | default(true) | bool }}"
     mode: "{{ item.mode | default('0644') }}"   # scripts that get executed need 0755
   loop: "{{ templated_configs }}"
   loop_control:

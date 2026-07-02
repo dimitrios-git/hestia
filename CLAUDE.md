@@ -92,7 +92,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 
 ### Rendered (templated) configs
 
-_Path-generalised configs (`docs/repo-structure-design.md` §5): rendered from a `.j2` by the `dotfiles` role instead of symlinked, so no `/home/<user>` literal is baked in (direct-edit is lost for these — keep the set small). Generated from the manifest's `templated_configs` — **do not edit by hand**; run `bootstrap/gen-symlink-table.py`._
+_Path-generalised configs (`docs/repo-structure-design.md` §5): rendered from a `.j2` by the `dotfiles` role instead of symlinked, so no `/home/<user>` literal is baked in (direct-edit is lost for these — keep the set small). A manifest item may set `force: false` to **seed once** — rendered only when the dest is absent, never overwriting a user's own file on re-run (the `claude` `settings.json`, which users personalise). Generated from the manifest's `templated_configs` — **do not edit by hand**; run `bootstrap/gen-symlink-table.py`._
 
 <!-- BEGIN rendered-templates (generated from bootstrap/group_vars/all.yml by bootstrap/gen-symlink-table.py — do not edit by hand) -->
 | Repo template | Rendered to |

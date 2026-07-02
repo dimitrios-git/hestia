@@ -103,6 +103,8 @@ dotfile_links:
   - { src: user/vifm/scripts/preview.sh,    dest: "{{ target_home }}/.config/vifm/scripts/preview.sh" }
   # vifm `i` image-browse launcher (opens imv tiled, jumps the open imv on re-press)
   - { src: user/vifm/scripts/imv-browse.sh, dest: "{{ target_home }}/.config/vifm/scripts/imv-browse.sh" }
+  # vifm :gc/:gs helper — lists branch-vs-main changed files (+ ancestor dirs)
+  - { src: user/vifm/scripts/git-changed.sh, dest: "{{ target_home }}/.config/vifm/scripts/git-changed.sh" }
   # bat — config + the wildcharm syntax theme. The theme is compiled into bat's
   # cache by the dotfiles role (`bat cache --build`) after this link is made.
   - { src: user/bat/config,                 dest: "{{ target_home }}/.config/bat/config" }

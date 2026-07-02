@@ -140,8 +140,13 @@ fileviewer {*.7z}
 " theme), with a binary/directory fallback. Catch-all goes LAST so the specific
 " viewers above win (vifm uses the first matching :fileviewer). preview.sh lives
 " in ~/.config/vifm/scripts (on vifm's PATH); %pw/%ph size output to the pane.
+" Uses %c:p (current file, full path), NOT %f: on the ".." parent entry vifm
+" expands %f to NOTHING, so the args shift left (%pw lands in $1) and preview.sh
+" ran `file` on the pane width — the `cannot open '48'` error. %c:p always yields
+" one absolute path (".." resolves to the parent dir), so args never shift and
+" hovering ".." previews the parent's listing (preview.sh's -d branch).
 fileviewer {*}
-         \ preview.sh %f %pw %ph
+         \ preview.sh %c:p %pw %ph
 
 " Key bindings
 
@@ -185,3 +190,30 @@ nnoremap o :!xdg-open %f &<cr>
 " difftool path had. Missing side (added/deleted) → empty file. Flags mirror
 " git's builtin vimdiff (-R -d, focus the HEAD pane).
 command! gd !git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "gd: not inside a git repository"; exit 1; }; b='%a'; [ -z "$b" ] && b=$(git rev-parse -q --verify main >/dev/null 2>&1 && echo main || echo master); git rev-parse -q --verify "$b" >/dev/null 2>&1 || { echo "gd: unknown base ref '$b' (:gd takes the file automatically; the optional arg is a base ref like origin/main)"; exit 1; }; f=%c:t; mb=$(git merge-base "$b" HEAD 2>/dev/null || echo "$b"); d=$(mktemp -d) || exit 1; mkdir -p "$d/base" "$d/head"; git show "$mb:./$f" > "$d/base/$f" 2>/dev/null || : > "$d/base/$f"; git show "HEAD:./$f" > "$d/head/$f" 2>/dev/null || : > "$d/head/$f"; vim -R -d -c "wincmd l" "$d/base/$f" "$d/head/$f"; rm -rf "$d"
+
+" git: find the files this branch changed vs main (what Claude edited in a PR you
+" checked out). Both take an optional base ref (%a) like :gd — default main, else
+" master; three-dot BASE...HEAD = changes since the branch forked. The shell
+" pipeline lives in user/vifm/scripts/git-changed.sh (vifm parses a literal `|`
+" in a :command / :select as a command separator, so it can't be inline here).
+"
+"   :gc  (key gc) — jump list. Populates a custom view (%U) with just the changed
+"        files as a flat list; j/k to move, Enter opens, `gh`/cd leaves the view.
+"        Best for "open what changed, directly".
+"   :gs  (key gs) — inline highlight. :select-marks the changed files AND the
+"        folders leading to them (--dirs) right in the normal browser, so at the
+"        repo root both `CLAUDE.md` and `bootstrap/` light up; descend and the
+"        trail continues. Re-run after moving (see the auto note below).
+"
+" Auto-highlight on directory entry was tried (autocmd DirEnter :gs) and does NOT
+" work: vifm clears the pane selection as part of loading a directory, so the
+" autocmd's selection never sticks (verified — even a static :select evaporates).
+" The `gs` key is the practical substitute: one press after you land in a repo.
+"
+" Caveat: :gs reuses vifm's SELECTION, which is also the target of file ops (dd,
+" yy, …). After :gs the highlighted (changed) files are what those act on until
+" you clear the selection (Esc, or space to toggle) — intentional, just be aware.
+command! gc !git-changed.sh %a %U
+command! gs :select !git-changed.sh --dirs %a
+nnoremap gc :gc<cr>
+nnoremap gs :gs<cr>

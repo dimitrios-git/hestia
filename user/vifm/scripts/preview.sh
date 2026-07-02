@@ -15,6 +15,12 @@ f="$1"
 w="${2:-80}"
 h="${3:-40}"
 
+# Belt-and-suspenders: if $1 isn't a real path, don't run `file` on it. The
+# vifmrc catch-all passes %c:p (always a path), but were a vifm macro to expand
+# to nothing the args would shift and a pane dimension would land in $1 — that's
+# the historical `cannot open '48'` on the ".." entry. Bail with a blank preview.
+[ -e "$f" ] || [ -L "$f" ] || exit 0
+
 # bat is `bat` on most distros but `batcat` on Debian/Ubuntu — accept either.
 BAT=""
 if command -v bat >/dev/null 2>&1; then

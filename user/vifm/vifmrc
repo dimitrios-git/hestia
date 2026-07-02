@@ -179,9 +179,19 @@ nnoremap o :!xdg-open %f &<cr>
 " filename typed by mistake) is rejected with a clear message rather than git's
 " cryptic `bad revision`. Foreground — vifm suspends until you :qa out of vim.
 "
+" Works from a normal listing AND from :gc's custom view. It resolves the cursor
+" file by FULL path (%c:p) → repo root + repo-relative path, and runs every git
+" op with `git -C` anchored to the file's own directory. It must NOT rely on
+" vifm's cwd + basename (`git show HEAD:./<name>`): in a :gc custom view the cwd
+" is wherever you launched :gc (e.g. the repo root) while the file is in a subdir,
+" so `./<name>` doesn't exist there and both blobs come out EMPTY — the bug that
+" showed two blank vimdiff panes when running :gd on a :gc entry. The %c:p macro
+" is UNQUOTED (`fp=%c:p`, like the old `f=%c:t`): vifm does NOT expand a macro
+" wrapped in single quotes (`'%c:p'` → empty), so don't add quotes around it.
+"
 " It does NOT use `git difftool`: difftool only launches the tool for files that
 " actually differ, so on an unmodified file it would just flash and do nothing.
-" Instead it extracts both sides itself — the merge-base blob (`$mb:./$f`) and
+" Instead it extracts both sides itself — the merge-base blob (`$mb:$rel`) and
 " the HEAD blob — into a temp dir and opens `vim -d` on them, so :gd ALWAYS
 " opens a diff view: changed files show the diff, unmodified files show two
 " identical panes, a file new on the branch shows added-vs-empty. The temp
@@ -189,7 +199,7 @@ nnoremap o :!xdg-open %f &<cr>
 " fugitive…) see "not a repo" and stay quiet — no GIT_DIR inheritance like the
 " difftool path had. Missing side (added/deleted) → empty file. Flags mirror
 " git's builtin vimdiff (-R -d, focus the HEAD pane).
-command! gd !git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "gd: not inside a git repository"; exit 1; }; b='%a'; [ -z "$b" ] && b=$(git rev-parse -q --verify main >/dev/null 2>&1 && echo main || echo master); git rev-parse -q --verify "$b" >/dev/null 2>&1 || { echo "gd: unknown base ref '$b' (:gd takes the file automatically; the optional arg is a base ref like origin/main)"; exit 1; }; f=%c:t; mb=$(git merge-base "$b" HEAD 2>/dev/null || echo "$b"); d=$(mktemp -d) || exit 1; mkdir -p "$d/base" "$d/head"; git show "$mb:./$f" > "$d/base/$f" 2>/dev/null || : > "$d/base/$f"; git show "HEAD:./$f" > "$d/head/$f" 2>/dev/null || : > "$d/head/$f"; vim -R -d -c "wincmd l" "$d/base/$f" "$d/head/$f"; rm -rf "$d"
+command! gd !fp=%c:p; wd=$(dirname "$fp"); git -C "$wd" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "gd: not inside a git repository"; exit 1; }; root=$(git -C "$wd" rev-parse --show-toplevel); rel=${fp#"$root"/}; name=$(basename "$fp"); b='%a'; [ -z "$b" ] && b=$(git -C "$wd" rev-parse -q --verify main >/dev/null 2>&1 && echo main || echo master); git -C "$wd" rev-parse -q --verify "$b" >/dev/null 2>&1 || { echo "gd: unknown base ref '$b' (:gd takes the file automatically; the optional arg is a base ref like origin/main)"; exit 1; }; mb=$(git -C "$wd" merge-base "$b" HEAD 2>/dev/null || echo "$b"); t=$(mktemp -d) || exit 1; mkdir -p "$t/base" "$t/head"; git -C "$root" show "$mb:$rel" > "$t/base/$name" 2>/dev/null || : > "$t/base/$name"; git -C "$root" show "HEAD:$rel" > "$t/head/$name" 2>/dev/null || : > "$t/head/$name"; vim -R -d -c "wincmd l" "$t/base/$name" "$t/head/$name"; rm -rf "$t"
 
 " git: find the files this branch changed vs main (what Claude edited in a PR you
 " checked out). Both take an optional base ref (%a) like :gd — default main, else

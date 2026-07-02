@@ -209,8 +209,8 @@ command! gd !fp=%c:p; wd=$(dirname "$fp"); git -C "$wd" rev-parse --is-inside-wo
 "
 "   :gc  (key gc) — jump list. Populates a custom view (%U) with just the changed
 "        files as a flat list; j/k to move, Enter opens. To LEAVE the view: `gh`
-"        returns to where you opened :gc; `gr` (below) jumps to the repo root.
-"        Best for "open what changed, directly".
+"        (key, or the :gh command below) returns to where you opened :gc; `gr`
+"        jumps to the repo root. Best for "open what changed, directly".
 "   :gs  (key gs) — inline highlight. :select-marks the changed files AND the
 "        folders leading to them (--dirs) right in the normal browser, so at the
 "        repo root both `CLAUDE.md` and `bootstrap/` light up; descend and the
@@ -239,3 +239,11 @@ nnoremap gs :gs<cr>
 " empty result would send `:cd` to $HOME (vifm's no-arg :cd behaviour).
 command! gr :execute 'cd' fnameescape(system('(git rev-parse --show-toplevel 2>/dev/null || echo .) | tr -d "\n"'))
 nnoremap gr :gr<cr>
+
+" git: leave the :gc jump list (:gh, mirrors vifm's built-in `gh` KEY). `gh` is a
+" built-in key, not a command — so typing `:gh` alongside :gc/:gs/:gr/:gd got
+" "Invalid command name". This aliases it: :norm[al]! runs the `gh` key, whose
+" custom-view meaning is "return to the original directory" (where you opened
+" :gc); in a normal listing it's plain "go up one directory". The key itself is
+" unchanged (this only ADDS the :gh command; it does not remap the key).
+command! gh :normal! gh

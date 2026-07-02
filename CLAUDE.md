@@ -78,6 +78,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/vifm/colors/wildcharm.vifm` | `~/.config/vifm/colors/wildcharm.vifm` |
 | `user/vifm/scripts/preview.sh` | `~/.config/vifm/scripts/preview.sh` |
 | `user/vifm/scripts/imv-browse.sh` | `~/.config/vifm/scripts/imv-browse.sh` |
+| `user/vifm/scripts/git-changed.sh` | `~/.config/vifm/scripts/git-changed.sh` |
 | `user/bat/config` | `~/.config/bat/config` |
 | `user/bat/themes/wildcharm.tmTheme` | `~/.config/bat/themes/wildcharm.tmTheme` |
 | `user/glow/wildcharm.json` | `~/.config/glow/wildcharm.json` |
@@ -169,6 +170,8 @@ Fresh-install steps (Debian trixie ships **0.10.4**, recent enough — `apt inst
 
 ### Vifm (`user/vifm/vifmrc`)
 Wayland-first file manager. Images → `imv-wayland`, video → `mpv`, PDFs → `zathura`, office docs → `libreoffice`, **Markdown** → **glow** (`:file` offers "Edit in vim"). **Audio** opens in **cmus** (`cmus-remote -f`, play-now) and falls back to `mpv --no-video` when cmus isn't running; `:file` offers queue / mpv alternatives. Preview pane (`w`, on by default) uses `bat` (code, wildcharm theme) / `mediainfo` (media + image info) / `pdftotext` (PDF) / `glow` (markdown); images are info-only in the pane and open in `imv`. Clipboard yank (`yd`/`yf`) uses `wl-copy`. Comment syntax is `"` (vim-style).
+
+**Git branch-vs-main helpers** (three commands, base auto-detected main→master, all in `vifmrc`; the pipeline-bearing two share `user/vifm/scripts/git-changed.sh`): `:gd` diffs the **cursor file** vs the branch base in vimdiff; **`:gc`** (key `gc`) opens a **custom-view jump list** of exactly the files this branch changed (Enter opens); **`:gs`** (key `gs`) **highlights** those files *and the folders leading to them* inline in the normal browser via `:select`. All take an optional base ref like `:gd origin/main`. Two vifm constraints shaped this: a `|` in a `:command`/`:select` is parsed as a command separator (so the pipeline is in the script, not inline), and vifm clears the pane selection on directory load (so **auto-highlight via `autocmd DirEnter` doesn't stick** — the `gs` key is the one-press substitute; note `:gs` reuses the selection that file ops like `dd`/`yy` act on). The catch-all `fileviewer` passes **`%c:p`** (not `%f`): on the `..` parent entry `%f` expands to nothing, shifting a pane dimension into `preview.sh`'s `$1` (the old `cannot open '48'`); `%c:p` is always one absolute path, so `..` previews the parent listing.
 
 The markdown **preview-pane** call is `CLICOLOR_FORCE=1 glow -s ~/.config/glow/wildcharm.json -w %pw`: when piped (the preview pane is notty) glow drops colour **and** emits malformed empty-param SGR (`ESC[;;1m`) for bold, which vifm's ANSI parser can't read and leaks as literal `1m` in the pane. **`-s` does NOT force colour** (it only carries the style's bold); **`CLICOLOR_FORCE=1` does** — it makes glow emit well-formed SGR (like `bat --color=always`) that vifm renders cleanly. Caveat: forced notty output is **16-colour** (no truecolor), an approximation of the wildcharm hex; `-s` keeps that mapping on-theme. The full-screen **open** action (`glow -p`) runs in a real TTY, so it gets truecolor and the default style from `glow.yml`.
 

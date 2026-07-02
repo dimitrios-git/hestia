@@ -208,7 +208,8 @@ command! gd !fp=%c:p; wd=$(dirname "$fp"); git -C "$wd" rev-parse --is-inside-wo
 " in a :command / :select as a command separator, so it can't be inline here).
 "
 "   :gc  (key gc) — jump list. Populates a custom view (%U) with just the changed
-"        files as a flat list; j/k to move, Enter opens, `gh`/cd leaves the view.
+"        files as a flat list; j/k to move, Enter opens. To LEAVE the view: `gh`
+"        returns to where you opened :gc; `gr` (below) jumps to the repo root.
 "        Best for "open what changed, directly".
 "   :gs  (key gs) — inline highlight. :select-marks the changed files AND the
 "        folders leading to them (--dirs) right in the normal browser, so at the
@@ -227,3 +228,14 @@ command! gc !git-changed.sh %a %U
 command! gs :select !git-changed.sh --dirs %a
 nnoremap gc :gc<cr>
 nnoremap gs :gs<cr>
+
+" git: cd to the repository root (key gr). Handy on its own, and the tidy way out
+" of the :gc jump list — after browsing the changed files, `gr` drops you back to
+" normal browsing at the repo top instead of some subdir. Uses vifm's expression
+" `cd`: system() runs `git rev-parse --show-toplevel`, `tr -d` strips the trailing
+" newline IN THE SHELL (vifm 0.14 has no trim()/substitute() — only system() and
+" fnameescape()), and fnameescape() quotes the path for the :cd. The `|| echo .`
+" makes it a true no-op outside a git repo (`:cd .` stays put) — without it an
+" empty result would send `:cd` to $HOME (vifm's no-arg :cd behaviour).
+command! gr :execute 'cd' fnameescape(system('(git rev-parse --show-toplevel 2>/dev/null || echo .) | tr -d "\n"'))
+nnoremap gr :gr<cr>

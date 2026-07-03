@@ -170,6 +170,21 @@ Default is canonical wins; promote only deliberately.
 
 - glow `wildcharm.json`: not yet audited against the canonical table (M4).
 - vifm's code preview follows bat, so it inherits bat's divergence until M4.
+- **OPEN — bg lift experiment (2026-07-03).** After seeing tci's code blocks on
+  `surface_alt #1a1a1a`, dimitrios wants to try `#1a1a1a` as the ground in place
+  of `bg #0a0a0a`. Running as a two-config experiment (kitty + vim only; the
+  rest of the desktop stays on `#0a0a0a` meanwhile). What the numbers say if it
+  wins: the surface ramp must be re-built upward (`surface #111111` and `border
+  #1e1e1e` stop working against a `#1a1a1a` ground, and bg would equal ANSI
+  color0 exactly — black-on-black in TUIs that paint with color0); a lifted code
+  surface (~`#242424`/`#2e2e2e`) drops `extended.purple` (4.36/3.82:1),
+  `diff_change` (4.03/3.52:1) and on the lighter step `comment` (4.04:1) below
+  AA, so 2–3 syntax colours would need re-lifting — each step drifts further
+  from wildcharm's black-tuned palette. Also note: tci's effect is *layering*
+  (page `#0f0f0f` vs block `#1a1a1a` + border), which a flat terminal ground
+  can't reproduce — the experiment tests whether the lighter ground itself is
+  what's liked. Decide → revert, or promote as palette **0.3.0** (decision-log
+  entry + full re-ramp + propagation sweep across all consumers).
 
 ## Verification
 

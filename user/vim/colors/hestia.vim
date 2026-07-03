@@ -13,9 +13,12 @@ runtime colors/wildcharm.vim
 let g:colors_name = 'hestia'
 
 if &background ==# 'dark'
-  " hestia near-black bg; most groups use guibg=NONE and inherit Normal, so this
-  " carries the whole UI. ctermbg 232 is the 256-colour near-black fallback (only
-  " used on non-truecolor terminals; kitty is truecolor and uses the gui value).
-  hi Normal      guibg=#0a0a0a ctermbg=232
-  hi TabLineFill guibg=#0a0a0a ctermbg=232
+  " hestia bg; most groups use guibg=NONE and inherit Normal, so this carries
+  " the whole UI. The cterm value is the 256-colour fallback (only used on
+  " non-truecolor terminals; kitty is truecolor and uses the gui value).
+  " EXPERIMENT(bg-lift): trying roles.surface_alt #1a1a1a as the ground (roles.bg
+  " is the near-black #0a0a0a), prompted by how the tci code blocks read. Revert
+  " or promote to palette 0.3.0 — see PR / docs/theme-roadmap.md backlog.
+  hi Normal      guibg=#1a1a1a ctermbg=234
+  hi TabLineFill guibg=#1a1a1a ctermbg=234
 endif

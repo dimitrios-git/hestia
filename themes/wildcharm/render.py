@@ -12,12 +12,14 @@ TextMate family (syntax + chrome):
                                                          (editor; bg = the app
                                                           CANVAS + UI chrome)
 
-Desktop chrome fragments (roles/ANSI only — no scopes; both variants, the
-bootstrap symlinks the one `theme_variant` selects, M7):
-  user/kitty/theme-{dark,light}.conf                     (terminal colours)
-  user/sway/theme-{dark,light}.conf                      ($vars + output bg +
-                                                          the gsettings execs)
-  user/waybar/theme-{dark,light}.css                     (@define-color tokens)
+Desktop chrome, both variants each (roles/ANSI only — no scopes; the bootstrap
+symlinks the one `theme_variant` selects to a variant-neutral dest, M7):
+  fragments   kitty/sway/mako theme-*.conf, waybar/wofi theme-*.css,
+              zathura theme-* (include'd/@import'ed by the main configs)
+  whole-file  swaylock/swaynag config-* (no include support)
+  theme pairs vifm wildcharm-*.vifm, bat wildcharm-*.tmTheme (TM family),
+              glow wildcharm-*.json, bash .dircolors-* (ls file colours —
+              generated from the SAME table as vifm so they cannot drift)
 
 Same tokenColors everywhere; only the per-target chrome differs. The WCAG AA
 contrast gate runs before anything is written — a palette edit that breaks a
@@ -643,27 +645,44 @@ set recolor-darkcolor  "{r["text"]}"
 """
 
 
+def filetype_colors(variant: str) -> dict:
+    """File-type colours shared by vifm AND dircolors — one table so `ls` and
+    vifm cannot drift. Dark rides the vivid BRIGHT ANSI slots; on light the
+    common groups drop to the BASE slots for readability (decision log — the
+    bright slots are dark-tuned; upstream's own light design makes the same
+    move). Light Link == Fifo (both base cyan) — accepted, fifos are rare."""
+    r, a = vroles(variant), vansi(variant)
+    if variant == "dark":
+        return {
+            "dir": a["bright_blue"], "link": a["bright_cyan"], "exec": a["bright_green"],
+            "broken": a["bright_red"], "hardlink": a["bright_yellow"],
+            "socket": a["bright_magenta"], "device": a["yellow"], "fifo": a["cyan"],
+            "archives": a["bright_red"], "images": a["bright_magenta"],
+            "video": a["magenta"], "audio": a["bright_cyan"],
+            "docs": a["bright_yellow"], "markdown": a["white"],
+        }
+    return {
+        "dir": a["blue"], "link": a["cyan"], "exec": a["green"],
+        "broken": a["bright_red"], "hardlink": a["bright_yellow"],
+        "socket": a["bright_magenta"], "device": a["yellow"], "fifo": a["cyan"],
+        "archives": a["bright_red"], "images": a["bright_magenta"],
+        "video": a["magenta"], "audio": a["cyan"],
+        "docs": a["yellow"], "markdown": r["muted"],
+    }
+
+
 def render_vifm(variant: str) -> str:
     r, a, e = vroles(variant), vansi(variant), vext(variant)
+    ft = filetype_colors(variant)
     if variant == "dark":
         ui_fg = e["ui_grey"]       # TopLine text / cursor-bar fill
         bar_fg = e["ink"]          # text ON the grey cursor bar
         tab_fg = a["white"]        # inactive tab/JobLine text (#d0d0d0)
-        line_grey = e["line_grey"]
-        # file types ride the vivid BRIGHT slots on dark
-        d_dir, d_link, d_exe = a["bright_blue"], a["bright_cyan"], a["bright_green"]
-        p_audio, p_docs, p_md = a["bright_cyan"], a["bright_yellow"], a["white"]
     else:
         ui_fg = e["ui_dark"]       # the inversion: dark-grey bar on light
         bar_fg = r["accent_fg"]    # white text on that bar
         tab_fg = r["muted"]
-        line_grey = e["line_grey"]
-        # on light the BASE slots are the readable ones (upstream's own light
-        # design does the same — light String is the base green); the common
-        # groups (Directory/Link/Executable, audio/docs/markdown) drop to them,
-        # rare ones stay slot-faithful
-        d_dir, d_link, d_exe = a["blue"], a["cyan"], a["green"]
-        p_audio, p_docs, p_md = a["cyan"], a["yellow"], r["muted"]
+    line_grey = e["line_grey"]
 
     def hl(group, attr, fg, bg="default"):
         cfg = xterm_index(fg) if fg != "default" else "default"
@@ -695,22 +714,22 @@ def render_vifm(variant: str) -> str:
         hl("CurrLine", "bold", bar_fg, ui_fg),
         hl("Selected", "bold", a["bright_magenta"]),
         "\n\" file types",
-        hl("Directory", "bold", d_dir),
-        hl("Link", "none", d_link),
-        hl("BrokenLink", "bold", a["bright_red"]),
-        hl("HardLink", "none", a["bright_yellow"]),
-        hl("Socket", "none", a["bright_magenta"]),
-        hl("Device", "none", a["yellow"]),
-        hl("Fifo", "none", a["cyan"]),
-        hl("Executable", "bold", d_exe),
+        hl("Directory", "bold", ft["dir"]),
+        hl("Link", "none", ft["link"]),
+        hl("BrokenLink", "bold", ft["broken"]),
+        hl("HardLink", "none", ft["hardlink"]),
+        hl("Socket", "none", ft["socket"]),
+        hl("Device", "none", ft["device"]),
+        hl("Fifo", "none", ft["fifo"]),
+        hl("Executable", "bold", ft["exec"]),
     ]
     pats = [
-        ("{*.tar,*.tgz,*.tbz2,*.txz,*.zip,*.gz,*.bz2,*.xz,*.zst,*.7z,*.rar}", a["bright_red"]),
-        ("{*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}", a["bright_magenta"]),
-        ("{*.mp4,*.mkv,*.webm,*.mov,*.avi,*.m4v,*.flv}", a["magenta"]),
-        ("{*.mp3,*.flac,*.ogg,*.opus,*.wav,*.m4a,*.aac}", p_audio),
-        ("{*.pdf,*.epub,*.djvu}", p_docs),
-        ("{*.md,*.markdown}", p_md),
+        ("{*.tar,*.tgz,*.tbz2,*.txz,*.zip,*.gz,*.bz2,*.xz,*.zst,*.7z,*.rar}", ft["archives"]),
+        ("{*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}", ft["images"]),
+        ("{*.mp4,*.mkv,*.webm,*.mov,*.avi,*.m4v,*.flv}", ft["video"]),
+        ("{*.mp3,*.flac,*.ogg,*.opus,*.wav,*.m4a,*.aac}", ft["audio"]),
+        ("{*.pdf,*.epub,*.djvu}", ft["docs"]),
+        ("{*.md,*.markdown}", ft["markdown"]),
     ]
     pat_lines = [
         "\n\" file-name patterns — vifm has no LS_COLORS, so these mirror the extension",
@@ -730,6 +749,78 @@ def render_vifm(variant: str) -> str:
         "highlight clear",
     ]
     return "\n".join(header + rows + pat_lines) + "\n"
+
+
+def render_dircolors(variant: str) -> str:
+    ft = filetype_colors(variant)
+
+    def c(key, bold=False):
+        return ("01;" if bold else "") + f"38;5;{xterm_index(ft[key])}"
+
+    exts = [
+        ("archives / compressed", "archives",
+         [".tar", ".tgz", ".tbz2", ".txz", ".zip", ".gz", ".bz2", ".xz", ".zst", ".7z", ".rar"]),
+        ("images", "images",
+         [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".avif", ".svg", ".ico"]),
+        ("video", "video", [".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".flv"]),
+        ("audio", "audio", [".mp3", ".flac", ".ogg", ".opus", ".wav", ".m4a", ".aac"]),
+        ("documents", "docs", [".pdf", ".epub", ".djvu"]),
+        ("markdown", "markdown", [".md", ".markdown"]),
+    ]
+    lines = [
+        f"# {PROVENANCE}",
+        f"# hestia .dircolors — ls/eza/tree file colours, {variant} (.dircolors-{{dark,light}}",
+        "# pair; the bootstrap symlinks the `theme_variant` one to ~/.dircolors).",
+        "#",
+        "# The file-TYPE colours come from the SAME per-variant table as vifm's generated",
+        "# colorscheme (render.py filetype_colors), so `ls` and vifm agree by construction.",
+        "# Indices 16-255 are the standard xterm cube (not the wildcharm-remapped 0-15).",
+        "#",
+        '# Loaded by .bashrc: `test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)"`.',
+        "",
+        "# Terminals colour is enabled for (kitty + the usual 256-colour set + console).",
+        "TERM xterm-kitty",
+        "TERM xterm-256color",
+        "TERM screen-256color",
+        "TERM tmux-256color",
+        "TERM *-256color",
+        "TERM xterm",
+        "TERM screen",
+        "TERM tmux",
+        "TERM linux",
+        "",
+        "# --- file types (the vifm-shared table) ---",
+        "RESET 0",
+        "NORMAL 00",
+        "FILE 00                         # regular file — plain, like vifm's Normal fg",
+        f"DIR {c('dir', bold=True)}                  # vifm Directory",
+        f"LINK {c('link')}                    # vifm Link",
+        f"ORPHAN {c('broken', bold=True)}              # vifm BrokenLink",
+        f"MISSING {c('broken', bold=True)}",
+        f"EXEC {c('exec', bold=True)}                # vifm Executable",
+        f"MULTIHARDLINK {c('hardlink')}          # vifm HardLink",
+        f"SOCK {c('socket')}                    # vifm Socket",
+        f"DOOR {c('socket')}",
+        f"FIFO {c('fifo')}                    # vifm Fifo",
+        f"BLK {c('device')}                     # vifm Device",
+        f"CHR {c('device')}",
+        "# permission-bit highlights (vifm has no direct analogue — keep them legible)",
+        f"SETUID {c('broken', bold=True)}",
+        f"SETGID {c('hardlink', bold=True)}",
+        f"CAPABILITY {c('broken', bold=True)}",
+        f"STICKY {c('dir', bold=True)}",
+        f"OTHER_WRITABLE {c('dir')}",
+        f"STICKY_OTHER_WRITABLE {c('dir')}",
+        "",
+        "# --- extension layer (restrained, wildcharm hues) ------------------------------",
+        "# vifm shows regular files in the plain fg, so this is a deliberate enhancement on",
+        "# top of the vifm-matched types — delete this block for exact `ls`==vifm parity.",
+    ]
+    for title, key, suffixes in exts:
+        lines.append(f"# {title}")
+        lines += [f"{s} {c(key)}" for s in suffixes]
+    lines.append("")
+    return "\n".join(lines)
 
 
 GLOW_CHROMA = [
@@ -840,6 +931,8 @@ OUTPUTS = {
     REPO / "user/zathura/theme-light": lambda: render_zathura("light"),
     REPO / "user/vifm/colors/wildcharm-dark.vifm": lambda: render_vifm("dark"),
     REPO / "user/vifm/colors/wildcharm-light.vifm": lambda: render_vifm("light"),
+    REPO / "user/bash/.dircolors-dark": lambda: render_dircolors("dark"),
+    REPO / "user/bash/.dircolors-light": lambda: render_dircolors("light"),
     REPO / "user/glow/wildcharm-dark.json": lambda: render_glow("dark"),
     REPO / "user/glow/wildcharm-light.json": lambda: render_glow("light"),
 }

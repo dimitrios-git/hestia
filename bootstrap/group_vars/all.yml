@@ -74,7 +74,9 @@ dotfile_links:
   # picked by `theme_variant`, the dest name is variant-neutral.
   - { src: "user/vim/hestia-background-{{ theme_variant }}.vim", dest: "{{ target_home }}/.vim/hestia-background.vim" }
   - { src: user/bash/.bashrc,               dest: "{{ target_home }}/.bashrc" }
-  - { src: user/bash/.dircolors,            dest: "{{ target_home }}/.dircolors" }
+  # GENERATED pair (render.py — same file-type table as vifm's colorscheme, so
+  # `ls` and vifm agree by construction). src picked by `theme_variant` (M7).
+  - { src: "user/bash/.dircolors-{{ theme_variant }}", dest: "{{ target_home }}/.dircolors" }
   - { src: user/git/.gitignore_global,      dest: "{{ target_home }}/.gitignore_global" }
   - { src: user/gnupg/gpg-agent.conf,       dest: "{{ target_home }}/.gnupg/gpg-agent.conf" }
   - { src: user/nvim/init.vim,              dest: "{{ target_home }}/.config/nvim/init.vim" }

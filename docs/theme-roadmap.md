@@ -41,6 +41,21 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-03 (0.7.1) — light ANSI color1 IS the accent** (`#d7005f`, deviating
+  from upstream light's `#af0000`): hestia's identity is `accent == ANSI
+  color01` and it must hold in both variants — caught live when cmus's bars
+  (which fill with terminal colour 1) rendered plain dark red on the light
+  desktop while waybar/VS Code (accent-as-hex) stayed magenta-red. Upstream's
+  `#af0000` lives on as light `syntax.constant`. Re-rendered: kitty light
+  `color1`, VS Code light `terminal.ansiRed`.
+- **2026-07-03 (0.7.1) — dircolors generated, both variants**, from the SAME
+  `filetype_colors()` table as the vifm colorscheme — closing the day-old
+  backlog item: `ls` and vifm now agree **by construction** in both variants
+  (the "kept in sync by hand" era ends). Dark output value-identical to the
+  retired hand-written `.dircolors`; light uses the readable base-slot drops
+  (dir 25, link/audio 30, exec 28, …). Light Link == Fifo (both base cyan) —
+  accepted, fifos are rare.
+
 - **2026-07-03 (M7 PR2/0.7.0) — the whole desktop chrome is now generated.**
   render.py grew emitters for mako/wofi/zathura (include fragments), swaylock/
   swaynag (whole-file pairs — no include support), vifm (`wildcharm-{dark,light}
@@ -356,12 +371,8 @@ the platform mapping, never in an artifact.
   palette 0.5.0** (see the decision log). The feared syntax re-lifting never
   happened: the code surface didn't move (it became the ground), so the AA
   constraints stayed at `#1a1a1a`.
-- **Light `ls` vs vifm divergence (M7 PR2).** `.dircolors` is variant-invariant
-  by design (256-cube indices), but vifm's LIGHT colorscheme drops common groups
-  to the base ANSI slots for readability — so `ls` and vifm agree exactly on
-  dark only, and `ls` output on the light terminal keeps the dark-tuned bright
-  cube colours (dir 39 `#00afff` is weak on `#f5f5f5`). If it grates live, give
-  dircolors a variant pair the same way (rendered or variant-linked).
+- ~~Light `ls` vs vifm divergence (M7 PR2)~~ — **RESOLVED in 0.7.1**: dircolors
+  became a generated variant pair sharing vifm's `filetype_colors()` table.
 - **WATCH — `bg == ANSI color0` (`#1a1a1a`, since 0.5.0).** If a TUI ever
   paints color0 text/panels invisibly against the ground, shift color0 (and
   vifm/dircolors consumers of it), not the ground.
@@ -387,6 +398,9 @@ the platform mapping, never in an artifact.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.7.1** (2026-07-03) — light `ansi.red` → the accent (identity fix, cmus
+  caught it live); `.dircolors` generated as a variant pair from the shared
+  vifm file-type table (backlog item closed).
 - **0.7.0** (2026-07-03) — **the long tail generated (M7 PR2)**: emitters for
   mako/wofi/zathura fragments, swaylock/swaynag whole-file pairs, vifm/bat/glow
   theme pairs (retiring their hand-written files — dark value-identical); VS

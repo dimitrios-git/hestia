@@ -47,7 +47,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/vim/colors/hestia.vim` | `~/.vim/colors/hestia.vim` |
 | `user/vim/hestia-background-{{ theme_variant }}.vim` | `~/.vim/hestia-background.vim` |
 | `user/bash/.bashrc` | `~/.bashrc` |
-| `user/bash/.dircolors` | `~/.dircolors` |
+| `user/bash/.dircolors-{{ theme_variant }}` | `~/.dircolors` |
 | `user/git/.gitignore_global` | `~/.gitignore_global` |
 | `user/gnupg/gpg-agent.conf` | `~/.gnupg/gpg-agent.conf` |
 | `user/nvim/init.vim` | `~/.config/nvim/init.vim` |

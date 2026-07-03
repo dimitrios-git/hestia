@@ -1,8 +1,13 @@
-/* wofi theme — matches sway / waybar / mako. Colour tokens are the GENERATED
-   theme-{dark,light}.css pair (themes/wildcharm/render.py; the bootstrap
-   symlinks the `theme_variant` one here as theme.css) — edit palette.yml +
-   re-render, not the fragment. */
-@import "theme.css";
+/* wofi theme — matches sway / waybar / mako. Colours come from wofi's COLORS
+   FILE (the GENERATED colors-{dark,light} pair, themes/wildcharm/render.py;
+   the bootstrap symlinks the `theme_variant` one to ~/.config/wofi/colors,
+   wired by `colors=colors` in the wofi config). wofi substitutes the
+   --wofi-color<n> macros below from that file's lines BEFORE handing the CSS
+   to GTK — @import/@define-color fragments do NOT work here (wofi loads the
+   preprocessed text, so relative imports never resolve). Slot order (line - 1,
+   from render.py WOFI_SLOTS):
+     0 bg · 1 text · 2 muted · 3 border · 4 surface · 5 accent · 6 accent_fg
+   Edit palette.yml + re-render to change a colour. */
 
 * {
     font-family: "Lilex Nerd Font Mono";
@@ -10,9 +15,9 @@
 }
 
 window {
-    background-color: @bg;
-    color: @text;
-    border: 2px solid @accent;
+    background-color: --wofi-color0;
+    color: --wofi-color1;
+    border: 2px solid --wofi-color5;
 }
 
 #outer-box {
@@ -23,22 +28,22 @@ window {
 #input {
     margin-bottom: 12px;
     padding: 8px 12px;
-    background-color: @surface;
-    color: @text;
-    border: 1px solid @border;
+    background-color: --wofi-color4;
+    color: --wofi-color1;
+    border: 1px solid --wofi-color3;
     border-radius: 0;
     outline: none;
     box-shadow: none;
 }
 
 #input:focus {
-    border: 1px solid @accent;
+    border: 1px solid --wofi-color5;
     outline: none;
     box-shadow: none;
 }
 
 #input image {
-    color: @muted;
+    color: --wofi-color2;
 }
 
 #scroll {
@@ -60,17 +65,17 @@ window {
 }
 
 #text {
-    color: @muted;
+    color: --wofi-color2;
 }
 
 #entry:selected {
-    background-color: @accent;
+    background-color: --wofi-color5;
 }
 
 #entry:selected #text {
-    color: @accent_fg;
+    color: --wofi-color6;
 }
 
 #text:selected {
-    color: @accent_fg;
+    color: --wofi-color6;
 }

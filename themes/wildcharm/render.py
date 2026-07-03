@@ -14,8 +14,9 @@ TextMate family (syntax + chrome):
 
 Desktop chrome, both variants each (roles/ANSI only — no scopes; the bootstrap
 symlinks the one `theme_variant` selects to a variant-neutral dest, M7):
-  fragments   kitty/sway/mako theme-*.conf, waybar/wofi theme-*.css,
-              zathura theme-* (include'd/@import'ed by the main configs)
+  fragments   kitty/sway/mako theme-*.conf, waybar theme-*.css, zathura
+              theme-* (include'd/@import'ed by the main configs), wofi
+              colors-* (wofi's own colors-file macro mechanism — no @import)
   whole-file  swaylock/swaynag config-* (no include support)
   theme pairs vifm wildcharm-*.vifm, bat wildcharm-*.tmTheme (TM family),
               glow wildcharm-*.json, bash .dircolors-* (ls file colours —
@@ -466,17 +467,20 @@ default-timeout=0
 """
 
 
-def render_wofi_css(variant: str) -> str:
+# wofi does NOT support @import/@define-color fragments: it preprocesses the
+# stylesheet TEXT itself (substituting --wofi-color<n> macros from its "colors
+# file") and then hands the result to GTK, so a relative @import never resolves
+# (caught live — the launcher rendered transparent). The native mechanism is the
+# colors file: newline-separated hexes, line N referenced as --wofi-color<N-1>
+# in style.css, path wired by `colors=` in the wofi config (relative paths
+# resolve against ~/.config/wofi). SLOT ORDER (style.css documents it too):
+WOFI_SLOTS = ["bg", "text", "muted", "border", "surface", "accent", "accent_fg"]
+
+
+def render_wofi_colors(variant: str) -> str:
+    # NO comments/provenance in this file — wofi parses every line as a hex
     r = vroles(variant)
-    return _css_tokens(variant, {
-        "bg": r["bg"],
-        "text": r["text"],
-        "muted": r["muted"],
-        "border": r["border"],
-        "surface": r["surface"],
-        "accent": r["accent"],
-        "accent_fg": r["accent_fg"],
-    }, f'wofi colour tokens — {variant} (style.css: @import "theme.css")')
+    return "\n".join(r[slot] for slot in WOFI_SLOTS) + "\n"
 
 
 def render_swaylock(variant: str) -> str:
@@ -921,8 +925,8 @@ OUTPUTS = {
     REPO / "user/waybar/theme-light.css": lambda: render_waybar_css("light"),
     REPO / "user/mako/theme-dark.conf": lambda: render_mako("dark"),
     REPO / "user/mako/theme-light.conf": lambda: render_mako("light"),
-    REPO / "user/wofi/theme-dark.css": lambda: render_wofi_css("dark"),
-    REPO / "user/wofi/theme-light.css": lambda: render_wofi_css("light"),
+    REPO / "user/wofi/colors-dark": lambda: render_wofi_colors("dark"),
+    REPO / "user/wofi/colors-light": lambda: render_wofi_colors("light"),
     REPO / "user/swaylock/config-dark": lambda: render_swaylock("dark"),
     REPO / "user/swaylock/config-light": lambda: render_swaylock("light"),
     REPO / "user/swaynag/config-dark": lambda: render_swaynag("dark"),

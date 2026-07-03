@@ -81,7 +81,9 @@ input type:keyboard {
 # Basics
     bindsym $mod+Return exec $term
     bindsym $mod+Shift+q kill
-    bindsym $mod+d exec wofi --show drun
+    # Launcher — TOGGLE like the waybar popups/qalc: a re-press closes the open
+    # wofi instead of stacking another (wofi has no built-in single-instance).
+    bindsym $mod+d exec sh -c 'pgrep -x wofi >/dev/null && pkill -x wofi || wofi --show drun'
     # Music: cmus + cava visualizer side by side
     bindsym $mod+m exec kitty --session music.session
     # Calculator: qalc (Qalculate CLI) in a floatterm — the floatterm app_id

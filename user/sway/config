@@ -2,9 +2,11 @@
 
 set $mod Mod4
 
-default_border pixel 1
-for_window [app_id=".*"] border pixel 1
-for_window [class=".*"] border pixel 1
+# 2px matches wofi's window border (user/wofi/style.css) — the launcher reads
+# as focused when open, so the frames should weigh the same.
+default_border pixel 2
+for_window [app_id=".*"] border pixel 2
+for_window [class=".*"] border pixel 2
 # Floating popups for tray/widget click actions (nmtui, etc.). The app_id criterion is
 # an unanchored regex, so it also matches the per-widget classes (floatterm-gpu,
 # floatterm-weather, …). The weather forecast is wide, so size that one larger (a later

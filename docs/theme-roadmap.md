@@ -41,6 +41,59 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-03 (M7/0.6.0) — light desktop ground `#f5f5f5`, ramp below it on
+  xterm greys.** The light desktop (M7 PR1) softens the ground off pure white —
+  the mirror of dark's `#000000→#1a1a1a` lift (and like `#1a1a1a`, not an xterm
+  colour); ramp: `surface #e4e4e4` (254, wildcharm light's own Pmenu),
+  `surface_alt #dadada` (253), `border #c6c6c6` (251), `muted #4e4e4e` (239).
+  The M3 "light bg stays pure `#ffffff`" decision survives via a new light-only
+  **`code_surface: #ffffff`** role — the web code surface keeps white (raised
+  on tci's warm page), the desktop gets the softened ground; render.py's shiki
+  target reads `code_surface`, everything canvas-like reads `bg`.
+- **2026-07-03 (M7/0.6.0) — the light AA gate moved to `#f5f5f5`**, which
+  pushed three M3 syntax values (tuned against white) under 4.5:1 — minimal
+  hue-true xterm steps, same rules as ever: `string #008700→#005f00` (22,
+  7.30:1), `type #af5f00→#875f00` (94, 5.25:1), `diff_add #00875f→#005f5f`
+  (23, 6.87:1). **diff_add now collides with preproc** — accepted: light
+  already shares values (`special == string_special`, `error == diff_delete`),
+  and imports vs added-diff-lines never co-occur ambiguously; the only
+  AA-passing hue-true alternative didn't exist.
+- **2026-07-03 (M7/0.6.0) — light `dim` decoupled from `comment`**: dim
+  `#6c6c6c→#626262` (241) so it clears bg (5.59) AND surface (4.80) — the
+  exact mirror of dark dim's profile (5.18/4.50, fails surface_alt);
+  `syntax.comment` stays `#6c6c6c` (code sits on the ground, 4.82:1). M3 had
+  defined them equal; UI dim also sits on raised surfaces, comments don't.
+  Also: accent-as-text (the light link) clears the ground (4.75:1) but NOT
+  surface (4.07) — links on raised light surfaces underline or use text.
+- **2026-07-03 (M7/0.6.0) — `light.ansi` transcribed verbatim** from upstream
+  wildcharm.vim's light `g:terminal_ansi_colors` (kitty light + future
+  terminal-app consumers). Upstream quirks kept by the never-invent rule
+  (color7 "white" = mid-grey `#8a8a8a`, color0 = pure black). Note light bg ≠
+  color0 — the dark-side `bg == color0` watch item has no light counterpart.
+- **2026-07-03 (M7/0.6.0) — off-palette config literals remapped/admitted**
+  (generation of the kitty/sway/waybar fragments forced the rulings): kitty
+  `active_border_color #2a2a2a` → `surface #262626`; waybar `#cccccc` → `text`,
+  `#c8c8c8` → `muted`, `#666666` → `bright_black #767676` (all three were
+  never-admitted greys — small deliberate dark visual deltas). Admitted to
+  `extended:`: the wildcharm UI greys `ui_grey #9e9e9e` (247) + `line_grey
+  #585858` (240) with light counterparts `line_grey #b2b2b2` (249) + `ui_dark
+  #5f5f5f` (59), and render-markdown's `heading_bg #1a0a12` (retroactive) with
+  light counterpart `#ffd7d7` (upstream light DiffDelete bg).
+- **2026-07-03 (M7) — the switch is an Ansible variable, not a runtime
+  helper**: scalar `theme_variant: dark|light` (group_vars default dark;
+  setup.sh asks; host_vars overrides). Flip = re-run the playbook
+  (`--tags dotfiles,sway_session`) + re-login. Selection mechanism: generated
+  per-app fragment pairs with **variant-picked manifest `src`, variant-neutral
+  dest** (`theme-{{ theme_variant }}.conf → theme.conf`) — the manifest srcs
+  are already Jinja-interpolated, zero role changes. A runtime
+  `hestia-mode dark|light` helper (kitty `@ set-colors`, gsettings flip
+  without re-login) stays future work.
+- **2026-07-03 (M7) — vim stays conformant-by-definition on light too**: the
+  hestia.vim wrapper gains only the light Normal/TabLineFill override
+  (`#f5f5f5`/`#1a1a1a`); syntax comes from upstream wildcharm's native light
+  branch verbatim — including values below the palette's AA gate (upstream
+  light String `#008700` is 4.31:1 on the soft ground), exactly as dark vim
+  shows upstream's `#767676` comments. The gate governs *generated* consumers.
 - **2026-07-03 — THE BG-LIFT VERDICT: promoted (palette 0.5.0).** After living
   with the experiment (PR #125), the lifted ground won every comparison —
   vifm's clearer borders/splits, and the VS Code canvas twice felt wrong at
@@ -152,7 +205,7 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 | vim / nvim | `user/vim/colors/hestia.vim` (thin wrapper over built-in wildcharm) | hestia | ✅ conformant by definition (dark) |
 | bat (+ vifm preview) | `user/bat/themes/wildcharm.tmTheme` | hestia | 🟡 themed, **diverges** from canonical — realign in M4 |
 | glow | `user/glow/wildcharm.json` | hestia | 🟡 themed, divergence unaudited — audit + realign in M4 |
-| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/wildcharm/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | ✅ pair shipped (stoa #92/#93); generated as of v0.4.0 |
+| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/wildcharm/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: 0.6.0 changed three light syntax values (the `#f5f5f5`-gate deviations; the light `editor.background` stays `#ffffff` via `code_surface`) — copy the regenerated pair over |
 | VS Code | `user/vscode/hestia/` extension (GENERATED themes) | hestia | 🟡 M5 done, unverified in a live VS Code; light chrome = M7 |
 | VS Code | same JSON + UI-chrome colours | hestia (publish later) | ⬜ M5 |
 
@@ -222,21 +275,25 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
   Outside the generator still (hand-applied): glow (chrome-heavy, small chroma
   block), vifm, kitty, and the GUI chrome configs — fold in if/when churn
   justifies it.
-- [ ] **M7 — light desktop enablement.** The goal dimitrios set 2026-07-03:
-  a way to switch the hestia *desktop* to light, and see how the GTK theme
-  (recoloured adw-gtk3 `hestia-dark`) and the KDE colour scheme (`Hestia.colors`)
-  perform in light. Scope: (a) design the **light desktop ramp** — the
-  deliberately-deferred light `surface`/`border`/`surface_alt`/`muted` roles —
-  informed by the bg-lift verdict (both decisions shape the same ladder);
-  (b) light artifacts: `hestia-light` GTK build (adw-gtk3 light + accent), a
-  light KDE colour scheme, kitty/vim/sway/waybar light values;
-  (c) a **switch mechanism** — likely a `hestia-mode dark|light` helper
-  flipping GTK/portal `color-scheme` (gsettings), `kdeglobals`, kitty
-  (`kitty @ set-colors`), vim `background`, and the wm/bar colours — plus how
-  much follows the freedesktop dark/light preference automatically;
-  (d) live verification pass over the GTK3/GTK4/KDE consumers (the theming.md
-  status table grows a light column). Design session first; don't start before
-  the bg-lift verdict lands.
+- [x] **M7 PR1 — light desktop: ramp + switch + core session.** (a) the light
+  desktop ramp designed and landed (palette 0.6.0 — ground `#f5f5f5`,
+  `code_surface` split, ramp/dim decisions in the log above); (c) the **switch
+  mechanism decided and built as an Ansible variable** — `theme_variant:
+  dark|light` (setup.sh question, host_vars, group_vars default dark) driving
+  variant-picked manifest symlinks of GENERATED per-app fragment pairs
+  (render.py grew kitty/sway/waybar emitters), `GTK_THEME` in a now-templated
+  start-sway.j2, and a templated gtk-3.0 settings.ini; (b) partially: kitty,
+  sway, waybar, vim (background selector + hestia.vim light branch) — the GTK
+  light theme (`hestia`) already existed from the gtk_theme role. The runtime
+  `hestia-mode` helper idea was set aside (decision log).
+- [ ] **M7 PR2 — light desktop: the long tail.** Remaining (b)+(d): render.py
+  emitters for mako/wofi/swaylock/swaynag/zathura/vifm/bat(light tmTheme)/glow;
+  cmus rc.j2 variant indices; qt_theme light scheme (`Hestia Light.colors` +
+  variant kdeglobals); VS Code full light chrome; cava ruling (expected
+  variant-invariant); the theming.md status table grows the **light column**;
+  live verification pass over every app in both variants. Known items to fix
+  en route: zathura's latent Debian-red `rgba(206,0,86,…)` highlight, the
+  swaylock/swaynag `#111111` sunken fill admission.
 
 ## Backlog — known inconsistencies
 
@@ -256,11 +313,10 @@ the platform mapping, never in an artifact.
   Truecolor terminals (kitty) are exact.
 - ~~vim Normal fg vs `roles.text`~~ — **RESOLVED in 0.5.0**: the wrapper lifts
   `Normal guifg` to `roles.text #e0e0e0` (see the decision log).
-- vifm's panel greys (`#262626` TopLine, `#303030` TabLine/JobLine, `#585858`
-  Border/LineNr, `#9e9e9e` CurrLine) are wildcharm.vim **UI-group** values
-  (CursorLine/LineNr/StatusLine) — upstream-faithful but not recorded in
-  `palette.yml`. Record them (an `extended:` UI-greys block or roles) when the
-  generator (M6) forces the question.
+- ~~vifm's panel greys not recorded in `palette.yml`~~ — **RESOLVED in 0.6.0**
+  (M7 PR1): `#585858`/`#9e9e9e` admitted as `extended.line_grey`/`ui_grey`
+  (+ light counterparts); `#262626`/`#303030` were already `surface`/
+  `surface_alt`. The vifm colours file itself renders from them in M7 PR2.
 - ~~bg lift experiment (2026-07-03, PR #125)~~ — **RESOLVED: promoted as
   palette 0.5.0** (see the decision log). The feared syntax re-lifting never
   happened: the code surface didn't move (it became the ground), so the AA
@@ -290,6 +346,15 @@ the platform mapping, never in an artifact.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.6.0** (2026-07-03) — **the light desktop ramp (M7 PR1)**: light ground
+  `#ffffff` → `#f5f5f5` with the web code surface split out as
+  `light.roles.code_surface #ffffff`; light `surface/surface_alt/border/muted`
+  defined (xterm 254/253/251/239); light `dim` → `#626262` (decoupled from
+  comment); three light syntax deviations for the new gate ground
+  (string/type/diff_add — diff_add==preproc collision accepted); `light.ansi`
+  (upstream verbatim); `extended` admissions `ui_grey/line_grey/heading_bg` +
+  light counterparts. render.py grew desktop-chrome emitters
+  (kitty/sway/waybar fragment pairs). stoa re-vendor of the shiki pair pending.
 - **0.5.0** (2026-07-03) — **the bg-lift promotion**: ground `#0a0a0a` →
   `#1a1a1a` (== the web code surface, which doesn't move; == ANSI color0,
   accepted watch item); surface ramp rebuilt on xterm greys (`#262626` /

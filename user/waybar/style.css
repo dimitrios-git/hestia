@@ -1,3 +1,10 @@
+/* Colour tokens — GENERATED variant fragment (theme-dark.css / theme-light.css,
+   rendered by themes/wildcharm/render.py; the bootstrap symlinks the
+   `theme_variant` one next to this file as theme.css). Edit palette.yml +
+   re-render, not the fragment. waybar watches imported files too when
+   reload_style_on_change is on. */
+@import "theme.css";
+
 * {
     font-family: "BigBlueTermPlus Nerd Font Mono";
     font-size: 16px;
@@ -9,8 +16,8 @@
 }
 
 window#waybar {
-    background-color: #1a1a1a;
-    color: #e0e0e0;
+    background-color: @bg;
+    color: @text;
 }
 
 #workspaces {
@@ -20,41 +27,41 @@ window#waybar {
 #workspaces button {
     padding: 0 10px;
     background: transparent;
-    color: #adadad;
+    color: @muted;
     border: none;
     border-top: 2px solid transparent;
     transition: all 0.12s ease-in-out;
 }
 
 #workspaces button.focused {
-    color: #e0e0e0;
-    border-top: 2px solid #d7005f;
+    color: @text;
+    border-top: 2px solid @accent;
 }
 
 #workspaces button.visible {
-    color: #adadad;
+    color: @muted;
 }
 
 #workspaces button.urgent {
-    background-color: #d7005f;
-    color: #ffffff;
+    background-color: @accent;
+    color: @accent_fg;
 }
 
 #workspaces button:hover {
-    background: #303030;
-    color: #cccccc;
+    background: @surface_alt;
+    color: @text;
 }
 
 #mode {
-    background-color: #d7005f;
-    color: #ffffff;
+    background-color: @accent;
+    color: @accent_fg;
     padding: 0 10px;
     font-weight: bold;
     margin: 2px 6px;
 }
 
 #window {
-    color: #adadad;
+    color: @muted;
 }
 
 #tray {
@@ -78,8 +85,8 @@ window#waybar {
 #language,
 #clock {
     padding: 0 14px;
-    border-left: 1px solid #3a3a3a;
-    color: #c8c8c8;
+    border-left: 1px solid @border;
+    color: @muted;
 }
 
 #clock {
@@ -88,12 +95,12 @@ window#waybar {
 }
 
 #custom-debian {
-    color: #d7005f;
+    color: @accent;
     padding-right: 14px;
 }
 
 #pulseaudio.muted {
-    color: #666666;
+    color: @icon_muted;
 }
 
 /* Tooltips use Lilex (scalable) rather than the bar's bitmap BigBlueTerm font.
@@ -105,12 +112,12 @@ window#waybar {
 tooltip {
     font-family: "Lilex Nerd Font Mono";
     font-size: 17px;
-    background-color: #1a1a1a;
-    border: 1px solid #d7005f;
+    background-color: @bg;
+    border: 1px solid @accent;
     padding: 6px 10px;
 }
 
 tooltip label {
     font-family: "Lilex Nerd Font Mono";
-    color: #e0e0e0;
+    color: @text;
 }

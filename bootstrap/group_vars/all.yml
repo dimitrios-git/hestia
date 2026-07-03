@@ -43,6 +43,15 @@ enable_yaru_icons: false    # install the prebuilt Yaru-hestia icon theme (yaru_
 # but broadly useful, so it's part of the full host — a lean spin sets this false.
 enable_headless_browser: true   # install chromium for headless dev/testing (package-only)
 
+# --- Theme variant (M7, docs/theme-roadmap.md) ----------------------------------
+# dark|light — selects which GENERATED theme fragments the dotfiles role links
+# (kitty/sway/waybar theme.*, the vim background selector) and what the rendered
+# configs carry (GTK_THEME in start-sway, the gtk-3.0 settings.ini theme name).
+# Flip it in host_vars, re-run the playbook (`./setup.sh --yes`, or
+# `--tags dotfiles,sway_session`), then RE-LOGIN — GTK_THEME and the sway
+# gsettings execs only apply to a new session.
+theme_variant: dark
+
 # --- Identity (rendered into git config + the credential-unlock hook) ----------
 # Personal — these defaults are de-personalised placeholders, OVERRIDDEN per host
 # in host_vars/<host>.yml (setup.sh detects + prompts). Empty signing key → git
@@ -61,6 +70,9 @@ dotfile_links:
   # hestia editor colorscheme (wildcharm + near-black bg). In ~/.vim/colors so both
   # Vim and Neovim find it (nvim prepends ~/.vim to its runtimepath).
   - { src: user/vim/colors/hestia.vim,      dest: "{{ target_home }}/.vim/colors/hestia.vim" }
+  # theme-variant selector sourced by .vimrc before `colo hestia` (M7): the src is
+  # picked by `theme_variant`, the dest name is variant-neutral.
+  - { src: "user/vim/hestia-background-{{ theme_variant }}.vim", dest: "{{ target_home }}/.vim/hestia-background.vim" }
   - { src: user/bash/.bashrc,               dest: "{{ target_home }}/.bashrc" }
   - { src: user/bash/.dircolors,            dest: "{{ target_home }}/.dircolors" }
   - { src: user/git/.gitignore_global,      dest: "{{ target_home }}/.gitignore_global" }
@@ -68,6 +80,9 @@ dotfile_links:
   - { src: user/nvim/init.vim,              dest: "{{ target_home }}/.config/nvim/init.vim" }
   - { src: user/nvim/lua/trees.lua,         dest: "{{ target_home }}/.config/nvim/lua/trees.lua" }
   - { src: user/sway/config,                dest: "{{ target_home }}/.config/sway/config" }
+  # GENERATED theme fragment (render.py) — colour $vars, desktop bg, the gsettings
+  # appearance execs; `include`d by the sway config. src picked by `theme_variant` (M7).
+  - { src: "user/sway/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/sway/theme.conf" }
   # sway-launched session scripts — referenced via $HOME in user/sway/config `exec`
   # (sway runs exec through `sh -c`), so they need a stable ~ path.
   # (credential-unlock.sh + keyring-ssh-askpass.sh carry identity values, so
@@ -76,6 +91,9 @@ dotfile_links:
   - { src: user/sway/screenshot.sh,         dest: "{{ target_home }}/.config/sway/scripts/screenshot.sh" }
   - { src: user/waybar/config,              dest: "{{ target_home }}/.config/waybar/config" }
   - { src: user/waybar/style.css,           dest: "{{ target_home }}/.config/waybar/style.css" }
+  # GENERATED colour tokens (render.py) — @import'ed by style.css. src picked by
+  # `theme_variant` (M7).
+  - { src: "user/waybar/theme-{{ theme_variant }}.css", dest: "{{ target_home }}/.config/waybar/theme.css" }
   - { src: user/waybar/scripts/cpu.sh,      dest: "{{ target_home }}/.config/waybar/scripts/cpu.sh" }
   - { src: user/waybar/scripts/gpu.sh,      dest: "{{ target_home }}/.config/waybar/scripts/gpu.sh" }
   - { src: user/waybar/scripts/gpu-watch.sh, dest: "{{ target_home }}/.config/waybar/scripts/gpu-watch.sh" }
@@ -89,6 +107,9 @@ dotfile_links:
   - { src: user/swaynag/config,             dest: "{{ target_home }}/.config/swaynag/config" }
   - { src: user/cava/config,                dest: "{{ target_home }}/.config/cava/config" }
   - { src: user/kitty/kitty.conf,           dest: "{{ target_home }}/.config/kitty/kitty.conf" }
+  # GENERATED terminal colours (render.py) — `include`d by kitty.conf. src picked by
+  # `theme_variant` (M7).
+  - { src: "user/kitty/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/kitty/theme.conf" }
   - { src: user/kitty/music.session,        dest: "{{ target_home }}/.config/kitty/music.session" }
   - { src: user/imv/config,                 dest: "{{ target_home }}/.config/imv/config" }
   # imv↔vifm integration (vifm `i` opens imv tiled, live cursor sync, q returns):
@@ -111,7 +132,8 @@ dotfile_links:
   - { src: user/bat/themes/wildcharm.tmTheme, dest: "{{ target_home }}/.config/bat/themes/wildcharm.tmTheme" }
   - { src: user/glow/wildcharm.json,        dest: "{{ target_home }}/.config/glow/wildcharm.json" }
   - { src: user/xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
-  - { src: user/gtk/gtk-3.0/settings.ini,   dest: "{{ target_home }}/.config/gtk-3.0/settings.ini" }
+  # (gtk-3.0 settings.ini moved to templated_configs — M7: its theme name follows
+  # `theme_variant`; the css overlays stay variant-invariant symlinks.)
   - { src: user/gtk/gtk-3.0/gtk.css,        dest: "{{ target_home }}/.config/gtk-3.0/gtk.css" }
   - { src: user/gtk/gtk-4.0/settings.ini,   dest: "{{ target_home }}/.config/gtk-4.0/settings.ini" }
   - { src: user/gtk/gtk-4.0/gtk.css,        dest: "{{ target_home }}/.config/gtk-4.0/gtk.css" }
@@ -138,6 +160,8 @@ templated_configs:
   - { src: user/git/.gitconfig.j2,          dest: "{{ target_home }}/.gitconfig" }
   - { src: user/glow/glow.yml.j2,           dest: "{{ target_home }}/.config/glow/glow.yml" }
   - { src: user/cmus/rc.j2,                 dest: "{{ target_home }}/.config/cmus/rc" }
+  # gtk-3.0 settings: the theme name + prefer-dark flag follow `theme_variant` (M7)
+  - { src: user/gtk/gtk-3.0/settings.ini.j2, dest: "{{ target_home }}/.config/gtk-3.0/settings.ini" }
   # credential scripts: carry identity values (ssh_key_file/keygrip/signingkey) and
   # are executed (sway exec + SSH_ASKPASS), so rendered + 0755, both into the same
   # dir so credential-unlock.sh finds its sibling via `readlink -f`.

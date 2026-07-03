@@ -3,15 +3,21 @@
 <!--
   wildcharm.tmTheme — hestia's syntax theme for bat (and any tmTheme consumer).
 
-  Colours are taken verbatim from themes/wildcharm/palette.yml (the single source
-  of truth) — never invent a shade here; add it to palette.yml first, then copy.
+  SOURCE: themes/wildcharm/palette.yml `syntax:` table, palette version 0.3.0
+  (canonical mapping = wildcharm.vim dark; docs/theme-roadmap.md). Realigned to
+  canonical in roadmap M4 — this file's rules MIRROR the TextMate-family scope
+  map shared with the web Shiki pair (stoa apps/thecodingidiot/lib/themes/
+  hestia.ts, RULES): change a scope decision in BOTH places, change a colour in
+  palette.yml first. Never invent a shade here.
 
-  Map used:
-    bg  #0a0a0a   text #e0e0e0   dim #8c8c8c   muted #adadad   accent #d7005f
-    surface_alt #1a1a1a (line highlight)   border #1e1e1e (selection)
-    ANSI: green #00af5f  yellow #d78700  blue #0087d7  magenta #d787d7
-          cyan #00afaf  bright_red #ff5f87  bright_yellow #ffaf00
-          bright_green #00d75f  bright_blue #00afff  accent_dark #9b0040
+  Roles used (dark):
+    text #e0e0e0        comment #8c8c8c      string #00d75f
+    string_special #af5fff (extended.purple)  constant #ff5f87
+    identifier #ff87ff  keyword #00afff      type #ffaf00
+    preproc #00d7d7     diff_add #00af5f     diff_change #0087d7
+    diff_delete #ff5f87 error #ffffff on accent_dark #9b0040
+  Chrome: bg roles.bg #0a0a0a, caret accent #d7005f,
+          lineHighlight surface_alt #1a1a1a, selection border #1e1e1e
 -->
 <plist version="1.0">
 <dict>
@@ -36,7 +42,7 @@
       </dict>
     </dict>
 
-    <!-- Comments -->
+    <!-- syntax.comment (roles.dim) -->
     <dict>
       <key>name</key><string>Comment</string>
       <key>scope</key><string>comment, punctuation.definition.comment</string>
@@ -47,82 +53,28 @@
       </dict>
     </dict>
 
-    <!-- Strings -->
+    <!-- syntax.string (ansi.bright_green) -->
     <dict>
       <key>name</key><string>String</string>
       <key>scope</key><string>string, string.quoted, punctuation.definition.string</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#00af5f</string></dict>
-    </dict>
-    <dict>
-      <key>name</key><string>String interpolation / escape</string>
-      <key>scope</key><string>constant.character.escape, string.regexp, punctuation.section.interpolation</string>
-      <key>settings</key>
       <dict><key>foreground</key><string>#00d75f</string></dict>
     </dict>
 
-    <!-- Numbers / constants -->
+    <!-- syntax.string_special (extended.purple) — escapes, regex, interpolation -->
     <dict>
-      <key>name</key><string>Number</string>
-      <key>scope</key><string>constant.numeric</string>
+      <key>name</key><string>String escape / regex / interpolation</string>
+      <key>scope</key><string>constant.character.escape, string.regexp, punctuation.section.interpolation, punctuation.definition.template-expression</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#d78700</string></dict>
-    </dict>
-    <dict>
-      <key>name</key><string>Built-in constant (true/false/null)</string>
-      <key>scope</key><string>constant.language, constant.character, constant.other</string>
-      <key>settings</key>
-      <dict><key>foreground</key><string>#ffaf00</string></dict>
+      <dict><key>foreground</key><string>#af5fff</string></dict>
     </dict>
 
-    <!-- Keywords / storage -->
+    <!-- syntax.constant (ansi.bright_red) — numbers, booleans, chars, symbols -->
     <dict>
-      <key>name</key><string>Keyword</string>
-      <key>scope</key><string>keyword, keyword.control, keyword.other</string>
+      <key>name</key><string>Constant</string>
+      <key>scope</key><string>constant.numeric, constant.language, constant.character, constant.other, support.constant</string>
       <key>settings</key>
-      <dict>
-        <key>foreground</key><string>#d7005f</string>
-        <key>fontStyle</key><string>bold</string>
-      </dict>
-    </dict>
-    <dict>
-      <key>name</key><string>Operator</string>
-      <key>scope</key><string>keyword.operator</string>
-      <key>settings</key>
-      <dict><key>foreground</key><string>#e0e0e0</string></dict>
-    </dict>
-    <dict>
-      <key>name</key><string>Storage</string>
-      <key>scope</key><string>storage, storage.type, storage.modifier</string>
-      <key>settings</key>
-      <dict>
-        <key>foreground</key><string>#d7005f</string>
-        <key>fontStyle</key><string>bold</string>
-      </dict>
-    </dict>
-
-    <!-- Functions -->
-    <dict>
-      <key>name</key><string>Function</string>
-      <key>scope</key><string>entity.name.function, support.function, meta.function-call, variable.function</string>
-      <key>settings</key>
-      <dict><key>foreground</key><string>#0087d7</string></dict>
-    </dict>
-
-    <!-- Types / classes / namespaces -->
-    <dict>
-      <key>name</key><string>Type / class</string>
-      <key>scope</key><string>entity.name.type, entity.name.class, entity.name.namespace, support.type, support.class, storage.type.class</string>
-      <key>settings</key>
-      <dict><key>foreground</key><string>#00afaf</string></dict>
-    </dict>
-
-    <!-- Variables -->
-    <dict>
-      <key>name</key><string>Variable</string>
-      <key>scope</key><string>variable, variable.other, variable.parameter</string>
-      <key>settings</key>
-      <dict><key>foreground</key><string>#e0e0e0</string></dict>
+      <dict><key>foreground</key><string>#ff5f87</string></dict>
     </dict>
     <dict>
       <key>name</key><string>Language variable (self/this)</string>
@@ -134,49 +86,83 @@
       </dict>
     </dict>
 
-    <!-- Symbols / preprocessor / imports -->
+    <!-- syntax.keyword (ansi.bright_blue) — vim Statement, NOT bold -->
     <dict>
-      <key>name</key><string>Symbol / special constant</string>
-      <key>scope</key><string>constant.other.symbol, constant.other.key, support.constant</string>
+      <key>name</key><string>Keyword</string>
+      <key>scope</key><string>keyword, keyword.control, keyword.operator, keyword.other</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#d787d7</string></dict>
+      <dict><key>foreground</key><string>#00afff</string></dict>
     </dict>
+
+    <!-- storage follows vim's StorageClass -> Type link (C int/static, TS const/let) -->
+    <dict>
+      <key>name</key><string>Storage (vim StorageClass -> Type)</string>
+      <key>scope</key><string>storage, storage.type, storage.modifier</string>
+      <key>settings</key>
+      <dict><key>foreground</key><string>#ffaf00</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Function/class keywords stay keywords</string>
+      <key>scope</key><string>storage.type.function, storage.type.class</string>
+      <key>settings</key>
+      <dict><key>foreground</key><string>#00afff</string></dict>
+    </dict>
+
+    <!-- syntax.identifier (ansi.bright_magenta) — vim Identifier/Function;
+         meta.function-call deliberately excluded -->
+    <dict>
+      <key>name</key><string>Function</string>
+      <key>scope</key><string>entity.name.function, support.function, variable.function</string>
+      <key>settings</key>
+      <dict><key>foreground</key><string>#ff87ff</string></dict>
+    </dict>
+
+    <!-- syntax.type (ansi.bright_yellow) -->
+    <dict>
+      <key>name</key><string>Type / class</string>
+      <key>scope</key><string>entity.name.type, entity.name.class, entity.name.namespace, support.type, support.class</string>
+      <key>settings</key>
+      <dict><key>foreground</key><string>#ffaf00</string></dict>
+    </dict>
+
+    <!-- syntax.preproc (ansi.bright_cyan) — imports, directives, at-rules -->
     <dict>
       <key>name</key><string>Preprocessor / import</string>
-      <key>scope</key><string>meta.preprocessor, keyword.control.import, keyword.control.directive, keyword.control.at-rule</string>
+      <key>scope</key><string>meta.preprocessor, keyword.control.import, keyword.control.export, keyword.control.directive, keyword.control.at-rule</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#d787d7</string></dict>
+      <dict><key>foreground</key><string>#00d7d7</string></dict>
     </dict>
 
-    <!-- Punctuation -->
+    <!-- plain text — variables and punctuation stay roles.text (vim Normal) -->
     <dict>
-      <key>name</key><string>Punctuation</string>
-      <key>scope</key><string>punctuation, meta.brace, punctuation.separator, punctuation.terminator</string>
+      <key>name</key><string>Plain (variables, punctuation)</string>
+      <key>scope</key><string>variable, variable.other, variable.parameter, punctuation, meta.brace, punctuation.separator, punctuation.terminator</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#adadad</string></dict>
+      <dict><key>foreground</key><string>#e0e0e0</string></dict>
     </dict>
 
-    <!-- Markup: HTML/XML tags + attributes -->
+    <!-- tags — vim htmlTagName -> Statement -->
     <dict>
       <key>name</key><string>Tag</string>
       <key>scope</key><string>entity.name.tag, punctuation.definition.tag</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#d7005f</string></dict>
+      <dict><key>foreground</key><string>#00afff</string></dict>
     </dict>
+    <!-- tag attributes — vim htmlArg -> Type -->
     <dict>
       <key>name</key><string>Tag attribute</string>
       <key>scope</key><string>entity.other.attribute-name</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#d78700</string></dict>
+      <dict><key>foreground</key><string>#ffaf00</string></dict>
     </dict>
 
-    <!-- Markdown / prose -->
+    <!-- markup — heading is vim Title (bold, default fg) -->
     <dict>
       <key>name</key><string>Heading</string>
       <key>scope</key><string>markup.heading, markup.heading entity.name</string>
       <key>settings</key>
       <dict>
-        <key>foreground</key><string>#d7005f</string>
+        <key>foreground</key><string>#e0e0e0</string>
         <key>fontStyle</key><string>bold</string>
       </dict>
     </dict>
@@ -195,28 +181,30 @@
       <key>settings</key>
       <dict><key>fontStyle</key><string>italic</string></dict>
     </dict>
+    <!-- roles.link — accent-coloured text -->
     <dict>
       <key>name</key><string>Link</string>
       <key>scope</key><string>markup.underline.link, markup.link, string.other.link</string>
       <key>settings</key>
       <dict>
-        <key>foreground</key><string>#00afff</string>
+        <key>foreground</key><string>#ff5f87</string>
         <key>fontStyle</key><string>underline</string>
       </dict>
     </dict>
+    <!-- raw/code spans — platform mapping choice (cyan family) -->
     <dict>
       <key>name</key><string>Raw / code span</string>
       <key>scope</key><string>markup.raw, markup.inline.raw</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#00afaf</string></dict>
+      <dict><key>foreground</key><string>#00d7d7</string></dict>
     </dict>
 
-    <!-- Diffs -->
+    <!-- diffs -->
     <dict>
       <key>name</key><string>Diff inserted</string>
       <key>scope</key><string>markup.inserted, meta.diff.header.to-file</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#00d75f</string></dict>
+      <dict><key>foreground</key><string>#00af5f</string></dict>
     </dict>
     <dict>
       <key>name</key><string>Diff deleted</string>
@@ -228,10 +216,10 @@
       <key>name</key><string>Diff changed</string>
       <key>scope</key><string>markup.changed</string>
       <key>settings</key>
-      <dict><key>foreground</key><string>#ffaf00</string></dict>
+      <dict><key>foreground</key><string>#0087d7</string></dict>
     </dict>
 
-    <!-- Errors -->
+    <!-- syntax.error — reverse/fill role: white on accent_dark -->
     <dict>
       <key>name</key><string>Invalid</string>
       <key>scope</key><string>invalid, invalid.illegal</string>

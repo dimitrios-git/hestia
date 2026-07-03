@@ -31,7 +31,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.7.0"
+version: "0.7.1"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -171,14 +171,19 @@ light:
                               # role (dark needed bright_red #ff5f87)
     accent_dark:  "#9b0040"   # same as dark — urgent borders, sunken red fills
     accent_fg:    "#ffffff"   # text ON the accent fill — same as dark
-  # The light ANSI 16 — upstream wildcharm.vim's light g:terminal_ansi_colors,
-  # VERBATIM (never invent; /usr/share/vim/vim91/colors/wildcharm.vim line 105).
-  # Upstream quirks are deliberate design: color7 "white" is a mid-grey and
-  # color0 "black" is pure black on light. Note bg is NOT color0 here (unlike
-  # dark, where bg == color0) — no invisible-TUI watch item on light.
+  # The light ANSI 16 — upstream wildcharm.vim's light g:terminal_ansi_colors
+  # (never invent; /usr/share/vim/vim91/colors/wildcharm.vim line 105), with ONE
+  # deviation: color1 is the ACCENT, not upstream's #af0000 — hestia's identity
+  # is `accent == ANSI color01` and it must hold in BOTH variants, or every
+  # accent-tracks-colour-1 consumer (cmus bars, prompt dirty counts) silently
+  # drifts to a plain red on light (caught live, 0.7.1; upstream's #af0000
+  # lives on as light syntax.constant). Other upstream quirks are deliberate
+  # design: color7 "white" is a mid-grey and color0 "black" is pure black on
+  # light. Note bg is NOT color0 here (unlike dark, where bg == color0) — no
+  # invisible-TUI watch item on light.
   ansi:
     black:          "#000000"   # [0]
-    red:            "#af0000"   # [1]
+    red:            "#d7005f"   # [1]  the accent (deviation — see above)
     green:          "#008700"   # [2]
     yellow:         "#af5f00"   # [3]
     blue:           "#005faf"   # [4]

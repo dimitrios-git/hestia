@@ -155,9 +155,17 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
   tables (`lib/themes/hestia.ts`), so the scope decisions can't drift between
   dark and light — the embryo of the M6 generator. tci is the light proving
   ground; the desktop stays dark.
-- [ ] **M4 — realign existing consumers.** bat tmTheme re-coloured to canonical
-  (scope selectors stay); glow audited + realigned; one consumer per session is
-  fine. Live-verify via vifm preview / glow on the golden sample.
+- [x] **M4 — realign existing consumers.** bat tmTheme rebuilt to MIRROR the
+  shared TextMate scope map (same rules as the web Shiki pair — including the
+  M2 storage→Type fix and the dropped meta.function-call); glow audited (it
+  predated the palette: its chroma block was full of invented near-miss shades)
+  and realigned — chroma to the canonical syntax table, chrome (headings/links/
+  inline code) onto palette values, keeping glow's markdown-rendering accent
+  identity. Both verified live on the golden samples via ANSI-escape inspection
+  (all old colours at zero; glow's 256-colour fallback maps losslessly because
+  wildcharm's hexes ARE xterm-256 colours). One residue: the 256-colour
+  fallback renders comment dim as xterm 245 `#8a8a8a` (the AA-lifted `#8c8c8c`
+  has no exact xterm home) — truecolor terminals are exact.
 - [ ] **M5 — VS Code theme.** Wrap the Shiki JSON with `colors:` UI chrome from
   the roles. Mostly free after M2/M3.
 - [ ] **M6 (open-ended) — generation.** Fold artifacts into the deferred Jinja2
@@ -167,31 +175,19 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
 ## Backlog — known inconsistencies
 
 Record what you notice here (token + platform + where seen); fix at layer 1–2 or
-the platform mapping, never in an artifact. Current entries, from the M1 audit —
-all are the bat tmTheme vs canonical divergences (resolved by M4):
+the platform mapping, never in an artifact.
 
-| Role | canonical (wildcharm.vim) | bat tmTheme today |
-|---|---|---|
-| keyword / storage | bright_blue `#00afff` | accent `#d7005f` bold |
-| string | bright_green `#00d75f` | green `#00af5f` |
-| number | bright_red `#ff5f87` (Constant) | yellow `#d78700` |
-| language constant | bright_red `#ff5f87` | bright_yellow `#ffaf00` |
-| function | bright_magenta `#ff87ff` | blue `#0087d7` |
-| type | bright_yellow `#ffaf00` | cyan `#00afaf` |
-| preproc / import | bright_cyan `#00d7d7` | magenta `#d787d7` |
-| operator | bright_blue (→Statement) | text `#e0e0e0` |
-| punctuation | text (vim leaves it Normal) | muted `#adadad` |
-| markup heading | bold text (vim Title) | accent `#d7005f` bold |
-| markup link | `roles.link #ff5f87` (hestia role) | bright_blue `#00afff` underline |
-| error/invalid | accent on white, reverse | white on accent_dark `#9b0040` |
-
-Some bat choices may *win* on re-inspection (e.g. muted punctuation is easy on
-the eyes) — if so, promote the choice into the `syntax:` table (a decision-log
-entry + version bump), then realign vim… which would mean forking the wrapper.
-Default is canonical wins; promote only deliberately.
-
-- glow `wildcharm.json`: not yet audited against the canonical table (M4).
-- vifm's code preview follows bat, so it inherits bat's divergence until M4.
+- ~~The M1 audit's bat-vs-canonical divergence table (12 rows: accent-bold
+  keywords, blue functions, cyan types, magenta preproc, muted punctuation,
+  accent headings, blue links, …)~~ — **resolved in M4** (bat rebuilt on the
+  shared scope map; none of the bat choices were promoted — canonical won
+  everywhere). vifm's preview follows bat, so it realigned with it.
+- ~~glow `wildcharm.json` unaudited~~ — **resolved in M4**: it predated the
+  palette entirely (invented near-miss shades throughout); chroma realigned to
+  the canonical table, chrome moved onto palette values.
+- Minor, accepted: on 256-colour terminals, downsampled renders show comment
+  dim as xterm 245 `#8a8a8a` — the AA-lifted `#8c8c8c` has no exact xterm home.
+  Truecolor terminals (kitty) are exact.
 - **OPEN — bg lift experiment (2026-07-03).** After seeing tci's code blocks on
   `surface_alt #1a1a1a`, dimitrios wants to try `#1a1a1a` as the ground in place
   of `bg #0a0a0a`. Running as a two-config experiment (kitty + vim only; the

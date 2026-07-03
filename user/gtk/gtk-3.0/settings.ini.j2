@@ -1,0 +1,11 @@
+# GTK 3 settings — RENDERED from settings.ini.j2 by the dotfiles role (the theme name
+# follows `theme_variant`). The hestia/hestia-dark themes (recoloured adw-gtk3,
+# installed by the gtk_theme role) carry the base + #d7005f accent. This covers
+# non-portal GTK3 apps; the portal file chooser reads the theme from gsettings instead
+# (set at login by sway's theme fragment). See docs/theming.md.
+[Settings]
+gtk-theme-name=hestia{{ '' if theme_variant == 'light' else '-dark' }}
+gtk-application-prefer-dark-theme={{ '0' if theme_variant == 'light' else '1' }}
+# Yaru-hestia = the #d7005f-accent Yaru icon theme built by the (opt-in) yaru_icons
+# role. Absent on a spin without that role -> GTK falls back to a default icon theme.
+gtk-icon-theme-name=Yaru-hestia

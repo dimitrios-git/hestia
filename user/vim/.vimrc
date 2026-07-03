@@ -113,7 +113,14 @@ if has('termguicolors') && ($COLORTERM ==# 'truecolor' || $COLORTERM ==# '24bit'
   let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
   set termguicolors
 endif
-set background=dark
+" Theme variant (M7): the bootstrap symlinks ~/.vim/hestia-background.vim to
+" user/vim/hestia-background-{dark,light}.vim per `theme_variant`; fall back
+" to dark when the link is absent (bare checkout / pre-bootstrap).
+if filereadable(expand('~/.vim/hestia-background.vim'))
+  source ~/.vim/hestia-background.vim
+else
+  set background=dark
+endif
 colo hestia   " wildcharm + the hestia ground/text (user/vim/colors/hestia.vim)
 
 " --- CoC.nvim Configuration ---
@@ -184,7 +191,12 @@ nnoremap <silent> <C-n> :NERDTreeToggle<CR>
 " colours hold with or without 'termguicolors'. (NERDTree colours via highlight
 " groups, not LS_COLORS/dircolors — those don't apply here.)
 function! s:HestiaNerdTreeIcons() abort
-  highlight NERDTreeFlags guifg=#9e9e9e ctermfg=247
+  " neutral icon grey per variant: dark extended.ui_grey, light roles.dim
+  if &background ==# 'light'
+    highlight NERDTreeFlags guifg=#626262 ctermfg=241
+  else
+    highlight NERDTreeFlags guifg=#9e9e9e ctermfg=247
+  endif
   let l:syms = get(g:, 'WebDevIconsUnicodeDecorateFolderNodesDefaultSymbol', '')
         \   . get(g:, 'DevIconsDefaultFolderOpenSymbol', '')
   if empty(l:syms) | return | endif
@@ -243,10 +255,12 @@ lua << EOF
       heading = { sign = false },
       code = { sign = false, width = 'block' },
     })
-    -- Theme headings to the wildcharm accent red (#d7005f)
+    -- Theme headings to the wildcharm accent red (#d7005f); the heading wash
+    -- follows the variant (dark extended.heading_bg, light its counterpart)
+    local heading_bg = vim.o.background == 'light' and '#ffd7d7' or '#1a0a12'
     for i = 1, 6 do
       vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i, { fg = '#d7005f', bold = true })
-      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i .. 'Bg', { bg = '#1a0a12' })
+      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i .. 'Bg', { bg = heading_bg })
     end
   end
 EOF

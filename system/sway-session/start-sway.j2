@@ -8,21 +8,23 @@
 # correct on AMD/Intel machines too — where GBM_BACKEND=nvidia-drm and
 # __GLX_VENDOR_LIBRARY_NAME=nvidia would otherwise break rendering.
 #
-# Tracked at system/sway-session/start-sway; deployed to /usr/local/bin/start-sway by
-# the `sway_session` bootstrap role. Edit the tracked copy + re-run the role to apply.
+# Tracked at system/sway-session/start-sway.j2; RENDERED to /usr/local/bin/start-sway
+# by the `sway_session` bootstrap role (the GTK_THEME below follows `theme_variant`).
+# Edit the tracked template + re-run the role to apply.
 
 # --- generic Wayland session env (every GPU) ----------------------------------
 export XDG_SESSION_TYPE=wayland
 export XDG_SESSION_DESKTOP=sway
 export XDG_CURRENT_DESKTOP=sway
 export MOZ_ENABLE_WAYLAND=1
-# Force the hestia GTK3 theme session-wide. GTK_THEME is the HIGHEST-priority theme
-# source — it overrides gsettings org.gnome.desktop.interface gtk-theme AND
-# ~/.config/gtk-3.0/settings.ini — so in-process GTK3 apps (Remmina, GIMP, etc.) in a
-# non-GNOME sway session pick the theme up from here, not from those files. hestia-dark is
-# the recoloured adw-gtk3 built by the gtk_theme role (#d7005f accent). libadwaita apps
-# ignore GTK_THEME (their accent is locked on 1.7 — see docs/theming.md).
-export GTK_THEME=hestia-dark
+# Force the hestia GTK3 theme session-wide, per `theme_variant` (hestia-dark, or the
+# light `hestia` — both recoloured adw-gtk3 builds from the gtk_theme role, #d7005f
+# accent). GTK_THEME is the HIGHEST-priority theme source — it overrides gsettings
+# org.gnome.desktop.interface gtk-theme AND ~/.config/gtk-3.0/settings.ini — so
+# in-process GTK3 apps (Remmina, GIMP, etc.) in a non-GNOME sway session pick the theme
+# up from here, not from those files. libadwaita apps ignore GTK_THEME (their accent is
+# locked on 1.7 — see docs/theming.md).
+export GTK_THEME=hestia{{ '' if theme_variant == 'light' else '-dark' }}
 
 # Make the SSH agent reachable by every app sway `exec`s (wofi launches, GUI git
 # clients, IDEs pushing over ssh, …). The credential-unlock hook warms id_dimitrios

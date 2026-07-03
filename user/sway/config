@@ -21,19 +21,18 @@ set $right l
 set $term kitty
 set $menu wmenu-run
 
-# Colors
-set $bg      #1a1a1a
-set $surface #262626
-set $border  #3a3a3a
-set $text    #e0e0e0
-set $dim     #8c8c8c
-set $accent  #d7005f
+# Colors — GENERATED variant fragment (user/sway/theme-{dark,light}.conf,
+# rendered by themes/wildcharm/render.py; the bootstrap symlinks the
+# `theme_variant` one to ~/.config/sway/theme.conf). Defines the $colour vars,
+# the desktop background, and the per-variant gsettings execs (color-scheme /
+# gtk-theme). Edit palette.yml + re-render, not the fragment.
+include ~/.config/sway/theme.conf
 
-# Window colors:          border    bg        text    indicator  child_border
-client.focused            $accent   $surface  $text   $accent    $accent
-client.focused_inactive   $border   $bg       $dim    $border    $border
-client.unfocused          $border   $bg       $dim    $border    $border
-client.urgent             $accent   $accent   #ffffff $accent    $accent
+# Window colors:          border    bg        text       indicator  child_border
+client.focused            $accent   $surface  $text      $accent    $accent
+client.focused_inactive   $border   $bg       $dim       $border    $border
+client.unfocused          $border   $bg       $dim       $border    $border
+client.urgent             $accent   $accent   $accent_fg $accent    $accent
 
 include /etc/sway/config-vars.d/*
 
@@ -46,7 +45,7 @@ set $right_mon "Dell Inc. DELL U3219Q 567V413"
 
 output $left_mon  resolution 3840x2160 position 0,0 scale 1
 output $right_mon resolution 3840x2160 position 3840,0 scale 1
-output * bg #1a1a1a solid_color
+# (the `output * bg` desktop background lives in the theme fragment above)
 
 # Pin workspaces to physical screens: odd -> left, even -> right
 workspace 1 output $left_mon
@@ -200,24 +199,14 @@ bindsym $mod+r mode "resize"
 # startup (a relogin re-runs it); see also ~/.config/xdg-desktop-portal/.
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
 
-# Dark appearance for GTK / portal-aware apps (Firefox, libadwaita). Two gsettings
-# keys, because portal-mediated apps — notably the GTK file chooser — read gsettings,
-# NOT ~/.config/gtk-3.0/settings.ini:
-#   color-scheme prefer-dark : the Settings-portal value Firefox/libadwaita read for
-#                              dark mode (else they default to light).
-#   gtk-theme hestia-dark     : the GTK3 theme (recoloured adw-gtk3 from the gtk_theme
-#                              role) — this is what carries the #d7005f accent to GTK3
-#                              apps (Remmina, GIMP, Firefox's file chooser); the portal
-#                              file chooser reads it from gsettings, not settings.ini.
-# dconf persists both; needs gsettings-desktop-schemas. NOTE: GTK4/libadwaita apps can't
-# take the accent on Debian's libadwaita 1.7 (the accent is locked) — they're dark but
-# keep the default blue accent until libadwaita 1.8; see docs/theming.md.
-exec gsettings set org.gnome.desktop.interface color-scheme prefer-dark
-exec gsettings set org.gnome.desktop.interface gtk-theme hestia-dark
-# Icon theme: the #d7005f-accent Yaru built by the opt-in yaru_icons role (Yaru-hestia).
-# Guard on the theme actually existing so a spin without that role doesn't force a missing
-# theme (portal/file-chooser read icon-theme from gsettings, like gtk-theme above).
-exec sh -c 'test -d "$HOME/.local/share/icons/Yaru-hestia" && gsettings set org.gnome.desktop.interface icon-theme Yaru-hestia'
+# GTK / portal appearance (color-scheme, gtk-theme, icon-theme gsettings) now
+# lives in the theme fragment included at the top — the values are per-variant
+# (prefer-dark + hestia-dark vs prefer-light + hestia). Why gsettings at all:
+# portal-mediated apps — notably the GTK file chooser — read gsettings, NOT
+# ~/.config/gtk-3.0/settings.ini; dconf persists the keys (needs
+# gsettings-desktop-schemas). NOTE: GTK4/libadwaita apps can't take the accent
+# on Debian's libadwaita 1.7 (locked) — they follow the colour-scheme but keep
+# the default blue accent until libadwaita ≥1.8; see docs/theming.md.
 
 ### Credentials — auto-unlock SSH + GPG from the login keyring
 # pam_gnome_keyring unlocks the gnome-keyring Secret Service at login; this hook

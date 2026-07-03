@@ -1,15 +1,16 @@
 ---
-# Deploy the Sway session launch chain (root). Mirrors the samba role's
-# copy-a-system-file pattern. Idempotent: copies only when the tracked files change.
-#   * start-sway -> /usr/local/bin (the launcher greetd runs; on PATH for the session
-#     user). Applies NVIDIA workarounds only when an NVIDIA GPU is live.
+# Deploy the Sway session launch chain (root). Idempotent: writes only when the
+# rendered/tracked files change.
+#   * start-sway.j2 -> /usr/local/bin/start-sway (TEMPLATED — GTK_THEME follows
+#     `theme_variant`; the launcher greetd runs, on PATH for the session user).
+#     Applies NVIDIA workarounds only when an NVIDIA GPU is live.
 #   * greetd config.toml -> /etc/greetd (the `tuigreet … --cmd start-sway` line).
 # Changing the greetd config takes effect on the NEXT login — we don't restart greetd
 # (that would kill the running session); reboot / re-login to apply.
 
 - name: Install the Sway session launcher (start-sway)
-  ansible.builtin.copy:
-    src: "{{ repo_root }}/system/sway-session/start-sway"
+  ansible.builtin.template:
+    src: "{{ repo_root }}/system/sway-session/start-sway.j2"
     dest: /usr/local/bin/start-sway
     owner: root
     group: root

@@ -123,6 +123,7 @@ enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
 samba_lan_subnet: "$samba_lan_subnet"
 cmus_music_dir: "$cmus_music_dir"
+theme_variant: "$theme_variant"
 git_user_name: "$git_user_name"
 git_user_email: "$git_user_email"
 git_signingkey: "$git_signingkey"
@@ -240,6 +241,7 @@ det_nvidia=false
 if lspci 2>/dev/null | grep -qi 'nvidia'; then det_nvidia=true
 elif grep -qi 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then det_nvidia=true; fi
 def_nvidia=$(cur enable_nvidia); def_nvidia=${def_nvidia:-$det_nvidia}
+def_theme=$(cur theme_variant); def_theme=${def_theme:-dark}
 
 # Identity defaults: existing host_vars -> existing git config -> gpg/ssh detect.
 def_gname=$(cur git_user_name);   [ -n "$def_gname" ]  || def_gname=$(git config --global user.name 2>/dev/null || true)
@@ -277,6 +279,12 @@ askyn enable_kdenlive    "Install Kdenlive? (heavy — Qt6/KF6 video editor)" "$
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"
+# Not a boolean — validate the two allowed values (a typo would break the manifest's
+# variant-picked symlink sources).
+while :; do
+    ask theme_variant    "Desktop theme variant (dark|light)"       "$def_theme"
+    case "$theme_variant" in dark|light) break ;; *) echo "  Please answer 'dark' or 'light'." ;; esac
+done
 
 echo
 echo "  Identity (commit author, signing, and the login key-unlock hook):"
@@ -303,6 +311,7 @@ cat <<EOF
     enable_kdenlive    = $enable_kdenlive
     enable_nvidia      = $enable_nvidia
     cmus_music_dir     = $cmus_music_dir
+    theme_variant      = $theme_variant
     git identity       = $git_user_name <$git_user_email>$( [ -n "$git_signingkey" ] && echo "   signing $git_signingkey" )
     ssh login key      = ~/.ssh/$ssh_key_file
 EOF

@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
-"""render.py — generate the TextMate-family theme artifacts from the palette.
+"""render.py — generate the theme artifacts from the palette.
 
 Layer 3 of the theme pipeline (docs/theme-roadmap.md): reads palette.yml
 (colours, per variant) + scopes.yml (the shared role→scope map) and renders
 
+TextMate family (syntax + chrome):
   user/bat/themes/wildcharm.tmTheme                      (dark; terminal chrome)
   themes/wildcharm/dist/shiki/hestia-{dark,light}.json   (web code blocks;
                                                           bg = the code SURFACE)
   user/vscode/hestia/themes/hestia-{dark,light}-color-theme.json
                                                          (editor; bg = the app
                                                           CANVAS + UI chrome)
+
+Desktop chrome fragments (roles/ANSI only — no scopes; both variants, the
+bootstrap symlinks the one `theme_variant` selects, M7):
+  user/kitty/theme-{dark,light}.conf                     (terminal colours)
+  user/sway/theme-{dark,light}.conf                      ($vars + output bg +
+                                                          the gsettings execs)
+  user/waybar/theme-{dark,light}.css                     (@define-color tokens)
 
 Same tokenColors everywhere; only the per-target chrome differs. The WCAG AA
 contrast gate runs before anything is written — a palette edit that breaks a
@@ -69,11 +77,23 @@ VARIANTS = {
         "link": LIGHT["roles"]["accent"],
         "error_fg": "#ffffff",
         "error_bg": LIGHT["syntax"]["error"],
+        # the light gate runs against the #f5f5f5 DESKTOP ground (M7) — stricter
+        # than the #ffffff code surface, so white is covered by implication
         "_aa_surfaces": [LIGHT["roles"]["bg"]],
         "_canvas": LIGHT["roles"]["bg"],
-        "_code_surface": LIGHT["roles"]["bg"],
+        # the web code surface keeps the M3 pure white (light-only split;
+        # dark's code surface == the ground)
+        "_code_surface": LIGHT["roles"]["code_surface"],
     },
 }
+
+# per-variant role/ANSI tables for the desktop-chrome emitters
+def vroles(variant: str) -> dict:
+    return ROLES if variant == "dark" else LIGHT["roles"]
+
+
+def vansi(variant: str) -> dict:
+    return ANSI if variant == "dark" else LIGHT["ansi"]
 
 FILL_ROLES = {"error", "todo"}  # reverse/fill — exempt from the plain-text gate
 
@@ -272,9 +292,10 @@ def theme_json(variant: str, target: str) -> str:
             "terminal.ansiBrightCyan": ANSI["bright_cyan"],
             "terminal.ansiBrightWhite": ANSI["bright_white"],
         }
-    else:  # vscode light — minimal chrome; the light DESKTOP ramp doesn't
-        # exist yet (roadmap M7), so unspecified UI falls back to VS Code's
-        # own light defaults rather than inventing surfaces here.
+    else:  # vscode light — minimal chrome for now; the light desktop ramp
+        # exists since 0.6.0 (M7 PR1), and the full role-mapped light chrome
+        # lands with the long-tail PR (M7 PR2). Until then unspecified UI
+        # falls back to VS Code's own light defaults.
         acc, accfg = LIGHT["roles"]["accent"], ROLES["accent_fg"]
         colors = {
             "focusBorder": acc,
@@ -302,12 +323,113 @@ def theme_json(variant: str, target: str) -> str:
     return json.dumps(doc, indent=2, ensure_ascii=False) + "\n"
 
 
+# ------------------------------------------------- desktop chrome (M7 switch)
+# Per-app colour fragments, both variants; the bootstrap manifest symlinks the
+# `theme_variant` one to a variant-neutral destination (theme.conf / theme.css).
+# Roles/ANSI only — no syntax scopes. Mappings live here (platform-quirk rule).
+
+def render_kitty(variant: str) -> str:
+    r, a = vroles(variant), vansi(variant)
+    slots = [
+        "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
+        "bright_black", "bright_red", "bright_green", "bright_yellow",
+        "bright_blue", "bright_magenta", "bright_cyan", "bright_white",
+    ]
+    lines = [f"# {PROVENANCE}", f"# kitty colours — {variant} (see kitty.conf: include theme.conf)", ""]
+    if variant == "dark":
+        lines += ["# Note: bg == ANSI color0 — accepted; watch item in the roadmap backlog.", ""]
+    lines += [
+        f"background            {r['bg']}",
+        f"foreground            {r['text']}",
+        f"cursor                {r['accent']}",
+        f"cursor_text_color     {r['accent_fg']}",
+        f"selection_background  {r['accent']}",
+        f"selection_foreground  {r['accent_fg']}",
+        "",
+    ]
+    for i, slot in enumerate(slots):
+        lines.append(f"color{i:<2} {a[slot]}")
+    lines += [
+        "",
+        f"active_tab_background   {r['accent']}",
+        f"active_tab_foreground   {r['accent_fg']}",
+        f"inactive_tab_background {r['surface']}",
+        f"inactive_tab_foreground {r['dim']}",
+        f"tab_bar_background      {r['bg']}",
+        "",
+        "# Split borders (kitty's default active is green) — quiet greys",
+        f"active_border_color   {r['surface']}",
+        f"inactive_border_color {r['border']}",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def render_sway(variant: str) -> str:
+    r = vroles(variant)
+    scheme = "prefer-dark" if variant == "dark" else "prefer-light"
+    gtk_theme = "hestia-dark" if variant == "dark" else "hestia"
+    return f"""# {PROVENANCE}
+# sway theme fragment — {variant} (see config: include ~/.config/sway/theme.conf)
+
+# Colors (roles from palette.yml)
+set $bg        {r["bg"]}
+set $surface   {r["surface"]}
+set $border    {r["border"]}
+set $text      {r["text"]}
+set $dim       {r["dim"]}
+set $accent    {r["accent"]}
+set $accent_fg {r["accent_fg"]}
+
+# Desktop background
+output * bg {r["bg"]} solid_color
+
+# GTK / portal appearance for this variant (CLAUDE.md GTK section): color-scheme
+# is what Firefox/portal-aware/libadwaita apps follow; gtk-theme is what the
+# portal file chooser reads (in-process GTK3 apps follow start-sway's GTK_THEME).
+# `exec` runs at login only — not re-run on `swaymsg reload`.
+exec gsettings set org.gnome.desktop.interface color-scheme {scheme}
+exec gsettings set org.gnome.desktop.interface gtk-theme {gtk_theme}
+# Icon theme: the #d7005f-accent Yaru built by the opt-in yaru_icons role
+# (Yaru-hestia). Guard on the theme actually existing so a spin without that
+# role doesn't force a missing theme.
+exec sh -c 'test -d "$HOME/.local/share/icons/Yaru-hestia" && gsettings set org.gnome.desktop.interface icon-theme Yaru-hestia'
+"""
+
+
+def render_waybar_css(variant: str) -> str:
+    r, a = vroles(variant), vansi(variant)
+    tokens = {
+        "bg": r["bg"],
+        "text": r["text"],
+        "muted": r["muted"],
+        "border": r["border"],
+        "surface_alt": r["surface_alt"],
+        "accent": r["accent"],
+        "accent_fg": r["accent_fg"],
+        # muted-state icons (pulseaudio.muted) — ANSI bright_black, the
+        # quietest grey that still reads on the bar
+        "icon_muted": a["bright_black"],
+    }
+    lines = [f"/* {PROVENANCE}",
+             f"   waybar colour tokens — {variant} (style.css: @import \"theme.css\") */", ""]
+    lines += [f"@define-color {k} {v};" for k, v in tokens.items()]
+    lines.append("")
+    return "\n".join(lines)
+
+
 OUTPUTS = {
     REPO / "user/bat/themes/wildcharm.tmTheme": render_tmtheme,
     HERE / "dist/shiki/hestia-dark.json": lambda: theme_json("dark", "shiki"),
     HERE / "dist/shiki/hestia-light.json": lambda: theme_json("light", "shiki"),
     REPO / "user/vscode/hestia/themes/hestia-dark-color-theme.json": lambda: theme_json("dark", "vscode"),
     REPO / "user/vscode/hestia/themes/hestia-light-color-theme.json": lambda: theme_json("light", "vscode"),
+    REPO / "user/kitty/theme-dark.conf": lambda: render_kitty("dark"),
+    REPO / "user/kitty/theme-light.conf": lambda: render_kitty("light"),
+    REPO / "user/sway/theme-dark.conf": lambda: render_sway("dark"),
+    REPO / "user/sway/theme-light.conf": lambda: render_sway("light"),
+    REPO / "user/waybar/theme-dark.css": lambda: render_waybar_css("dark"),
+    REPO / "user/waybar/theme-light.css": lambda: render_waybar_css("light"),
 }
 
 

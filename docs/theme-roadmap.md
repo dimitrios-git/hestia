@@ -41,6 +41,17 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-03 — wofi cannot take CSS fragments; use its colors file.** The
+  0.7.0 `@import "theme.css"` approach rendered wofi transparent: wofi
+  preprocesses the stylesheet TEXT itself (its `--wofi-color<n>` macro pass)
+  and hands the result to GTK, so a relative @import never resolves. Corrected
+  to wofi's native mechanism: a GENERATED `colors-{dark,light}` file
+  (newline-separated hexes, NO comments possible — the one artifact without a
+  provenance header; slot order lives in render.py `WOFI_SLOTS` + the style.css
+  header), `--wofi-color<n>` macros in style.css, `colors=colors` in the wofi
+  config (relative paths resolve against ~/.config/wofi). Platform-quirk rule
+  upheld: the quirk lives in wofi's mapping, not the palette.
+
 - **2026-07-03 (0.7.1) — light ANSI color1 IS the accent** (`#d7005f`, deviating
   from upstream light's `#af0000`): hestia's identity is `accent == ANSI
   color01` and it must hold in both variants — caught live when cmus's bars

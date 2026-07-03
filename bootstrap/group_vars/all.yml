@@ -108,9 +108,11 @@ dotfile_links:
   - { src: "user/mako/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/mako/theme.conf" }
   - { src: user/wofi/config,                dest: "{{ target_home }}/.config/wofi/config" }
   - { src: user/wofi/style.css,             dest: "{{ target_home }}/.config/wofi/style.css" }
-  # GENERATED colour tokens (render.py) — @import'ed by wofi's style.css. src picked
-  # by `theme_variant` (M7).
-  - { src: "user/wofi/theme-{{ theme_variant }}.css", dest: "{{ target_home }}/.config/wofi/theme.css" }
+  # GENERATED wofi COLORS FILE (render.py) — wofi's own macro mechanism
+  # (--wofi-color<n> in style.css; `colors=colors` in the wofi config). NOT a CSS
+  # fragment: wofi preprocesses the stylesheet text, so @import doesn't work there.
+  # src picked by `theme_variant` (M7).
+  - { src: "user/wofi/colors-{{ theme_variant }}", dest: "{{ target_home }}/.config/wofi/colors" }
   # GENERATED whole-file variant pair (render.py; swaylock has no include) — src
   # picked by `theme_variant` (M7).
   - { src: "user/swaylock/config-{{ theme_variant }}", dest: "{{ target_home }}/.config/swaylock/config" }

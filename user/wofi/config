@@ -14,3 +14,4 @@ no_actions=true
 gtk_dark=true
 hide_scroll=true
 key_expand=Tab
+colors=colors

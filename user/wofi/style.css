@@ -6,7 +6,7 @@
 }
 
 window {
-    background-color: #0a0a0a;
+    background-color: #1a1a1a;
     color: #e0e0e0;
     border: 2px solid #d7005f;
 }
@@ -19,9 +19,9 @@ window {
 #input {
     margin-bottom: 12px;
     padding: 8px 12px;
-    background-color: #111111;
+    background-color: #262626;
     color: #e0e0e0;
-    border: 1px solid #1e1e1e;
+    border: 1px solid #3a3a3a;
     border-radius: 0;
     outline: none;
     box-shadow: none;

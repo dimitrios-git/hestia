@@ -94,7 +94,7 @@
     "prefix": " ",
     "suffix": " ",
     "color": "#ff5f87",
-    "background_color": "#1a1a1a"
+    "background_color": "#262626"
   },
   "code_block": {
     "color": "#e0e0e0",
@@ -181,7 +181,7 @@
         "color": "#8c8c8c"
       },
       "background": {
-        "background_color": "#1a1a1a"
+        "background_color": "#262626"
       }
     }
   },

@@ -9,7 +9,7 @@
 }
 
 window#waybar {
-    background-color: #0a0a0a;
+    background-color: #1a1a1a;
     color: #e0e0e0;
 }
 
@@ -41,7 +41,7 @@ window#waybar {
 }
 
 #workspaces button:hover {
-    background: #1a1a1a;
+    background: #303030;
     color: #cccccc;
 }
 
@@ -78,7 +78,7 @@ window#waybar {
 #language,
 #clock {
     padding: 0 14px;
-    border-left: 1px solid #1e1e1e;
+    border-left: 1px solid #3a3a3a;
     color: #c8c8c8;
 }
 
@@ -105,7 +105,7 @@ window#waybar {
 tooltip {
     font-family: "Lilex Nerd Font Mono";
     font-size: 17px;
-    background-color: #0a0a0a;
+    background-color: #1a1a1a;
     border: 1px solid #d7005f;
     padding: 6px 10px;
 }

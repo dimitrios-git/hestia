@@ -54,11 +54,14 @@ VARIANTS = {
         "link": ROLES["link"],
         "error_fg": "#ffffff",
         "error_bg": ROLES["accent_dark"],
-        # surfaces the plain-text roles must clear AA against
-        "_aa_surfaces": [ROLES["bg"], ROLES["surface_alt"]],
+        # surfaces the plain-text roles must clear AA against. Since 0.5.0 the
+        # web code surface IS the ground (it reads raised on tci's darker
+        # page); surface_alt is transient (hover/line-highlight), not a body-
+        # text surface, so it is deliberately NOT gated here.
+        "_aa_surfaces": [ROLES["bg"]],
         # per-target canvas/surface
         "_canvas": ROLES["bg"],          # vim/bat/VS Code app canvas
-        "_code_surface": ROLES["surface_alt"],  # web code blocks
+        "_code_surface": ROLES["bg"],    # web code blocks == the ground
     },
     "light": {
         **LIGHT["syntax"],

@@ -4,24 +4,24 @@
 # comments across config parsers (the swaylock lesson).
 
 # --- window / page area ---
-set default-bg          "#0a0a0a"
+set default-bg          "#1a1a1a"
 set default-fg          "#e0e0e0"
-set render-loading-bg   "#0a0a0a"
+set render-loading-bg   "#1a1a1a"
 set render-loading-fg   "#e0e0e0"
 
 # --- statusbar (bottom bar) ---
-set statusbar-bg        "#111111"
+set statusbar-bg        "#262626"
 set statusbar-fg        "#e0e0e0"
 
 # --- inputbar (the ':' command line) ---
-set inputbar-bg         "#111111"
+set inputbar-bg         "#262626"
 set inputbar-fg         "#e0e0e0"
 
 # --- notifications (info / warning / error) ---
-set notification-bg         "#111111"
+set notification-bg         "#262626"
 set notification-fg         "#e0e0e0"
 set notification-warning-bg "#d78700"
-set notification-warning-fg "#0a0a0a"
+set notification-warning-fg "#1a1a1a"
 set notification-error-bg   "#9b0040"
 set notification-error-fg   "#ffffff"
 
@@ -31,24 +31,24 @@ set highlight-color        "rgba(0, 135, 215, 0.35)"
 set highlight-active-color "rgba(206, 0, 86, 0.5)"
 
 # --- completion menu (Tab) ---
-set completion-bg           "#111111"
+set completion-bg           "#262626"
 set completion-fg           "#e0e0e0"
-set completion-group-bg     "#0a0a0a"
+set completion-group-bg     "#1a1a1a"
 set completion-group-fg     "#d7005f"
 set completion-highlight-bg "#d7005f"
 set completion-highlight-fg "#ffffff"
 
 # --- index / table of contents ---
-set index-bg        "#0a0a0a"
+set index-bg        "#1a1a1a"
 set index-fg        "#e0e0e0"
 set index-active-bg "#d7005f"
 set index-active-fg "#ffffff"
 
 # --- document recolouring (dark mode for the page content itself) ---
-# On by default: white pages -> bg (#0a0a0a), black text -> #e0e0e0. keephue keeps
+# On by default: white pages -> bg (#1a1a1a), black text -> #e0e0e0. keephue keeps
 # coloured text/links readable; images stay natural (reverse-video left at its default
 # off). Toggle per-document at any time with `r`.
 set recolor            true
 set recolor-keephue    true
-set recolor-lightcolor "#0a0a0a"
+set recolor-lightcolor "#1a1a1a"
 set recolor-darkcolor  "#e0e0e0"

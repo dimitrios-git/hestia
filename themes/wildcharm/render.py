@@ -183,6 +183,11 @@ def theme_json(variant: str, target: str) -> str:
         colors = {
             "focusBorder": acc,
             "foreground": c["text"],
+            # links in UI text (chat/welcome/notifications) + ctrl-hover links
+            # in the editor — default to VS Code blue unless mapped
+            "textLink.foreground": c["link"],
+            "textLink.activeForeground": c["link"],
+            "editorLink.activeForeground": c["link"],
             "editor.background": c["_canvas"],
             "editor.foreground": c["text"],
             "editor.lineHighlightBackground": ROLES["surface_alt"],
@@ -259,6 +264,9 @@ def theme_json(variant: str, target: str) -> str:
         acc, accfg = LIGHT["roles"]["accent"], ROLES["accent_fg"]
         colors = {
             "focusBorder": acc,
+            "textLink.foreground": c["link"],
+            "textLink.activeForeground": c["link"],
+            "editorLink.activeForeground": c["link"],
             "editor.background": c["_canvas"],
             "editor.foreground": c["text"],
             "editorCursor.foreground": acc,

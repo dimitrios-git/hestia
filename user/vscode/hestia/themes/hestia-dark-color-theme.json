@@ -5,6 +5,9 @@
   "colors": {
     "focusBorder": "#d7005f",
     "foreground": "#e0e0e0",
+    "textLink.foreground": "#ff5f87",
+    "textLink.activeForeground": "#ff5f87",
+    "editorLink.activeForeground": "#ff5f87",
     "editor.background": "#1a1a1a",
     "editor.foreground": "#e0e0e0",
     "editor.lineHighlightBackground": "#303030",

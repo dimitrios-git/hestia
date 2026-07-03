@@ -4,6 +4,9 @@
   "type": "light",
   "colors": {
     "focusBorder": "#d7005f",
+    "textLink.foreground": "#d7005f",
+    "textLink.activeForeground": "#d7005f",
+    "editorLink.activeForeground": "#d7005f",
     "editor.background": "#ffffff",
     "editor.foreground": "#1a1a1a",
     "editorCursor.foreground": "#d7005f",

@@ -107,7 +107,7 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 | vim / nvim | `user/vim/colors/hestia.vim` (thin wrapper over built-in wildcharm) | hestia | ✅ conformant by definition (dark) |
 | bat (+ vifm preview) | `user/bat/themes/wildcharm.tmTheme` | hestia | 🟡 themed, **diverges** from canonical — realign in M4 |
 | glow | `user/glow/wildcharm.json` | hestia | 🟡 themed, divergence unaudited — audit + realign in M4 |
-| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendored copy; integration point `apps/thecodingidiot/lib/mdx-options.ts` (rehype-pretty-code `{ dark, light }` accepts theme objects); also retune `--code-surface` in that app's `globals.css` | ⬜ M2 (dark) / M3 (light) |
+| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendored copy at `apps/thecodingidiot/lib/themes/hestia-dark.ts`, wired in `lib/mdx-options.ts` (rehype-pretty-code `{ dark, light }` takes theme objects); `--code-surface` retuned in that app's `globals.css` | 🟡 dark shipped (stoa PR #92, from v0.2.0) / light = M3 |
 | VS Code | same JSON + UI-chrome colours | hestia (publish later) | ⬜ M5 |
 
 Cross-repo consumers get **stamped copies** (header: source file + palette
@@ -121,11 +121,14 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
 - [x] **M1 — formalise layer 2 (dark).** `syntax:` table in `palette.yml` from
   the canonical mapping; `extended.purple`; palette versioning; this doc.
   (PR: feat/theme-syntax-roles)
-- [ ] **M2 — first generated consumer: Shiki dark.** Author `hestia-dark` theme
-  JSON from the `syntax:` table + role→TM-scope mapping (start from the bat
-  tmTheme's scope selectors, re-coloured to canonical); vendor into stoa/tci
-  (keep `github-light` for light temporarily). Proves the pipeline on a *new*
-  artifact. Decide then: hand-author once, or start the small generator.
+- [x] **M2 — first generated consumer: Shiki dark.** `hestia-dark` authored from
+  the `syntax:` table (scope selectors from the bat tmTheme, re-coloured to
+  canonical), vendored into stoa/tci with `github-light` kept for light
+  (stoa PR #92); golden sample added here (this PR). Hand-authored — revisit a
+  generator at M6. Live verification caught one mapping fix, now encoded in the
+  theme: `storage.*` follows vim's `StorageClass→Type` link (C `int`/`static`,
+  TS `const`/`let` render type-yellow), except `storage.type.function`/`.class`
+  which stay keyword-blue.
 - [ ] **M3 — light variant.** `light:` palette roles + light `syntax:`
   resolution from the upstream table above (+ documented hestia deviations);
   `hestia-light` Shiki theme; tci dual-theme config on hestia pair. tci is the
@@ -170,9 +173,10 @@ Default is canonical wins; promote only deliberately.
 
 ## Verification
 
-- **Golden sample** (create in M2): a fixed snippet set — one TypeScript file,
-  one shell session, one diff, one markdown doc — rendered on every platform for
-  eyeball comparison. Coherence checks always run against the same content.
+- **Golden sample** — `themes/wildcharm/golden/` (see its README for per-platform
+  render commands): a fixed snippet set — TypeScript, shell, diff, markdown —
+  rendered on every platform for eyeball comparison. Coherence checks always run
+  against the same content; don't edit the samples casually.
 - **Contrast**: every plain-text `syntax:` foreground must clear **WCAG AA
   (4.5:1)** against `roles.bg` *and* `roles.surface_alt` (code-block surface) in
   its variant; reverse/fill roles (`error`, `todo`) are checked as pairings

@@ -1,0 +1,11 @@
+--- a/themes/wildcharm/palette.yml
++++ b/themes/wildcharm/palette.yml
+@@ -30,7 +30,8 @@ roles:
+   surface_alt: "#1a1a1a"   # code blocks, hover rows (also ANSI black, color0)
+   border:      "#1e1e1e"   # separators, idle borders
+   text:        "#e0e0e0"   # primary foreground
+-  dim:         "#767676"   # tertiary text / hints
++  dim:         "#8c8c8c"   # tertiary text / hints — wildcharm #767676
++                           # lightened for AA on surfaces
+   muted:       "#adadad"   # secondary text (e.g. unfocused workspaces)
+   accent:      "#d7005f"   # wildcharm red (ANSI color01)

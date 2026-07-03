@@ -29,7 +29,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.3.0"
+version: "0.4.0"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).

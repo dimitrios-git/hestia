@@ -1,0 +1,140 @@
+# themes/wildcharm/scopes.yml — the TextMate-family scope map (layer 2½).
+#
+# ONE ordered rule list maps syntax ROLES (palette.yml `syntax:` tables) to
+# TextMate scopes, shared by every TM consumer: bat (.tmTheme), the web Shiki
+# pair (stoa/thecodingidiot), and the VS Code themes. `themes/wildcharm/
+# render.py` renders all of them from this file + palette.yml — edit a scope
+# decision HERE (once, for every consumer), edit a colour in palette.yml.
+#
+# Rules carry: name (artifact label), scopes, and either a role (resolved to a
+# colour per variant) or style-only entries (role: null). `paired: true` marks
+# the one fg+bg rule (error). Notable decisions baked in (see the roadmap
+# decision log + M2/M4 notes): storage.* follows vim's StorageClass→Type link
+# except the function/class keywords; meta.function-call is deliberately
+# excluded; wildcharm Statement is NOT bold.
+
+rules:
+  - name: Comment
+    role: comment
+    font_style: italic
+    scopes: [comment, punctuation.definition.comment]
+
+  - name: String
+    role: string
+    scopes: [string, string.quoted, punctuation.definition.string]
+
+  - name: String escape / regex / interpolation
+    role: string_special
+    scopes:
+      - constant.character.escape
+      - string.regexp
+      - punctuation.section.interpolation
+      - punctuation.definition.template-expression
+
+  - name: Constant
+    role: constant
+    scopes:
+      - constant.numeric
+      - constant.language
+      - constant.character
+      - constant.other
+      - support.constant
+
+  - name: Language variable (self/this)
+    role: constant
+    font_style: italic
+    scopes: [variable.language]
+
+  - name: Keyword (vim Statement, not bold)
+    role: keyword
+    scopes: [keyword, keyword.control, keyword.operator, keyword.other]
+
+  - name: Storage (vim StorageClass -> Type)
+    role: type
+    scopes: [storage, storage.type, storage.modifier]
+
+  - name: Function/class keywords stay keywords
+    role: keyword
+    scopes: [storage.type.function, storage.type.class]
+
+  - name: Function
+    role: identifier
+    scopes: [entity.name.function, support.function, variable.function]
+
+  - name: Type / class
+    role: type
+    scopes:
+      - entity.name.type
+      - entity.name.class
+      - entity.name.namespace
+      - support.type
+      - support.class
+
+  - name: Preprocessor / import
+    role: preproc
+    scopes:
+      - meta.preprocessor
+      - keyword.control.import
+      - keyword.control.export
+      - keyword.control.directive
+      - keyword.control.at-rule
+
+  - name: Plain (variables, punctuation)
+    role: text
+    scopes:
+      - variable
+      - variable.other
+      - variable.parameter
+      - punctuation
+      - meta.brace
+      - punctuation.separator
+      - punctuation.terminator
+
+  - name: Tag
+    role: keyword
+    scopes: [entity.name.tag, punctuation.definition.tag]
+
+  - name: Tag attribute
+    role: type
+    scopes: [entity.other.attribute-name]
+
+  - name: Heading (vim Title)
+    role: text
+    font_style: bold
+    scopes: [markup.heading, markup.heading entity.name]
+
+  - name: Bold
+    role: text
+    font_style: bold
+    scopes: [markup.bold]
+
+  - name: Italic
+    role: null
+    font_style: italic
+    scopes: [markup.italic]
+
+  - name: Link
+    role: link
+    font_style: underline
+    scopes: [markup.underline.link, markup.link, string.other.link]
+
+  - name: Raw / code span
+    role: preproc
+    scopes: [markup.raw, markup.inline.raw]
+
+  - name: Diff inserted
+    role: diff_add
+    scopes: [markup.inserted, meta.diff.header.to-file]
+
+  - name: Diff deleted
+    role: diff_delete
+    scopes: [markup.deleted, meta.diff.header.from-file]
+
+  - name: Diff changed
+    role: diff_change
+    scopes: [markup.changed]
+
+  - name: Invalid
+    role: error
+    paired: true
+    scopes: [invalid, invalid.illegal]

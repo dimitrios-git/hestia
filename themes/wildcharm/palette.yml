@@ -21,6 +21,13 @@
 #
 # Edit a colour HERE first; then propagate it to the consuming configs. Hex values
 # carry a leading '#'; strip it for tools that want bare RRGGBB (e.g. swaylock).
+#
+# The dark/light + cross-platform syntax-highlighting plan (layer model, decision
+# log, milestones, known-inconsistency backlog) is docs/theme-roadmap.md.
+
+# Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
+# when roles/values are added, patch for a tweak; log one line in the roadmap.
+version: "0.2.0"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -57,3 +64,40 @@ ansi:
   bright_magenta: "#ff87ff"   # [13]
   bright_cyan:    "#00d7d7"   # [14]
   bright_white:   "#ffffff"   # [15]
+
+# Colours wildcharm uses beyond the ANSI 16 (xterm-256 indices) — upstream
+# values admitted under the never-invent rule, not new shades.
+extended:
+  purple: "#af5fff"   # xterm 135 — wildcharm's Special/Todo purple (#875fff, xterm 99)
+                      # lifted one 256-palette step for AA on hestia surfaces
+                      # (4.24:1 on surface_alt -> 4.89:1; same treatment as roles.dim)
+
+# Syntax-highlighting roles (layer 2 — docs/theme-roadmap.md). What a colour
+# means IN CODE, resolved from the palette above; the canonical mapping is the
+# wildcharm.vim DARK variant (decision 2026-07-03), with hestia's documented
+# deviations (comment on dim; bg/default text come from roles, not upstream's
+# pure #000000/#d0d0d0). Every syntax consumer (vim, bat tmTheme, Shiki/VS Code,
+# glow) renders FROM this table — never map a scope to a hex an artifact invents.
+# Anything not listed renders as roles.text (vim leaves it Normal — this
+# includes plain variables and punctuation). A light: resolution of the same
+# role names lands with milestone 3 (upstream source table is in the roadmap).
+syntax:
+  comment:        "#8c8c8c"   # roles.dim — upstream #767676 lightened for AA (documented deviation)
+  string:         "#00d75f"   # ansi.bright_green — vim String
+  string_special: "#af5fff"   # extended.purple — escapes/regex (vim SpecialChar -> Special)
+  constant:       "#ff5f87"   # ansi.bright_red — numbers, booleans, chars (vim Constant)
+  identifier:     "#ff87ff"   # ansi.bright_magenta — functions + members (vim Identifier/Function)
+  keyword:        "#00afff"   # ansi.bright_blue — statements, operators, storage (vim Statement)
+  type:           "#ffaf00"   # ansi.bright_yellow — types, classes (vim Type)
+  preproc:        "#00d7d7"   # ansi.bright_cyan — imports, macros, at-rules (vim PreProc)
+  special:        "#af5fff"   # extended.purple — delimiters, tags, specials (vim Special)
+  diff_add:       "#00af5f"   # ansi.green — vim Added
+  diff_change:    "#0087d7"   # ansi.blue — vim Changed
+  diff_delete:    "#ff5f87"   # ansi.bright_red — deviation: upstream Removed is #d7005f, but the
+                              # accent is a FILL in hestia; bright_red is the accent-coloured TEXT
+                              # (roles.link) and is what git diff + the bat theme already use
+  # error/todo are REVERSE/FILL treatments (the colour is a background or is
+  # reversed), not plain foreground text — the AA-vs-surface rule above doesn't
+  # apply to them; platform mappings pair error with white/accent_fg.
+  error:          "#d7005f"   # roles.accent — vim Error (reverse on white; bat: white on accent_dark)
+  todo:           "#af5fff"   # extended.purple — vim Todo (rendered reverse)

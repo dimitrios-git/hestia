@@ -1,10 +1,16 @@
 # Theming hestia
 
-hestia has one look: a **dark theme** on near-black `#0a0a0a`, accent **wildcharm
-red `#d7005f`**, and a saturated **16-colour palette from the `wildcharm` vim
-colorscheme**. This doc is the **process** for bringing a new app onto that look. The
+hestia has one deployed look: a **dark theme** on near-black `#0a0a0a`, accent
+**wildcharm red `#d7005f`**, and a saturated **16-colour palette from the `wildcharm`
+vim colorscheme**. This doc is the **process** for bringing a new app onto that look. The
 colours themselves live in one place — **`themes/wildcharm/palette.yml`** (the single
 source of truth) — so this doc never repeats hex values; it tells you how to apply them.
+
+> A **light variant** and **cross-platform syntax-highlighting coherence** (vim, bat,
+> Shiki/web, VS Code) are planned, multi-session work — the layer model, decision log,
+> milestones and inconsistency backlog live in **`docs/theme-roadmap.md`**. For *syntax*
+> colours specifically, map an app from the palette's **`syntax:`** role table (layer 2),
+> not ad hoc from the ANSI names.
 
 > **How the system works today.** The palette is applied **by hand**: you read the right
 > value from `palette.yml` and write the literal hex into the app's own config, which is
@@ -55,8 +61,8 @@ Legend: ✅ themed · 🟡 partial · ⬜ not yet.
 | cava | gradient config | ✅ | accent-anchored cool sweep through wildcharm hues (accent → magenta → blue → cyan) |
 | cmus | cterm slots (rc) | ✅ | accent tracks ANSI red |
 | vifm | `.vifm` colorscheme | ✅ | file-type colours from the ANSI set, **plus per-glob `:highlight` rules mirroring `~/.dircolors`'s extension layer** (vifm has no LS_COLORS, so they're kept in sync by hand) — archives/images/video/audio/docs match `ls`; preview pane on by default (`view!`, `w` toggles); catch-all `fileviewer` runs `scripts/preview.sh` for syntax-highlighted code preview (bat, wildcharm) with binary/dir fallback; images show text info (mediainfo) — in-pane rendering was dropped (kitty graphics didn't display in vifm and made scrolling laggy); open in imv instead |
-| bat | `.tmTheme` syntax theme | ✅ | `user/bat/themes/wildcharm.tmTheme` (scopes mapped from `palette.yml`); compiled into bat's cache by the dotfiles role (`bat cache --build`); drives vifm's code preview. Debian ships the binary as `batcat` |
-| glow | glamour JSON | ✅ | markdown render theme |
+| bat | `.tmTheme` syntax theme | 🟡 | `user/bat/themes/wildcharm.tmTheme` (scopes mapped from `palette.yml`); compiled into bat's cache by the dotfiles role (`bat cache --build`); drives vifm's code preview. Debian ships the binary as `batcat`. **Diverges from the canonical `syntax:` role table** (it predates it — accent keywords vs bright-blue, etc.); realign is roadmap M4, divergences itemised in `docs/theme-roadmap.md` |
+| glow | glamour JSON | 🟡 | markdown render theme; not yet audited against the canonical `syntax:` role table — roadmap M4 |
 | vim / nvim | `hestia` colorscheme (wildcharm wrapper) | ✅ | `user/vim/colors/hestia.vim` loads built-in `wildcharm` then overrides the bg to hestia near-black `#0a0a0a`; accent is wildcharm's own `#d7005f`. In `~/.vim/colors` so Vim + Neovim share it. Plus render-markdown accent (nvim) |
 | ls / file listing | `dircolors` (LS_COLORS) | ✅ | `user/bash/.dircolors` — file-**type** colours mirror vifm's highlights exactly (same 256-indices: dir 39, link 44, exec 41, …) so `ls` and vifm agree; plus a restrained wildcharm extension layer (archives/images/video/audio/docs). `.bashrc` already loads it |
 | git | `[color]` in `.gitconfig` | ✅ | hex (24-bit) palette, **aligned to the bash prompt** so the accent means one thing everywhere: branch → yellow `#d78700`, staged/added → green, dirty (changed/untracked) → accent `#d7005f`. Diff lines stay bright red/green (line-level, off the accent — git's default `old`=red would otherwise be `#d7005f`). The prompt itself needs no theming — its ANSI codes already render via the wildcharm terminal palette (branch yellow, dirty counts accent) |

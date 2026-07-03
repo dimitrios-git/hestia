@@ -29,6 +29,8 @@
     - role: yaru_icons # build + install the #d7005f Yaru icon theme into ~/.local/share/icons (opt-in, heavy)
       tags: [yaru_icons]
       when: enable_yaru_icons | bool
+    - role: vscode_theme # package + install the hestia VS Code theme (.vsix; no root) — self-skips when the `code` binary is absent (VS Code itself is not in the apt manifest)
+      tags: [vscode_theme]
     - role: hostname   # set the machine hostname (pantheon scheme) — root
       tags: [system, hostname]
       when: system_hostname is defined

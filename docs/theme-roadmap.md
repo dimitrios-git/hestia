@@ -203,7 +203,11 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
   README. **Verified live on VS Code 1.127 (2026-07-03)** — both themes load
   and render; install must go via `.vsix` (`vsce package` +
   `code --install-extension`; a folder symlinked into `~/.vscode/extensions`
-  does not register on current VS Code).
+  does not register on current VS Code). *Amended 2026-07-03: the "not
+  bootstrap-wired" call was reversed after the manual vsix copy-lag cost three
+  round-trips — the `vscode_theme` role now packages + installs on version
+  change, gated on the `code` binary rather than a manifest entry (VS Code
+  itself stays outside the apt manifest — it's Microsoft-repo software).*
 - [x] **M6 — generation (TextMate family).** The scope map became data
   (`themes/wildcharm/scopes.yml`, layer 2½) and `themes/wildcharm/render.py`
   renders every TM-family artifact from it + `palette.yml`: bat's tmTheme, the

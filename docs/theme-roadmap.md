@@ -173,8 +173,10 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
   integrated terminal); **light is editor-only** — chrome falls back to VS
   Code's stock light UI until the light desktop ramp exists (M7). Not wired
   into the bootstrap (VS Code isn't base-system); install per the extension
-  README. Validated by loading the JSONs through Shiki (a VS Code-theme
-  consumer) — not yet launched in a real VS Code.
+  README. **Verified live on VS Code 1.127 (2026-07-03)** — both themes load
+  and render; install must go via `.vsix` (`vsce package` +
+  `code --install-extension`; a folder symlinked into `~/.vscode/extensions`
+  does not register on current VS Code).
 - [x] **M6 — generation (TextMate family).** The scope map became data
   (`themes/wildcharm/scopes.yml`, layer 2½) and `themes/wildcharm/render.py`
   renders every TM-family artifact from it + `palette.yml`: bat's tmTheme, the
@@ -249,6 +251,12 @@ the platform mapping, never in an artifact.
   (decision-log entry + full re-ramp + propagation sweep across all consumers).
   *(Experiment merged and live on the desktop since 2026-07-03, PR #125;
   verdict pending. 0.3.0 was taken by the light variant meanwhile.)*
+  **Evidence so far, all pro-lift (2026-07-03):** vifm's transparent canvas on
+  the lifted ground praised (clearer accent border, more visible split
+  separation); the VS Code dark theme's palette-canonical `#0a0a0a` canvas was
+  immediately felt as "deviating" from the lived ground. Interim for VS Code:
+  a user-settings `workbench.colorCustomizations` override on
+  `[hestia dark]` — personal, no generated artifact touched.
 
 ## Verification
 

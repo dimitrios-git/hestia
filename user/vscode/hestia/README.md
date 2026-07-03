@@ -15,20 +15,26 @@ ramp (surfaces/borders) deliberately doesn't exist yet — roadmap M7
 
 ## Install
 
-Not wired into the bootstrap (VS Code isn't part of the base system). Package a
-`.vsix` and install it — **a folder symlinked into `~/.vscode/extensions` does
-NOT register** on current VS Code (verified on 1.127: the extensions manifest
-only trusts installed extensions):
+**The bootstrap does this** (`vscode_theme` role): it packages the `.vsix` and
+installs it whenever this extension's version differs from what VS Code
+reports, and self-skips on machines without the `code` binary (VS Code itself
+is not in the apt manifest — it comes from Microsoft's repo, outside the
+bootstrap). After a theme change lands: pull, then
+`ansible-playbook site.yml --tags vscode_theme` (or a full run), then reload
+VS Code windows.
+
+Manual equivalent — a `.vsix` is required either way; **a folder symlinked
+into `~/.vscode/extensions` does NOT register** on current VS Code (verified
+on 1.127: the extensions manifest only trusts installed extensions):
 
 ```sh
 cd user/vscode/hestia
 npx @vscode/vsce package
-code --install-extension ./hestia-theme-*.vsix
+code --install-extension ./hestia-theme-*.vsix   # add --force for same-version
 ```
 
-Then pick **hestia dark** / **hestia light** in *Preferences: Color Theme*.
-After a theme change (re-render + version bump here), re-run both commands —
-same-version reinstalls need `code --install-extension --force`.
+Then pick **hestia dark** / **hestia light** in *Preferences: Color Theme*
+(a one-time choice — installs/upgrades don't switch your active theme).
 
 Verify against the golden sample: open
 `themes/wildcharm/golden/sample.ts` — it must agree hue-for-hue with

@@ -1,0 +1,73 @@
+---
+# Package + install the hestia VS Code theme extension (user/vscode/hestia).
+# No root. Gated on the `code` binary: VS Code is NOT in the apt manifest (it
+# ships from Microsoft's repo, installed outside the bootstrap), so the role
+# self-skips on machines without it — no toggle needed.
+#
+# Why packaging at all: a folder symlinked into ~/.vscode/extensions does NOT
+# register on current VS Code (verified on 1.127 — the extensions manifest only
+# trusts installed extensions), so the deployable artifact is a .vsix built by
+# vsce. The role is idempotent on the extension VERSION: it repackages and
+# reinstalls only when user/vscode/hestia/package.json's version differs from
+# what `code --list-extensions --show-versions` reports. Bump the version when
+# the theme changes (the render/PR flow already does) and a bootstrap run rolls
+# it out.
+#
+# The theme JSONs are GENERATED (themes/wildcharm/render.py). The role runs
+# `render.py --check` first and FAILS on stale artifacts rather than silently
+# regenerating at deploy time — generation is a repo-time act (commit the
+# rendered files); deploys must not mutate the repo.
+
+- name: Find the code binary (skip the role on machines without VS Code)
+  ansible.builtin.shell: "command -v code || true"
+  register: _code_bin
+  changed_when: false
+
+- name: VS Code theme block (only when VS Code is installed)
+  when: _code_bin.stdout | length > 0
+  block:
+    - name: Refuse to deploy stale generated theme artifacts
+      ansible.builtin.command:
+        cmd: python3 {{ repo_root }}/themes/wildcharm/render.py --check
+      changed_when: false
+
+    - name: Read the extension version from the repo
+      ansible.builtin.command:
+        cmd: python3 -c "import json;print(json.load(open('{{ repo_root }}/user/vscode/hestia/package.json'))['version'])"
+      register: _ext_version
+      changed_when: false
+
+    - name: Read the installed extension version (empty when not installed)
+      ansible.builtin.shell: >
+        {{ _code_bin.stdout }} --list-extensions --show-versions
+        | sed -n 's/^dimitrios\.hestia-theme@//p'
+      register: _installed_version
+      changed_when: false
+
+    - name: Package + install the theme (only on a version change)
+      when: _installed_version.stdout != _ext_version.stdout
+      block:
+        # vsce runs via npx; node comes from nvm (not on ansible's PATH), so
+        # source it explicitly with a system-node fallback. --yes answers the
+        # one-time "install @vscode/vsce?" download prompt.
+        - name: Package the extension into a .vsix (vsce)
+          ansible.builtin.shell: |
+            set -e
+            command -v npx >/dev/null || . "$HOME/.nvm/nvm.sh"
+            cd "{{ repo_root }}/user/vscode/hestia"
+            npx --yes @vscode/vsce package -o "hestia-theme-{{ _ext_version.stdout }}.vsix"
+          args:
+            executable: /bin/bash
+
+        - name: Install the .vsix (upgrades in place)
+          ansible.builtin.command:
+            cmd: >
+              {{ _code_bin.stdout }} --install-extension
+              {{ repo_root }}/user/vscode/hestia/hestia-theme-{{ _ext_version.stdout }}.vsix --force
+
+        - name: Report
+          ansible.builtin.debug:
+            msg: >
+              hestia VS Code theme {{ _installed_version.stdout | default('(none)', true) }}
+              -> {{ _ext_version.stdout }} installed. Reload VS Code windows to pick it up;
+              the theme is selected per-user in Preferences: Color Theme.

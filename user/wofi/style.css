@@ -1,4 +1,8 @@
-/* wofi theme — matches sway / waybar / mako (accent #d7005f) */
+/* wofi theme — matches sway / waybar / mako. Colour tokens are the GENERATED
+   theme-{dark,light}.css pair (themes/wildcharm/render.py; the bootstrap
+   symlinks the `theme_variant` one here as theme.css) — edit palette.yml +
+   re-render, not the fragment. */
+@import "theme.css";
 
 * {
     font-family: "Lilex Nerd Font Mono";
@@ -6,9 +10,9 @@
 }
 
 window {
-    background-color: #1a1a1a;
-    color: #e0e0e0;
-    border: 2px solid #d7005f;
+    background-color: @bg;
+    color: @text;
+    border: 2px solid @accent;
 }
 
 #outer-box {
@@ -19,22 +23,22 @@ window {
 #input {
     margin-bottom: 12px;
     padding: 8px 12px;
-    background-color: #262626;
-    color: #e0e0e0;
-    border: 1px solid #3a3a3a;
+    background-color: @surface;
+    color: @text;
+    border: 1px solid @border;
     border-radius: 0;
     outline: none;
     box-shadow: none;
 }
 
 #input:focus {
-    border: 1px solid #d7005f;
+    border: 1px solid @accent;
     outline: none;
     box-shadow: none;
 }
 
 #input image {
-    color: #adadad;
+    color: @muted;
 }
 
 #scroll {
@@ -56,17 +60,17 @@ window {
 }
 
 #text {
-    color: #c8c8c8;
+    color: @muted;
 }
 
 #entry:selected {
-    background-color: #d7005f;
+    background-color: @accent;
 }
 
 #entry:selected #text {
-    color: #ffffff;
+    color: @accent_fg;
 }
 
 #text:selected {
-    color: #ffffff;
+    color: @accent_fg;
 }

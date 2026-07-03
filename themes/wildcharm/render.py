@@ -142,18 +142,19 @@ def token_colors(colors: dict) -> list:
 
 # ---------------------------------------------------------------- tmTheme (bat)
 
-def render_tmtheme() -> str:
-    c = VARIANTS["dark"]
+def render_tmtheme(variant: str = "dark") -> str:
+    c = VARIANTS[variant]
+    r = vroles(variant)
     chrome = {
         "background": c["_canvas"],
         "foreground": c["text"],
-        "caret": ROLES["accent"],
-        "lineHighlight": ROLES["surface_alt"],
-        "selection": ROLES["border"],
-        "invisibles": ROLES["dim"],
-        "guide": ROLES["border"],
-        "activeGuide": ROLES["dim"],
-        "gutterForeground": ROLES["dim"],
+        "caret": r["accent"],
+        "lineHighlight": r["surface_alt"],
+        "selection": r["border"],
+        "invisibles": r["dim"],
+        "guide": r["border"],
+        "activeGuide": r["dim"],
+        "gutterForeground": r["dim"],
     }
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -173,7 +174,7 @@ def render_tmtheme() -> str:
     for k, v in chrome.items():
         lines.append(f"        <key>{k}</key> <string>{v}</string>")
     lines += ["      </dict>", "    </dict>"]
-    for tc in token_colors(VARIANTS["dark"]):
+    for tc in token_colors(c):
         lines += [
             "",
             "    <dict>",
@@ -198,8 +199,11 @@ def theme_json(variant: str, target: str) -> str:
             "editor.background": c["_code_surface"],
             "editor.foreground": c["text"],
         }
-    elif variant == "dark":  # vscode dark — full chrome from roles + ANSI
-        acc, accfg = ROLES["accent"], ROLES["accent_fg"]
+    else:  # vscode — full UI chrome from the variant's roles + ANSI (since M7
+        # PR2 light mirrors dark's chrome key-for-key; before that light shipped
+        # minimal chrome and fell back to VS Code's stock light UI)
+        r, a = vroles(variant), vansi(variant)
+        acc, accfg = r["accent"], r["accent_fg"]
         colors = {
             "focusBorder": acc,
             "foreground": c["text"],
@@ -210,43 +214,43 @@ def theme_json(variant: str, target: str) -> str:
             "editorLink.activeForeground": c["link"],
             "editor.background": c["_canvas"],
             "editor.foreground": c["text"],
-            "editor.lineHighlightBackground": ROLES["surface_alt"],
-            "editor.selectionBackground": ROLES["border"],
+            "editor.lineHighlightBackground": r["surface_alt"],
+            "editor.selectionBackground": r["border"],
             "editorCursor.foreground": acc,
-            "editorLineNumber.foreground": ROLES["dim"],
+            "editorLineNumber.foreground": r["dim"],
             "editorLineNumber.activeForeground": c["text"],
-            "editorIndentGuide.background1": ROLES["border"],
-            "editorIndentGuide.activeBackground1": ROLES["dim"],
-            "editorWhitespace.foreground": ROLES["border"],
-            "sideBar.background": ROLES["surface"],
-            "sideBar.foreground": ROLES["muted"],
-            "sideBar.border": ROLES["border"],
+            "editorIndentGuide.background1": r["border"],
+            "editorIndentGuide.activeBackground1": r["dim"],
+            "editorWhitespace.foreground": r["border"],
+            "sideBar.background": r["surface"],
+            "sideBar.foreground": r["muted"],
+            "sideBar.border": r["border"],
             "sideBarTitle.foreground": c["text"],
             "activityBar.background": c["_canvas"],
             "activityBar.foreground": c["text"],
-            "activityBar.inactiveForeground": ROLES["dim"],
+            "activityBar.inactiveForeground": r["dim"],
             "activityBarBadge.background": acc,
             "activityBarBadge.foreground": accfg,
             "statusBar.background": acc,
             "statusBar.foreground": accfg,
-            "statusBar.noFolderBackground": ROLES["accent_dark"],
-            "statusBar.debuggingBackground": ROLES["accent_dark"],
-            "titleBar.activeBackground": ROLES["surface"],
+            "statusBar.noFolderBackground": r["accent_dark"],
+            "statusBar.debuggingBackground": r["accent_dark"],
+            "titleBar.activeBackground": r["surface"],
             "titleBar.activeForeground": c["text"],
             "titleBar.inactiveBackground": c["_canvas"],
-            "titleBar.inactiveForeground": ROLES["dim"],
+            "titleBar.inactiveForeground": r["dim"],
             "tab.activeBackground": c["_canvas"],
             "tab.activeForeground": c["text"],
             "tab.activeBorderTop": acc,
-            "tab.inactiveBackground": ROLES["surface"],
-            "tab.inactiveForeground": ROLES["dim"],
-            "editorGroupHeader.tabsBackground": ROLES["surface"],
+            "tab.inactiveBackground": r["surface"],
+            "tab.inactiveForeground": r["dim"],
+            "editorGroupHeader.tabsBackground": r["surface"],
             "panel.background": c["_canvas"],
-            "panel.border": ROLES["border"],
-            "input.background": ROLES["surface"],
+            "panel.border": r["border"],
+            "input.background": r["surface"],
             "input.foreground": c["text"],
-            "input.border": ROLES["border"],
-            "dropdown.background": ROLES["surface"],
+            "input.border": r["border"],
+            "dropdown.background": r["surface"],
             "dropdown.foreground": c["text"],
             "button.background": acc,
             "button.foreground": accfg,
@@ -254,64 +258,43 @@ def theme_json(variant: str, target: str) -> str:
             "badge.foreground": accfg,
             "list.activeSelectionBackground": acc,
             "list.activeSelectionForeground": accfg,
-            "list.inactiveSelectionBackground": ROLES["surface_alt"],
-            "list.hoverBackground": ROLES["surface_alt"],
-            "scrollbarSlider.background": ROLES["border"],
-            "scrollbarSlider.hoverBackground": ROLES["dim"],
+            "list.inactiveSelectionBackground": r["surface_alt"],
+            "list.hoverBackground": r["surface_alt"],
+            "scrollbarSlider.background": r["border"],
+            "scrollbarSlider.hoverBackground": r["dim"],
             # semantic info/warning/error — same meanings the terminal tools
             # use (buildkit run-blue, git/zathura warning-yellow, vifm
             # ErrorMsg bright-red); covers notification toasts, editor
             # squiggles and the Problems panel
-            "notifications.background": ROLES["surface"],
+            "notifications.background": r["surface"],
             "notifications.foreground": c["text"],
-            "notifications.border": ROLES["border"],
-            "notificationCenterHeader.background": ROLES["surface_alt"],
-            "notificationsInfoIcon.foreground": ANSI["blue"],
-            "notificationsWarningIcon.foreground": ANSI["yellow"],
-            "notificationsErrorIcon.foreground": ANSI["bright_red"],
-            "editorInfo.foreground": ANSI["blue"],
-            "editorWarning.foreground": ANSI["yellow"],
-            "editorError.foreground": ANSI["bright_red"],
+            "notifications.border": r["border"],
+            "notificationCenterHeader.background": r["surface_alt"],
+            "notificationsInfoIcon.foreground": a["blue"],
+            "notificationsWarningIcon.foreground": a["yellow"],
+            "notificationsErrorIcon.foreground": a["bright_red"],
+            "editorInfo.foreground": a["blue"],
+            "editorWarning.foreground": a["yellow"],
+            "editorError.foreground": a["bright_red"],
             "terminal.background": c["_canvas"],
             "terminal.foreground": c["text"],
             "terminalCursor.foreground": acc,
-            "terminal.ansiBlack": ANSI["black"],
-            "terminal.ansiRed": ANSI["red"],
-            "terminal.ansiGreen": ANSI["green"],
-            "terminal.ansiYellow": ANSI["yellow"],
-            "terminal.ansiBlue": ANSI["blue"],
-            "terminal.ansiMagenta": ANSI["magenta"],
-            "terminal.ansiCyan": ANSI["cyan"],
-            "terminal.ansiWhite": ANSI["white"],
-            "terminal.ansiBrightBlack": ANSI["bright_black"],
-            "terminal.ansiBrightRed": ANSI["bright_red"],
-            "terminal.ansiBrightGreen": ANSI["bright_green"],
-            "terminal.ansiBrightYellow": ANSI["bright_yellow"],
-            "terminal.ansiBrightBlue": ANSI["bright_blue"],
-            "terminal.ansiBrightMagenta": ANSI["bright_magenta"],
-            "terminal.ansiBrightCyan": ANSI["bright_cyan"],
-            "terminal.ansiBrightWhite": ANSI["bright_white"],
-        }
-    else:  # vscode light — minimal chrome for now; the light desktop ramp
-        # exists since 0.6.0 (M7 PR1), and the full role-mapped light chrome
-        # lands with the long-tail PR (M7 PR2). Until then unspecified UI
-        # falls back to VS Code's own light defaults.
-        acc, accfg = LIGHT["roles"]["accent"], ROLES["accent_fg"]
-        colors = {
-            "focusBorder": acc,
-            "textLink.foreground": c["link"],
-            "textLink.activeForeground": c["link"],
-            "editorLink.activeForeground": c["link"],
-            "editor.background": c["_canvas"],
-            "editor.foreground": c["text"],
-            "editorCursor.foreground": acc,
-            "editorLineNumber.foreground": LIGHT["roles"]["dim"],
-            "statusBar.background": acc,
-            "statusBar.foreground": accfg,
-            "button.background": acc,
-            "button.foreground": accfg,
-            "badge.background": acc,
-            "badge.foreground": accfg,
+            "terminal.ansiBlack": a["black"],
+            "terminal.ansiRed": a["red"],
+            "terminal.ansiGreen": a["green"],
+            "terminal.ansiYellow": a["yellow"],
+            "terminal.ansiBlue": a["blue"],
+            "terminal.ansiMagenta": a["magenta"],
+            "terminal.ansiCyan": a["cyan"],
+            "terminal.ansiWhite": a["white"],
+            "terminal.ansiBrightBlack": a["bright_black"],
+            "terminal.ansiBrightRed": a["bright_red"],
+            "terminal.ansiBrightGreen": a["bright_green"],
+            "terminal.ansiBrightYellow": a["bright_yellow"],
+            "terminal.ansiBrightBlue": a["bright_blue"],
+            "terminal.ansiBrightMagenta": a["bright_magenta"],
+            "terminal.ansiBrightCyan": a["bright_cyan"],
+            "terminal.ansiBrightWhite": a["bright_white"],
         }
     doc = {
         "_provenance": PROVENANCE,
@@ -418,8 +401,423 @@ def render_waybar_css(variant: str) -> str:
     return "\n".join(lines)
 
 
+# ----------------------------------------------- xterm-256 index (vifm cterm)
+
+_CUBE = [0, 95, 135, 175, 215, 255]
+
+
+def xterm_index(hexval: str) -> int:
+    """Nearest xterm-256 index (16-255). Palette values are xterm-native except
+    the two grounds (#1a1a1a -> 234, #f5f5f5 -> 255) — nearest steps, matching
+    the cterm fallbacks hestia.vim uses."""
+    h = hexval.lstrip("#")
+    r, g, b = (int(h[i : i + 2], 16) for i in (0, 2, 4))
+    best, best_d = 16, 3 * 255 ** 2 + 1
+    for ri, rv in enumerate(_CUBE):
+        for gi, gv in enumerate(_CUBE):
+            for bi, bv in enumerate(_CUBE):
+                d = (r - rv) ** 2 + (g - gv) ** 2 + (b - bv) ** 2
+                if d < best_d:
+                    best, best_d = 16 + 36 * ri + 6 * gi + bi, d
+    for i in range(24):
+        v = 8 + 10 * i
+        d = (r - v) ** 2 + (g - v) ** 2 + (b - v) ** 2
+        if d < best_d:
+            best, best_d = 232 + i, d
+    return best
+
+
+# ------------------------------------------- desktop chrome, the long tail (M7)
+
+EXT = PALETTE["extended"]
+LEXT = LIGHT["extended"]
+
+
+def vext(variant: str) -> dict:
+    # light falls back to the shared extended for variant-invariant values (ink)
+    return EXT if variant == "dark" else {**EXT, **LEXT}
+
+
+def _css_tokens(variant: str, tokens: dict, note: str) -> str:
+    lines = [f"/* {PROVENANCE}", f"   {note} */", ""]
+    lines += [f"@define-color {k} {v};" for k, v in tokens.items()]
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_mako(variant: str) -> str:
+    r, e = vroles(variant), vext(variant)
+    return f"""# {PROVENANCE}
+# mako colours — {variant}. Included LAST by ~/.config/mako/config so the
+# [urgency=high] section below can't swallow main-config keys. default-timeout=0
+# rides with the section (criteria keys must stay inside it): urgent sticks.
+
+background-color={r["bg"]}
+text-color={r["text"]}
+border-color={r["accent"]}
+
+[urgency=high]
+background-color={r["accent"]}
+border-color={r["accent_dark"]}
+text-color={r["accent_fg"]}
+default-timeout=0
+"""
+
+
+def render_wofi_css(variant: str) -> str:
+    r = vroles(variant)
+    return _css_tokens(variant, {
+        "bg": r["bg"],
+        "text": r["text"],
+        "muted": r["muted"],
+        "border": r["border"],
+        "surface": r["surface"],
+        "accent": r["accent"],
+        "accent_fg": r["accent_fg"],
+    }, f'wofi colour tokens — {variant} (style.css: @import "theme.css")')
+
+
+def render_swaylock(variant: str) -> str:
+    r, a, e = vroles(variant), vansi(variant), vext(variant)
+    def b(h):  # swaylock wants bare RRGGBB
+        return h.lstrip("#")
+    return f"""# {PROVENANCE}
+# swaylock — wildcharm lockscreen, {variant} (config-dark / config-light pair;
+# the bootstrap symlinks the `theme_variant` one to ~/.config/swaylock/config).
+#
+# IMPORTANT: swaylock's config parser only supports WHOLE-LINE `#` comments — it
+# does NOT strip trailing/inline comments. Keep every annotation on its own line;
+# values are bare RRGGBB (no leading '#').
+#
+# Sway invokes `swaylock -f` (no -c flag), so `color` below is the single source
+# for the lock background. `indicator-idle-visible` keeps the ring on when idle.
+
+color={b(r["bg"])}
+font=Lilex Nerd Font Mono
+indicator-radius=110
+indicator-thickness=8
+indicator-idle-visible
+indicator-caps-lock
+show-failed-attempts
+
+# idle (no input): inside=sunken, ring=border, line/separator=bg, text=text
+inside-color={b(e["sunken"])}
+ring-color={b(r["border"])}
+line-color={b(r["bg"])}
+separator-color={b(r["bg"])}
+text-color={b(r["text"])}
+
+# typing: key highlight = accent, backspace = bright_red
+key-hl-color={b(r["accent"])}
+bs-hl-color={b(a["bright_red"])}
+
+# verifying (checking password): ring = blue
+inside-ver-color={b(e["sunken"])}
+ring-ver-color={b(a["blue"])}
+line-ver-color={b(r["bg"])}
+text-ver-color={b(r["text"])}
+
+# wrong password: ring = bright_red, inside = accent_dark, text = accent_fg
+inside-wrong-color={b(r["accent_dark"])}
+ring-wrong-color={b(a["bright_red"])}
+line-wrong-color={b(r["bg"])}
+text-wrong-color={b(r["accent_fg"])}
+
+# cleared (input wiped): ring = accent
+inside-clear-color={b(e["sunken"])}
+ring-clear-color={b(r["accent"])}
+line-clear-color={b(r["bg"])}
+text-clear-color={b(r["text"])}
+
+# caps lock on: ring + highlight = bright_yellow (warning), backspace = bright_red
+inside-caps-lock-color={b(e["sunken"])}
+ring-caps-lock-color={b(a["bright_yellow"])}
+caps-lock-key-hl-color={b(a["bright_yellow"])}
+caps-lock-bs-hl-color={b(a["bright_red"])}
+text-caps-lock-color={b(r["text"])}
+"""
+
+
+def render_swaynag(variant: str) -> str:
+    r, a, e = vroles(variant), vansi(variant), vext(variant)
+    def b(h):
+        return h.lstrip("#")
+    sections = [
+        ("global / default (dialogs with no -t)", None, r["accent"]),
+        ("warning (the sway exit confirm passes -t warning): yellow accent line", "warning", a["bright_yellow"]),
+        ("error: bright-red accent line", "error", a["bright_red"]),
+    ]
+    out = [f"# {PROVENANCE}",
+           f"# swaynag — wildcharm dialogs, {variant} (config-dark / config-light pair; the",
+           "# bootstrap symlinks the `theme_variant` one to ~/.config/swaynag/config).",
+           "# Values are bare RRGGBB (no '#'); annotations on their own lines.",
+           "#",
+           "# GOTCHA: swaynag's built-in `warning`/`error` types ship hardcoded colours and",
+           "# do NOT layer the global options — only keys set INSIDE a type's [section]",
+           "# override its presets, so the theme is restated in full per section.",
+           ""]
+    for title, section, accent_line in sections:
+        out.append(f"# --- {title} ---")
+        if section:
+            out.append(f"[{section}]")
+        else:
+            out.append("font=Lilex Nerd Font Mono 11")
+        out += [
+            f"background={b(r['bg'])}",
+            f"border={b(r['border'])}",
+            f"border-bottom={b(accent_line)}",
+            "border-bottom-size=2",
+            f"text={b(r['text'])}",
+            f"button-background={b(e['sunken'])}",
+            f"button-text={b(r['text'])}",
+            f"details-background={b(e['sunken'])}",
+            "",
+        ]
+    return "\n".join(out)
+
+
+def render_zathura(variant: str) -> str:
+    r, a = vroles(variant), vansi(variant)
+    def rgba(h, alpha):
+        v = h.lstrip("#")
+        rr, gg, bb = (int(v[i : i + 2], 16) for i in (0, 2, 4))
+        return f'"rgba({rr}, {gg}, {bb}, {alpha})"'
+    # warning fill takes contrast text: the dark ground on dark's yellow, white
+    # on light's darker yellow
+    warn_fg = r["bg"] if variant == "dark" else r["accent_fg"]
+    # recolour is a dark-mode feature: on by default on dark (white pages ->
+    # ground), OFF on light (pages are already light); `r` toggles either way,
+    # so both variants carry sensible recolor-* values.
+    recolor = "true" if variant == "dark" else "false"
+    return f"""# {PROVENANCE}
+# zathura colours — {variant} (theme-dark / theme-light pair; the bootstrap
+# symlinks the `theme_variant` one to ~/.config/zathura/theme, `include`d by
+# zathurarc). zathura takes "#RRGGBB" (+ rgba(...) for translucent highlights).
+
+# --- window / page area ---
+set default-bg          "{r["bg"]}"
+set default-fg          "{r["text"]}"
+set render-loading-bg   "{r["bg"]}"
+set render-loading-fg   "{r["text"]}"
+
+# --- statusbar (bottom bar) ---
+set statusbar-bg        "{r["surface"]}"
+set statusbar-fg        "{r["text"]}"
+
+# --- inputbar (the ':' command line) ---
+set inputbar-bg         "{r["surface"]}"
+set inputbar-fg         "{r["text"]}"
+
+# --- notifications (info / warning / error) ---
+set notification-bg         "{r["surface"]}"
+set notification-fg         "{r["text"]}"
+set notification-warning-bg "{a["yellow"]}"
+set notification-warning-fg "{warn_fg}"
+set notification-error-bg   "{r["accent_dark"]}"
+set notification-error-fg   "{r["accent_fg"]}"
+
+# --- search highlights (translucent so the text shows through) ---
+# all matches = blue; the active/focused match = accent
+set highlight-color        {rgba(a["blue"], "0.35")}
+set highlight-active-color {rgba(r["accent"], "0.5")}
+
+# --- completion menu (Tab) ---
+set completion-bg           "{r["surface"]}"
+set completion-fg           "{r["text"]}"
+set completion-group-bg     "{r["bg"]}"
+set completion-group-fg     "{r["accent"]}"
+set completion-highlight-bg "{r["accent"]}"
+set completion-highlight-fg "{r["accent_fg"]}"
+
+# --- index / table of contents ---
+set index-bg        "{r["bg"]}"
+set index-fg        "{r["text"]}"
+set index-active-bg "{r["accent"]}"
+set index-active-fg "{r["accent_fg"]}"
+
+# --- document recolouring (invert page content toward the theme) ---
+set recolor            {recolor}
+set recolor-keephue    true
+set recolor-lightcolor "{r["bg"]}"
+set recolor-darkcolor  "{r["text"]}"
+"""
+
+
+def render_vifm(variant: str) -> str:
+    r, a, e = vroles(variant), vansi(variant), vext(variant)
+    if variant == "dark":
+        ui_fg = e["ui_grey"]       # TopLine text / cursor-bar fill
+        bar_fg = e["ink"]          # text ON the grey cursor bar
+        tab_fg = a["white"]        # inactive tab/JobLine text (#d0d0d0)
+        line_grey = e["line_grey"]
+        # file types ride the vivid BRIGHT slots on dark
+        d_dir, d_link, d_exe = a["bright_blue"], a["bright_cyan"], a["bright_green"]
+        p_audio, p_docs, p_md = a["bright_cyan"], a["bright_yellow"], a["white"]
+    else:
+        ui_fg = e["ui_dark"]       # the inversion: dark-grey bar on light
+        bar_fg = r["accent_fg"]    # white text on that bar
+        tab_fg = r["muted"]
+        line_grey = e["line_grey"]
+        # on light the BASE slots are the readable ones (upstream's own light
+        # design does the same — light String is the base green); the common
+        # groups (Directory/Link/Executable, audio/docs/markdown) drop to them,
+        # rare ones stay slot-faithful
+        d_dir, d_link, d_exe = a["blue"], a["cyan"], a["green"]
+        p_audio, p_docs, p_md = a["cyan"], a["yellow"], r["muted"]
+
+    def hl(group, attr, fg, bg="default"):
+        cfg = xterm_index(fg) if fg != "default" else "default"
+        cbg = xterm_index(bg) if bg != "default" else "default"
+        gfg = fg if fg != "default" else "default"
+        gbg = bg if bg != "default" else "default"
+        return (f"highlight {group:<10} cterm={attr:<12} ctermfg={cfg!s:<7} "
+                f"ctermbg={cbg!s:<7} guifg={gfg} guibg={gbg}")
+
+    rows = [
+        "\n\" frame — transparent canvas, terminal ground shows through",
+        hl("Win", "none", r["text"]),
+        hl("OtherWin", "none", r["text"]),
+        hl("Border", "none", line_grey),
+        hl("CmdLine", "none", r["text"]),
+        "\n\" title / tab bar",
+        hl("TopLine", "none", ui_fg, r["surface"]),
+        hl("TopLineSel", "bold", bar_fg, ui_fg),
+        hl("TabLine", "none", tab_fg, r["surface_alt"]),
+        hl("TabLineSel", "bold", e["ink"], r["accent"]),
+        "\n\" status line / messages — the accent lives here (accent status bar)",
+        hl("StatusLine", "bold", r["accent_fg"], r["accent"]),
+        hl("JobLine", "bold", tab_fg, r["surface_alt"]),
+        hl("WildMenu", "bold", e["ink"], r["accent"]),
+        hl("SuggestBox", "none", tab_fg, r["surface_alt"]),
+        hl("ErrorMsg", "bold", a["bright_red"]),
+        hl("LineNr", "none", line_grey),
+        "\n\" cursor / selection — a quiet grey bar; the accent stays on the status line",
+        hl("CurrLine", "bold", bar_fg, ui_fg),
+        hl("Selected", "bold", a["bright_magenta"]),
+        "\n\" file types",
+        hl("Directory", "bold", d_dir),
+        hl("Link", "none", d_link),
+        hl("BrokenLink", "bold", a["bright_red"]),
+        hl("HardLink", "none", a["bright_yellow"]),
+        hl("Socket", "none", a["bright_magenta"]),
+        hl("Device", "none", a["yellow"]),
+        hl("Fifo", "none", a["cyan"]),
+        hl("Executable", "bold", d_exe),
+    ]
+    pats = [
+        ("{*.tar,*.tgz,*.tbz2,*.txz,*.zip,*.gz,*.bz2,*.xz,*.zst,*.7z,*.rar}", a["bright_red"]),
+        ("{*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}", a["bright_magenta"]),
+        ("{*.mp4,*.mkv,*.webm,*.mov,*.avi,*.m4v,*.flv}", a["magenta"]),
+        ("{*.mp3,*.flac,*.ogg,*.opus,*.wav,*.m4a,*.aac}", p_audio),
+        ("{*.pdf,*.epub,*.djvu}", p_docs),
+        ("{*.md,*.markdown}", p_md),
+    ]
+    pat_lines = [
+        "\n\" file-name patterns — vifm has no LS_COLORS, so these mirror the extension",
+        "\" layer in ~/.dircolors by hand (keeps `ls` and vifm in sync on archives/media).",
+    ]
+    for pat, fg in pats:
+        pat_lines.append(f"highlight {pat} cterm=none ctermfg={xterm_index(fg)} ctermbg=default guifg={fg}")
+
+    header = [
+        f"\" {PROVENANCE}",
+        f"\" wildcharm.vifm — {variant} (wildcharm-{{dark,light}}.vifm pair; the bootstrap",
+        "\" symlinks the `theme_variant` one to ~/.config/vifm/colors/wildcharm.vifm, so",
+        "\" vifmrc's `colorscheme wildcharm` needs no variant logic).",
+        "\" The canvas paints NO background (guibg=default): the terminal's own ground",
+        "\" shows through, so vifm always matches kitty exactly.",
+        "",
+        "highlight clear",
+    ]
+    return "\n".join(header + rows + pat_lines) + "\n"
+
+
+GLOW_CHROMA = [
+    # (chroma key, syntax role or None, extra style dict)
+    ("text", "text", {}),
+    ("error", "PAIRED", {}),
+    ("comment", "comment", {"italic": True}),
+    ("comment_preproc", "preproc", {}),
+    ("keyword", "keyword", {}),
+    ("keyword_reserved", "keyword", {}),
+    ("keyword_namespace", "preproc", {}),
+    ("keyword_type", "type", {}),
+    ("operator", "keyword", {}),
+    ("punctuation", "text", {}),
+    ("name", "text", {}),
+    ("name_builtin", "identifier", {}),
+    ("name_tag", "keyword", {}),
+    ("name_attribute", "type", {}),
+    ("name_class", "type", {}),
+    ("name_constant", "constant", {}),
+    ("name_decorator", "preproc", {}),
+    ("name_function", "identifier", {}),
+    ("literal_number", "constant", {}),
+    ("literal_string", "string", {}),
+    ("literal_string_escape", "string_special", {}),
+    ("generic_deleted", "diff_delete", {}),
+    ("generic_emph", None, {"italic": True}),
+    ("generic_inserted", "diff_add", {}),
+    ("generic_strong", None, {"bold": True}),
+    ("generic_subheading", "comment", {}),
+]
+
+
+def render_glow(variant: str) -> str:
+    c = VARIANTS[variant]
+    r = vroles(variant)
+    acc, accfg, link, dim = r["accent"], r["accent_fg"], c["link"], r["dim"]
+    chroma = {}
+    for key, role, style in GLOW_CHROMA:
+        entry = {}
+        if role == "PAIRED":
+            entry = {"color": c["error_fg"], "background_color": c["error_bg"]}
+        elif role:
+            entry["color"] = c[role]
+        for k, v in style.items():
+            entry[k] = v
+        chroma[key] = entry
+    chroma["background"] = {"background_color": r["surface"]}
+    doc = {
+        "_provenance": PROVENANCE,
+        "document": {"block_prefix": "", "block_suffix": "", "color": c["text"], "margin": 2},
+        "block_quote": {"color": dim, "indent": 1, "indent_token": "│ "},
+        "paragraph": {},
+        "list": {"level_indent": 2},
+        "heading": {"block_suffix": "\n", "color": acc, "bold": True},
+        "h1": {"prefix": " ", "suffix": " ", "color": accfg, "background_color": acc, "bold": True},
+        "h2": {"prefix": "## ", "color": acc, "bold": True},
+        "h3": {"prefix": "### ", "color": link, "bold": True},
+        "h4": {"prefix": "#### ", "color": link, "bold": True},
+        "h5": {"prefix": "##### ", "color": link, "bold": True},
+        "h6": {"prefix": "###### ", "color": link},
+        "text": {},
+        "strikethrough": {"crossed_out": True},
+        "emph": {"italic": True},
+        "strong": {"bold": True},
+        "hr": {"color": acc, "format": "\n────────\n"},
+        "item": {"block_prefix": "• "},
+        "enumeration": {"block_prefix": ". "},
+        "task": {"ticked": "[✓] ", "unticked": "[ ] "},
+        "link": {"color": link, "underline": True},
+        "link_text": {"color": link, "bold": True},
+        "image": {"color": link, "underline": True},
+        "image_text": {"color": dim, "format": "Image: {{.text}} →"},
+        "code": {"prefix": " ", "suffix": " ", "color": link, "background_color": r["surface"]},
+        "code_block": {"color": c["text"], "margin": 2, "chroma": chroma},
+        "table": {"center_separator": "┼", "column_separator": "│", "row_separator": "─"},
+        "definition_list": {},
+        "definition_term": {},
+        "definition_description": {"block_prefix": "\n🠶 "},
+        "html_block": {},
+        "html_span": {},
+    }
+    return json.dumps(doc, indent=2, ensure_ascii=False) + "\n"
+
+
 OUTPUTS = {
-    REPO / "user/bat/themes/wildcharm.tmTheme": render_tmtheme,
+    REPO / "user/bat/themes/wildcharm-dark.tmTheme": lambda: render_tmtheme("dark"),
+    REPO / "user/bat/themes/wildcharm-light.tmTheme": lambda: render_tmtheme("light"),
     HERE / "dist/shiki/hestia-dark.json": lambda: theme_json("dark", "shiki"),
     HERE / "dist/shiki/hestia-light.json": lambda: theme_json("light", "shiki"),
     REPO / "user/vscode/hestia/themes/hestia-dark-color-theme.json": lambda: theme_json("dark", "vscode"),
@@ -430,6 +828,20 @@ OUTPUTS = {
     REPO / "user/sway/theme-light.conf": lambda: render_sway("light"),
     REPO / "user/waybar/theme-dark.css": lambda: render_waybar_css("dark"),
     REPO / "user/waybar/theme-light.css": lambda: render_waybar_css("light"),
+    REPO / "user/mako/theme-dark.conf": lambda: render_mako("dark"),
+    REPO / "user/mako/theme-light.conf": lambda: render_mako("light"),
+    REPO / "user/wofi/theme-dark.css": lambda: render_wofi_css("dark"),
+    REPO / "user/wofi/theme-light.css": lambda: render_wofi_css("light"),
+    REPO / "user/swaylock/config-dark": lambda: render_swaylock("dark"),
+    REPO / "user/swaylock/config-light": lambda: render_swaylock("light"),
+    REPO / "user/swaynag/config-dark": lambda: render_swaynag("dark"),
+    REPO / "user/swaynag/config-light": lambda: render_swaynag("light"),
+    REPO / "user/zathura/theme-dark": lambda: render_zathura("dark"),
+    REPO / "user/zathura/theme-light": lambda: render_zathura("light"),
+    REPO / "user/vifm/colors/wildcharm-dark.vifm": lambda: render_vifm("dark"),
+    REPO / "user/vifm/colors/wildcharm-light.vifm": lambda: render_vifm("light"),
+    REPO / "user/glow/wildcharm-dark.json": lambda: render_glow("dark"),
+    REPO / "user/glow/wildcharm-light.json": lambda: render_glow("light"),
 }
 
 

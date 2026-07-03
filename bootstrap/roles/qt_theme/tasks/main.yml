@@ -19,14 +19,25 @@
     - "{{ target_home }}/.config"
     - "{{ target_home }}/.local/share/color-schemes"
 
-- name: Render the hestia colour scheme (kdeglobals + the selectable .colors)
+# BOTH variants' schemes are always installed (selectable in-app, e.g. Kdenlive's
+# theme menu); kdeglobals — what KDE apps actually read — renders from the ACTIVE
+# `theme_variant` (M7).
+- name: Render the hestia colour schemes (both variants' selectable .colors)
   ansible.builtin.template:
     src: kdeglobals.j2
-    dest: "{{ item }}"
+    dest: "{{ target_home }}/.local/share/color-schemes/{{ qt_theme_schemes[item].name }}.colors"
     mode: "0644"
-  loop:
-    - "{{ target_home }}/.config/kdeglobals"
-    - "{{ target_home }}/.local/share/color-schemes/{{ qt_theme_scheme_name }}.colors"
+  loop: [dark, light]
+  vars:
+    qt_scheme: "{{ qt_theme_schemes[item] }}"
+
+- name: Render kdeglobals from the active theme_variant
+  ansible.builtin.template:
+    src: kdeglobals.j2
+    dest: "{{ target_home }}/.config/kdeglobals"
+    mode: "0644"
+  vars:
+    qt_scheme: "{{ qt_theme_schemes[theme_variant] }}"
 
 # Kdenlive does NOT follow the system kdeglobals scheme on its own — it stores its own
 # choice in kdenliverc [UiSettings] ColorSchemePath, so on a fresh machine it would come
@@ -62,7 +73,7 @@
           changed_when: false
           failed_when: false
 
-        - name: Set ColorSchemePath={{ qt_theme_scheme_name }}.colors
+        - name: Set ColorSchemePath={{ qt_theme_schemes[theme_variant].name }}.colors
           ansible.builtin.command:
             argv:
               - kwriteconfig6
@@ -72,6 +83,6 @@
               - UiSettings
               - --key
               - ColorSchemePath
-              - "{{ qt_theme_scheme_name }}.colors"
-          when: (_qt_kdenlive_scheme.stdout | trim) != (qt_theme_scheme_name ~ '.colors')
+              - "{{ qt_theme_schemes[theme_variant].name }}.colors"
+          when: (_qt_kdenlive_scheme.stdout | trim) != (qt_theme_schemes[theme_variant].name ~ '.colors')
           changed_when: true

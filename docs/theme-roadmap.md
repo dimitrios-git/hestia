@@ -41,6 +41,41 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-03 (M7 PR2/0.7.0) — the whole desktop chrome is now generated.**
+  render.py grew emitters for mako/wofi/zathura (include fragments), swaylock/
+  swaynag (whole-file pairs — no include support), vifm (`wildcharm-{dark,light}
+  .vifm`, dest keeps the `wildcharm` name), bat (`render_tmtheme(variant)` pair)
+  and glow (glamour JSON pair) — each dark output proven **value-identical** to
+  the hand-written file it retired (glow/bat byte-identical modulo provenance;
+  zathura differs only by the logged rgba fix). The VS Code chrome dict was
+  unified (one role-mapped dict, per-variant tables) — light got the full
+  chrome, dark stayed byte-identical. Admissions forced: `extended.sunken
+  #111111` (+ light `#ffffff` counterpart) and `extended.ink #000000`
+  (variant-invariant text on light fills).
+- **2026-07-03 (M7 PR2) — light TUI mapping rules.** The cursor bar inverts
+  (dark: `ink` on `ui_grey #9e9e9e`; light: `accent_fg` on `ui_dark #5f5f5f`) —
+  vifm CurrLine/TopLineSel and cmus selections share it. File-type colours stay
+  ANSI-slot-faithful EXCEPT the common groups (Directory/Link/Executable,
+  audio/docs/markdown), which drop from the bright to the BASE slots on light —
+  the bright slots are dark-tuned (bright_green is 2.7:1 on the light ground)
+  and upstream wildcharm's own light design makes the same move (light String
+  is the base green). Consequence: `ls` (variant-invariant dircolors) and vifm
+  agree exactly on dark only — backlog item below.
+- **2026-07-03 (M7 PR2) — zathura recolour is a dark-mode feature**: ON on the
+  dark desktop (pages invert to the ground), OFF on light (pages are already
+  light); both variants carry sensible recolor-* values so `r` still toggles.
+  The render also fixed the latent Debian-red `rgba(206,0,86,…)` active-search
+  highlight (pre-dated the accent change).
+- **2026-07-03 (M7 PR2) — qt_theme grew the light scheme**: defaults
+  restructured to `qt_theme_schemes: {dark: Hestia, light: Hestia Light}`;
+  BOTH `.colors` files are always installed (selectable in-app), kdeglobals +
+  the Kdenlive pre-pick follow the active `theme_variant`. Dark `negative`
+  moved off the never-admitted `#da4453` onto `ansi.bright_red #ff5f87` — the
+  same semantic error red VS Code/vifm use (palette-law cleanup, logged dark
+  delta).
+- **2026-07-03 (M7 PR2) — cava ruled variant-invariant**: `background =
+  default` follows the terminal, the gradient bars are saturated fills (no AA
+  text rule applies); revisit only if the cyan top washes out on light live.
 - **2026-07-03 (M7/0.6.0) — light desktop ground `#f5f5f5`, ramp below it on
   xterm greys.** The light desktop (M7 PR1) softens the ground off pure white —
   the mirror of dark's `#000000→#1a1a1a` lift (and like `#1a1a1a`, not an xterm
@@ -203,10 +238,10 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 | Consumer | Artifact | Repo | Status |
 |---|---|---|---|
 | vim / nvim | `user/vim/colors/hestia.vim` (thin wrapper over built-in wildcharm) | hestia | ✅ conformant by definition (dark) |
-| bat (+ vifm preview) | `user/bat/themes/wildcharm.tmTheme` | hestia | 🟡 themed, **diverges** from canonical — realign in M4 |
-| glow | `user/glow/wildcharm.json` | hestia | 🟡 themed, divergence unaudited — audit + realign in M4 |
+| bat (+ vifm preview) | `user/bat/themes/wildcharm-{dark,light}.tmTheme` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.4.0; light pair since 0.7.0 |
+| glow | `user/glow/wildcharm-{dark,light}.json` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.7.0 |
 | Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/wildcharm/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: 0.6.0 changed three light syntax values (the `#f5f5f5`-gate deviations; the light `editor.background` stays `#ffffff` via `code_surface`) — copy the regenerated pair over |
-| VS Code | `user/vscode/hestia/` extension (GENERATED themes) | hestia | 🟡 M5 done, unverified in a live VS Code; light chrome = M7 |
+| VS Code | `user/vscode/hestia/` extension (GENERATED themes) | hestia | ✅ dark + light full chrome (M7 PR2); verified live on 1.127 (dark, 2026-07-03) — light chrome pending the M7 live pass |
 | VS Code | same JSON + UI-chrome colours | hestia (publish later) | ⬜ M5 |
 
 Cross-repo consumers get **stamped copies** (header: source file + palette
@@ -286,14 +321,14 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
   sway, waybar, vim (background selector + hestia.vim light branch) — the GTK
   light theme (`hestia`) already existed from the gtk_theme role. The runtime
   `hestia-mode` helper idea was set aside (decision log).
-- [ ] **M7 PR2 — light desktop: the long tail.** Remaining (b)+(d): render.py
-  emitters for mako/wofi/swaylock/swaynag/zathura/vifm/bat(light tmTheme)/glow;
-  cmus rc.j2 variant indices; qt_theme light scheme (`Hestia Light.colors` +
-  variant kdeglobals); VS Code full light chrome; cava ruling (expected
-  variant-invariant); the theming.md status table grows the **light column**;
-  live verification pass over every app in both variants. Known items to fix
-  en route: zathura's latent Debian-red `rgba(206,0,86,…)` highlight, the
-  swaylock/swaynag `#111111` sunken fill admission.
+- [x] **M7 PR2 — light desktop: the long tail.** All of it landed (0.7.0):
+  render.py emitters for mako/wofi/swaylock/swaynag/zathura/vifm/bat/glow (dark
+  outputs value-identical to the retired hand-written files); cmus rc.j2
+  variant indices; qt_theme `Hestia Light` (+ both schemes always installed);
+  VS Code full light chrome (extension 0.7.0); cava ruled variant-invariant;
+  the theming.md table grew the light column; the zathura Debian-red bug and
+  the `sunken`/`ink` admissions fixed en route. Remaining M7 item: the **live
+  verification pass** over both variants (dimitrios, per PR checklist).
 
 ## Backlog — known inconsistencies
 
@@ -321,6 +356,12 @@ the platform mapping, never in an artifact.
   palette 0.5.0** (see the decision log). The feared syntax re-lifting never
   happened: the code surface didn't move (it became the ground), so the AA
   constraints stayed at `#1a1a1a`.
+- **Light `ls` vs vifm divergence (M7 PR2).** `.dircolors` is variant-invariant
+  by design (256-cube indices), but vifm's LIGHT colorscheme drops common groups
+  to the base ANSI slots for readability — so `ls` and vifm agree exactly on
+  dark only, and `ls` output on the light terminal keeps the dark-tuned bright
+  cube colours (dir 39 `#00afff` is weak on `#f5f5f5`). If it grates live, give
+  dircolors a variant pair the same way (rendered or variant-linked).
 - **WATCH — `bg == ANSI color0` (`#1a1a1a`, since 0.5.0).** If a TUI ever
   paints color0 text/panels invisibly against the ground, shift color0 (and
   vifm/dircolors consumers of it), not the ground.
@@ -346,6 +387,12 @@ the platform mapping, never in an artifact.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.7.0** (2026-07-03) — **the long tail generated (M7 PR2)**: emitters for
+  mako/wofi/zathura fragments, swaylock/swaynag whole-file pairs, vifm/bat/glow
+  theme pairs (retiring their hand-written files — dark value-identical); VS
+  Code light = full chrome (unified dict); `extended.sunken`/`ink` admissions
+  (+ light `sunken #ffffff`); zathura rgba bugfix; qt_theme light scheme +
+  dark `negative` → `bright_red`; cmus variant indices (rc.j2, not render.py).
 - **0.6.0** (2026-07-03) — **the light desktop ramp (M7 PR1)**: light ground
   `#ffffff` → `#f5f5f5` with the web code surface split out as
   `light.roles.code_surface #ffffff`; light `surface/surface_alt/border/muted`

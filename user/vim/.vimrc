@@ -104,8 +104,17 @@ Plug 'ryanoasis/vim-devicons'
 call plug#end()
 
 " --- Theme ---
+" Truecolor: without this vim falls back to the cterm values (ground renders
+" xterm 234 #1c1c1c instead of the exact #1a1a1a — one 256-step off, spotted
+" against kitty in the bg-lift promotion). kitty advertises COLORTERM; the
+" t_8f/t_8b terminfo overrides cover TERMs without built-in truecolor entries.
+if has('termguicolors') && ($COLORTERM ==# 'truecolor' || $COLORTERM ==# '24bit')
+  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+  set termguicolors
+endif
 set background=dark
-colo hestia   " wildcharm + hestia's near-black bg (user/vim/colors/hestia.vim)
+colo hestia   " wildcharm + the hestia ground/text (user/vim/colors/hestia.vim)
 
 " --- CoC.nvim Configuration ---
 " Use Tab for completion and navigation

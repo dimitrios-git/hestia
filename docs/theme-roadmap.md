@@ -41,6 +41,33 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-03 — THE BG-LIFT VERDICT: promoted (palette 0.5.0).** After living
+  with the experiment (PR #125), the lifted ground won every comparison —
+  vifm's clearer borders/splits, and the VS Code canvas twice felt wrong at
+  `#0a0a0a`. Key insight that shaped the promotion: *the colour that kept
+  winning was the code-block surface, so it became the ground itself* — the
+  web code surface stays `#1a1a1a` (raised on tci's darker page) and now
+  equals `roles.bg`, which means the syntax tables needed **no** re-lifting
+  (all roles already clear AA on `#1a1a1a`; the earlier warning assumed the
+  code surface would lift too). Only the UI ramp rebuilt, on xterm-native
+  greys: `surface #262626` (xterm 235 — wildcharm's own CursorLine),
+  `surface_alt #303030` (236, now hover/line-highlight/alt-rows only),
+  `border #3a3a3a` (237). Ramp steps are even (~1.15× each).
+- **2026-07-03 (0.5.0) — `bg == ANSI color0` accepted** (`#1a1a1a`). Common in
+  terminal themes; the practical risk (color0-painted TUI panels blending with
+  the ground) never materialised during the experiment. Watch item in the
+  backlog; if an invisible-text case appears, shift color0, not the ground.
+- **2026-07-03 (0.5.0) — vim `Normal` fg lifted to `roles.text #e0e0e0`**
+  (was wildcharm's `#d0d0d0`; closes the backlog item — kitty/waybar/vifm
+  already used roles.text). Also fixed alongside: `.vimrc` now enables
+  `termguicolors` when `COLORTERM` says truecolor — vim had been rendering the
+  cterm fallback (`#1c1c1c`, one 256-step off the ground), caught by pixel-
+  sampling a screenshot during the verdict discussion.
+- **2026-07-03 (0.5.0) — `dim` usage guidance**: it clears AA on `bg` (5.18)
+  and `surface` (4.50) but not `surface_alt` (3.92) — transient hover surfaces
+  carry `text`/`muted` only. Encoded in the palette comments; the render gate
+  checks syntax roles against the ground.
+
 - **2026-07-03 — canonical syntax mapping is `wildcharm.vim` (dark variant).**
   The alternative was the bat `.tmTheme`'s hand-tuned look (accent-red bold
   keywords, blue functions, cyan types), which had diverged from what vim shows.
@@ -223,40 +250,20 @@ the platform mapping, never in an artifact.
 - Minor, accepted: on 256-colour terminals, downsampled renders show comment
   dim as xterm 245 `#8a8a8a` — the AA-lifted `#8c8c8c` has no exact xterm home.
   Truecolor terminals (kitty) are exact.
-- **OPEN — vim Normal fg vs `roles.text` (noticed 2026-07-03,** while making
-  vifm's canvas transparent**)**: vim shows wildcharm's `#d0d0d0` (the hestia
-  wrapper overrides only the bg), but `roles.text` is `#e0e0e0` and kitty/
-  waybar/vifm use it. Either the wrapper also lifts `Normal guifg` to
-  `#e0e0e0`, or `roles.text` was wrong to deviate — decide alongside the
-  bg-lift verdict (both touch the same `hi Normal` line).
+- ~~vim Normal fg vs `roles.text`~~ — **RESOLVED in 0.5.0**: the wrapper lifts
+  `Normal guifg` to `roles.text #e0e0e0` (see the decision log).
 - vifm's panel greys (`#262626` TopLine, `#303030` TabLine/JobLine, `#585858`
   Border/LineNr, `#9e9e9e` CurrLine) are wildcharm.vim **UI-group** values
   (CursorLine/LineNr/StatusLine) — upstream-faithful but not recorded in
   `palette.yml`. Record them (an `extended:` UI-greys block or roles) when the
   generator (M6) forces the question.
-- **OPEN — bg lift experiment (2026-07-03).** After seeing tci's code blocks on
-  `surface_alt #1a1a1a`, dimitrios wants to try `#1a1a1a` as the ground in place
-  of `bg #0a0a0a`. Running as a two-config experiment (kitty + vim only; the
-  rest of the desktop stays on `#0a0a0a` meanwhile). What the numbers say if it
-  wins: the surface ramp must be re-built upward (`surface #111111` and `border
-  #1e1e1e` stop working against a `#1a1a1a` ground, and bg would equal ANSI
-  color0 exactly — black-on-black in TUIs that paint with color0); a lifted code
-  surface (~`#242424`/`#2e2e2e`) drops `extended.purple` (4.36/3.82:1),
-  `diff_change` (4.03/3.52:1) and on the lighter step `comment` (4.04:1) below
-  AA, so 2–3 syntax colours would need re-lifting — each step drifts further
-  from wildcharm's black-tuned palette. Also note: tci's effect is *layering*
-  (page `#0f0f0f` vs block `#1a1a1a` + border), which a flat terminal ground
-  can't reproduce — the experiment tests whether the lighter ground itself is
-  what's liked. Decide → revert, or promote as the next minor palette version
-  (decision-log entry + full re-ramp + propagation sweep across all consumers).
-  *(Experiment merged and live on the desktop since 2026-07-03, PR #125;
-  verdict pending. 0.3.0 was taken by the light variant meanwhile.)*
-  **Evidence so far, all pro-lift (2026-07-03):** vifm's transparent canvas on
-  the lifted ground praised (clearer accent border, more visible split
-  separation); the VS Code dark theme's palette-canonical `#0a0a0a` canvas was
-  immediately felt as "deviating" from the lived ground. Interim for VS Code:
-  a user-settings `workbench.colorCustomizations` override on
-  `[hestia dark]` — personal, no generated artifact touched.
+- ~~bg lift experiment (2026-07-03, PR #125)~~ — **RESOLVED: promoted as
+  palette 0.5.0** (see the decision log). The feared syntax re-lifting never
+  happened: the code surface didn't move (it became the ground), so the AA
+  constraints stayed at `#1a1a1a`.
+- **WATCH — `bg == ANSI color0` (`#1a1a1a`, since 0.5.0).** If a TUI ever
+  paints color0 text/panels invisibly against the ground, shift color0 (and
+  vifm/dircolors consumers of it), not the ground.
 
 ## Verification
 
@@ -279,6 +286,12 @@ the platform mapping, never in an artifact.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.5.0** (2026-07-03) — **the bg-lift promotion**: ground `#0a0a0a` →
+  `#1a1a1a` (== the web code surface, which doesn't move; == ANSI color0,
+  accepted watch item); surface ramp rebuilt on xterm greys (`#262626` /
+  `#303030` / `#3a3a3a`); vim Normal fg → `roles.text`; syntax tables
+  unchanged (AA constraints stayed at `#1a1a1a`). Propagated across every
+  consumer + regenerated artifacts in one sweep.
 - **0.4.0** (2026-07-03) — the TM scope map extracted to `scopes.yml` (layer 2½
   data) and `render.py` introduced: bat/Shiki/VS Code artifacts are now
   generated, with the AA gate inside the render and a `--check` drift mode. No

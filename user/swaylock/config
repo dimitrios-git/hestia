@@ -1,14 +1,14 @@
 # swaylock — wildcharm-themed lockscreen. Colours come from themes/wildcharm/palette.yml.
 #
 # IMPORTANT: swaylock's config parser only supports WHOLE-LINE `#` comments — it does
-# NOT strip trailing/inline comments, so `color=0a0a0a  # bg` would parse the value as
-# "0a0a0a  # bg" and silently fall back to the default (white). Keep every annotation on
+# NOT strip trailing/inline comments, so `color=1a1a1a  # bg` would parse the value as
+# "1a1a1a  # bg" and silently fall back to the default (white). Keep every annotation on
 # its own line; values are bare RRGGBB (no leading '#').
 #
 # Sway invokes `swaylock -f` (no -c flag), so `color` below is the single source for the
 # lock background. `indicator-idle-visible` keeps the themed ring on screen even when idle.
 
-color=0a0a0a
+color=1a1a1a
 font=Lilex Nerd Font Mono
 indicator-radius=110
 indicator-thickness=8
@@ -18,9 +18,9 @@ show-failed-attempts
 
 # idle (no input): inside=surface, ring=border, text=text, line/separator=bg
 inside-color=111111
-ring-color=1e1e1e
-line-color=0a0a0a
-separator-color=0a0a0a
+ring-color=3a3a3a
+line-color=1a1a1a
+separator-color=1a1a1a
 text-color=e0e0e0
 
 # typing: key highlight = accent, backspace = bright_red
@@ -30,19 +30,19 @@ bs-hl-color=ff5f87
 # verifying (checking password): ring = blue
 inside-ver-color=111111
 ring-ver-color=0087d7
-line-ver-color=0a0a0a
+line-ver-color=1a1a1a
 text-ver-color=e0e0e0
 
 # wrong password: ring = bright_red, inside = accent_dark, text = white
 inside-wrong-color=9b0040
 ring-wrong-color=ff5f87
-line-wrong-color=0a0a0a
+line-wrong-color=1a1a1a
 text-wrong-color=ffffff
 
 # cleared (input wiped): ring = accent
 inside-clear-color=111111
 ring-clear-color=d7005f
-line-clear-color=0a0a0a
+line-clear-color=1a1a1a
 text-clear-color=e0e0e0
 
 # caps lock on: ring + highlight = bright_yellow (warning), backspace = bright_red

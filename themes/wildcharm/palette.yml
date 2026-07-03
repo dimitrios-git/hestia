@@ -6,7 +6,8 @@
 # palette as its primary look (the desktop is dark); a LIGHT variant (from
 # upstream's background=light branch) exists in the `light:` section below for
 # syntax/web consumers. Dark deviations:
-#   - bg softened to near-black #0a0a0a (wildcharm uses pure #000000);
+#   - the ground lifted to #1a1a1a (wildcharm uses pure #000000; hestia used
+#     near-black #0a0a0a until the bg-lift verdict, 2026-07 / 0.5.0);
 #   - dim/muted lightened so secondary/tertiary text clears WCAG AA on these
 #     surfaces (wildcharm's greys are tuned against #000000);
 #   - accent_fg + link roles added (text ON the accent fill; accent-coloured text).
@@ -29,17 +30,28 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.4.0"
+version: "0.5.0"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
+#
+# The ground was lifted #0a0a0a -> #1a1a1a in 0.5.0 (the bg-lift verdict,
+# 2026-07-03): the code-block surface everyone kept preferring BECAME the
+# ground, and the surface ramp rebuilt above it on xterm-native greys (235/
+# 236/237 — losslessly downsample, and 235 is wildcharm.vim's own CursorLine).
+# Note bg == ANSI color0 now — accepted; watch item in the roadmap backlog.
 roles:
-  bg:          "#0a0a0a"   # window / canvas background (the near-black base)
-  surface:     "#111111"   # raised panels, inputs, the inside of indicators
-  surface_alt: "#1a1a1a"   # code blocks, hover rows (also ANSI black, color0)
-  border:      "#1e1e1e"   # separators, idle borders
+  bg:          "#1a1a1a"   # window / canvas ground (== ANSI color0); ALSO the web
+                           # code-block surface — it sits raised on tci's darker page
+  surface:     "#262626"   # raised panels, inputs, code blocks inside terminal docs
+                           # (glow) — xterm 235, wildcharm's CursorLine grey
+  surface_alt: "#303030"   # hover rows, line highlight, alternate rows, tooltips —
+                           # xterm 236. Transient surfaces: body text on it is
+                           # text/muted only (dim is 3.92:1 here — below AA)
+  border:      "#3a3a3a"   # separators, idle borders — xterm 237
   text:        "#e0e0e0"   # primary foreground
-  dim:         "#8c8c8c"   # tertiary text / hints — wildcharm #767676 lightened for AA on surfaces
+  dim:         "#8c8c8c"   # tertiary text / hints — wildcharm #767676 lightened for AA;
+                           # AA holds on bg (5.18) and surface (4.50) — not surface_alt
   muted:       "#adadad"   # secondary text (e.g. unfocused workspaces) — kept above dim for an even ramp
   accent:      "#d7005f"   # wildcharm red (ANSI color01) — focus, highlights, FILL (== ANSI red)
   accent_dark: "#9b0040"   # darker accent, for urgent borders / sunken red fills
@@ -72,7 +84,7 @@ ansi:
 extended:
   purple: "#af5fff"   # xterm 135 — wildcharm's Special/Todo purple (#875fff, xterm 99)
                       # lifted one 256-palette step for AA on hestia surfaces
-                      # (4.24:1 on surface_alt -> 4.89:1; same treatment as roles.dim)
+                      # (4.24:1 on the #1a1a1a ground -> 4.89:1; same as roles.dim)
 
 # Syntax-highlighting roles (layer 2 — docs/theme-roadmap.md). What a colour
 # means IN CODE, resolved from the palette above; the canonical mapping is the
@@ -115,7 +127,7 @@ syntax:
 light:
   roles:
     bg:      "#ffffff"   # upstream Normal bg, verbatim. Deliberate asymmetry with
-                         # dark (which softened #000000 -> #0a0a0a): the web code
+                         # dark (whose ground moved off pure black): the web code
                          # surface wants to sit RAISED on tci's warm #fefcf8 page,
                          # and a softened grey-white reads dirty there, not softer.
     text:    "#1a1a1a"   # softened from upstream #000000 (17.4:1) — the mirror of

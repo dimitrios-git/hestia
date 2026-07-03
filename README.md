@@ -17,7 +17,7 @@ more than a config repo:
   collaborator behind a **kernel-enforced** trust boundary, not a process wearing
   my account. We work through git: it opens pull requests, I review and merge.
 
-Everything sits on one **unified theme**: near-black `#0a0a0a`, accent **wildcharm
+Everything sits on one **unified theme**: dark ground `#1a1a1a`, accent **wildcharm
 red `#d7005f`**, and a saturated 16-colour palette from the `wildcharm` vim
 colorscheme — defined once in `themes/wildcharm/palette.yml`
 and applied app-by-app via the process in [`docs/theming.md`](docs/theming.md)

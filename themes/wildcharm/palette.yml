@@ -3,7 +3,9 @@
 # hestia is based on the `wildcharm` vim colorscheme (Maxim Kim, in the official
 # vim/colorschemes repo; palette derived from "quiet" by @neutaaaaan) — a dark,
 # saturated 16-colour scheme bundled with Vim. hestia adopts wildcharm's DARK
-# palette, with a few deliberate, documented deviations:
+# palette as its primary look (the desktop is dark); a LIGHT variant (from
+# upstream's background=light branch) exists in the `light:` section below for
+# syntax/web consumers. Dark deviations:
 #   - bg softened to near-black #0a0a0a (wildcharm uses pure #000000);
 #   - dim/muted lightened so secondary/tertiary text clears WCAG AA on these
 #     surfaces (wildcharm's greys are tuned against #000000);
@@ -27,7 +29,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.2.0"
+version: "0.3.0"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -101,3 +103,47 @@ syntax:
   # apply to them; platform mappings pair error with white/accent_fg.
   error:          "#d7005f"   # roles.accent — vim Error (reverse on white; bat: white on accent_dark)
   todo:           "#af5fff"   # extended.purple — vim Todo (rendered reverse)
+
+# The LIGHT variant (roadmap M3) — from upstream wildcharm's background=light
+# branch (the roadmap doc carries the full upstream reference table), with
+# hestia's deviations applied by the same rules as dark: AA-checked against the
+# light surfaces, minimal steps within the xterm-256 palette, every deviation
+# in the roadmap decision log. Scope: today's only light consumer is web code
+# blocks (tci Shiki); the desktop stays dark, so only the roles that consumer
+# needs are defined — the light DESKTOP ramp (surface/border/…) lands when a
+# desktop light consumer exists, not before.
+light:
+  roles:
+    bg:      "#ffffff"   # upstream Normal bg, verbatim. Deliberate asymmetry with
+                         # dark (which softened #000000 -> #0a0a0a): the web code
+                         # surface wants to sit RAISED on tci's warm #fefcf8 page,
+                         # and a softened grey-white reads dirty there, not softer.
+    text:    "#1a1a1a"   # softened from upstream #000000 (17.4:1) — the mirror of
+                         # dark's bg softening; equals tci's own light foreground
+    dim:     "#6c6c6c"   # == light syntax.comment (xterm 242); upstream light
+                         # comment #8a8a8a is only 3.45:1 on white
+    accent:  "#d7005f"   # same accent both variants — and on white it clears AA
+                         # as TEXT (5.18:1), so no separate link role is needed:
+                         # light link = accent (dark needed bright_red #ff5f87)
+  syntax:
+    comment:        "#6c6c6c"   # deviation — upstream #8a8a8a fails AA (3.45:1);
+                                # xterm 242, 5.25:1 (~= dark comment's 5.18:1)
+    string:         "#008700"   # upstream String, verbatim (4.70:1)
+    string_special: "#5f00d7"   # upstream Special, verbatim (8.51:1) — the light
+                                # purple needs NO lift, unlike dark's
+    constant:       "#af0000"   # upstream Constant, verbatim (7.44:1)
+    identifier:     "#870087"   # upstream Identifier/Function, verbatim (8.82:1)
+    keyword:        "#005faf"   # upstream Statement, verbatim (6.45:1)
+    type:           "#af5f00"   # upstream Type, verbatim (4.71:1)
+    preproc:        "#005f5f"   # deviation — upstream #008787 fails AA (4.36:1);
+                                # one cube step darker (xterm 23), 7.49:1
+    special:        "#5f00d7"   # upstream Special, verbatim
+    diff_add:       "#00875f"   # deviation — upstream Added #5faf5f fails badly
+                                # (2.70:1); green+5f-blue mirrors the dark family
+                                # (string green vs diff green), 4.53:1
+    diff_change:    "#005fd7"   # deviation — upstream Changed #0087d7 fails
+                                # (3.86:1); xterm 26, 5.80:1, distinct from keyword
+    diff_delete:    "#d70000"   # upstream Removed, verbatim (5.40:1)
+    # reverse/fill roles (same rule as dark — paired, never bare foregrounds)
+    error:          "#d70000"   # upstream Error (reverse on white)
+    todo:           "#5f00d7"   # upstream Todo (rendered reverse)

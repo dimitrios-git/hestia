@@ -69,6 +69,24 @@ but either way a layer-3 file is never the place a colour decision lives.
   is `#d7005f` on white reverse; bat renders invalid as white on `accent_dark`).
   Platform mappings must pair them (`accent_fg`/white), never use them as bare
   foregrounds.
+- **2026-07-03 (M3) — light-variant deviations**, same rules as dark (AA against
+  the light surfaces, minimal xterm-256 steps): `text` softened `#000000` →
+  `#1a1a1a` (the mirror of dark's bg softening); `comment` `#8a8a8a` → `#6c6c6c`
+  (upstream is 3.45:1 on white; xterm 242 lands 5.25:1 ≈ dark's 5.18:1);
+  `preproc` `#008787` → `#005f5f` (4.36→7.49:1, one cube step); `diff_add`
+  `#5faf5f` → `#00875f` (2.70→4.53:1, mirrors the dark string-vs-diff green
+  family); `diff_change` `#0087d7` → `#005fd7` (3.86→5.80:1). Everything else is
+  upstream verbatim — notably the light purple needs no lift.
+- **2026-07-03 (M3) — light `bg` stays pure `#ffffff`, a deliberate asymmetry**
+  with dark's softened ground: the only light consumer is the web code surface,
+  which sits raised on tci's warm `#fefcf8` page — a softened grey-white reads
+  dirty there, not softer. Revisit if a desktop light consumer ever appears.
+- **2026-07-03 (M3) — no light `link` role: the accent doubles as text on light
+  grounds** (`#d7005f` is 5.18:1 on white). The dark-side `link #ff5f87` exists
+  only because the accent fails as text on dark surfaces.
+- **2026-07-03 (M3) — light scope kept to what has a consumer**: syntax table +
+  the roles web code blocks need. The light desktop ramp (surface/border/…) is
+  deliberately NOT invented ahead of a consumer that would verify it live.
 
 ## Upstream reference — wildcharm.vim, both variants
 
@@ -107,7 +125,7 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 | vim / nvim | `user/vim/colors/hestia.vim` (thin wrapper over built-in wildcharm) | hestia | ✅ conformant by definition (dark) |
 | bat (+ vifm preview) | `user/bat/themes/wildcharm.tmTheme` | hestia | 🟡 themed, **diverges** from canonical — realign in M4 |
 | glow | `user/glow/wildcharm.json` | hestia | 🟡 themed, divergence unaudited — audit + realign in M4 |
-| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendored copy at `apps/thecodingidiot/lib/themes/hestia-dark.ts`, wired in `lib/mdx-options.ts` (rehype-pretty-code `{ dark, light }` takes theme objects); `--code-surface` retuned in that app's `globals.css` | 🟡 dark shipped (stoa PR #92, from v0.2.0) / light = M3 |
+| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendored at `apps/thecodingidiot/lib/themes/hestia.ts` (ONE role→scope map, per-variant colour tables), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | ✅ pair shipped (dark: stoa #92 from v0.2.0; light: stoa #93 from v0.3.0) |
 | VS Code | same JSON + UI-chrome colours | hestia (publish later) | ⬜ M5 |
 
 Cross-repo consumers get **stamped copies** (header: source file + palette
@@ -129,10 +147,14 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
   theme: `storage.*` follows vim's `StorageClass→Type` link (C `int`/`static`,
   TS `const`/`let` render type-yellow), except `storage.type.function`/`.class`
   which stay keyword-blue.
-- [ ] **M3 — light variant.** `light:` palette roles + light `syntax:`
-  resolution from the upstream table above (+ documented hestia deviations);
-  `hestia-light` Shiki theme; tci dual-theme config on hestia pair. tci is the
-  light-mode proving ground — the hestia desktop stays dark.
+- [x] **M3 — light variant.** `light:` section in `palette.yml` (0.3.0): roles
+  subset + full light `syntax:` from the upstream table (+ five deviations, see
+  the decision log); `hestia-light` Shiki theme vendored into stoa/tci, dual
+  config now the hestia pair (stoa PR — see consumer table). In stoa the two
+  variants were refactored into ONE role→scope mapping with per-variant colour
+  tables (`lib/themes/hestia.ts`), so the scope decisions can't drift between
+  dark and light — the embryo of the M6 generator. tci is the light proving
+  ground; the desktop stays dark.
 - [ ] **M4 — realign existing consumers.** bat tmTheme re-coloured to canonical
   (scope selectors stay); glow audited + realigned; one consumer per session is
   fine. Live-verify via vifm preview / glow on the golden sample.
@@ -183,8 +205,10 @@ Default is canonical wins; promote only deliberately.
   from wildcharm's black-tuned palette. Also note: tci's effect is *layering*
   (page `#0f0f0f` vs block `#1a1a1a` + border), which a flat terminal ground
   can't reproduce — the experiment tests whether the lighter ground itself is
-  what's liked. Decide → revert, or promote as palette **0.3.0** (decision-log
-  entry + full re-ramp + propagation sweep across all consumers).
+  what's liked. Decide → revert, or promote as the next minor palette version
+  (decision-log entry + full re-ramp + propagation sweep across all consumers).
+  *(Experiment merged and live on the desktop since 2026-07-03, PR #125;
+  verdict pending. 0.3.0 was taken by the light variant meanwhile.)*
 
 ## Verification
 
@@ -207,6 +231,10 @@ Default is canonical wins; promote only deliberately.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.3.0** (2026-07-03) — light variant added (`light:` roles subset + syntax
+  table; canonical = wildcharm.vim light with five logged deviations: text
+  softened, comment/preproc/diff_add/diff_change darkened for AA). Light scope
+  deliberately limited to consumers that exist (web code blocks).
 - **0.2.0** (2026-07-03) — syntax-role layer added (canonical = wildcharm.vim
   dark, with logged deviations: comment→dim, purple lifted to `#af5fff`,
   diff_delete→bright_red); `extended.purple`; versioning introduced.

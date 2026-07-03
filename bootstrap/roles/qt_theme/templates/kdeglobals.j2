@@ -1,64 +1,65 @@
-# hestia Qt/KDE colour scheme ({{ qt_theme_scheme_name }}, wildcharm) — RENDERED by the
-# qt_theme role from templates/kdeglobals.j2 (palette: themes/wildcharm/palette.yml). Do
-# NOT edit the rendered copy; it is overwritten on the next bootstrap. The same body is
-# written to two places: ~/.config/kdeglobals (KDE apps read colours here via KColorScheme)
-# and ~/.local/share/color-schemes/{{ qt_theme_scheme_name }}.colors (KColorSchemeManager
-# lists it — e.g. Kdenlive's theme menu). See docs/theming.md (Qt/KDE track).
+# hestia Qt/KDE colour scheme ({{ qt_scheme.name }}, wildcharm) — RENDERED by the
+# qt_theme role from templates/kdeglobals.j2 (palette: themes/wildcharm/palette.yml;
+# the scheme dict comes from qt_theme_schemes[<variant>], M7). Do NOT edit the rendered
+# copy; it is overwritten on the next bootstrap. The same body is written per variant to
+# ~/.local/share/color-schemes/<name>.colors (KColorSchemeManager lists both — e.g.
+# Kdenlive's theme menu) and, for the ACTIVE `theme_variant`, to ~/.config/kdeglobals
+# (KDE apps read colours here via KColorScheme). See docs/theming.md (Qt/KDE track).
 {% macro rgb(h) -%}
 {{ h[1:3] | int(base=16) }},{{ h[3:5] | int(base=16) }},{{ h[5:7] | int(base=16) }}
 {%- endmacro %}
 {% set groups = [
-  {'name': 'Colors:Window',        'bg': qt_theme_surface,     'alt': qt_theme_surface_alt},
-  {'name': 'Colors:View',          'bg': qt_theme_bg,          'alt': qt_theme_surface},
-  {'name': 'Colors:Button',        'bg': qt_theme_surface_alt, 'alt': qt_theme_border},
-  {'name': 'Colors:Header',        'bg': qt_theme_surface,     'alt': qt_theme_surface_alt},
-  {'name': 'Colors:Tooltip',       'bg': qt_theme_surface_alt, 'alt': qt_theme_border},
-  {'name': 'Colors:Complementary', 'bg': qt_theme_bg,          'alt': qt_theme_surface_alt},
+  {'name': 'Colors:Window',        'bg': qt_scheme.surface,     'alt': qt_scheme.surface_alt},
+  {'name': 'Colors:View',          'bg': qt_scheme.bg,          'alt': qt_scheme.surface},
+  {'name': 'Colors:Button',        'bg': qt_scheme.surface_alt, 'alt': qt_scheme.border},
+  {'name': 'Colors:Header',        'bg': qt_scheme.surface,     'alt': qt_scheme.surface_alt},
+  {'name': 'Colors:Tooltip',       'bg': qt_scheme.surface_alt, 'alt': qt_scheme.border},
+  {'name': 'Colors:Complementary', 'bg': qt_scheme.bg,          'alt': qt_scheme.surface_alt},
 ] -%}
 {% for g in groups %}
 [{{ g.name }}]
 BackgroundNormal={{ rgb(g.bg) }}
 BackgroundAlternate={{ rgb(g.alt) }}
-DecorationFocus={{ rgb(qt_theme_accent) }}
-DecorationHover={{ rgb(qt_theme_link) }}
-ForegroundActive={{ rgb(qt_theme_accent) }}
-ForegroundInactive={{ rgb(qt_theme_dim) }}
-ForegroundLink={{ rgb(qt_theme_link) }}
-ForegroundNegative={{ rgb(qt_theme_negative) }}
-ForegroundNeutral={{ rgb(qt_theme_neutral) }}
-ForegroundNormal={{ rgb(qt_theme_text) }}
-ForegroundPositive={{ rgb(qt_theme_positive) }}
-ForegroundVisited={{ rgb(qt_theme_visited) }}
+DecorationFocus={{ rgb(qt_scheme.accent) }}
+DecorationHover={{ rgb(qt_scheme.link) }}
+ForegroundActive={{ rgb(qt_scheme.accent) }}
+ForegroundInactive={{ rgb(qt_scheme.dim) }}
+ForegroundLink={{ rgb(qt_scheme.link) }}
+ForegroundNegative={{ rgb(qt_scheme.negative) }}
+ForegroundNeutral={{ rgb(qt_scheme.neutral) }}
+ForegroundNormal={{ rgb(qt_scheme.text) }}
+ForegroundPositive={{ rgb(qt_scheme.positive) }}
+ForegroundVisited={{ rgb(qt_scheme.visited) }}
 
 {% endfor %}
 [Colors:Selection]
-BackgroundNormal={{ rgb(qt_theme_accent) }}
-BackgroundAlternate={{ rgb(qt_theme_accent_dark) }}
-DecorationFocus={{ rgb(qt_theme_accent) }}
-DecorationHover={{ rgb(qt_theme_accent) }}
-ForegroundActive={{ rgb(qt_theme_accent_fg) }}
-ForegroundInactive={{ rgb(qt_theme_text) }}
-ForegroundLink={{ rgb(qt_theme_accent_fg) }}
-ForegroundNegative={{ rgb(qt_theme_negative) }}
-ForegroundNeutral={{ rgb(qt_theme_neutral) }}
-ForegroundNormal={{ rgb(qt_theme_accent_fg) }}
-ForegroundPositive={{ rgb(qt_theme_positive) }}
-ForegroundVisited={{ rgb(qt_theme_accent_fg) }}
+BackgroundNormal={{ rgb(qt_scheme.accent) }}
+BackgroundAlternate={{ rgb(qt_scheme.accent_dark) }}
+DecorationFocus={{ rgb(qt_scheme.accent) }}
+DecorationHover={{ rgb(qt_scheme.accent) }}
+ForegroundActive={{ rgb(qt_scheme.accent_fg) }}
+ForegroundInactive={{ rgb(qt_scheme.text) }}
+ForegroundLink={{ rgb(qt_scheme.accent_fg) }}
+ForegroundNegative={{ rgb(qt_scheme.negative) }}
+ForegroundNeutral={{ rgb(qt_scheme.neutral) }}
+ForegroundNormal={{ rgb(qt_scheme.accent_fg) }}
+ForegroundPositive={{ rgb(qt_scheme.positive) }}
+ForegroundVisited={{ rgb(qt_scheme.accent_fg) }}
 
 [General]
-ColorScheme={{ qt_theme_scheme_name }}
-Name={{ qt_theme_scheme_name }}
+ColorScheme={{ qt_scheme.name }}
+Name={{ qt_scheme.name }}
 accentColorFromWallpaper=false
-AccentColor={{ rgb(qt_theme_accent) }}
+AccentColor={{ rgb(qt_scheme.accent) }}
 shadeSortColumn=true
 
 [KDE]
 contrast=4
 
 [WM]
-activeBackground={{ rgb(qt_theme_surface) }}
-activeBlend={{ rgb(qt_theme_accent) }}
-activeForeground={{ rgb(qt_theme_text) }}
-inactiveBackground={{ rgb(qt_theme_bg) }}
-inactiveBlend={{ rgb(qt_theme_dim) }}
-inactiveForeground={{ rgb(qt_theme_dim) }}
+activeBackground={{ rgb(qt_scheme.surface) }}
+activeBlend={{ rgb(qt_scheme.accent) }}
+activeForeground={{ rgb(qt_scheme.text) }}
+inactiveBackground={{ rgb(qt_scheme.bg) }}
+inactiveBlend={{ rgb(qt_scheme.dim) }}
+inactiveForeground={{ rgb(qt_scheme.dim) }}

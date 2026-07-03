@@ -31,7 +31,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.6.0"
+version: "0.7.0"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -94,6 +94,13 @@ extended:
   # render-markdown's heading wash (vim), admitted retroactively 0.6.0 — a dark
   # accent-tinted bg, used as a FILL under accent-coloured heading text.
   heading_bg: "#1a0a12"
+  # Below-ground fill (swaylock inside-circle, swaynag buttons/details), admitted
+  # retroactively 0.7.0 — deliberately darker than bg, no role equivalent.
+  sunken:     "#111111"
+  # Max-contrast text ON light fills (vifm/cmus cursor bars, WildMenu/TabLineSel
+  # on the accent) — pure black, xterm 16. Variant-invariant (light fills are
+  # light in both variants). Admitted 0.7.0 with the vifm/cmus generation.
+  ink:        "#000000"
 
 # Syntax-highlighting roles (layer 2 — docs/theme-roadmap.md). What a colour
 # means IN CODE, resolved from the palette above; the canonical mapping is the
@@ -190,9 +197,14 @@ light:
   # admitted 0.6.0) — the light counterparts of extended.ui_grey/line_grey.
   extended:
     line_grey:  "#b2b2b2"   # xterm 249 — upstream light LineNr
-    ui_dark:    "#5f5f5f"   # xterm 59  — upstream light StatusLine bg
+    ui_dark:    "#5f5f5f"   # xterm 59  — upstream light StatusLine bg; also the
+                            # light cursor-bar fill (vifm CurrLine / cmus sel —
+                            # the inversion of dark's ui_grey #9e9e9e bar)
     heading_bg: "#ffd7d7"   # upstream light DiffDelete bg — render-markdown's
                             # light heading wash (fill under accent heading text)
+    sunken:     "#ffffff"   # light counterpart of extended.sunken — the
+                            # below-ground fill flips past the ground to pure
+                            # white (swaylock inside-circle, swaynag buttons)
   syntax:
     comment:        "#6c6c6c"   # deviation — upstream #8a8a8a fails AA (3.45:1 on
                                 # white); xterm 242: 4.82:1 on the #f5f5f5 ground

@@ -1,54 +1,9 @@
-# zathura — wildcharm-themed document viewer (PDF/EPUB/DjVu/CBZ). Colours come from
-# themes/wildcharm/palette.yml. zathura takes "#RRGGBB" (and rgba(...) for translucent
-# search highlights). Keep annotations on their OWN lines — don't trust trailing inline
-# comments across config parsers (the swaylock lesson).
+# zathura — wildcharm-themed document viewer (PDF/EPUB/DjVu/CBZ). Behaviour and
+# future non-colour settings live here (direct-edit); ALL colours (+ the recolor
+# block) live in the GENERATED theme-{dark,light} pair (themes/wildcharm/render.py
+# — edit palette.yml + re-render), symlinked by the bootstrap as `theme` per
+# `theme_variant`. zathura resolves the include relative to this config's dir.
+# Recolour (dark-mode page inversion) is on by default on the dark desktop, off on
+# light; toggle per-document with `r`.
 
-# --- window / page area ---
-set default-bg          "#1a1a1a"
-set default-fg          "#e0e0e0"
-set render-loading-bg   "#1a1a1a"
-set render-loading-fg   "#e0e0e0"
-
-# --- statusbar (bottom bar) ---
-set statusbar-bg        "#262626"
-set statusbar-fg        "#e0e0e0"
-
-# --- inputbar (the ':' command line) ---
-set inputbar-bg         "#262626"
-set inputbar-fg         "#e0e0e0"
-
-# --- notifications (info / warning / error) ---
-set notification-bg         "#262626"
-set notification-fg         "#e0e0e0"
-set notification-warning-bg "#d78700"
-set notification-warning-fg "#1a1a1a"
-set notification-error-bg   "#9b0040"
-set notification-error-fg   "#ffffff"
-
-# --- search highlights (translucent so the text shows through) ---
-# all matches = blue; the active/focused match = accent red
-set highlight-color        "rgba(0, 135, 215, 0.35)"
-set highlight-active-color "rgba(206, 0, 86, 0.5)"
-
-# --- completion menu (Tab) ---
-set completion-bg           "#262626"
-set completion-fg           "#e0e0e0"
-set completion-group-bg     "#1a1a1a"
-set completion-group-fg     "#d7005f"
-set completion-highlight-bg "#d7005f"
-set completion-highlight-fg "#ffffff"
-
-# --- index / table of contents ---
-set index-bg        "#1a1a1a"
-set index-fg        "#e0e0e0"
-set index-active-bg "#d7005f"
-set index-active-fg "#ffffff"
-
-# --- document recolouring (dark mode for the page content itself) ---
-# On by default: white pages -> bg (#1a1a1a), black text -> #e0e0e0. keephue keeps
-# coloured text/links readable; images stay natural (reverse-video left at its default
-# off). Toggle per-document at any time with `r`.
-set recolor            true
-set recolor-keephue    true
-set recolor-lightcolor "#1a1a1a"
-set recolor-darkcolor  "#e0e0e0"
+include theme

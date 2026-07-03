@@ -101,10 +101,20 @@ dotfile_links:
   - { src: user/waybar/scripts/notifications.sh, dest: "{{ target_home }}/.config/waybar/scripts/notifications.sh" }
   - { src: user/waybar/scripts/usb.sh,        dest: "{{ target_home }}/.config/waybar/scripts/usb.sh" }
   - { src: user/mako/config,                dest: "{{ target_home }}/.config/mako/config" }
+  # GENERATED colours + urgent section (render.py) — include'd (last) by the mako
+  # config. src picked by `theme_variant` (M7).
+  - { src: "user/mako/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/mako/theme.conf" }
   - { src: user/wofi/config,                dest: "{{ target_home }}/.config/wofi/config" }
   - { src: user/wofi/style.css,             dest: "{{ target_home }}/.config/wofi/style.css" }
-  - { src: user/swaylock/config,            dest: "{{ target_home }}/.config/swaylock/config" }
-  - { src: user/swaynag/config,             dest: "{{ target_home }}/.config/swaynag/config" }
+  # GENERATED colour tokens (render.py) — @import'ed by wofi's style.css. src picked
+  # by `theme_variant` (M7).
+  - { src: "user/wofi/theme-{{ theme_variant }}.css", dest: "{{ target_home }}/.config/wofi/theme.css" }
+  # GENERATED whole-file variant pair (render.py; swaylock has no include) — src
+  # picked by `theme_variant` (M7).
+  - { src: "user/swaylock/config-{{ theme_variant }}", dest: "{{ target_home }}/.config/swaylock/config" }
+  # GENERATED whole-file variant pair (render.py; swaynag has no include) — src
+  # picked by `theme_variant` (M7).
+  - { src: "user/swaynag/config-{{ theme_variant }}", dest: "{{ target_home }}/.config/swaynag/config" }
   - { src: user/cava/config,                dest: "{{ target_home }}/.config/cava/config" }
   - { src: user/kitty/kitty.conf,           dest: "{{ target_home }}/.config/kitty/kitty.conf" }
   # GENERATED terminal colours (render.py) — `include`d by kitty.conf. src picked by
@@ -117,8 +127,14 @@ dotfile_links:
   - { src: user/imv/config-vifm,            dest: "{{ target_home }}/.config/imv/config-vifm" }
   - { src: user/imv/imv-vifm-return.sh,     dest: "{{ target_home }}/.config/imv/imv-vifm-return.sh" }
   - { src: user/zathura/zathurarc,          dest: "{{ target_home }}/.config/zathura/zathurarc" }
+  # GENERATED colours + recolor block (render.py) — `include theme` in zathurarc.
+  # src picked by `theme_variant` (M7).
+  - { src: "user/zathura/theme-{{ theme_variant }}", dest: "{{ target_home }}/.config/zathura/theme" }
   - { src: user/vifm/vifmrc,                dest: "{{ target_home }}/.config/vifm/vifmrc" }
-  - { src: user/vifm/colors/wildcharm.vifm, dest: "{{ target_home }}/.config/vifm/colors/wildcharm.vifm" }
+  # GENERATED colorscheme pair (render.py) — dest keeps the `wildcharm` name so
+  # vifmrc's `colorscheme wildcharm` needs no variant logic; src picked by
+  # `theme_variant` (M7).
+  - { src: "user/vifm/colors/wildcharm-{{ theme_variant }}.vifm", dest: "{{ target_home }}/.config/vifm/colors/wildcharm.vifm" }
   # vifm quick-view dispatcher (catch-all fileviewer) — syntax-highlighted code
   # preview via bat; executable bit comes from the source file.
   - { src: user/vifm/scripts/preview.sh,    dest: "{{ target_home }}/.config/vifm/scripts/preview.sh" }
@@ -129,8 +145,13 @@ dotfile_links:
   # bat — config + the wildcharm syntax theme. The theme is compiled into bat's
   # cache by the dotfiles role (`bat cache --build`) after this link is made.
   - { src: user/bat/config,                 dest: "{{ target_home }}/.config/bat/config" }
-  - { src: user/bat/themes/wildcharm.tmTheme, dest: "{{ target_home }}/.config/bat/themes/wildcharm.tmTheme" }
-  - { src: user/glow/wildcharm.json,        dest: "{{ target_home }}/.config/glow/wildcharm.json" }
+  # GENERATED tmTheme pair (render.py) — dest keeps the `wildcharm` name (bat
+  # selects themes by file stem; config --theme untouched); src picked by
+  # `theme_variant` (M7). Cache rebuilt by this role's `bat cache --build`.
+  - { src: "user/bat/themes/wildcharm-{{ theme_variant }}.tmTheme", dest: "{{ target_home }}/.config/bat/themes/wildcharm.tmTheme" }
+  # GENERATED glamour style pair (render.py) — dest keeps the name glow.yml points
+  # at; src picked by `theme_variant` (M7).
+  - { src: "user/glow/wildcharm-{{ theme_variant }}.json", dest: "{{ target_home }}/.config/glow/wildcharm.json" }
   - { src: user/xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
   # (gtk-3.0 settings.ini moved to templated_configs — M7: its theme name follows
   # `theme_variant`; the css overlays stay variant-invariant symlinks.)

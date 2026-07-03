@@ -1,27 +1,48 @@
 ---
-# The hestia Qt/KDE colour scheme — the wildcharm palette (themes/wildcharm/palette.yml)
-# expressed as a KDE colour scheme. It themes Qt / KDE-Frameworks apps (currently
-# Kdenlive) the way gtk_theme themes GTK3 apps: no root, no Kvantum, no env var. KDE apps
-# read the colours straight from ~/.config/kdeglobals (KColorScheme) and discover the
-# named scheme in ~/.local/share/color-schemes (KColorSchemeManager — e.g. Kdenlive's
-# theme menu). Bare-Qt (non-KDE) apps ignore kdeglobals and need a qt6ct follow-up.
+# The hestia Qt/KDE colour schemes — the wildcharm palette (themes/wildcharm/palette.yml)
+# expressed as KDE colour schemes, one per `theme_variant` (M7). It themes Qt /
+# KDE-Frameworks apps (currently Kdenlive) the way gtk_theme themes GTK3 apps: no root,
+# no Kvantum, no env var. KDE apps read the colours straight from ~/.config/kdeglobals
+# (KColorScheme — rendered from the ACTIVE variant) and discover BOTH named schemes in
+# ~/.local/share/color-schemes (KColorSchemeManager — e.g. Kdenlive's theme menu), so
+# the inactive variant stays selectable in-app. Bare-Qt (non-KDE) apps ignore kdeglobals
+# and need a qt6ct follow-up.
 #
 # Values mirror themes/wildcharm/palette.yml (roles.* plus a few ansi.* for the semantic
 # foregrounds). Kept as hex here — like gtk_theme's gtk_theme_accent — and converted to
 # Breeze's "R,G,B" decimals in the template. Edit the palette first, then match here.
-qt_theme_scheme_name: "Hestia"
-
-qt_theme_bg:          "#1a1a1a"   # roles.bg          — window/canvas base (the ground)
-qt_theme_surface:     "#262626"   # roles.surface     — raised panels, inputs
-qt_theme_surface_alt: "#303030"   # roles.surface_alt — alternate rows, tooltips
-qt_theme_border:      "#3a3a3a"   # roles.border      — button alt, separators
-qt_theme_text:        "#e0e0e0"   # roles.text        — primary foreground
-qt_theme_dim:         "#8c8c8c"   # roles.dim         — inactive / tertiary text
-qt_theme_accent:      "#d7005f"   # roles.accent      — selection, focus, highlights
-qt_theme_accent_dark: "#9b0040"   # roles.accent_dark — alternate selection fill
-qt_theme_accent_fg:   "#ffffff"   # roles.accent_fg   — text ON the accent fill
-qt_theme_link:        "#ff5f87"   # roles.link        — links, hover decoration
-qt_theme_positive:    "#00af5f"   # ansi.green        — success foreground
-qt_theme_neutral:     "#d78700"   # ansi.yellow       — warning foreground
-qt_theme_negative:    "#da4453"   # a distinct error red, kept off the magenta-red accent
-qt_theme_visited:     "#d787d7"   # ansi.magenta      — visited-link foreground
+# (0.7.0: dark `negative` moved from the never-admitted #da4453 onto ansi.bright_red —
+# the same semantic error red VS Code/vifm use; light values from palette light.*.)
+qt_theme_schemes:
+  dark:
+    name: "Hestia"
+    bg:          "#1a1a1a"   # roles.bg          — window/canvas base (the ground)
+    surface:     "#262626"   # roles.surface     — raised panels, inputs
+    surface_alt: "#303030"   # roles.surface_alt — alternate rows, tooltips
+    border:      "#3a3a3a"   # roles.border      — button alt, separators
+    text:        "#e0e0e0"   # roles.text        — primary foreground
+    dim:         "#8c8c8c"   # roles.dim         — inactive / tertiary text
+    accent:      "#d7005f"   # roles.accent      — selection, focus, highlights
+    accent_dark: "#9b0040"   # roles.accent_dark — alternate selection fill
+    accent_fg:   "#ffffff"   # roles.accent_fg   — text ON the accent fill
+    link:        "#ff5f87"   # roles.link        — links, hover decoration
+    positive:    "#00af5f"   # ansi.green        — success foreground
+    neutral:     "#d78700"   # ansi.yellow       — warning foreground
+    negative:    "#ff5f87"   # ansi.bright_red   — error foreground
+    visited:     "#d787d7"   # ansi.magenta      — visited-link foreground
+  light:
+    name: "Hestia Light"
+    bg:          "#f5f5f5"   # light.roles.bg
+    surface:     "#e4e4e4"   # light.roles.surface
+    surface_alt: "#dadada"   # light.roles.surface_alt
+    border:      "#c6c6c6"   # light.roles.border
+    text:        "#1a1a1a"   # light.roles.text
+    dim:         "#626262"   # light.roles.dim
+    accent:      "#d7005f"   # light.roles.accent
+    accent_dark: "#9b0040"   # light.roles.accent_dark
+    accent_fg:   "#ffffff"   # light.roles.accent_fg
+    link:        "#d7005f"   # light link = the accent (no separate role)
+    positive:    "#008700"   # light.ansi.green
+    neutral:     "#af5f00"   # light.ansi.yellow
+    negative:    "#d70000"   # light.ansi.bright_red
+    visited:     "#870087"   # light.ansi.magenta

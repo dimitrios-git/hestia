@@ -1,6 +1,8 @@
-background-color=#1a1a1a
-text-color=#e0e0e0
-border-color=#d7005f
+# mako — notification daemon. Behaviour lives here (direct-edit); colours live in
+# the GENERATED theme-{dark,light}.conf pair (themes/wildcharm/render.py — edit
+# palette.yml + re-render), symlinked by the bootstrap as theme.conf per
+# `theme_variant`. Reload with `makoctl reload`.
+
 border-radius=0
 border-size=2
 default-timeout=5000
@@ -10,8 +12,7 @@ sort=-time
 margin=8
 padding=10,14
 
-[urgency=high]
-background-color=#d7005f
-border-color=#9b0040
-text-color=#ffffff
-default-timeout=0
+# Colours + the [urgency=high] section — included LAST so the fragment's section
+# can't swallow keys in this file (everything after an include's [section] header
+# would land inside it).
+include=~/.config/mako/theme.conf

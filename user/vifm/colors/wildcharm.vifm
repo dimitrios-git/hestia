@@ -1,13 +1,17 @@
 " wildcharm.vifm — vifm colorscheme matching the Vim 'wildcharm' theme.
-" Dark background, grey foreground, #d7005f magenta-red accent.
+" Text roles.text #e0e0e0, #d7005f magenta-red accent. The canvas paints NO
+" background (guibg=default): the terminal's own ground shows through, so vifm
+" always matches kitty exactly — including across the bg-lift experiment and
+" whatever it decides (it used to hard-paint #000000, which sat as a black
+" rectangle on the lifted #1a1a1a ground).
 
 highlight clear
 
-" frame
-highlight Win        cterm=none           ctermfg=252 ctermbg=16  guifg=#d0d0d0 guibg=#000000
-highlight OtherWin   cterm=none           ctermfg=252 ctermbg=16  guifg=#d0d0d0 guibg=#000000
-highlight Border     cterm=none           ctermfg=240 ctermbg=16  guifg=#585858 guibg=#000000
-highlight CmdLine    cterm=none           ctermfg=252 ctermbg=16  guifg=#d0d0d0 guibg=#000000
+" frame — transparent canvas, terminal ground shows through
+highlight Win        cterm=none           ctermfg=254 ctermbg=default guifg=#e0e0e0 guibg=default
+highlight OtherWin   cterm=none           ctermfg=254 ctermbg=default guifg=#e0e0e0 guibg=default
+highlight Border     cterm=none           ctermfg=240 ctermbg=default guifg=#585858 guibg=default
+highlight CmdLine    cterm=none           ctermfg=254 ctermbg=default guifg=#e0e0e0 guibg=default
 
 " title / tab bar
 highlight TopLine    cterm=none           ctermfg=247 ctermbg=235 guifg=#9e9e9e guibg=#262626
@@ -20,13 +24,13 @@ highlight StatusLine cterm=bold           ctermfg=231 ctermbg=161 guifg=#ffffff 
 highlight JobLine    cterm=bold           ctermfg=252 ctermbg=236 guifg=#d0d0d0 guibg=#303030
 highlight WildMenu   cterm=bold           ctermfg=16  ctermbg=161 guifg=#000000 guibg=#d7005f
 highlight SuggestBox cterm=none           ctermfg=252 ctermbg=236 guifg=#d0d0d0 guibg=#303030
-highlight ErrorMsg   cterm=bold           ctermfg=204 ctermbg=16  guifg=#ff5f87 guibg=#000000
-highlight LineNr     cterm=none           ctermfg=240 ctermbg=16  guifg=#585858 guibg=#000000
+highlight ErrorMsg   cterm=bold           ctermfg=204 ctermbg=default guifg=#ff5f87 guibg=default
+highlight LineNr     cterm=none           ctermfg=240 ctermbg=default guifg=#585858 guibg=default
 
 " cursor / selection — subtle grey bar (wildcharm's own statusline grey, #9e9e9e),
 " clear but not aggressive; the magenta moved to the status line above
 highlight CurrLine   cterm=bold           ctermfg=16  ctermbg=247 guifg=#000000 guibg=#9e9e9e
-highlight Selected   cterm=bold           ctermfg=213 ctermbg=16  guifg=#ff87ff guibg=#000000
+highlight Selected   cterm=bold           ctermfg=213 ctermbg=default guifg=#ff87ff guibg=default
 
 " file types
 highlight Directory  cterm=bold           ctermfg=39  ctermbg=default guifg=#00afff

@@ -188,6 +188,17 @@ the platform mapping, never in an artifact.
 - Minor, accepted: on 256-colour terminals, downsampled renders show comment
   dim as xterm 245 `#8a8a8a` — the AA-lifted `#8c8c8c` has no exact xterm home.
   Truecolor terminals (kitty) are exact.
+- **OPEN — vim Normal fg vs `roles.text` (noticed 2026-07-03,** while making
+  vifm's canvas transparent**)**: vim shows wildcharm's `#d0d0d0` (the hestia
+  wrapper overrides only the bg), but `roles.text` is `#e0e0e0` and kitty/
+  waybar/vifm use it. Either the wrapper also lifts `Normal guifg` to
+  `#e0e0e0`, or `roles.text` was wrong to deviate — decide alongside the
+  bg-lift verdict (both touch the same `hi Normal` line).
+- vifm's panel greys (`#262626` TopLine, `#303030` TabLine/JobLine, `#585858`
+  Border/LineNr, `#9e9e9e` CurrLine) are wildcharm.vim **UI-group** values
+  (CursorLine/LineNr/StatusLine) — upstream-faithful but not recorded in
+  `palette.yml`. Record them (an `extended:` UI-greys block or roles) when the
+  generator (M6) forces the question.
 - **OPEN — bg lift experiment (2026-07-03).** After seeing tci's code blocks on
   `surface_alt #1a1a1a`, dimitrios wants to try `#1a1a1a` as the ground in place
   of `bg #0a0a0a`. Running as a two-config experiment (kitty + vim only; the

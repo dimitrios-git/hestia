@@ -238,6 +238,20 @@ def theme_json(variant: str, target: str) -> str:
             "list.hoverBackground": ROLES["surface_alt"],
             "scrollbarSlider.background": ROLES["border"],
             "scrollbarSlider.hoverBackground": ROLES["dim"],
+            # semantic info/warning/error — same meanings the terminal tools
+            # use (buildkit run-blue, git/zathura warning-yellow, vifm
+            # ErrorMsg bright-red); covers notification toasts, editor
+            # squiggles and the Problems panel
+            "notifications.background": ROLES["surface"],
+            "notifications.foreground": c["text"],
+            "notifications.border": ROLES["border"],
+            "notificationCenterHeader.background": ROLES["surface_alt"],
+            "notificationsInfoIcon.foreground": ANSI["blue"],
+            "notificationsWarningIcon.foreground": ANSI["yellow"],
+            "notificationsErrorIcon.foreground": ANSI["bright_red"],
+            "editorInfo.foreground": ANSI["blue"],
+            "editorWarning.foreground": ANSI["yellow"],
+            "editorError.foreground": ANSI["bright_red"],
             "terminal.background": c["_canvas"],
             "terminal.foreground": c["text"],
             "terminalCursor.foreground": acc,

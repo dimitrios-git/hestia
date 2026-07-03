@@ -15,16 +15,20 @@ ramp (surfaces/borders) deliberately doesn't exist yet — roadmap M7
 
 ## Install
 
-Not wired into the bootstrap (VS Code isn't part of the base system). Manual:
+Not wired into the bootstrap (VS Code isn't part of the base system). Package a
+`.vsix` and install it — **a folder symlinked into `~/.vscode/extensions` does
+NOT register** on current VS Code (verified on 1.127: the extensions manifest
+only trusts installed extensions):
 
 ```sh
-# symlink straight into the extensions dir (dev-style install):
-ln -s "$(pwd)/user/vscode/hestia" ~/.vscode/extensions/dimitrios.hestia-theme
+cd user/vscode/hestia
+npx @vscode/vsce package
+code --install-extension ./hestia-theme-*.vsix
 ```
 
-Then reload VS Code and pick **hestia dark** / **hestia light** in
-*Preferences: Color Theme*. Alternatively package a `.vsix` with `vsce package`
-in this directory and `code --install-extension hestia-theme-*.vsix`.
+Then pick **hestia dark** / **hestia light** in *Preferences: Color Theme*.
+After a theme change (re-render + version bump here), re-run both commands —
+same-version reinstalls need `code --install-extension --force`.
 
 Verify against the golden sample: open
 `themes/wildcharm/golden/sample.ts` — it must agree hue-for-hue with

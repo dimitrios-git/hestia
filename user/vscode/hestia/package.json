@@ -2,9 +2,13 @@
   "name": "hestia-theme",
   "displayName": "hestia",
   "description": "hestia's wildcharm-derived colour theme (dark + light) — generated from the hestia palette; see themes/wildcharm/ in the hestia repo",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "dimitrios",
-  "license": "Vim",
+  "license": "SEE LICENSE IN ../../../LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dimitrios-git/hestia"
+  },
   "engines": {
     "vscode": "^1.75.0"
   },

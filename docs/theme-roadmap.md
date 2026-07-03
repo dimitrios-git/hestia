@@ -125,7 +125,8 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 | vim / nvim | `user/vim/colors/hestia.vim` (thin wrapper over built-in wildcharm) | hestia | ✅ conformant by definition (dark) |
 | bat (+ vifm preview) | `user/bat/themes/wildcharm.tmTheme` | hestia | 🟡 themed, **diverges** from canonical — realign in M4 |
 | glow | `user/glow/wildcharm.json` | hestia | 🟡 themed, divergence unaudited — audit + realign in M4 |
-| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendored at `apps/thecodingidiot/lib/themes/hestia.ts` (ONE role→scope map, per-variant colour tables), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | ✅ pair shipped (dark: stoa #92 from v0.2.0; light: stoa #93 from v0.3.0) |
+| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/wildcharm/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | ✅ pair shipped (stoa #92/#93); generated as of v0.4.0 |
+| VS Code | `user/vscode/hestia/` extension (GENERATED themes) | hestia | 🟡 M5 done, unverified in a live VS Code; light chrome = M7 |
 | VS Code | same JSON + UI-chrome colours | hestia (publish later) | ⬜ M5 |
 
 Cross-repo consumers get **stamped copies** (header: source file + palette
@@ -166,11 +167,43 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
   wildcharm's hexes ARE xterm-256 colours). One residue: the 256-colour
   fallback renders comment dim as xterm 245 `#8a8a8a` (the AA-lifted `#8c8c8c`
   has no exact xterm home) — truecolor terminals are exact.
-- [ ] **M5 — VS Code theme.** Wrap the Shiki JSON with `colors:` UI chrome from
-  the roles. Mostly free after M2/M3.
-- [ ] **M6 (open-ended) — generation.** Fold artifacts into the deferred Jinja2
-  render (`docs/repo-structure-design.md` §9.3) as hand-copying starts to hurt
-  (the matrix doubles with light). Not a prerequisite for M2–M5.
+- [x] **M5 — VS Code theme.** `user/vscode/hestia/` — extension with both
+  variants, JSONs **generated** (M6). Dark ships full UI chrome from the roles
+  (accent status bar/buttons like vifm/cmus/less, `surface` panels, ANSI-16
+  integrated terminal); **light is editor-only** — chrome falls back to VS
+  Code's stock light UI until the light desktop ramp exists (M7). Not wired
+  into the bootstrap (VS Code isn't base-system); install per the extension
+  README. Validated by loading the JSONs through Shiki (a VS Code-theme
+  consumer) — not yet launched in a real VS Code.
+- [x] **M6 — generation (TextMate family).** The scope map became data
+  (`themes/wildcharm/scopes.yml`, layer 2½) and `themes/wildcharm/render.py`
+  renders every TM-family artifact from it + `palette.yml`: bat's tmTheme, the
+  web Shiki pair (`dist/shiki/`, vendored by stoa), and the VS Code themes —
+  same tokenColors everywhere, per-target chrome (bat/VS Code canvas =
+  `roles.bg`; web code surface = `surface_alt`). The **AA gate runs inside the
+  render** (a palette edit that breaks a role fails the build) and
+  `render.py --check` detects stale artifacts. Equivalence proven at adoption:
+  regenerated bat output byte-identical to M4's, generated Shiki JSONs
+  render byte-identical HTML to M3's hand-written pair. Python, not the
+  deferred Ansible/Jinja2 route — same pattern as `gen-symlink-table.py`.
+  Outside the generator still (hand-applied): glow (chrome-heavy, small chroma
+  block), vifm, kitty, and the GUI chrome configs — fold in if/when churn
+  justifies it.
+- [ ] **M7 — light desktop enablement.** The goal dimitrios set 2026-07-03:
+  a way to switch the hestia *desktop* to light, and see how the GTK theme
+  (recoloured adw-gtk3 `hestia-dark`) and the KDE colour scheme (`Hestia.colors`)
+  perform in light. Scope: (a) design the **light desktop ramp** — the
+  deliberately-deferred light `surface`/`border`/`surface_alt`/`muted` roles —
+  informed by the bg-lift verdict (both decisions shape the same ladder);
+  (b) light artifacts: `hestia-light` GTK build (adw-gtk3 light + accent), a
+  light KDE colour scheme, kitty/vim/sway/waybar light values;
+  (c) a **switch mechanism** — likely a `hestia-mode dark|light` helper
+  flipping GTK/portal `color-scheme` (gsettings), `kdeglobals`, kitty
+  (`kitty @ set-colors`), vim `background`, and the wm/bar colours — plus how
+  much follows the freedesktop dark/light preference automatically;
+  (d) live verification pass over the GTK3/GTK4/KDE consumers (the theming.md
+  status table grows a light column). Design session first; don't start before
+  the bg-lift verdict lands.
 
 ## Backlog — known inconsistencies
 
@@ -238,6 +271,10 @@ the platform mapping, never in an artifact.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.4.0** (2026-07-03) — the TM scope map extracted to `scopes.yml` (layer 2½
+  data) and `render.py` introduced: bat/Shiki/VS Code artifacts are now
+  generated, with the AA gate inside the render and a `--check` drift mode. No
+  colour changes (equivalence proven byte-for-byte at adoption).
 - **0.3.0** (2026-07-03) — light variant added (`light:` roles subset + syntax
   table; canonical = wildcharm.vim light with five logged deviations: text
   softened, comment/preproc/diff_add/diff_change darkened for AA). Light scope

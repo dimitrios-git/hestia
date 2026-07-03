@@ -1,0 +1,28 @@
+{
+  "name": "hestia-theme",
+  "displayName": "hestia",
+  "description": "hestia's wildcharm-derived colour theme (dark + light) — generated from the hestia palette; see themes/wildcharm/ in the hestia repo",
+  "version": "0.4.0",
+  "publisher": "dimitrios",
+  "license": "Vim",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "hestia dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/hestia-dark-color-theme.json"
+      },
+      {
+        "label": "hestia light",
+        "uiTheme": "vs",
+        "path": "./themes/hestia-light-color-theme.json"
+      }
+    ]
+  }
+}

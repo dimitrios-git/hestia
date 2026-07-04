@@ -1332,12 +1332,14 @@ class Wildcharm(ColorScheme):
 def render_qimgv(variant: str) -> str:
     """theme.conf — qimgv's own [Colors] scheme (its per-app theme engine; it
     ignores the Qt palette unless useSystemColorScheme is on, which derives
-    worse colours than stating ours). Deployed as the variant symlink to
-    ~/.config/qimgv/theme.conf. Caveat: editing colours in qimgv's settings
-    dialog makes QSettings rewrite the dest and clobber the symlink — the
-    palette is the source of truth, don't theme in-app (re-run --tags dotfiles
-    to restore). background_fullscreen stays pure black in both variants —
-    a black surround for fullscreen photos, like every dedicated viewer."""
+    worse colours than stating ours). Deployed as a COPY (templated_configs),
+    NOT a symlink: QSettings saves the theme back ON EXIT — caught live, a
+    symlinked dest let qimgv write its defaults THROUGH the link and clobber
+    this generated file in the repo checkout. The copy gets rewritten by qimgv
+    freely (comments dropped, keys reordered — cosmetic); a --tags dotfiles
+    re-run resets it from the palette. background_fullscreen stays pure black
+    in both variants — a black surround for fullscreen photos, like every
+    dedicated viewer."""
     r, e = vroles(variant), vext(variant)
     keys = {
         "accent": r["accent"],
@@ -1355,9 +1357,9 @@ def render_qimgv(variant: str) -> str:
     }
     lines = [f"; {PROVENANCE}",
              f"; qimgv colours — wildcharm {variant} (theme-dark/theme-light pair; the",
-             "; bootstrap symlinks the `theme_variant` one to ~/.config/qimgv/theme.conf).",
-             "; QSettings drops these comments if it ever rewrites the file — that only",
-             "; happens on an in-app theme edit, which also clobbers the symlink: don't.",
+             "; bootstrap COPIES the `theme_variant` one to ~/.config/qimgv/theme.conf —",
+             "; qimgv rewrites that copy on exit (drops comments, reorders keys), which",
+             "; is why it is not a symlink: it would write through into this repo file.",
              "",
              "[Colors]"]
     lines += [f"{k}={v}" for k, v in keys.items()]

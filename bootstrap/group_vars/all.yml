@@ -187,11 +187,6 @@ dotfile_links:
   - { src: "user/yazi/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/yazi/theme.toml" }
   - { src: user/ranger/rc.conf,             dest: "{{ target_home }}/.config/ranger/rc.conf" }
   - { src: "user/ranger/colorschemes/wildcharm-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/wildcharm.py" }
-  # image-viewer keeper themes (same ruling as the file managers: configs deploy
-  # unconditionally, the enable_image_viewers toggle gates only the packages).
-  # qimgv: GENERATED pair; qimgv only rewrites the dest (clobbering the symlink)
-  # on an in-app theme edit — the palette is the source, don't theme in-app.
-  - { src: "user/qimgv/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/qimgv/theme.conf" }
   - { src: user/xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
   # (gtk-3.0 settings.ini moved to templated_configs — M7: its theme name follows
   # `theme_variant`; the css overlays stay variant-invariant symlinks.)
@@ -246,6 +241,11 @@ templated_configs:
   # at the NEXT login (a live xfconfd holds the channel in memory).
   - { src: user/ristretto/ristretto.xml.j2, dest: "{{ target_home }}/.config/xfce4/xfconf/xfce-perchannel-xml/ristretto.xml" }
   - { src: user/ristretto/accels.scm,       dest: "{{ target_home }}/.config/ristretto/accels.scm" }
+  # qimgv: COPY too — QSettings saves the theme back ON EXIT (caught live: a
+  # symlinked dest let qimgv write THROUGH the link and clobber the generated
+  # file in the repo checkout). The src is the GENERATED pair (render.py),
+  # variant-picked; qimgv may rewrite its copy freely, a re-run resets it.
+  - { src: "user/qimgv/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/qimgv/theme.conf" }
 
 # --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
 # Sensible defaults so a fresh checkout renders without host_vars; real machines

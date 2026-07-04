@@ -22,6 +22,15 @@ set nohlsearch
 set incsearch
 set scrolloff=4
 
+" Export THIS instance's server name for the imv-browse/return scripts: their
+" `vifm --remote` calls must drive the panes of the vifm that launched imv —
+" a bare --remote reaches the FIRST server (name "vifm"), so with several
+" vifm instances open, Enter-on-image in a later one collapsed the WRONG
+" window's panes (seen live as "the preview pane no longer hides"; the miller
+" commit was coincidental timing). vifm doesn't export this by itself;
+" children inherit env vars set with :let.
+let $VIFM_SERVER_NAME = v:servername
+
 " Show a live preview of the selected file in the other (right) pane on startup.
 " `w` (mapped below) toggles it off/on. `view!` is idempotent — it ensures quick
 " view is ON rather than toggling, so it sticks when vifmrc runs at launch.

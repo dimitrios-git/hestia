@@ -17,6 +17,12 @@
 cur=$1
 dir=$2
 
+# Drive THE LAUNCHING vifm instance, not whichever registered the "vifm" server
+# name first: vifmrc exports $VIFM_SERVER_NAME (v:servername) to its children,
+# and imv inherits it through us for imv-vifm-return.sh. Without this, a second
+# open vifm got the collapse/sync commands meant for this one.
+vremote() { vifm --server-name "${VIFM_SERVER_NAME:-vifm}" --remote "$@"; }
+
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/imv-vifm-thumbs"
 session="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-session.list"
 mkdir -p "$cache"
@@ -104,7 +110,7 @@ EOF
 wait
 
 # First open: integrated layout, then imv on the DISPLAY list at the cursor file.
-vifm --remote -c only
+vremote -c only
 swaymsg split horizontal
 set --
 while IFS= read -r f; do

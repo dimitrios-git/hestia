@@ -548,13 +548,22 @@ text-caps-lock-color={b(r["text"])}
 
 
 def render_swaynag(variant: str) -> str:
+    # Typeless dialogs keep the quiet dark base with an accent line; the two
+    # built-in types are FULL-FILL banners so they can't be missed — warning
+    # (the $mod+Shift+e exit confirm, and the power-menu confirms) is a solid
+    # orange bar with ink text, error the accent fill with accent_fg. Buttons/
+    # details keep the global sunken+text treatment on every section — the
+    # neutral wells read fine on the fills and the emitter stays one loop.
     r, a, e = vroles(variant), vansi(variant), vext(variant)
     def b(h):
         return h.lstrip("#")
     sections = [
-        ("global / default (dialogs with no -t)", None, r["accent"]),
-        ("warning (the sway exit confirm passes -t warning): yellow accent line", "warning", a["bright_yellow"]),
-        ("error: bright-red accent line", "error", a["bright_red"]),
+        ("global / default (dialogs with no -t): dark base, accent line",
+         None, r["bg"], r["text"], r["border"], r["accent"]),
+        ("warning (the sway exit confirm passes -t warning): full orange banner",
+         "warning", a["bright_yellow"], e["ink"], a["yellow"], a["yellow"]),
+        ("error: full accent banner",
+         "error", r["accent"], r["accent_fg"], r["accent_dark"], r["accent_dark"]),
     ]
     out = [f"# {PROVENANCE}",
            f"# swaynag — wildcharm dialogs, {variant} (config-dark / config-light pair; the",
@@ -565,18 +574,18 @@ def render_swaynag(variant: str) -> str:
            "# do NOT layer the global options — only keys set INSIDE a type's [section]",
            "# override its presets, so the theme is restated in full per section.",
            ""]
-    for title, section, accent_line in sections:
+    for title, section, bg, text, border, accent_line in sections:
         out.append(f"# --- {title} ---")
         if section:
             out.append(f"[{section}]")
         else:
             out.append("font=Lilex Nerd Font Mono 11")
         out += [
-            f"background={b(r['bg'])}",
-            f"border={b(r['border'])}",
+            f"background={b(bg)}",
+            f"border={b(border)}",
             f"border-bottom={b(accent_line)}",
             "border-bottom-size=2",
-            f"text={b(r['text'])}",
+            f"text={b(text)}",
             f"button-background={b(e['sunken'])}",
             f"button-text={b(r['text'])}",
             f"details-background={b(e['sunken'])}",

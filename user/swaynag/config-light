@@ -7,7 +7,7 @@
 # do NOT layer the global options — only keys set INSIDE a type's [section]
 # override its presets, so the theme is restated in full per section.
 
-# --- global / default (dialogs with no -t) ---
+# --- global / default (dialogs with no -t): dark base, accent line ---
 font=Lilex Nerd Font Mono 11
 background=f5f5f5
 border=c6c6c6
@@ -18,24 +18,24 @@ button-background=ffffff
 button-text=1a1a1a
 details-background=ffffff
 
-# --- warning (the sway exit confirm passes -t warning): yellow accent line ---
+# --- warning (the sway exit confirm passes -t warning): full orange banner ---
 [warning]
-background=f5f5f5
-border=c6c6c6
-border-bottom=d78700
+background=d78700
+border=af5f00
+border-bottom=af5f00
 border-bottom-size=2
-text=1a1a1a
+text=000000
 button-background=ffffff
 button-text=1a1a1a
 details-background=ffffff
 
-# --- error: bright-red accent line ---
+# --- error: full accent banner ---
 [error]
-background=f5f5f5
-border=c6c6c6
-border-bottom=d70000
+background=d7005f
+border=9b0040
+border-bottom=9b0040
 border-bottom-size=2
-text=1a1a1a
+text=ffffff
 button-background=ffffff
 button-text=1a1a1a
 details-background=ffffff

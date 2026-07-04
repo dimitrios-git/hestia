@@ -1,0 +1,43 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!-- hestia ristretto settings (image-viewer evaluation, 2026-07) — the xfconf
+     channel dump ristretto/xfconfd read at session start. Deployed by COPY
+     (templated_configs), NOT symlinked: xfconfd rewrites this file atomically
+     (rename) on any property change — window geometry on every exit — which
+     would destroy a symlink on first run. Consequences: hestia OWNS the layout
+     keys below (re-running the playbook resets in-app tweaks, kdeglobals
+     ruling), and a deploy lands at the NEXT login — a live xfconfd holds the
+     channel in memory and would flush stale state over the file (or apply now:
+     xfconf-query -c ristretto -p /window/toolbar/show -s false ...).
+     Layout per dimitrios's live pick: toolbar hidden, thumbnail bar at the
+     bottom, thumbnails at "very large" (size is the RsttoThumbnailSize ENUM,
+     0-6, not pixels). bgcolor = the variant's ground as GdkRGBA doubles
+     (override on — the image mat matches the desktop instead of GTK grey). -->
+
+<channel name="ristretto" version="1.0">
+  <property name="window" type="empty">
+    <property name="toolbar" type="empty">
+      <property name="show" type="bool" value="false"/>
+    </property>
+    <property name="navigationbar" type="empty">
+      <property name="position" type="string" value="bottom"/>
+    </property>
+    <property name="thumbnails" type="empty">
+      <property name="show" type="bool" value="true"/>
+      <property name="size" type="uint" value="6"/>
+    </property>
+    <property name="bgcolor-override" type="bool" value="true"/>
+    <property name="bgcolor" type="array">
+{% if theme_variant == 'light' %}
+      <value type="double" value="0.960784"/>
+      <value type="double" value="0.960784"/>
+      <value type="double" value="0.960784"/>
+{% else %}
+      <value type="double" value="0.101961"/>
+      <value type="double" value="0.101961"/>
+      <value type="double" value="0.101961"/>
+{% endif %}
+      <value type="double" value="1.000000"/>
+    </property>
+  </property>
+</channel>

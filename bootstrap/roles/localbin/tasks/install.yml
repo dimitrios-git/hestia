@@ -11,13 +11,14 @@
 # localbin_arch_map); bash_completion (true to run `<name> completion bash` into
 # ~/.local/share/bash-completion/completions); enabled (default true — set it to a
 # toggle expression to feature-gate the entry, e.g. the yazi/ya pair riding
-# enable_file_managers; main.yml skips a disabled entry).
+# enable_file_managers; main.yml skips a disabled entry); raw (true when the release
+# asset IS the binary — no archive, e.g. viu — skipping the extract; member unused).
 
 - name: "{{ binary.name }}: install from its GitHub release"
   vars:
     _lb_arch: "{{ (binary.arch_map | default(localbin_arch_map))[_lb_uname.stdout] | default('') }}"
     _lb_url: "{{ binary.url | replace('{ver}', binary.version) | replace('{arch}', _lb_arch) }}"
-    _lb_member: "{{ binary.member | replace('{ver}', binary.version) | replace('{arch}', _lb_arch) }}"
+    _lb_member: "{{ binary.member | default('') | replace('{ver}', binary.version) | replace('{arch}', _lb_arch) }}"
     _lb_asset: "{{ _lb_url | basename }}"
     _lb_sum: "{{ (binary.checksums | default({}))[_lb_arch] | default('') }}"
     _lb_marker: "{{ target_home }}/.local/state/hestia/localbin/{{ binary.name }}-{{ binary.version }}"
@@ -61,10 +62,11 @@
                 src: "{{ _lb_tmp.path }}/{{ _lb_asset }}"
                 dest: "{{ _lb_tmp.path }}"
                 remote_src: true
+              when: not (binary.raw | default(false) | bool)
 
             - name: "{{ binary.name }}: install -> ~/.local/bin/{{ binary.name }}"
               ansible.builtin.copy:
-                src: "{{ _lb_tmp.path }}/{{ _lb_member }}"
+                src: "{{ _lb_tmp.path }}/{{ _lb_asset if (binary.raw | default(false) | bool) else _lb_member }}"
                 dest: "{{ target_home }}/.local/bin/{{ binary.name }}"
                 mode: "0755"
                 remote_src: true

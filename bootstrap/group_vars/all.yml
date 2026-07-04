@@ -47,6 +47,16 @@ enable_thunderbird: false   # install thunderbird (email client; hestia-themed v
 # for the staged gtk-4.0/gtk.css accent). nemo is the intended default GUI manager
 # once the trial concludes. Trim the group to the keepers then.
 enable_file_managers: false # install the file-manager evaluation set (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)
+# Package-only toggle (no role): gates the `image_viewers` apt group below.
+# Default OFF — the KEEPER of the 2026-07 evaluation, alongside the primary imv
+# (Wayland-native, the vifm/sway integration): ristretto (GTK3; hestia layout +
+# h/l accels via user/ristretto/, accent thumbnail selection via the gtk-3.0
+# gtk.css style properties). Dropped after live trial: nsxiv (single-image X11
+# viewer, no grid/menus), viu (half-blocks, not the ASCII look hoped for — the
+# vifm in-pane preview experiment reverted), and qimgv (its own theme engine
+# covered the main surfaces but menus/icons stayed unthemed — not worth the
+# road; it also saves its theme on exit, see the 6f5051a clobber story).
+enable_image_viewers: false # install the image-viewer keeper (ristretto)
 # Default OFF — installs the prebuilt #d7005f Yaru ICON theme (a ~27 MB sha256-verified
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
@@ -225,6 +235,13 @@ templated_configs:
   # (claude unprivileged, not in sudo) plus this deny-list (no sudo, no push to main,
   # no `gh pr merge`, no `.env` reads) are the two halves of the trust model.
   - { src: user/claude/settings.json.j2,    dest: "{{ target_home }}/.claude/settings.json", force: false }
+  # ristretto: COPIES, not symlinks — xfconfd rewrites the channel xml atomically
+  # (rename) on any property change (window geometry on every exit) and ristretto
+  # re-saves accels.scm on quit, either of which would destroy a symlink. hestia
+  # OWNS both (a re-run resets in-app tweaks — kdeglobals ruling); the xml lands
+  # at the NEXT login (a live xfconfd holds the channel in memory).
+  - { src: user/ristretto/ristretto.xml.j2, dest: "{{ target_home }}/.config/xfce4/xfconf/xfce-perchannel-xml/ristretto.xml" }
+  - { src: user/ristretto/accels.scm,       dest: "{{ target_home }}/.config/ristretto/accels.scm" }
 
 # --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
 # Sensible defaults so a fresh checkout renders without host_vars; real machines
@@ -333,6 +350,7 @@ apt_packages:
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
+  image_viewers: [ristretto]                     # enable_image_viewers (default off; the evaluation keeper)
   # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)
   # outside Plasma — start-sway exports QT_QPA_PLATFORMTHEME=kde when it's installed.
   # Needed by the KDE file managers (dolphin/krusader don't self-apply a scheme) and
@@ -352,5 +370,6 @@ package_group_features:
   email:       "{{ enable_thunderbird | bool }}"
   file_managers: "{{ enable_file_managers | bool }}"
   qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
+  image_viewers: "{{ enable_image_viewers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"

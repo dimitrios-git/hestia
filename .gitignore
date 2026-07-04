@@ -6,3 +6,4 @@ bootstrap/host_vars/*.yml
 # Site-local customisations — the user's own untracked tasks (the personalization
 # seam, docs/personalizing.md). The committed template is local.yml.example.
 bootstrap/local.yml
+__pycache__/

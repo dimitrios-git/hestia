@@ -27,6 +27,16 @@ set scrolloff=4
 " view is ON rather than toggling, so it sticks when vifmrc runs at launch.
 view!
 
+" Miller columns (ranger/yazi-inspired, 2026-07): a slim parent-context column
+" on the left of the browsing pane, so with the quick view above the layout
+" reads as the ranger triple — parent | current | preview. rsize:0 disables
+" miller's OWN in-pane preview column: the quick-view pane already previews
+" everything through preview.sh (directories included, as a tree), so a right
+" miller column would just double it up. Options BEFORE the toggle, so the view
+" comes up sized correctly.
+set milleroptions=lsize:1,csize:2,rsize:0
+set millerview
+
 " Marks
 
 mark h ~/

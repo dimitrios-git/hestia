@@ -42,8 +42,17 @@ bat_view() {
 }
 
 if [ -d "$f" ]; then
-    # Directory: a quick listing (dirs first), capped to the pane height.
-    ls -A --group-directories-first -- "$f" 2>/dev/null || ls -A -- "$f"
+    # Directory: a coloured tree, two levels deep (the yazi/ranger-style dir
+    # preview, 2026-07), capped to the pane height. tree -C colours via
+    # LS_COLORS, so it matches ls and vifm's own file-type colours by
+    # construction (all three render from the generated ~/.dircolors). .git is
+    # pruned (pure noise at this depth); falls back to the old flat listing if
+    # tree is ever absent (it's in the apt manifest).
+    if command -v tree >/dev/null 2>&1; then
+        tree -C -a -L 2 --dirsfirst --noreport -I .git -- "$f" 2>/dev/null | head -n "$h"
+    else
+        ls -A --group-directories-first -- "$f" 2>/dev/null || ls -A -- "$f"
+    fi
     exit 0
 fi
 

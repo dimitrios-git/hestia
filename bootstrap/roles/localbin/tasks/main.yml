@@ -24,9 +24,12 @@
   register: _lb_uname
   changed_when: false
 
+# An entry may carry `enabled:` (a toggle expression) to feature-gate it — e.g.
+# the yazi/ya pair rides enable_file_managers. Absent = always installed.
 - name: Install each prebuilt binary
   ansible.builtin.include_tasks: install.yml
   loop: "{{ localbin_binaries | default([]) }}"
   loop_control:
     loop_var: binary
     label: "{{ binary.name }} v{{ binary.version }}"
+  when: binary.enabled | default(true) | bool

@@ -97,7 +97,8 @@ input type:keyboard {
     floating_modifier $mod normal
 
     bindsym $mod+Shift+c reload
-    bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
+    # -s renames the dismiss button (default is a bare 'X') to pair with the Yes.
+    bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit' -s 'No'
 
 # Moving around
     bindsym $mod+$left focus left

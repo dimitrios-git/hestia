@@ -47,14 +47,15 @@ enable_thunderbird: false   # install thunderbird (email client; hestia-themed v
 # for the staged gtk-4.0/gtk.css accent). nemo is the intended default GUI manager
 # once the trial concludes. Trim the group to the keepers then.
 enable_file_managers: false # install the file-manager evaluation set (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)
-# Package-ish toggle (no role): gates the `image_viewers` apt group below AND the
-# viu localbin entry. Default OFF — an EVALUATION set alongside the primary imv
-# (Wayland-native, the vifm/sway integration keeper): nsxiv (keyboard thumbnail
-# grid — the maintained sxiv fork; X11, runs under XWayland), ristretto (GTK3 —
-# themes for free), qimgv (bare-Qt — reads the hestia kdeglobals through the
-# qt_platform platform theme). viu (terminal blocks renderer) also powers vifm's
-# in-pane image preview when present. Trim once the keepers are chosen.
-enable_image_viewers: false # install the image-viewer evaluation set (nsxiv/ristretto/qimgv + viu)
+# Package-only toggle (no role): gates the `image_viewers` apt group below.
+# Default OFF — the KEEPERS of the 2026-07 evaluation, alongside the primary imv
+# (Wayland-native, the vifm/sway integration): ristretto (GTK3; hestia layout +
+# hjkl via user/ristretto/) and qimgv (Qt; its own theme engine — the GENERATED
+# user/qimgv/ pair). Dropped after live trial: nsxiv (single-image X11 viewer,
+# no grid/menus — pointless next to imv) and viu (half-block terminal renderer;
+# the vifm in-pane preview experiment was reverted — not the ASCII look hoped
+# for, and imv is one keypress away).
+enable_image_viewers: false # install the image-viewer keepers (ristretto/qimgv)
 # Default OFF — installs the prebuilt #d7005f Yaru ICON theme (a ~27 MB sha256-verified
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
@@ -186,6 +187,11 @@ dotfile_links:
   - { src: "user/yazi/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/yazi/theme.toml" }
   - { src: user/ranger/rc.conf,             dest: "{{ target_home }}/.config/ranger/rc.conf" }
   - { src: "user/ranger/colorschemes/wildcharm-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/wildcharm.py" }
+  # image-viewer keeper themes (same ruling as the file managers: configs deploy
+  # unconditionally, the enable_image_viewers toggle gates only the packages).
+  # qimgv: GENERATED pair; qimgv only rewrites the dest (clobbering the symlink)
+  # on an in-app theme edit — the palette is the source, don't theme in-app.
+  - { src: "user/qimgv/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/qimgv/theme.conf" }
   - { src: user/xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
   # (gtk-3.0 settings.ini moved to templated_configs — M7: its theme name follows
   # `theme_variant`; the css overlays stay variant-invariant symlinks.)
@@ -233,6 +239,13 @@ templated_configs:
   # (claude unprivileged, not in sudo) plus this deny-list (no sudo, no push to main,
   # no `gh pr merge`, no `.env` reads) are the two halves of the trust model.
   - { src: user/claude/settings.json.j2,    dest: "{{ target_home }}/.claude/settings.json", force: false }
+  # ristretto: COPIES, not symlinks — xfconfd rewrites the channel xml atomically
+  # (rename) on any property change (window geometry on every exit) and ristretto
+  # re-saves accels.scm on quit, either of which would destroy a symlink. hestia
+  # OWNS both (a re-run resets in-app tweaks — kdeglobals ruling); the xml lands
+  # at the NEXT login (a live xfconfd holds the channel in memory).
+  - { src: user/ristretto/ristretto.xml.j2, dest: "{{ target_home }}/.config/xfce4/xfconf/xfce-perchannel-xml/ristretto.xml" }
+  - { src: user/ristretto/accels.scm,       dest: "{{ target_home }}/.config/ristretto/accels.scm" }
 
 # --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
 # Sensible defaults so a fresh checkout renders without host_vars; real machines
@@ -315,20 +328,6 @@ localbin_binaries:
       x86_64-unknown-linux-gnu: "1c9096f0a83b8102c194385f644cdeff93cc8269426163c9d033041ebd537bd2"
       aarch64-unknown-linux-gnu: "c38b07961e7fc4c76503fd0f4a1b4bd0b379a99835b818cd899b0315c728e1e1"
 
-  # viu — terminal image renderer (ANSI half-blocks when piped; kitty graphics on
-  # a real tty). Part of the image-viewer EVALUATION set (enable_image_viewers);
-  # also vifm's in-pane image preview (preview.sh tries it first). Not in Debian
-  # apt; the release asset IS the binary (musl static) — hence `raw`, no member.
-  - name: viu
-    version: "1.6.1"
-    url: "https://github.com/atanunq/viu/releases/download/v{ver}/viu-{arch}"
-    raw: true
-    arch_map: { x86_64: x86_64-unknown-linux-musl, aarch64: aarch64-unknown-linux-musl }
-    enabled: "{{ enable_image_viewers | bool }}"
-    checksums:
-      x86_64-unknown-linux-musl: "f108265ff0441406290d5f53f64a2b88d4db530a7389a5dcd771bf782aa3ec6e"
-      aarch64-unknown-linux-musl: "64fd815cc4c9a215aab4e81e2165db78127a84789a8b04df060b3de82ac4613b"
-
 # --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------
 # Dependency-audited 2026-06-21 (swept every config for invoked binaries). Things
 # that are NOT apt packages, or are heavy/optional, are listed in README.md /
@@ -355,7 +354,7 @@ apt_packages:
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
-  image_viewers: [nsxiv, ristretto, qimgv]       # enable_image_viewers (default off; evaluation set — viu rides localbin on the same toggle)
+  image_viewers: [ristretto, qimgv]              # enable_image_viewers (default off; the evaluation keepers)
   # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)
   # outside Plasma — start-sway exports QT_QPA_PLATFORMTHEME=kde when it's installed.
   # Needed by the KDE file managers (dolphin/krusader don't self-apply a scheme), by

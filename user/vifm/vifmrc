@@ -109,14 +109,15 @@ filetype {*.7z}
 
 " Preview pane (toggle with w)
 
-" Images — handled by the preview.sh catch-all since 2026-07 (image-viewer
-" evaluation): viu renders the image as ANSI half-blocks IN the pane (piped
-" viu emits plain SGR, which vifm renders fine — unlike the kitty graphics
-" protocol, which was tried and dropped: it never displayed in the pane and
-" lagged scrolling), falling back to the old mediainfo text info when viu is
-" absent or can't decode the format (svg/avif). Enter still opens imv —
-" full-resolution browsing stays there (filextype above); the pane render is
-" a low-res block mosaic, a preview not a viewer.
+" Images — text info only (mediainfo: dimensions, format, colour depth). In-pane
+" image *rendering* was tried TWICE and dropped both times: chafa sixels /
+" kitty icat never displayed in vifm's pane and lagged scrolling; viu's ANSI
+" half-blocks (2026-07, image-viewer evaluation) DID render and were fast, but
+" a ~60x60-pixel block mosaic wasn't worth replacing the info text for (the
+" verdict: not the ASCII look hoped for). Press Enter to open the actual image
+" in imv — fast, separate window (filextype above).
+fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}
+         \ mediainfo %f
 
 " Markdown — rendered preview (requires glow). Two pipe/notty gotchas:
 "   * CLICOLOR_FORCE=1 forces colour. When piped (the preview pane is notty),

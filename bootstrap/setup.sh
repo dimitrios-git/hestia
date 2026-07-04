@@ -124,6 +124,7 @@ enable_file_managers: $enable_file_managers
 enable_image_viewers: $enable_image_viewers
 enable_firefox: $enable_firefox
 enable_firefoxpwa: $enable_firefoxpwa
+enable_trading: $enable_trading
 enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
 samba_lan_subnet: "$samba_lan_subnet"
@@ -245,6 +246,7 @@ def_filemgrs=$(cur enable_file_managers); def_filemgrs=${def_filemgrs:-false}
 def_imgviewers=$(cur enable_image_viewers); def_imgviewers=${def_imgviewers:-false}
 def_firefox=$(cur enable_firefox); def_firefox=${def_firefox:-true}
 def_ffpwa=$(cur enable_firefoxpwa); def_ffpwa=${def_ffpwa:-true}
+def_trading=$(cur enable_trading); def_trading=${def_trading:-false}
 def_yaruicons=$(cur enable_yaru_icons); def_yaruicons=${def_yaruicons:-false}
 # NVIDIA: detect a card via lspci (pciutils), else the PCI vendor id 0x10de in sysfs.
 det_nvidia=false
@@ -291,6 +293,7 @@ askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yaz
 askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)" "$def_imgviewers"
 askyn enable_firefox     "Install Firefox ESR? (the desktop browser)" "$def_firefox"
 askyn enable_firefoxpwa  "Install firefoxpwa? (PWA support — vendor apt repo)" "$def_ffpwa"
+askyn enable_trading     "Install trading apps? (TradingView Desktop — vendor .deb)" "$def_trading"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"
@@ -329,6 +332,7 @@ cat <<EOF
     enable_image_viewers = $enable_image_viewers
     enable_firefox     = $enable_firefox
     enable_firefoxpwa  = $enable_firefoxpwa
+    enable_trading     = $enable_trading
     enable_nvidia      = $enable_nvidia
     cmus_music_dir     = $cmus_music_dir
     theme_variant      = $theme_variant

@@ -77,6 +77,11 @@ enable_firefox: true        # install firefox-esr (the desktop browser)
 # connector — the FFPWA-* windows (Netflix/YouTube/…) the sway config already
 # handles. The in-Firefox extension + per-site installs stay manual.
 enable_firefoxpwa: true     # install firefoxpwa from its vendor repo (firefoxpwa role)
+# Trading apps (the `trading` role): TradingView Desktop from the vendor's
+# rolling "latest" .deb (no apt repo and no versioned URLs exist — nothing to
+# pin; TLS-trust, installed only when absent). JForex4 joins the role when it
+# lands. Default OFF — proprietary + niche; turn on per host.
+enable_trading: false       # install trading apps (TradingView Desktop; JForex4 later)
 
 # --- Theme variant (M7, docs/theme-roadmap.md) ----------------------------------
 # dark|light — selects which GENERATED theme fragments the dotfiles role links

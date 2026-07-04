@@ -1,0 +1,60 @@
+---
+# Trading apps (enable_trading) — TradingView Desktop today; JForex4 joins this
+# role when it lands. Root (become) for the package install.
+#
+# TradingView ships ONLY a rolling "latest" .deb — no apt repo (dists/ probes
+# 403) and no versioned URLs (/stable/<ver>/ probes 403 too; checked 2026-07)
+# — so unlike tailscale/firefoxpwa there is nothing to add a source for, and
+# unlike localbin there is nothing stable to sha256-pin: a pinned hash would
+# break every fresh install the moment the vendor rolls "latest". The download
+# is therefore TLS-trust-the-vendor (the same trust their repo would carry),
+# and the role installs ONLY WHEN THE PACKAGE IS ABSENT so a re-run never
+# re-downloads the ~128 MB deb. Updates: the app prompts in-app; or
+# `sudo apt remove tradingview` + re-run the role. The deb is a self-contained
+# Electron bundle (no hard Depends; Recommends libappindicator3-1), amd64-only
+# — the role skips other arches. The "jammy" path segment is just the vendor's
+# URL layout; the bundle runs fine on Debian.
+
+- name: Is tradingview already installed?
+  ansible.builtin.command: dpkg-query -W -f '${Version}' tradingview
+  register: _tv_installed
+  changed_when: false
+  failed_when: false
+
+- name: Detect CPU architecture
+  ansible.builtin.command: uname -m
+  register: _tv_arch
+  changed_when: false
+
+- name: "tradingview: no vendor build for this arch -> skip"
+  ansible.builtin.debug:
+    msg: "TradingView ships amd64 only — skipping on {{ _tv_arch.stdout }}."
+  when: _tv_arch.stdout != 'x86_64'
+
+- name: Install TradingView Desktop (only when absent)
+  when:
+    - _tv_installed.rc != 0
+    - _tv_arch.stdout == 'x86_64'
+  block:
+    - name: "tradingview: temp download dir"
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: hestia-tradingview
+      register: _tv_tmp
+
+    - name: "tradingview: download the vendor's rolling latest .deb (~128 MB)"
+      ansible.builtin.get_url:
+        url: https://tvd-packages.tradingview.com/ubuntu/stable/latest/jammy/tradingview_amd64.deb
+        dest: "{{ _tv_tmp.path }}/tradingview_amd64.deb"
+        mode: "0644"
+
+    - name: "tradingview: install the .deb"
+      ansible.builtin.apt:
+        deb: "{{ _tv_tmp.path }}/tradingview_amd64.deb"
+      become: true
+  always:
+    - name: "tradingview: remove the temp download"
+      ansible.builtin.file:
+        path: "{{ _tv_tmp.path | default('') }}"
+        state: absent
+      when: _tv_tmp.path is defined

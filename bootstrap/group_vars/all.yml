@@ -333,6 +333,11 @@ apt_packages:
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
+  # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)
+  # outside Plasma — start-sway exports QT_QPA_PLATFORMTHEME=kde when it's installed.
+  # Needed by the KDE file managers (dolphin/krusader don't self-apply a scheme) and
+  # useful to kdenlive too, hence the either-toggle gate below.
+  qt_platform:  [plasma-integration]
   browser:      [chromium]                       # enable_headless_browser (headless dev/testing; also satisfies Playwright/Puppeteer runtime libs)
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
 
@@ -346,5 +351,6 @@ package_group_features:
   video:       "{{ enable_kdenlive | bool }}"
   email:       "{{ enable_thunderbird | bool }}"
   file_managers: "{{ enable_file_managers | bool }}"
+  qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"

@@ -26,6 +26,18 @@ export MOZ_ENABLE_WAYLAND=1
 # locked on 1.7 — see docs/theming.md).
 export GTK_THEME=hestia{{ '' if theme_variant == 'light' else '-dark' }}
 
+# Qt/KDE: point Qt at KDE's platform-theme plugin (plasma-integration) so Qt apps
+# read ~/.config/kdeglobals — the rendered hestia scheme (qt_theme role). Without a
+# platform theme, KDE apps that don't self-apply a scheme (dolphin, krusader — unlike
+# kdenlive, which activates its ColorSchemePath itself) fall back to Qt's dark-Fusion
+# palette with the stock blue highlight, ignoring kdeglobals entirely; bare-Qt apps
+# get kdeglobals this way too (the once-deferred qt6ct track, resolved). Guarded on
+# the plugin actually being installed — with the env set but the plugin absent, Qt
+# logs a warning per launch and themes nothing.
+if ls /usr/lib/*/qt6/plugins/platformthemes/KDEPlasmaPlatformTheme* >/dev/null 2>&1; then
+    export QT_QPA_PLATFORMTHEME=kde
+fi
+
 # Make the SSH agent reachable by every app sway `exec`s (wofi launches, GUI git
 # clients, IDEs pushing over ssh, …). The credential-unlock hook warms id_dimitrios
 # into the agent at this deterministic socket; exporting the var HERE — before sway,

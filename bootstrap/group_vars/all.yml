@@ -26,7 +26,7 @@ enable_nvidia: false        # proprietary NVIDIA driver (Debian non-free)
 # Package-only toggle (no role): gates the `office` apt group below via
 # package_group_features. Default OFF — libreoffice is heavy (~hundreds of MB) and
 # only vifm's office-doc opener needs it; turn on per host if you want it.
-enable_libreoffice: false   # install libreoffice (vifm opens office docs with it)
+enable_libreoffice: false   # install libreoffice + its GTK3 plugin (vifm opens office docs with it)
 # Package-only toggle (no role): gates the `video` apt group below via
 # package_group_features. Default OFF — kdenlive is heavy (pulls a large slice of
 # KDE Frameworks 6 + Qt6 multimedia libs) and host-specific; turn on per host. It's
@@ -361,7 +361,7 @@ apt_packages:
   # --- feature-gated groups (installed only when their toggle is on, see below) ---
   sharing:      [samba]                        # enable_samba
   credentials:  [gnome-keyring, libsecret-tools]  # enable_credentials
-  office:       [libreoffice]                   # enable_libreoffice (heavy, default off)
+  office:       [libreoffice, libreoffice-gtk3]  # enable_libreoffice (heavy, default off; -gtk3 = the GTK VCL plugin — without it LO renders via the grey 90s `gen` backend on XWayland, ignoring the hestia GTK theme entirely)
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)

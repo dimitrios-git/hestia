@@ -2,9 +2,9 @@
     "layer": "top",
     "position": "top",
     "height": 32,
-    "modules-left": ["sway/workspaces", "sway/mode"],
+    "modules-left": ["custom/launcher", "sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
-    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "custom/usb", "custom/notifications", "custom/weather", "clock", "custom/debian"],
+    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "custom/usb", "custom/notifications", "custom/weather", "clock"],
 
     "custom/gpu": {
         "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
@@ -119,9 +119,10 @@
         "on-click": "swaymsg -t get_tree | grep -q floatterm-weather && swaymsg '[app_id=\"^floatterm-weather$\"] kill' || kitty --class floatterm-weather -o confirm_os_window_close=0 -e $HOME/.config/waybar/scripts/weather.sh show"
     },
 
-    "custom/debian": {
+    "custom/launcher": {
         "format": "<span size='xx-large' rise='-3072'></span>",
-        "tooltip": false
+        "tooltip-format": "Applications",
+        "on-click": "pgrep -x wofi >/dev/null && pkill -x wofi || wofi --show drun"
     },
 
     "tray": {

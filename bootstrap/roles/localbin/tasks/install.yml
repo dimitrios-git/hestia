@@ -3,16 +3,21 @@
 # tarball. Expects `_lb_uname` (uname -m) registered by main.yml.
 #
 # Each `binary` entry: name (the command in ~/.local/bin), version, url (a template
-# with {ver}/{arch} placeholders), member (the binary's path inside the tarball),
-# and optional: checksums (sha256 of the tarball, keyed by arch token); arch_map (a
-# per-binary uname->token map, for releases that name x86_64 differently — e.g.
-# `amd64` — overriding the global localbin_arch_map); bash_completion (true to run
-# `<name> completion bash` into ~/.local/share/bash-completion/completions).
+# with {ver}/{arch} placeholders), member (the binary's path inside the tarball —
+# {ver}/{arch} placeholders work here too, for releases whose top-level dir embeds
+# the arch triple, e.g. yazi's `yazi-{arch}/yazi`), and optional: checksums (sha256
+# of the tarball, keyed by arch token); arch_map (a per-binary uname->token map,
+# for releases that name x86_64 differently — e.g. `amd64` — overriding the global
+# localbin_arch_map); bash_completion (true to run `<name> completion bash` into
+# ~/.local/share/bash-completion/completions); enabled (default true — set it to a
+# toggle expression to feature-gate the entry, e.g. the yazi/ya pair riding
+# enable_file_managers; main.yml skips a disabled entry).
 
 - name: "{{ binary.name }}: install from its GitHub release"
   vars:
     _lb_arch: "{{ (binary.arch_map | default(localbin_arch_map))[_lb_uname.stdout] | default('') }}"
     _lb_url: "{{ binary.url | replace('{ver}', binary.version) | replace('{arch}', _lb_arch) }}"
+    _lb_member: "{{ binary.member | replace('{ver}', binary.version) | replace('{arch}', _lb_arch) }}"
     _lb_asset: "{{ _lb_url | basename }}"
     _lb_sum: "{{ (binary.checksums | default({}))[_lb_arch] | default('') }}"
     _lb_marker: "{{ target_home }}/.local/state/hestia/localbin/{{ binary.name }}-{{ binary.version }}"
@@ -59,7 +64,7 @@
 
             - name: "{{ binary.name }}: install -> ~/.local/bin/{{ binary.name }}"
               ansible.builtin.copy:
-                src: "{{ _lb_tmp.path }}/{{ binary.member }}"
+                src: "{{ _lb_tmp.path }}/{{ _lb_member }}"
                 dest: "{{ target_home }}/.local/bin/{{ binary.name }}"
                 mode: "0755"
                 remote_src: true

@@ -120,6 +120,7 @@ enable_credentials: $enable_credentials
 enable_libreoffice: $enable_libreoffice
 enable_kdenlive: $enable_kdenlive
 enable_thunderbird: $enable_thunderbird
+enable_file_managers: $enable_file_managers
 enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
 samba_lan_subnet: "$samba_lan_subnet"
@@ -237,6 +238,7 @@ def_creds=$(cur enable_credentials);  def_creds=${def_creds:-true}
 def_office=$(cur enable_libreoffice); def_office=${def_office:-false}
 def_kdenlive=$(cur enable_kdenlive); def_kdenlive=${def_kdenlive:-false}
 def_thunderbird=$(cur enable_thunderbird); def_thunderbird=${def_thunderbird:-false}
+def_filemgrs=$(cur enable_file_managers); def_filemgrs=${def_filemgrs:-false}
 def_yaruicons=$(cur enable_yaru_icons); def_yaruicons=${def_yaruicons:-false}
 # NVIDIA: detect a card via lspci (pciutils), else the PCI vendor id 0x10de in sysfs.
 det_nvidia=false
@@ -279,6 +281,7 @@ askyn enable_credentials "Enable login auto-unlock of SSH + GPG?"    "$def_creds
 askyn enable_libreoffice "Install LibreOffice? (heavy — vifm opens office docs)" "$def_office"
 askyn enable_kdenlive    "Install Kdenlive? (heavy — Qt6/KF6 video editor)" "$def_kdenlive"
 askyn enable_thunderbird "Install Thunderbird? (email client, hestia-themed)" "$def_thunderbird"
+askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yazi/krusader/thunar/nemo)" "$def_filemgrs"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"
@@ -313,6 +316,7 @@ cat <<EOF
     enable_libreoffice = $enable_libreoffice
     enable_kdenlive    = $enable_kdenlive
     enable_thunderbird = $enable_thunderbird
+    enable_file_managers = $enable_file_managers
     enable_nvidia      = $enable_nvidia
     cmus_music_dir     = $cmus_music_dir
     theme_variant      = $theme_variant

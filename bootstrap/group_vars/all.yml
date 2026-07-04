@@ -37,6 +37,13 @@ enable_kdenlive: false      # install kdenlive (Qt6/KF6 video editor; Qt-theming
 # hestia theming (user/thunderbird/, deployed by the dotfiles role into whatever
 # profiles exist) is INDEPENDENT of this toggle — it follows Thunderbird's presence.
 enable_thunderbird: false   # install thunderbird (email client; hestia-themed via userChrome)
+# Package-ish toggle (no role): gates the `file_managers` apt group below AND the
+# yazi/ya localbin entries (their `enabled:` key). Default OFF — an EVALUATION set
+# alongside the primary vifm: ranger + yazi (terminal), krusader (dual-pane KDE;
+# rides the Hestia kdeglobals scheme like kdenlive), thunar + nemo (GTK3 GUI; pick
+# up hestia/hestia-dark + Yaru-hestia automatically). Trim or drop the group once
+# the keepers are chosen.
+enable_file_managers: false # install the file-manager evaluation set (ranger/yazi/krusader/thunar/nemo)
 # Default OFF — installs the prebuilt #d7005f Yaru ICON theme (a ~27 MB sha256-verified
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
@@ -266,6 +273,31 @@ localbin_binaries:
       amd64: "b0673abb7cd7ceda64146756917c99c36f234bb8e900c852a9901d9bfa4b66b4"
       arm64: "228e87760c24a571bd390acd77f9f272338d69a62c1605bd0015994489f9547d"
 
+  # yazi + ya (its flavor/plugin CLI) — terminal file manager, part of the
+  # file-manager EVALUATION set (gated: `enabled` rides enable_file_managers);
+  # not in Debian apt. Both come from the SAME release zip; the asset name and
+  # its top-level dir embed the full arch triple, hence the arch_map to triples
+  # and the {arch} placeholder in `member`.
+  - name: yazi
+    version: "26.5.6"
+    url: "https://github.com/sxyazi/yazi/releases/download/v{ver}/yazi-{arch}.zip"
+    member: yazi-{arch}/yazi
+    arch_map: { x86_64: x86_64-unknown-linux-gnu, aarch64: aarch64-unknown-linux-gnu }
+    enabled: "{{ enable_file_managers | bool }}"
+    checksums:
+      x86_64-unknown-linux-gnu: "1c9096f0a83b8102c194385f644cdeff93cc8269426163c9d033041ebd537bd2"
+      aarch64-unknown-linux-gnu: "c38b07961e7fc4c76503fd0f4a1b4bd0b379a99835b818cd899b0315c728e1e1"
+
+  - name: ya
+    version: "26.5.6"
+    url: "https://github.com/sxyazi/yazi/releases/download/v{ver}/yazi-{arch}.zip"
+    member: yazi-{arch}/ya
+    arch_map: { x86_64: x86_64-unknown-linux-gnu, aarch64: aarch64-unknown-linux-gnu }
+    enabled: "{{ enable_file_managers | bool }}"
+    checksums:
+      x86_64-unknown-linux-gnu: "1c9096f0a83b8102c194385f644cdeff93cc8269426163c9d033041ebd537bd2"
+      aarch64-unknown-linux-gnu: "c38b07961e7fc4c76503fd0f4a1b4bd0b379a99835b818cd899b0315c728e1e1"
+
 # --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------
 # Dependency-audited 2026-06-21 (swept every config for invoked binaries). Things
 # that are NOT apt packages, or are heavy/optional, are listed in README.md /
@@ -291,6 +323,7 @@ apt_packages:
   office:       [libreoffice]                   # enable_libreoffice (heavy, default off)
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
+  file_managers: [ranger, thunar, nemo, krusader]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
   browser:      [chromium]                       # enable_headless_browser (headless dev/testing; also satisfies Playwright/Puppeteer runtime libs)
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
 
@@ -303,5 +336,6 @@ package_group_features:
   office:      "{{ enable_libreoffice | bool }}"
   video:       "{{ enable_kdenlive | bool }}"
   email:       "{{ enable_thunderbird | bool }}"
+  file_managers: "{{ enable_file_managers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"

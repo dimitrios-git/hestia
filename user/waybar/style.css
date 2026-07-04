@@ -103,7 +103,19 @@ window#waybar {
 
 #clock {
     font-weight: bold;
-    padding-right: 16px;
+}
+
+/* Power menu — accent ⏻ pinned at the far right (the slot the launcher swirl
+   vacated); click opens the power.sh wofi menu (lock/logout/suspend/reboot/
+   shutdown, destructive ones behind the swaynag orange banner). */
+#custom-power {
+    color: @accent;
+    padding: 0 16px 0 14px;
+    border-left: 1px solid @border;
+}
+
+#custom-power:hover {
+    background: @surface_alt;
 }
 
 #pulseaudio.muted {

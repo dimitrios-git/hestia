@@ -107,6 +107,7 @@ dotfile_links:
   - { src: user/waybar/scripts/weather.sh,   dest: "{{ target_home }}/.config/waybar/scripts/weather.sh" }
   - { src: user/waybar/scripts/notifications.sh, dest: "{{ target_home }}/.config/waybar/scripts/notifications.sh" }
   - { src: user/waybar/scripts/usb.sh,        dest: "{{ target_home }}/.config/waybar/scripts/usb.sh" }
+  - { src: user/waybar/scripts/power.sh,      dest: "{{ target_home }}/.config/waybar/scripts/power.sh" }
   - { src: user/mako/config,                dest: "{{ target_home }}/.config/mako/config" }
   # GENERATED colours + urgent section (render.py) — include'd (last) by the mako
   # config. src picked by `theme_variant` (M7).

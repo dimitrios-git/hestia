@@ -1,11 +1,18 @@
 ---
 # Razer peripherals (enable_razer, hardware-detected by setup.sh like NVIDIA):
-# OpenRazer (the userspace daemon + DKMS kernel driver — in Debian apt) and
-# Polychromatic (the RGB/config GUI — NOT in Debian; the vendor runs its own
-# Debian repo at debian.polychromatic.app, which replaced their SHA-1-signed
-# Launchpad PPA that trixie's apt rejects since 2026-02. The OBS hardware:razer
-# repo was checked too — it carries openrazer/razergenie but no polychromatic).
-# Root (become).
+# OpenRazer (the userspace daemon + DKMS kernel driver) and Polychromatic (the
+# RGB/config GUI). Root (become). TWO third-party repos, each for a reason:
+#
+# - openrazer comes from the OBS hardware:razer repo, NOT Debian apt: Debian's
+#   3.10.2 predates the kernel's hid_report_raw_event() 6-arg change, which
+#   Debian BACKPORTED into its stable 6.12.94 kernel — the DKMS build fails
+#   with "too few arguments" (caught live; built fine on 6.12.90). Upstream
+#   fixed it with a version guard that explicitly covers the 6.12.93+ stable
+#   backport, first shipped in 3.12.x; OBS builds current releases for
+#   Debian_13. When Debian's own openrazer catches up, this repo can go.
+# - polychromatic is NOT in Debian at all (and not in the OBS razer repo —
+#   checked); its vendor runs debian.polychromatic.app, which replaced their
+#   SHA-1-signed Launchpad PPA that trixie's apt rejects since 2026-02.
 #
 # The DKMS driver builds against the running kernel's headers; dkms is pulled
 # by the driver package and this machine's headers ride the nvidia role, but a
@@ -27,6 +34,34 @@
 - name: Install OpenRazer + Polychromatic
   when: _rz_arch.stdout == 'x86_64'
   block:
+    - name: Detect the Debian codename + major version (the repos are per-release)
+      ansible.builtin.shell: . /etc/os-release && printf '%s' "$VERSION_CODENAME"
+      register: _rz_codename
+      changed_when: false
+
+    - name: Detect the Debian major version (the OBS repo path uses Debian_<N>)
+      ansible.builtin.shell: . /etc/os-release && printf '%s' "$VERSION_ID"
+      register: _rz_debver
+      changed_when: false
+
+    - name: Install the OBS hardware:razer apt signing key (armored)
+      ansible.builtin.get_url:
+        url: "https://download.opensuse.org/repositories/hardware:/razer/Debian_{{ _rz_debver.stdout }}/Release.key"
+        dest: /usr/share/keyrings/obs-hardware-razer-keyring.asc
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Add the OBS hardware:razer apt repository (openrazer 3.12.x for Debian stable)
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/hardware-razer.list
+        content: "deb [signed-by=/usr/share/keyrings/obs-hardware-razer-keyring.asc] https://download.opensuse.org/repositories/hardware:/razer/Debian_{{ _rz_debver.stdout }}/ /\n"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
     - name: Install the Polychromatic apt signing key (armored)
       ansible.builtin.get_url:
         url: https://debian.polychromatic.app/key.asc
@@ -35,11 +70,6 @@
         group: root
         mode: "0644"
       become: true
-
-    - name: Detect the Debian codename (the repo is per-release)
-      ansible.builtin.shell: . /etc/os-release && printf '%s' "$VERSION_CODENAME"
-      register: _rz_codename
-      changed_when: false
 
     - name: Add the Polychromatic apt repository
       ansible.builtin.copy:

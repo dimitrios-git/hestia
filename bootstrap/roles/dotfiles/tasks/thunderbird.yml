@@ -1,0 +1,41 @@
+---
+# Thunderbird theming (docs/theming.md): symlink the GENERATED hestia accent
+# overrides (chrome/userChrome.css + chrome/userContent.css) and the prefs pin
+# (user.js) into every Thunderbird profile on the machine. NOT in
+# `dotfile_links` — the profile dir name is randomized
+# (~/.thunderbird/<hash>.<name>), so the fixed-dest manifest can't carry it;
+# this file GLOBS instead (any dir holding a prefs.js) and self-skips when
+# Thunderbird has never run. Fresh install: start Thunderbird once (creates
+# the profile), then re-run `--tags dotfiles`. Like the manifest symlinks,
+# force-replaces what sits at the dests (these are outside the one-time .bak
+# net — a pre-existing user.js/userChrome.css is NOT backed up).
+
+- name: Find Thunderbird profiles (any dir with a prefs.js)
+  ansible.builtin.find:
+    paths: "{{ target_home }}/.thunderbird"
+    patterns: prefs.js
+    recurse: true
+    depth: 2
+  register: _tb_prefs
+
+- name: Collect the profile directories
+  ansible.builtin.set_fact:
+    _tb_profiles: "{{ _tb_prefs.files | map(attribute='path') | map('dirname') | unique | list }}"
+
+- name: Ensure each profile's chrome/ dir exists
+  ansible.builtin.file:
+    path: "{{ item }}/chrome"
+    state: directory
+  loop: "{{ _tb_profiles }}"
+  loop_control:
+    label: "{{ item | basename }}/chrome"
+
+- name: Symlink hestia Thunderbird theming into each profile
+  ansible.builtin.file:
+    src: "{{ repo_root }}/user/thunderbird/{{ item.1 | basename }}"
+    dest: "{{ item.0 }}/{{ item.1 }}"
+    state: link
+    force: true
+  loop: "{{ _tb_profiles | product(['chrome/userChrome.css', 'chrome/userContent.css', 'user.js']) | list }}"
+  loop_control:
+    label: "{{ item.0 | basename }}/{{ item.1 }}"

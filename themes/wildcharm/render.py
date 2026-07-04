@@ -21,6 +21,9 @@ symlinks the one `theme_variant` selects to a variant-neutral dest, M7):
   theme pairs vifm wildcharm-*.vifm, bat wildcharm-*.tmTheme (TM family),
               glow wildcharm-*.json, bash .dircolors-* (ls file colours —
               generated from the SAME table as vifm so they cannot drift)
+  single-file thunderbird userChrome/userContent.css — CSS light-dark()
+              carries both variants in one file (TB follows the portal
+              color-scheme), so no pair + variant symlink
 
 Same tokenColors everywhere; only the per-target chrome differs. The WCAG AA
 contrast gate runs before anything is written — a palette edit that breaks a
@@ -910,6 +913,95 @@ def render_glow(variant: str) -> str:
     return json.dumps(doc, indent=2, ensure_ascii=False) + "\n"
 
 
+def _ld(light_val: str, dark_val: str) -> str:
+    """CSS light-dark(), collapsed when both variants agree. Thunderbird follows
+    the portal color-scheme (the sway theme fragment's gsettings exec), so ONE
+    file with light-dark() covers both theme_variants — no pair + symlink."""
+    if light_val == dark_val:
+        return light_val
+    return f"light-dark({light_val}, {dark_val})"
+
+
+def render_thunderbird(kind: str) -> str:
+    """userChrome.css / userContent.css — Thunderbird 140 (Supernova) accent.
+
+    The GTK theme only reaches native GTK widgets (context menus, file
+    chooser); the main window is Gecko-rendered from THREE separate variable
+    chains, all blue by default (traced in omni.ja, 2026-07):
+      1. --selected-item-color: var(--sidebar-highlight-background-color,
+         AccentColor) in messenger's variables.css — selection, primary
+         buttons, focus rings, spaces toolbar all derive from it. AccentColor
+         itself ignores the GTK3 theme (widget.gtk.libadwaita-colors, user.js).
+      2. hardcoded blues that derive from nothing: --primary (#0a84ff),
+         --color-primary-{soft,default,hover,pressed} (account hub),
+         --color-text-highlight, --button-link-text-color.
+      3. the toolkit design-system token --color-accent-primary
+         (tokens-brand.css) — about:preferences never loads messenger's
+         variables.css; its checkboxes/radios paint from the CSS accent-color
+         property, set from that token.
+    userChrome targets * (not :root): unified-toolbar tabs are custom elements
+    whose shadow-root stylesheets re-declare vars on :host, beating anything
+    inherited from :root — but a user-origin !important declared ON the host
+    element (which * matches) wins across the shadow boundary."""
+    d, l = ROLES, LIGHT["roles"]
+    acc = _ld(l["accent"], d["accent"])            # fill — variant-invariant
+    accfg = _ld(l["accent_fg"], d["accent_fg"])
+    accdark = _ld(l["accent_dark"], d["accent_dark"])
+    link = _ld(l["accent"], d["link"])             # accent-as-TEXT (light has no link role)
+    hover = _ld(l["accent_dark"], d["accent"])     # hover ramp: darken on light, lift on dark
+    tok_hover = _ld(l["accent_dark"], d["link"])
+    soft = _ld(LEXT["heading_bg"], EXT["heading_bg"])  # accent-tinted wash
+    if kind == "chrome":
+        return f"""/* {PROVENANCE}
+   Thunderbird chrome accent (see render_thunderbird's docstring for the three
+   variable chains + the shadow-DOM reason the selector is *, not :root).
+   Deployed by the dotfiles role into each profile's chrome/ dir; needs
+   toolkit.legacyUserProfileCustomizations.stylesheets=true (user.js). */
+
+* {{
+  --selected-item-color: {acc} !important;
+  --selected-item-text-color: {accfg} !important;
+  --sidebar-highlight-background-color: {acc} !important;
+  --sidebar-highlight-text-color: {accfg} !important;
+  --primary: {acc} !important;
+  --tabline-color: {acc} !important;
+  --lwt-tab-line-color: {acc} !important;
+  --color-primary-default: {link} !important;
+  --color-primary-hover: {hover} !important;
+  --color-primary-pressed: {accdark} !important;
+  --color-primary-soft: {soft} !important;
+  --color-text-highlight: {link} !important;
+  --button-link-text-color: {link} !important;
+  /* toolkit design-system tokens (chrome dialogs) */
+  --color-accent-primary: {acc} !important;
+  --color-accent-primary-hover: {tok_hover} !important;
+  --color-accent-primary-active: {accdark} !important;
+}}
+"""
+    return f"""/* {PROVENANCE}
+   Thunderbird content accent — the Settings tab and other about: pages are
+   content documents (they load the toolkit tokens, not messenger's
+   variables.css); form controls (checkboxes/radios/toggles) paint from the
+   CSS accent-color property. Also applies to rendered HTML mail — a form in
+   an email gets the accent too (uniform, accepted). */
+
+:root {{
+  accent-color: {acc} !important;
+  --color-accent-primary: {acc} !important;
+  --color-accent-primary-hover: {tok_hover} !important;
+  --color-accent-primary-active: {accdark} !important;
+  --link-color: {link} !important;
+  --link-color-hover: {hover} !important;
+  --selected-item-color: {acc} !important;
+  --selected-item-text-color: {accfg} !important;
+  --color-primary-default: {link} !important;
+  --color-primary-hover: {hover} !important;
+  --color-primary-pressed: {accdark} !important;
+  --color-primary-soft: {soft} !important;
+}}
+"""
+
+
 OUTPUTS = {
     REPO / "user/bat/themes/wildcharm-dark.tmTheme": lambda: render_tmtheme("dark"),
     REPO / "user/bat/themes/wildcharm-light.tmTheme": lambda: render_tmtheme("light"),
@@ -939,6 +1031,9 @@ OUTPUTS = {
     REPO / "user/bash/.dircolors-light": lambda: render_dircolors("light"),
     REPO / "user/glow/wildcharm-dark.json": lambda: render_glow("dark"),
     REPO / "user/glow/wildcharm-light.json": lambda: render_glow("light"),
+    # single light-dark() files, not pairs — TB follows the portal color-scheme
+    REPO / "user/thunderbird/userChrome.css": lambda: render_thunderbird("chrome"),
+    REPO / "user/thunderbird/userContent.css": lambda: render_thunderbird("content"),
 }
 
 

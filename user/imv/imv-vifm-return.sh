@@ -20,6 +20,12 @@
 
 session="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-session.list"
 mpvlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-mpv.lock"
+
+# Target THE LAUNCHING vifm instance: $VIFM_SERVER_NAME is exported by vifmrc
+# (v:servername) and reaches us through imv's environment (imv-browse.sh
+# exec'd imv with it). A bare --remote reaches the FIRST vifm server instead —
+# with several vifms open, the restore/sync landed in the wrong window.
+vremote() { vifm --server-name "${VIFM_SERVER_NAME:-vifm}" --remote "$@"; }
 orig=$(sed -n "${imv_current_index}p" "$session" 2>/dev/null)
 [ -n "$orig" ] || orig=$imv_current_file   # fallback (images-only / no map)
 
@@ -39,13 +45,13 @@ close_imv() {
 
 case "$1" in
     quit)
-        vifm --remote -c 'vsplit' -c 'view!' -c "goto '$orig'"
+        vremote -c 'vsplit' -c 'view!' -c "goto '$orig'"
         close_imv
         ;;
     up)
         # up one dir from the ORIGINAL's folder (absolute), not vifm's current
         # dir — the user may have moved vifm's cwd while imv was open.
-        vifm --remote -c 'vsplit' -c 'view!' -c "goto '$(dirname "$orig")'"
+        vremote -c 'vsplit' -c 'view!' -c "goto '$(dirname "$orig")'"
         close_imv
         ;;
     play)
@@ -84,6 +90,6 @@ case "$1" in
         ' _ "$orig" "$mpvlock" >/dev/null 2>&1
         ;;
     *)
-        vifm --remote -c "goto '$orig'"
+        vremote -c "goto '$orig'"
         ;;
 esac

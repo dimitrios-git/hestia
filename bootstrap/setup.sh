@@ -284,7 +284,7 @@ askyn enable_libreoffice "Install LibreOffice? (heavy — vifm opens office docs
 askyn enable_kdenlive    "Install Kdenlive? (heavy — Qt6/KF6 video editor)" "$def_kdenlive"
 askyn enable_thunderbird "Install Thunderbird? (email client, hestia-themed)" "$def_thunderbird"
 askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)" "$def_filemgrs"
-askyn enable_image_viewers "Install the image viewers? (ristretto + qimgv, alongside imv)" "$def_imgviewers"
+askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)" "$def_imgviewers"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"

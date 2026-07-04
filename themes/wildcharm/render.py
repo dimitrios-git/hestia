@@ -1329,44 +1329,6 @@ class Wildcharm(ColorScheme):
 '''
 
 
-def render_qimgv(variant: str) -> str:
-    """theme.conf — qimgv's own [Colors] scheme (its per-app theme engine; it
-    ignores the Qt palette unless useSystemColorScheme is on, which derives
-    worse colours than stating ours). Deployed as a COPY (templated_configs),
-    NOT a symlink: QSettings saves the theme back ON EXIT — caught live, a
-    symlinked dest let qimgv write its defaults THROUGH the link and clobber
-    this generated file in the repo checkout. The copy gets rewritten by qimgv
-    freely (comments dropped, keys reordered — cosmetic); a --tags dotfiles
-    re-run resets it from the palette. background_fullscreen stays pure black
-    in both variants — a black surround for fullscreen photos, like every
-    dedicated viewer."""
-    r, e = vroles(variant), vext(variant)
-    keys = {
-        "accent": r["accent"],
-        "background": r["bg"],
-        "background_fullscreen": e["ink"],
-        "folderview": r["bg"],
-        "folderview_topbar": r["surface"],
-        "icons": r["muted"],
-        "overlay": r["surface"],
-        "overlay_text": r["text"],
-        "scrollbar": r["border"],
-        "text": r["text"],
-        "widget": r["surface"],
-        "widget_border": r["border"],
-    }
-    lines = [f"; {PROVENANCE}",
-             f"; qimgv colours — wildcharm {variant} (theme-dark/theme-light pair; the",
-             "; bootstrap COPIES the `theme_variant` one to ~/.config/qimgv/theme.conf —",
-             "; qimgv rewrites that copy on exit (drops comments, reorders keys), which",
-             "; is why it is not a symlink: it would write through into this repo file.",
-             "",
-             "[Colors]"]
-    lines += [f"{k}={v}" for k, v in keys.items()]
-    lines.append("")
-    return "\n".join(lines)
-
-
 OUTPUTS = {
     REPO / "user/bat/themes/wildcharm-dark.tmTheme": lambda: render_tmtheme("dark"),
     REPO / "user/bat/themes/wildcharm-light.tmTheme": lambda: render_tmtheme("light"),
@@ -1403,8 +1365,6 @@ OUTPUTS = {
     REPO / "user/yazi/theme-light.toml": lambda: render_yazi("light"),
     REPO / "user/ranger/colorschemes/wildcharm-dark.py": lambda: render_ranger("dark"),
     REPO / "user/ranger/colorschemes/wildcharm-light.py": lambda: render_ranger("light"),
-    REPO / "user/qimgv/theme-dark.conf": lambda: render_qimgv("dark"),
-    REPO / "user/qimgv/theme-light.conf": lambda: render_qimgv("light"),
 }
 
 

@@ -48,14 +48,15 @@ enable_thunderbird: false   # install thunderbird (email client; hestia-themed v
 # once the trial concludes. Trim the group to the keepers then.
 enable_file_managers: false # install the file-manager evaluation set (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)
 # Package-only toggle (no role): gates the `image_viewers` apt group below.
-# Default OFF — the KEEPERS of the 2026-07 evaluation, alongside the primary imv
+# Default OFF — the KEEPER of the 2026-07 evaluation, alongside the primary imv
 # (Wayland-native, the vifm/sway integration): ristretto (GTK3; hestia layout +
-# hjkl via user/ristretto/) and qimgv (Qt; its own theme engine — the GENERATED
-# user/qimgv/ pair). Dropped after live trial: nsxiv (single-image X11 viewer,
-# no grid/menus — pointless next to imv) and viu (half-block terminal renderer;
-# the vifm in-pane preview experiment was reverted — not the ASCII look hoped
-# for, and imv is one keypress away).
-enable_image_viewers: false # install the image-viewer keepers (ristretto/qimgv)
+# h/l accels via user/ristretto/, accent thumbnail selection via the gtk-3.0
+# gtk.css style properties). Dropped after live trial: nsxiv (single-image X11
+# viewer, no grid/menus), viu (half-blocks, not the ASCII look hoped for — the
+# vifm in-pane preview experiment reverted), and qimgv (its own theme engine
+# covered the main surfaces but menus/icons stayed unthemed — not worth the
+# road; it also saves its theme on exit, see the 6f5051a clobber story).
+enable_image_viewers: false # install the image-viewer keeper (ristretto)
 # Default OFF — installs the prebuilt #d7005f Yaru ICON theme (a ~27 MB sha256-verified
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
@@ -241,11 +242,6 @@ templated_configs:
   # at the NEXT login (a live xfconfd holds the channel in memory).
   - { src: user/ristretto/ristretto.xml.j2, dest: "{{ target_home }}/.config/xfce4/xfconf/xfce-perchannel-xml/ristretto.xml" }
   - { src: user/ristretto/accels.scm,       dest: "{{ target_home }}/.config/ristretto/accels.scm" }
-  # qimgv: COPY too — QSettings saves the theme back ON EXIT (caught live: a
-  # symlinked dest let qimgv write THROUGH the link and clobber the generated
-  # file in the repo checkout). The src is the GENERATED pair (render.py),
-  # variant-picked; qimgv may rewrite its copy freely, a re-run resets it.
-  - { src: "user/qimgv/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/qimgv/theme.conf" }
 
 # --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
 # Sensible defaults so a fresh checkout renders without host_vars; real machines
@@ -354,11 +350,11 @@ apt_packages:
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
-  image_viewers: [ristretto, qimgv]              # enable_image_viewers (default off; the evaluation keepers)
+  image_viewers: [ristretto]                     # enable_image_viewers (default off; the evaluation keeper)
   # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)
   # outside Plasma — start-sway exports QT_QPA_PLATFORMTHEME=kde when it's installed.
-  # Needed by the KDE file managers (dolphin/krusader don't self-apply a scheme), by
-  # bare-Qt apps (qimgv), and useful to kdenlive too — hence the any-toggle gate below.
+  # Needed by the KDE file managers (dolphin/krusader don't self-apply a scheme) and
+  # useful to kdenlive too, hence the either-toggle gate below.
   qt_platform:  [plasma-integration]
   browser:      [chromium]                       # enable_headless_browser (headless dev/testing; also satisfies Playwright/Puppeteer runtime libs)
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
@@ -373,7 +369,7 @@ package_group_features:
   video:       "{{ enable_kdenlive | bool }}"
   email:       "{{ enable_thunderbird | bool }}"
   file_managers: "{{ enable_file_managers | bool }}"
-  qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) or (enable_image_viewers | bool) }}"
+  qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
   image_viewers: "{{ enable_image_viewers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"

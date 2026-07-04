@@ -4,3 +4,23 @@
  * that still keys off the legacy theme_selected_bg_color, plus a home for future tweaks. */
 @define-color theme_selected_bg_color #d7005f;   /* accent: selection / highlight bg */
 @define-color theme_selected_fg_color #ffffff;   /* text on the accent */
+
+/* Ristretto's thumbnail bar (RsttoIconBar) cairo-draws its own selection from
+ * these WIDGET STYLE PROPERTIES, falling back to hardcoded XP-ish light blues
+ * (#c1d2ee fill / #316ac5 border — icon_bar.c) that ignore the GTK theme
+ * entirely. Point them at the palette: active = the shown image (accent fill,
+ * accent_dark edge, white label), cursor = keyboard position (accent_dark fill,
+ * accent edge) — all variant-invariant accent-family values. Two gotchas,
+ * bisected live: the selector MUST be `*` (GTK 3.20+ doesn't match custom
+ * widgets by type name — RsttoIconBar's CSS node is the generic "widget"; the
+ * -RsttoIconBar- prefix already namespaces the properties, so `*` leaks
+ * nowhere), and the values must be literal colours (the style-property GdkRGBA
+ * parser choked on mix()/@named forms — the rule silently did nothing). */
+* {
+    -RsttoIconBar-active-item-fill-color: #d7005f;
+    -RsttoIconBar-active-item-border-color: #9b0040;
+    -RsttoIconBar-active-item-text-color: #ffffff;
+    -RsttoIconBar-cursor-item-fill-color: #9b0040;
+    -RsttoIconBar-cursor-item-border-color: #d7005f;
+    -RsttoIconBar-cursor-item-text-color: #ffffff;
+}

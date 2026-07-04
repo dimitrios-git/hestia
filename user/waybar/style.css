@@ -20,6 +20,18 @@ window#waybar {
     color: @text;
 }
 
+/* App launcher — the accent Debian swirl at the far left (start-menu spot);
+   click toggles wofi with the same pgrep toggle as $mod+d, so the launcher
+   is reachable by mouse alone. Was the decorative far-right custom/debian. */
+#custom-launcher {
+    color: @accent;
+    padding: 0 12px 0 10px;
+}
+
+#custom-launcher:hover {
+    background: @surface_alt;
+}
+
 #workspaces {
     padding: 0 4px;
 }
@@ -92,11 +104,6 @@ window#waybar {
 #clock {
     font-weight: bold;
     padding-right: 16px;
-}
-
-#custom-debian {
-    color: @accent;
-    padding-right: 14px;
 }
 
 #pulseaudio.muted {

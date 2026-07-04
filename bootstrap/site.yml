@@ -39,6 +39,9 @@
     - role: tailscale  # Tailscale mesh VPN from its own apt repo (root); `tailscale up` stays manual
       tags: [system, tailscale]
       when: enable_tailscale | default(true) | bool
+    - role: firefoxpwa # PWAsForFirefox native connector from its vendor apt repo (root); the Firefox extension + per-site installs stay manual
+      tags: [system, firefoxpwa]
+      when: enable_firefoxpwa | default(true) | bool
     - role: samba      # layer-(a) system config: Samba share to /etc (root)
       tags: [system, samba]
       when: enable_samba | default(true) | bool

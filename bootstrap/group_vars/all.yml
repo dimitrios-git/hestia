@@ -67,6 +67,16 @@ enable_yaru_icons: false    # install the prebuilt Yaru-hestia icon theme (yaru_
 # the agent can `chromium --headless --screenshot` directly. Heavy (~a few hundred MB)
 # but broadly useful, so it's part of the full host — a lean spin sets this false.
 enable_headless_browser: true   # install chromium for headless dev/testing (package-only)
+# The assumed desktop browser (package-only toggle): the sway config's
+# inhibit_idle media rules, the GTK3 hestia-dark chrome theming, and the portal
+# color-scheme work all presuppose Firefox — but it was never in the manifest
+# (this machine got firefox-esr from Debian's desktop task; a lean spin would
+# come up browserless). ESR because that is what Debian ships.
+enable_firefox: true        # install firefox-esr (the desktop browser)
+# PWAsForFirefox: the firefoxpwa role adds the vendor apt repo + native
+# connector — the FFPWA-* windows (Netflix/YouTube/…) the sway config already
+# handles. The in-Firefox extension + per-site installs stay manual.
+enable_firefoxpwa: true     # install firefoxpwa from its vendor repo (firefoxpwa role)
 
 # --- Theme variant (M7, docs/theme-roadmap.md) ----------------------------------
 # dark|light — selects which GENERATED theme fragments the dotfiles role links
@@ -358,6 +368,7 @@ apt_packages:
   qt_platform:  [plasma-integration]
   browser:      [chromium]                       # enable_headless_browser (headless dev/testing; also satisfies Playwright/Puppeteer runtime libs)
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
+  firefox:      [firefox-esr]                    # enable_firefox (the desktop browser — see the toggle comment)
 
 # Maps a feature-gated apt group -> its toggle. The `packages` role skips a group
 # whose toggle is false, so a disabled feature doesn't drag in its packages.
@@ -373,3 +384,4 @@ package_group_features:
   image_viewers: "{{ enable_image_viewers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"
+  firefox:     "{{ enable_firefox | bool }}"

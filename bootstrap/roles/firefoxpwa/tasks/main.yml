@@ -1,0 +1,48 @@
+---
+# Install firefoxpwa (the PWAsForFirefox native connector) from its official
+# packagecloud apt repo — it is NOT in Debian apt. Root (become). This is what
+# turns web apps into the FFPWA-* windows the sway config already handles
+# (per-PWA app_ids, the `inhibit_idle fullscreen` media rules) — each PWA is a
+# GTK3 Firefox window, so the hestia theming applies for free.
+#
+# The repo is distro-agnostic (suite `any`, matching the vendor's documented
+# one-liner); the signing key ships ASCII-armored and apt (trixie) accepts
+# armored .asc keyrings in signed-by, so no dearmor step. This role installs
+# the PACKAGE only — the in-Firefox "Progressive Web Apps for Firefox"
+# extension and the per-site PWA installs are irreducibly interactive and stay
+# MANUAL (like `tailscale up`); the role prints that reminder at the end.
+# (A pre-existing repo-less .deb install of the same package is simply adopted
+# by apt once the repo is known — that is how this machine started.)
+
+- name: Install the firefoxpwa apt signing key (armored)
+  ansible.builtin.get_url:
+    url: https://packagecloud.io/filips/FirefoxPWA/gpgkey
+    dest: /usr/share/keyrings/firefoxpwa-archive-keyring.asc
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Add the firefoxpwa apt repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/firefoxpwa.list
+    content: "deb [signed-by=/usr/share/keyrings/firefoxpwa-archive-keyring.asc] https://packagecloud.io/filips/FirefoxPWA/any any main\n"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Install firefoxpwa (refresh the cache so the new repo is seen)
+  ansible.builtin.apt:
+    name: firefoxpwa
+    state: present
+    update_cache: true
+  become: true
+
+- name: The irreducibly-manual Firefox side (printed, not automated)
+  ansible.builtin.debug:
+    msg: >-
+      firefoxpwa installed. Manual (in Firefox): install the 'Progressive Web
+      Apps for Firefox' extension, then install each site as a PWA from its
+      toolbar button — every PWA gets its own FFPWA-<ULID> window the sway
+      config already themes and idle-inhibits.

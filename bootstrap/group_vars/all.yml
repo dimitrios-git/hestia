@@ -39,11 +39,14 @@ enable_kdenlive: false      # install kdenlive (Qt6/KF6 video editor; Qt-theming
 enable_thunderbird: false   # install thunderbird (email client; hestia-themed via userChrome)
 # Package-ish toggle (no role): gates the `file_managers` apt group below AND the
 # yazi/ya localbin entries (their `enabled:` key). Default OFF — an EVALUATION set
-# alongside the primary vifm: ranger + yazi (terminal), krusader (dual-pane KDE;
-# rides the Hestia kdeglobals scheme like kdenlive), thunar + nemo (GTK3 GUI; pick
-# up hestia/hestia-dark + Yaru-hestia automatically). Trim or drop the group once
-# the keepers are chosen.
-enable_file_managers: false # install the file-manager evaluation set (ranger/yazi/krusader/thunar/nemo)
+# alongside the primary vifm (which STAYS the terminal primary — the trial verdict
+# on speed was no contest): ranger + yazi (terminal), krusader + dolphin (KDE;
+# ride the Hestia kdeglobals scheme like kdenlive), thunar + nemo + nautilus (GTK
+# GUI; thunar/nemo are GTK3 — hestia/hestia-dark + Yaru-hestia apply automatically;
+# nautilus is GTK4/libadwaita — dark-only until Debian 14, and the live test target
+# for the staged gtk-4.0/gtk.css accent). nemo is the intended default GUI manager
+# once the trial concludes. Trim the group to the keepers then.
+enable_file_managers: false # install the file-manager evaluation set (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)
 # Default OFF — installs the prebuilt #d7005f Yaru ICON theme (a ~27 MB sha256-verified
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
@@ -323,7 +326,7 @@ apt_packages:
   office:       [libreoffice]                   # enable_libreoffice (heavy, default off)
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
-  file_managers: [ranger, thunar, nemo, krusader]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
+  file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
   browser:      [chromium]                       # enable_headless_browser (headless dev/testing; also satisfies Playwright/Puppeteer runtime libs)
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
 

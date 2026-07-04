@@ -62,6 +62,23 @@ case "$mime" in
     inode/x-empty)
         echo "(empty file)"
         ;;
+    image/*)
+        # In-pane image preview as ANSI half-blocks via viu (2026-07, the
+        # image-viewer evaluation; ~10-90ms at pane size — measured). Piped viu
+        # emits plain SGR that vifm renders, where the kitty graphics protocol
+        # never worked in this pane. -s: first GIF frame only (an animation
+        # would stream frames forever); -b: force blocks, never a graphics
+        # protocol. Falls back to the old mediainfo text info when viu is
+        # absent (localbin, gated on enable_image_viewers) or can't decode the
+        # format (svg/avif) — the || catches both. Enter still opens imv.
+        if command -v viu >/dev/null 2>&1 && viu -s -b -w "$w" -h "$h" -- "$f" 2>/dev/null; then
+            :
+        elif command -v mediainfo >/dev/null 2>&1; then
+            mediainfo -- "$f"
+        else
+            file -Lb -- "$f"
+        fi
+        ;;
     text/* | application/json | application/javascript | application/xml \
     | application/x-shellscript | application/x-yaml | application/x-toml \
     | application/x-perl | application/x-php | application/x-ruby \

@@ -54,6 +54,9 @@
     - role: credentials  # login auto-unlock launcher-untangle (SSH + GPG)
       tags: [credentials]
       when: enable_credentials | default(true) | bool
+    - role: razer      # Razer peripherals: openrazer (DKMS) + polychromatic from its vendor repo — opt-in, hardware-detected
+      tags: [system, razer]
+      when: enable_razer | default(false) | bool
     - role: nvidia     # proprietary NVIDIA driver (non-free) — opt-in, needs reboot
       tags: [nvidia]
       when: enable_nvidia | default(false) | bool

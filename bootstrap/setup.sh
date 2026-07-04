@@ -127,6 +127,7 @@ enable_firefoxpwa: $enable_firefoxpwa
 enable_trading: $enable_trading
 enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
+enable_razer: $enable_razer
 samba_lan_subnet: "$samba_lan_subnet"
 cmus_music_dir: "$cmus_music_dir"
 theme_variant: "$theme_variant"
@@ -253,6 +254,10 @@ det_nvidia=false
 if lspci 2>/dev/null | grep -qi 'nvidia'; then det_nvidia=true
 elif grep -qi 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then det_nvidia=true; fi
 def_nvidia=$(cur enable_nvidia); def_nvidia=${def_nvidia:-$det_nvidia}
+# Razer: detect gear via the USB vendor id 1532 in sysfs (usbutils may be absent).
+det_razer=false
+if grep -qi '^1532$' /sys/bus/usb/devices/*/idVendor 2>/dev/null; then det_razer=true; fi
+def_razer=$(cur enable_razer); def_razer=${def_razer:-$det_razer}
 def_theme=$(cur theme_variant); def_theme=${def_theme:-dark}
 
 # Identity defaults: existing host_vars -> existing git config -> gpg/ssh detect.
@@ -296,6 +301,7 @@ askyn enable_firefoxpwa  "Install firefoxpwa? (PWA support — vendor apt repo)"
 askyn enable_trading     "Install trading apps? (TradingView Desktop — vendor .deb)" "$def_trading"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
+askyn enable_razer       "Install Razer peripheral support? (openrazer + polychromatic; needs reboot)" "$def_razer"
 ask   cmus_music_dir     "Music library directory (cmus)"           "$def_music"
 # Not a boolean — validate the two allowed values (a typo would break the manifest's
 # variant-picked symlink sources).
@@ -334,6 +340,7 @@ cat <<EOF
     enable_firefoxpwa  = $enable_firefoxpwa
     enable_trading     = $enable_trading
     enable_nvidia      = $enable_nvidia
+    enable_razer       = $enable_razer
     cmus_music_dir     = $cmus_music_dir
     theme_variant      = $theme_variant
     git identity       = $git_user_name <$git_user_email>$( [ -n "$git_signingkey" ] && echo "   signing $git_signingkey" )

@@ -1,0 +1,75 @@
+---
+# Razer peripherals (enable_razer, hardware-detected by setup.sh like NVIDIA):
+# OpenRazer (the userspace daemon + DKMS kernel driver — in Debian apt) and
+# Polychromatic (the RGB/config GUI — NOT in Debian; the vendor runs its own
+# Debian repo at debian.polychromatic.app, which replaced their SHA-1-signed
+# Launchpad PPA that trixie's apt rejects since 2026-02. The OBS hardware:razer
+# repo was checked too — it carries openrazer/razergenie but no polychromatic).
+# Root (become).
+#
+# The DKMS driver builds against the running kernel's headers; dkms is pulled
+# by the driver package and this machine's headers ride the nvidia role, but a
+# Razer-only spin needs them too — hence linux-headers-amd64 here (the razer
+# hardware the driver supports is x86-desktop gear; the role skips other
+# arches wholesale). Manual afterwards (printed at the end): re-login for the
+# plugdev group, and a REBOOT (or device replug) for the module to bind.
+
+- name: Detect CPU architecture
+  ansible.builtin.command: uname -m
+  register: _rz_arch
+  changed_when: false
+
+- name: "razer: no amd64 -> skip (headers metapackage + Razer gear are x86)"
+  ansible.builtin.debug:
+    msg: "Skipping the razer role on {{ _rz_arch.stdout }}."
+  when: _rz_arch.stdout != 'x86_64'
+
+- name: Install OpenRazer + Polychromatic
+  when: _rz_arch.stdout == 'x86_64'
+  block:
+    - name: Install the Polychromatic apt signing key (armored)
+      ansible.builtin.get_url:
+        url: https://debian.polychromatic.app/key.asc
+        dest: /usr/share/keyrings/polychromatic-archive-keyring.asc
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Detect the Debian codename (the repo is per-release)
+      ansible.builtin.shell: . /etc/os-release && printf '%s' "$VERSION_CODENAME"
+      register: _rz_codename
+      changed_when: false
+
+    - name: Add the Polychromatic apt repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/polychromatic.list
+        content: "deb [signed-by=/usr/share/keyrings/polychromatic-archive-keyring.asc] https://debian.polychromatic.app {{ _rz_codename.stdout }} main\n"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Install openrazer (Debian apt) + polychromatic (vendor repo) + headers for DKMS
+      ansible.builtin.apt:
+        name:
+          - openrazer-meta
+          - linux-headers-amd64
+          - polychromatic
+        state: present
+        update_cache: true
+      become: true
+
+    - name: Ensure the user is in plugdev (openrazer's device-access group)
+      ansible.builtin.user:
+        name: "{{ lookup('env', 'USER') }}"
+        groups: plugdev
+        append: true
+      become: true
+
+    - name: The manual tail (printed, not automated)
+      ansible.builtin.debug:
+        msg: >-
+          OpenRazer + Polychromatic installed. Manual: RE-LOGIN if plugdev was
+          just added, and REBOOT (or unplug/replug the device) so the DKMS
+          module binds — then run `polychromatic-controller`.

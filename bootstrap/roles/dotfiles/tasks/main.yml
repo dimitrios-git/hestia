@@ -125,3 +125,9 @@
   ansible.builtin.command: "{{ _bat_bin.stdout }} cache --build"
   when: _bat_bin.stdout | length > 0
   changed_when: false
+
+# Thunderbird theming rides its own task file: the profile dir is randomized,
+# so the dests are GLOBBED rather than listed in the fixed-dest manifest above
+# (self-skips when no profile exists yet).
+- name: Deploy Thunderbird theming into existing profiles
+  ansible.builtin.import_tasks: thunderbird.yml

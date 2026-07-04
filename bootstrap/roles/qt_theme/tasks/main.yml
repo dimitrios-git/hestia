@@ -39,16 +39,21 @@
   vars:
     qt_scheme: "{{ qt_theme_schemes[theme_variant] }}"
 
-# Kdenlive does NOT follow the system kdeglobals scheme on its own — it stores its own
-# choice in kdenliverc [UiSettings] ColorSchemePath, so on a fresh machine it would come
-# up on bundled Breeze until selected by hand. This is the per-app "selection" step (the
-# Qt analogue of gtk_theme's gsettings gtk-theme=hestia-dark, which sway sets at login):
-# point Kdenlive at the scheme so a from-zero bootstrap is themed with no manual pick.
-# kwriteconfig6 is KDE's own KConfig writer (from libkf6config-bin, which Kdenlive pulls
-# in) — format-correct, idempotent, and no new collection dependency. Gated on
-# enable_kdenlive so a Kdenlive-less spin skips it entirely.
-- name: Default Kdenlive to the hestia colour scheme
-  when: enable_kdenlive | default(false) | bool
+# Some KDE apps do NOT follow the system kdeglobals scheme on their own — they keep a
+# per-app choice in <app>rc [UiSettings] ColorSchemePath (KColorSchemeManager), so on a
+# fresh machine they'd come up on bundled Breeze until selected by hand. This is the
+# per-app "selection" step (the Qt analogue of gtk_theme's gsettings gtk-theme=hestia-dark,
+# which sway sets at login): point each installed app at the scheme so a from-zero
+# bootstrap is themed with no manual pick. kwriteconfig6 is KDE's own KConfig writer (from
+# libkf6config-bin, which any KF6 app pulls in) — format-correct, idempotent, and no new
+# collection dependency. Kdenlive proved the mechanism; the file-manager evaluation adds
+# krusader + dolphin on their toggle — the rc list assembles from whichever are enabled.
+- name: Default KDE apps to the hestia colour scheme
+  vars:
+    _qt_scheme_rcs: >-
+      {{ (['kdenliverc'] if enable_kdenlive | default(false) | bool else [])
+       + (['krusaderrc', 'dolphinrc'] if enable_file_managers | default(false) | bool else []) }}
+  when: _qt_scheme_rcs | length > 0
   block:
     - name: Find the KF6 config tools (kwriteconfig6 / kreadconfig6)
       ansible.builtin.command: which kwriteconfig6 kreadconfig6
@@ -56,20 +61,21 @@
       changed_when: false
       failed_when: false
 
-    - name: Point Kdenlive's UiSettings at the hestia scheme (only if the KF6 tools exist)
+    - name: Point each app's UiSettings at the hestia scheme (only if the KF6 tools exist)
       when: _qt_kwc.rc == 0
       block:
-        - name: Read Kdenlive's current ColorSchemePath
+        - name: Read each app's current ColorSchemePath
           ansible.builtin.command:
             argv:
               - kreadconfig6
               - --file
-              - "{{ target_home }}/.config/kdenliverc"
+              - "{{ target_home }}/.config/{{ item }}"
               - --group
               - UiSettings
               - --key
               - ColorSchemePath
-          register: _qt_kdenlive_scheme
+          loop: "{{ _qt_scheme_rcs }}"
+          register: _qt_cur_scheme
           changed_when: false
           failed_when: false
 
@@ -78,11 +84,14 @@
             argv:
               - kwriteconfig6
               - --file
-              - "{{ target_home }}/.config/kdenliverc"
+              - "{{ target_home }}/.config/{{ item.item }}"
               - --group
               - UiSettings
               - --key
               - ColorSchemePath
               - "{{ qt_theme_schemes[theme_variant].name }}.colors"
-          when: (_qt_kdenlive_scheme.stdout | trim) != (qt_theme_schemes[theme_variant].name ~ '.colors')
+          loop: "{{ _qt_cur_scheme.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+          when: (item.stdout | default('') | trim) != (qt_theme_schemes[theme_variant].name ~ '.colors')
           changed_when: true

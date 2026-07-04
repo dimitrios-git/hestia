@@ -172,6 +172,12 @@ dotfile_links:
   # GENERATED glamour style pair (render.py) — dest keeps the name glow.yml points
   # at; src picked by `theme_variant` (M7).
   - { src: "user/glow/wildcharm-{{ theme_variant }}.json", dest: "{{ target_home }}/.config/glow/wildcharm.json" }
+  # file-manager evaluation themes (enable_file_managers gates the APPS; the
+  # config symlinks below are unconditional — harmless without the app, and a
+  # manual install picks them straight up, same ruling as every other config)
+  - { src: "user/yazi/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/yazi/theme.toml" }
+  - { src: user/ranger/rc.conf,             dest: "{{ target_home }}/.config/ranger/rc.conf" }
+  - { src: "user/ranger/colorschemes/wildcharm-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/wildcharm.py" }
   - { src: user/xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
   # (gtk-3.0 settings.ini moved to templated_configs — M7: its theme name follows
   # `theme_variant`; the css overlays stay variant-invariant symlinks.)

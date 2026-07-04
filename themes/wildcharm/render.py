@@ -1011,6 +1011,324 @@ def render_thunderbird(kind: str) -> str:
 """
 
 
+def render_yazi(variant: str) -> str:
+    """theme.toml — yazi 26.x ([mgr]/[tabs]/[indicator] key era). Only the keys
+    we restyle are emitted — yazi deep-merges the user theme over its embedded
+    defaults, so omitted sections ([icon], separators, …) keep upstream values.
+    File-type rules mirror filetype_colors(), so yazi agrees with ls + vifm by
+    construction; code previews reuse bat's DEPLOYED wildcharm.tmTheme via
+    syntect_theme (the variant symlink, so it follows theme_variant too)."""
+    r, a, e = vroles(variant), vansi(variant), vext(variant)
+    ft = filetype_colors(variant)
+    acc, accfg, accd = r["accent"], r["accent_fg"], r["accent_dark"]
+    # the hestia TUI cursor bar — the exact vifm CurrLine / cmus selection pair
+    if variant == "dark":
+        bar_bg, bar_fg = e["ui_grey"], e["ink"]
+    else:
+        bar_bg, bar_fg = e["ui_dark"], r["accent_fg"]
+
+    def st(**kw):  # an inline TOML style table: fg/bg hex strings, flag attrs
+        parts = []
+        for k, v in kw.items():
+            parts.append(f'{k} = true' if v is True else f'{k} = "{v}"')
+        return "{ " + ", ".join(parts) + " }"
+
+    archive_mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}"
+    return f"""# {PROVENANCE}
+# yazi theme — wildcharm {variant} (theme-dark/theme-light pair; the bootstrap
+# symlinks the `theme_variant` one to ~/.config/yazi/theme.toml). Partial on
+# purpose: yazi merges this over its embedded defaults.
+
+[mgr]
+cwd = {st(fg=acc, bold=True)}
+find_keyword = {st(fg=e["ink"], bg=a["bright_yellow"], bold=True)}
+find_position = {st(fg=a["bright_magenta"], bold=True)}
+marker_copied = {st(fg=a["green"], bg=a["green"])}
+marker_cut = {st(fg=a["bright_red"], bg=a["bright_red"])}
+marker_marked = {st(fg=a["blue"], bg=a["blue"])}
+marker_selected = {st(fg=acc, bg=acc)}
+count_copied = {st(fg=accfg, bg=a["green"])}
+count_cut = {st(fg=e["ink"], bg=a["bright_red"])}
+count_selected = {st(fg=accfg, bg=acc)}
+border_style = {st(fg=r["border"])}
+syntect_theme = "~/.config/bat/themes/wildcharm.tmTheme"
+
+[indicator]
+parent = {st(fg=bar_fg, bg=bar_bg)}
+current = {st(fg=bar_fg, bg=bar_bg, bold=True)}
+
+[tabs]
+active = {st(fg=accfg, bg=acc, bold=True)}
+inactive = {st(fg=r["muted"], bg=r["surface"])}
+
+[mode]
+normal_main = {st(fg=accfg, bg=acc, bold=True)}
+normal_alt = {st(fg=acc, bg=r["surface"])}
+select_main = {st(fg=accfg, bg=a["blue"], bold=True)}
+select_alt = {st(fg=a["blue"], bg=r["surface"])}
+unset_main = {st(fg=e["ink"], bg=a["bright_yellow"], bold=True)}
+unset_alt = {st(fg=a["bright_yellow"], bg=r["surface"])}
+
+[status]
+perm_sep = {st(fg=r["dim"])}
+perm_type = {st(fg=a["green"])}
+perm_read = {st(fg=a["yellow"])}
+perm_write = {st(fg=acc)}
+perm_exec = {st(fg=a["cyan"])}
+progress_label = {st(bold=True)}
+progress_normal = {st(fg=acc, bg=r["surface"])}
+progress_error = {st(fg=accfg, bg=accd)}
+
+[which]
+mask = {st(bg=r["bg"])}
+cand = {st(fg=a["bright_cyan"])}
+rest = {st(fg=r["dim"])}
+desc = {st(fg=e["purple"])}
+separator_style = {st(fg=r["dim"])}
+
+[confirm]
+border = {st(fg=acc)}
+title = {st(fg=acc, bold=True)}
+btn_yes = {st(fg=accfg, bg=acc)}
+
+[spot]
+border = {st(fg=acc)}
+title = {st(fg=acc, bold=True)}
+tbl_col = {st(fg=acc)}
+tbl_cell = {st(fg=a["bright_yellow"], reversed=True)}
+
+[notify]
+title_info = {st(fg=a["green"])}
+title_warn = {st(fg=a["bright_yellow"])}
+title_error = {st(fg=a["bright_red"])}
+
+[pick]
+border = {st(fg=acc)}
+active = {st(fg=acc, bold=True)}
+
+[input]
+border = {st(fg=acc)}
+
+[cmp]
+border = {st(fg=acc)}
+
+[tasks]
+border = {st(fg=acc)}
+hovered = {st(fg=acc, bold=True)}
+
+[help]
+on = {st(fg=a["bright_cyan"])}
+run = {st(fg=a["bright_magenta"])}
+desc = {st(fg=r["dim"])}
+footer = {st(fg=r["bg"], bg=r["muted"])}
+
+# File-type rules — from render.py's shared filetype_colors() table (the same
+# one vifm's colorscheme and ~/.dircolors render from, so all three agree).
+[filetype]
+rules = [
+    {st(fg=ft["images"])[:-1]}, mime = "image/*" }},
+    {st(fg=ft["video"])[:-1]}, mime = "video/*" }},
+    {st(fg=ft["audio"])[:-1]}, mime = "audio/*" }},
+    {st(fg=ft["archives"])[:-1]}, mime = "{archive_mime}" }},
+    {st(fg=ft["docs"])[:-1]}, mime = "application/{{pdf,doc,rtf}}" }},
+    {st(fg=ft["broken"], crossed=True)[:-1]}, url = "*", is = "orphan" }},
+    {st(fg=ft["exec"])[:-1]}, url = "*", is = "exec" }},
+    {st(fg=accfg, bg=accd)[:-1]}, url = "*", is = "dummy" }},
+    {st(fg=accfg, bg=accd)[:-1]}, url = "*/", is = "dummy" }},
+    {st(fg=ft["dir"], bold=True)[:-1]}, url = "*/" }},
+]
+"""
+
+
+def render_ranger(variant: str) -> str:
+    """colorschemes/wildcharm.py — ranger. The context-check structure follows
+    ranger's stock default.py; colours are exact xterm-256 indices resolved
+    from the palette (filetype_colors() for the file classes — the same table
+    as vifm/dircolors — plus the accent identity in the hostname/tabs/marks/
+    progress spots). One class per variant file; the bootstrap symlinks the
+    theme_variant one to colorschemes/wildcharm.py (rc.conf is variant-blind)."""
+    r, a, e = vroles(variant), vansi(variant), vext(variant)
+    ft = filetype_colors(variant)
+    x = xterm_index
+    # the hestia TUI cursor-bar fill (vifm CurrLine / the yazi indicator pair):
+    # with curses `reverse`, setting fg paints the BAR, text becomes the ground
+    bar = e["ui_grey"] if variant == "dark" else e["ui_dark"]
+    consts = "\n".join(
+        f"{name} = {x(val)}"
+        for name, val in [
+            ("ACCENT", r["accent"]), ("ACCENT_DARK", r["accent_dark"]),
+            ("DIM", r["dim"]), ("MUTED", r["muted"]), ("BORDER", e["line_grey"]),
+            ("DIR", ft["dir"]), ("EXEC", ft["exec"]), ("LINK", ft["link"]),
+            ("BROKEN", ft["broken"]), ("FIFO", ft["fifo"]), ("DEVICE", ft["device"]),
+            ("SOCKET", ft["socket"]), ("IMAGES", ft["images"]), ("VIDEO", ft["video"]),
+            ("AUDIO", ft["audio"]), ("DOCS", ft["docs"]), ("ARCHIVES", ft["archives"]),
+            ("MARKED", a["bright_yellow"]), ("GREEN", a["green"]),
+            ("CYAN", a["cyan"]), ("MAGENTA", a["bright_magenta"]),
+            ("BRIGHT_RED", a["bright_red"]), ("YELLOW", a["yellow"]),
+            ("BAR", bar),
+        ]
+    )
+    return f'''# {PROVENANCE}
+# ranger colorscheme — wildcharm {variant} (wildcharm-dark/-light pair; the
+# bootstrap symlinks the `theme_variant` one to colorschemes/wildcharm.py).
+# Structure follows ranger's stock default.py; colours are xterm-256 indices
+# resolved from palette.yml — the file classes from the SAME filetype_colors()
+# table as vifm + dircolors, so all of them agree by construction.
+
+from __future__ import absolute_import, division, print_function
+
+from ranger.gui.color import bold, default, default_colors, normal, reverse
+from ranger.gui.colorscheme import ColorScheme
+
+{consts}
+
+
+class Wildcharm(ColorScheme):
+    progress_bar_color = ACCENT
+
+    def use(self, context):  # noqa: C901  pylint: disable=too-many-branches,too-many-statements
+        fg, bg, attr = default_colors
+
+        if context.reset:
+            return default_colors
+
+        elif context.in_browser:
+            attr = reverse if context.selected else normal
+            if context.empty or context.error:
+                fg, bg = {x(r["accent_fg"])}, ACCENT_DARK
+            if context.border:
+                fg = BORDER
+            if context.media:
+                fg = IMAGES if context.image else (AUDIO if context.audio else VIDEO)
+            if context.document:
+                fg = DOCS
+            if context.container:
+                fg = ARCHIVES
+            if context.directory:
+                attr |= bold
+                fg = DIR
+            elif context.executable and not any(
+                    (context.media, context.container, context.fifo, context.socket)):
+                attr |= bold
+                fg = EXEC
+            if context.socket:
+                attr |= bold
+                fg = SOCKET
+            if context.fifo:
+                fg = FIFO
+            if context.device:
+                attr |= bold
+                fg = DEVICE
+            if context.link:
+                fg = LINK if context.good else BROKEN
+            if context.tag_marker and not context.selected:
+                attr |= bold
+                fg = ACCENT
+            if not context.selected and (context.cut or context.copied):
+                attr |= bold
+                fg = DIM
+            if context.main_column:
+                if context.selected:
+                    attr |= bold
+                if context.marked:
+                    attr |= bold
+                    fg = MARKED
+            if context.badinfo:
+                if attr & reverse:
+                    bg = MAGENTA
+                else:
+                    fg = MAGENTA
+            if context.selected:
+                # the uniform hestia cursor bar (vifm CurrLine / yazi indicator)
+                # instead of reverse-video over the item's own colour
+                fg = BAR
+            if context.inactive_pane:
+                fg = MUTED
+
+        elif context.in_titlebar:
+            if context.hostname:
+                fg = BRIGHT_RED if context.bad else ACCENT
+            elif context.directory:
+                fg = DIR
+            elif context.tab:
+                if context.good:
+                    fg, bg = {x(r["accent_fg"])}, ACCENT
+            elif context.link:
+                fg = LINK
+            attr |= bold
+
+        elif context.in_statusbar:
+            if context.permissions:
+                fg = CYAN if context.good else BRIGHT_RED
+            if context.marked:
+                attr |= bold | reverse
+                fg = MARKED
+            if context.frozen:
+                attr |= bold | reverse
+                fg = CYAN
+            if context.message:
+                if context.bad:
+                    attr |= bold
+                    fg = BRIGHT_RED
+            if context.loaded:
+                bg = self.progress_bar_color
+            if context.vcsinfo:
+                fg = DIR
+                attr &= ~bold
+            if context.vcscommit:
+                fg = YELLOW
+                attr &= ~bold
+            if context.vcsdate:
+                fg = CYAN
+                attr &= ~bold
+
+        if context.text and context.highlight:
+            attr |= reverse
+
+        if context.in_taskview:
+            if context.title:
+                fg = DIR
+            if context.selected:
+                attr |= reverse
+            if context.loaded:
+                if context.selected:
+                    fg = self.progress_bar_color
+                else:
+                    bg = self.progress_bar_color
+
+        if context.vcsfile and not context.selected:
+            attr &= ~bold
+            if context.vcsconflict:
+                fg = MAGENTA
+            elif context.vcsuntracked:
+                fg = ACCENT
+            elif context.vcschanged:
+                fg = ACCENT
+            elif context.vcsunknown:
+                fg = BRIGHT_RED
+            elif context.vcsstaged:
+                fg = GREEN
+            elif context.vcssync:
+                fg = GREEN
+            elif context.vcsignored:
+                fg = default
+        elif context.vcsremote and not context.selected:
+            attr &= ~bold
+            if context.vcssync or context.vcsnone:
+                fg = GREEN
+            elif context.vcsbehind:
+                fg = BRIGHT_RED
+            elif context.vcsahead:
+                fg = DIR
+            elif context.vcsdiverged:
+                fg = MAGENTA
+            elif context.vcsunknown:
+                fg = BRIGHT_RED
+
+        return fg, bg, attr
+'''
+
+
 OUTPUTS = {
     REPO / "user/bat/themes/wildcharm-dark.tmTheme": lambda: render_tmtheme("dark"),
     REPO / "user/bat/themes/wildcharm-light.tmTheme": lambda: render_tmtheme("light"),
@@ -1043,6 +1361,10 @@ OUTPUTS = {
     # single light-dark() files, not pairs — TB follows the portal color-scheme
     REPO / "user/thunderbird/userChrome.css": lambda: render_thunderbird("chrome"),
     REPO / "user/thunderbird/userContent.css": lambda: render_thunderbird("content"),
+    REPO / "user/yazi/theme-dark.toml": lambda: render_yazi("dark"),
+    REPO / "user/yazi/theme-light.toml": lambda: render_yazi("light"),
+    REPO / "user/ranger/colorschemes/wildcharm-dark.py": lambda: render_ranger("dark"),
+    REPO / "user/ranger/colorschemes/wildcharm-light.py": lambda: render_ranger("light"),
 }
 
 

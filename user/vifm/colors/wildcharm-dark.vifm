@@ -10,6 +10,9 @@ highlight clear
 " frame — transparent canvas, terminal ground shows through
 highlight Win        cterm=none         ctermfg=254     ctermbg=default guifg=#e0e0e0 guibg=default
 highlight OtherWin   cterm=none         ctermfg=254     ctermbg=default guifg=#e0e0e0 guibg=default
+" AuxWin recesses the miller PARENT column (the only per-column knob —
+" the cursor bar itself is always CurrLine, in every column)
+highlight AuxWin     cterm=none         ctermfg=default ctermbg=233     guifg=default guibg=#111111
 highlight Border     cterm=none         ctermfg=240     ctermbg=default guifg=#585858 guibg=default
 highlight CmdLine    cterm=none         ctermfg=254     ctermbg=default guifg=#e0e0e0 guibg=default
 

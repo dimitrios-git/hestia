@@ -709,6 +709,13 @@ def render_vifm(variant: str) -> str:
         bar_fg = r["accent_fg"]    # white text on that bar
         tab_fg = r["muted"]
     line_grey = e["line_grey"]
+    # Miller parent-column shade (AuxWin). vifm has no separate group for the
+    # parent column's cursor bar — it always paints CurrLine (fileview.c mixes
+    # CURR_LINE_COLOR for non-main columns too; maintainer-confirmed, Q2A #1844)
+    # — so the supported differentiation is shading the WHOLE aux column one
+    # quiet step off the ground. Light uses surface, NOT extended.sunken: light
+    # sunken is the white below-ground WELL fill, which would read raised here.
+    aux_bg = e["sunken"] if variant == "dark" else r["surface"]
 
     def hl(group, attr, fg, bg="default"):
         cfg = xterm_index(fg) if fg != "default" else "default"
@@ -722,6 +729,9 @@ def render_vifm(variant: str) -> str:
         "\n\" frame — transparent canvas, terminal ground shows through",
         hl("Win", "none", r["text"]),
         hl("OtherWin", "none", r["text"]),
+        "\" AuxWin recesses the miller PARENT column (the only per-column knob —",
+        "\" the cursor bar itself is always CurrLine, in every column)",
+        hl("AuxWin", "none", "default", aux_bg),
         hl("Border", "none", line_grey),
         hl("CmdLine", "none", r["text"]),
         "\n\" title / tab bar",

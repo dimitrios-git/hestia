@@ -9,3 +9,7 @@ gtk-application-prefer-dark-theme={{ '0' if theme_variant == 'light' else '1' }}
 # Yaru-hestia = the #d7005f-accent Yaru icon theme built by the (opt-in) yaru_icons
 # role. Absent on a spin without that role -> GTK falls back to a default icon theme.
 gtk-icon-theme-name=Yaru-hestia
+# Breeze cursors (breeze-cursor-theme, apt) — white on the dark desktop, the
+# standard dark Breeze on light; gsettings + XCURSOR_THEME carry the same pick.
+gtk-cursor-theme-name={{ 'breeze_cursors' if theme_variant == 'light' else 'Breeze_Light' }}
+gtk-cursor-theme-size=24

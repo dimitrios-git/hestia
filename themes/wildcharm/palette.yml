@@ -94,8 +94,10 @@ extended:
   # render-markdown's heading wash (vim), admitted retroactively 0.6.0 — a dark
   # accent-tinted bg, used as a FILL under accent-coloured heading text.
   heading_bg: "#1a0a12"
-  # Below-ground fill (swaylock inside-circle, swaynag buttons/details), admitted
-  # retroactively 0.7.0 — deliberately darker than bg, no role equivalent.
+  # Below-ground fill (swaylock inside-circle, swaynag buttons/details, vifm
+  # AuxWin — the miller parent-column shade; light AuxWin uses surface instead,
+  # see render.py), admitted retroactively 0.7.0 — deliberately darker than bg,
+  # no role equivalent.
   sunken:     "#111111"
   # Max-contrast text ON light fills (vifm/cmus cursor bars, WildMenu/TabLineSel
   # on the accent) — pure black, xterm 16. Variant-invariant (light fills are

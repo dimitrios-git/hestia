@@ -358,9 +358,11 @@ def render_sway(variant: str) -> str:
     r, a = vroles(variant), vansi(variant)
     # Focused-tile border (client.focused in user/sway/config) — cyan, not the
     # accent, so "this tile has focus" reads apart from the red accent surfaces.
-    # Dark rides ANSI 14 (bright_cyan); light drops to ANSI 6 (cyan) — the
-    # bright one washes out against the #f5f5f5 ground.
-    focus = a["bright_cyan"] if variant == "dark" else a["cyan"]
+    # Both variants ride ANSI 14 (bright_cyan): each table's own step (dark
+    # #00d7d7, light #00afaf). Light was cyan-6 (#008787) at first for ground
+    # contrast, but the brighter step won the live A/B — a 2px border needs
+    # less contrast than text.
+    focus = a["bright_cyan"]
     scheme = "prefer-dark" if variant == "dark" else "prefer-light"
     gtk_theme = "hestia-dark" if variant == "dark" else "hestia"
     # KDE Breeze cursors (breeze-cursor-theme, apt): the WHITE cursor on the

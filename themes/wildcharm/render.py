@@ -355,7 +355,12 @@ def render_kitty(variant: str) -> str:
 
 
 def render_sway(variant: str) -> str:
-    r = vroles(variant)
+    r, a = vroles(variant), vansi(variant)
+    # Focused-tile border (client.focused in user/sway/config) — cyan, not the
+    # accent, so "this tile has focus" reads apart from the red accent surfaces.
+    # Dark rides ANSI 14 (bright_cyan); light drops to ANSI 6 (cyan) — the
+    # bright one washes out against the #f5f5f5 ground.
+    focus = a["bright_cyan"] if variant == "dark" else a["cyan"]
     scheme = "prefer-dark" if variant == "dark" else "prefer-light"
     gtk_theme = "hestia-dark" if variant == "dark" else "hestia"
     # KDE Breeze cursors (breeze-cursor-theme, apt): the WHITE cursor on the
@@ -373,6 +378,7 @@ set $text      {r["text"]}
 set $dim       {r["dim"]}
 set $accent    {r["accent"]}
 set $accent_fg {r["accent_fg"]}
+set $focus     {focus}
 
 # Desktop background
 output * bg {r["bg"]} solid_color

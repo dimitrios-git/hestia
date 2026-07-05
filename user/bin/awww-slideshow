@@ -1,0 +1,38 @@
+#!/bin/bash
+# awww-slideshow — minimal slideshow driver for awww, which (like swww before
+# it) has transitions but no built-in cycling. Part of the wallpaper
+# EVALUATION set (enable_wallpapers); symlinked into ~/.local/bin.
+#
+# Usage: awww-slideshow [-d SECONDS] [-t TRANSITION] DIR
+#   -d  seconds between wallpapers (default 1800)
+#   -t  awww transition type (default random; see `awww img --help`)
+# Needs a running `awww-daemon` (started separately). Loops forever in a
+# shuffled order, reshuffling each full pass — run it backgrounded or from an
+# `exec` line. Images: anything awww loads (png/jpg/webp/gif/...).
+
+set -eu
+
+delay=1800
+transition=random
+while getopts d:t: opt; do
+    case $opt in
+        d) delay=$OPTARG ;;
+        t) transition=$OPTARG ;;
+        *) echo "usage: awww-slideshow [-d SECONDS] [-t TRANSITION] DIR" >&2; exit 2 ;;
+    esac
+done
+shift $((OPTIND - 1))
+dir=${1:?usage: awww-slideshow [-d SECONDS] [-t TRANSITION] DIR}
+
+[ -d "$dir" ] || { echo "awww-slideshow: not a directory: $dir" >&2; exit 1; }
+
+while :; do
+    # NUL-safe shuffle; skip dotfiles like vifm/imv do
+    find "$dir" -maxdepth 1 -type f ! -name '.*' -print0 | shuf -z |
+    while IFS= read -r -d '' img; do
+        awww img "$img" --transition-type "$transition" || exit 1
+        sleep "$delay"
+    done
+    # empty dir: don't spin
+    [ -n "$(find "$dir" -maxdepth 1 -type f ! -name '.*' -print -quit)" ] || sleep "$delay"
+done

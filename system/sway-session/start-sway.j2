@@ -26,6 +26,13 @@ export MOZ_ENABLE_WAYLAND=1
 # locked on 1.7 — see docs/theming.md).
 export GTK_THEME=hestia{{ '' if theme_variant == 'light' else '-dark' }}
 
+# Mouse cursor for everything that reads Xcursor conventions (XWayland, Qt,
+# SDL, …): KDE Breeze — white (Breeze_Light) on the dark desktop, standard
+# Breeze on light. sway's own cursor + GTK get the same theme from the sway
+# theme fragment (seat xcursor_theme + the gsettings exec) — keep in sync.
+export XCURSOR_THEME={{ 'breeze_cursors' if theme_variant == 'light' else 'Breeze_Light' }}
+export XCURSOR_SIZE=24
+
 # Qt/KDE: point Qt at KDE's platform-theme plugin (plasma-integration) so Qt apps
 # read ~/.config/kdeglobals — the rendered hestia scheme (qt_theme role). Without a
 # platform theme, KDE apps that don't self-apply a scheme (dolphin, krusader — unlike

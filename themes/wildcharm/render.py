@@ -358,6 +358,10 @@ def render_sway(variant: str) -> str:
     r = vroles(variant)
     scheme = "prefer-dark" if variant == "dark" else "prefer-light"
     gtk_theme = "hestia-dark" if variant == "dark" else "hestia"
+    # KDE Breeze cursors (breeze-cursor-theme, apt): the WHITE cursor on the
+    # dark desktop, the standard dark "Breeze" on light. Names are the theme
+    # DIRS in /usr/share/icons (index.theme: Breeze Light / Breeze).
+    cursor = "Breeze_Light" if variant == "dark" else "breeze_cursors"
     return f"""# {PROVENANCE}
 # sway theme fragment — {variant} (see config: include ~/.config/sway/theme.conf)
 
@@ -373,12 +377,18 @@ set $accent_fg {r["accent_fg"]}
 # Desktop background
 output * bg {r["bg"]} solid_color
 
+# Mouse cursor — sway's own cursor (window drags, resize, the bare desktop).
+# Clients draw their own: GTK reads the gsettings exec below + settings.ini,
+# XWayland/Qt read start-sway's XCURSOR_THEME export (all follow the variant).
+seat * xcursor_theme {cursor} 24
+
 # GTK / portal appearance for this variant (CLAUDE.md GTK section): color-scheme
 # is what Firefox/portal-aware/libadwaita apps follow; gtk-theme is what the
 # portal file chooser reads (in-process GTK3 apps follow start-sway's GTK_THEME).
 # `exec` runs at login only — not re-run on `swaymsg reload`.
 exec gsettings set org.gnome.desktop.interface color-scheme {scheme}
 exec gsettings set org.gnome.desktop.interface gtk-theme {gtk_theme}
+exec gsettings set org.gnome.desktop.interface cursor-theme {cursor}
 # Icon theme: the #d7005f-accent Yaru built by the opt-in yaru_icons role
 # (Yaru-hestia). Guard on the theme actually existing so a spin without that
 # role doesn't force a missing theme.

@@ -46,13 +46,6 @@ img_re='\.(jpe?g|png|gif|bmp|tiff?|webp|avif|ico|svg)$'
 
 is_video() { printf '%s' "$1" | grep -qiE "$vid_re"; }
 
-# Ordered media list of $dir (images + videos), one path per line. Natural sort
-# (`sort -V`) + no dotfiles, to match vifm's view (`set sortnumbers`, hidden off).
-media() {
-    find "$dir" -maxdepth 1 -type f ! -name '.*' 2>/dev/null \
-        | grep -iE "$img_re|$vid_re" | sort -V
-}
-
 # Cache path for a video's thumbnail (keyed on realpath + mtime).
 thumb_for() {
     key=$(printf '%s\037%s' "$(readlink -f -- "$1")" "$(stat -c %Y -- "$1" 2>/dev/null)" \
@@ -117,39 +110,74 @@ display_of() {
     fi
 }
 
-# The whole-list mapper: reads original paths on stdin, prints the display
-# path for each (same rules as display_of, byte-identical sha1 keys), and
-# writes to $3 the backfill queue — ONLY the videos still missing a poster,
-# so a fully-cached directory spawns no worker at all. One process for the
-# whole list: the per-file shell version (grep+readlink+stat+sha1sum+cut per
-# file) cost ~7s of pure fork overhead on a 2000-video directory — THE
-# residual hang after posters went cursor-first.
-display_list() {
-    python3 -c '
-import sys, os, re, hashlib
-cache, placeholder, qf = (a.encode() for a in sys.argv[1:4])
+# The whole-directory pass, ONE python process (the per-file shell version —
+# grep+readlink+stat+sha1sum+cut per file — cost ~7s of pure fork overhead on
+# a 2000-video directory): lists the media, sorts it, writes the session map
+# (originals) and the backfill queue (ONLY the videos still missing a poster,
+# so a fully-cached directory spawns no worker at all), and prints the display
+# list — same display rules as display_of, byte-identical sha1 keys.
+#
+# THE ORDER REPLICATES VIFM 0.14 EXACTLY (sort.c + utils/utf8.c for
+# `sort +name` with `set sortnumbers`): sort key = NFKD compat-decomposition
+# of the name (utf8proc — why "Ä" sorts with "A", before "B"), compared by
+# skip-leading-zeros + glibc strverscmp (called via ctypes: the very same
+# libc function, not a reimplementation). `sort -V` was only an
+# approximation — coreutils filevercmp has its own extension rule and no
+# unicode normalization — and every divergence made the imv->vifm synced
+# cursor JUMP. Verified byte-identical against a live vifm on an adversarial
+# name set (case, leading zeros, spaces vs dots, unicode).
+# Keep the regexes in sync with vid_re/img_re above.
+build_lists() {
+    python3 - "$cache" "$placeholder" "$dir" "$session" "$1" <<'PYEOF'
+import sys, os, re, hashlib, ctypes, unicodedata, functools
+cache, placeholder, dirp, session, qf = (os.fsencode(a) for a in sys.argv[1:6])
 vid = re.compile(rb"\.(mp4|mkv|avi|mov|webm|flv|m4v|mpe?g|wmv|ts|m2v|ogv|3gp|vob)$", re.I)
+img = re.compile(rb"\.(jpe?g|png|gif|bmp|tiff?|webp|avif|ico|svg)$", re.I)
+
+libc = ctypes.CDLL("libc.so.6")
+libc.strverscmp.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+libc.strverscmp.restype = ctypes.c_int
+# utf8proc's UTF8PROC_IGNORE strips default-ignorables; the common set
+IGNORABLE = dict.fromkeys(map(ord, "­​‌‍⁠﻿"))
+
+def key(nb):
+    try:
+        s = unicodedata.normalize("NFKD", nb.decode("utf-8", "surrogateescape"))
+        b = s.translate(IGNORABLE).encode("utf-8", "surrogateescape")
+    except Exception:
+        b = nb
+    i = 0
+    while b[i:i+1] == b"0" and b[i+1:i+2].isdigit():
+        i += 1
+    return b[i:]
+
+names = [e.name for e in os.scandir(dirp)
+         if e.is_file() and not e.name.startswith(b".")
+         and (vid.search(e.name) or img.search(e.name))]
+names.sort(key=functools.cmp_to_key(lambda a, b: libc.strverscmp(key(a), key(b))))
+
 out, queue = sys.stdout.buffer, []
-for f in sys.stdin.buffer.read().splitlines():
-    if not f:
-        continue
-    if vid.search(f):
-        try:
-            key = hashlib.sha1(os.path.realpath(f) + b"\x1f"
-                               + str(int(os.stat(f).st_mtime)).encode()).hexdigest()[:40]
-            t = os.path.join(cache, key.encode() + b".jpg")
-            if os.path.getsize(t) > 0:
-                out.write(t + b"\n")
-                continue
-        except OSError:
-            pass
-        queue.append(f)
-        out.write(placeholder + b"\n")
-    else:
-        out.write(f + b"\n")
+with open(session, "wb") as smap:
+    for n in names:
+        f = os.path.join(dirp, n)
+        smap.write(f + b"\n")
+        if vid.search(n):
+            try:
+                k = hashlib.sha1(os.path.realpath(f) + b"\x1f"
+                                 + str(int(os.stat(f).st_mtime)).encode()).hexdigest()[:40]
+                t = os.path.join(cache, k.encode() + b".jpg")
+                if os.path.getsize(t) > 0:
+                    out.write(t + b"\n")
+                    continue
+            except OSError:
+                pass
+            queue.append(f)
+            out.write(placeholder + b"\n")
+        else:
+            out.write(f + b"\n")
 with open(qf, "wb") as fh:
     fh.write(b"\n".join(queue) + (b"\n" if queue else b""))
-' "$cache" "$placeholder" "$1"
+PYEOF
 }
 
 # Internal: `imv-browse.sh __backfill <listfile>` — the detached worker.
@@ -187,18 +215,16 @@ fi
 echo $$ > "$launchlock"
 trap 'rm -f "$launchlock"' EXIT INT TERM
 
-origs=$(media)
-printf '%s\n' "$origs" > "$session"
-
 gen_placeholder
 # The SELECTED file gets its real poster now (one file, bounded); everyone
 # else gets it from the background worker below.
 is_video "$cur" && gen_thumb "$cur"
 
-# One pass: the display list for imv + the queue of posters still missing
-# (runs after the cursor's gen_thumb, so its fresh poster is already seen).
+# One pass: media list in vifm's exact order, session map, display list for
+# imv, and the queue of posters still missing (runs after the cursor's
+# gen_thumb, so its fresh poster is already seen).
 qf="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-thumbqueue.$$"
-display=$(printf '%s\n' "$origs" | display_list "$qf")
+display=$(build_lists "$qf")
 
 # Backfill the missing posters in a single detached worker (self-invocation
 # with the __backfill mode above): idle CPU/IO priority, strictly sequential,

@@ -26,13 +26,30 @@ dir=${1:?usage: awww-slideshow [-d SECONDS] [-t TRANSITION] DIR}
 
 [ -d "$dir" ] || { echo "awww-slideshow: not a directory: $dir" >&2; exit 1; }
 
+# Only formats awww decodes — a bare `find -type f` fed it .xmp sidecars and
+# the like, and one bad file must not kill the loop (caught live 2026-07).
+img_find() {
+    find "$dir" -maxdepth 1 -type f ! -name '.*' \( \
+        -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o \
+        -iname '*.gif' -o -iname '*.webp' -o -iname '*.bmp' -o \
+        -iname '*.tiff' -o -iname '*.tif' -o -iname '*.pnm' -o \
+        -iname '*.tga' -o -iname '*.svg' \) "$@"
+}
+
+fails=0
 while :; do
-    # NUL-safe shuffle; skip dotfiles like vifm/imv do
-    find "$dir" -maxdepth 1 -type f ! -name '.*' -print0 | shuf -z |
     while IFS= read -r -d '' img; do
-        awww img "$img" --transition-type "$transition" || exit 1
+        if awww img "$img" --transition-type "$transition"; then
+            fails=0
+        else
+            # a corrupt file shouldn't end the show — but a dead daemon must
+            fails=$((fails + 1))
+            echo "awww-slideshow: skipping $img (failure $fails/5)" >&2
+            [ "$fails" -ge 5 ] && { echo "awww-slideshow: 5 consecutive failures — is awww-daemon running?" >&2; exit 1; }
+            continue
+        fi
         sleep "$delay"
-    done
-    # empty dir: don't spin
-    [ -n "$(find "$dir" -maxdepth 1 -type f ! -name '.*' -print -quit)" ] || sleep "$delay"
+    done < <(img_find -print0 | shuf -z)
+    # no usable images: don't spin
+    [ -n "$(img_find -print -quit)" ] || sleep "$delay"
 done

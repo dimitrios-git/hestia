@@ -16,8 +16,8 @@ incumbent, never replacing it.
 
 | App | Kind | Verdict |
 |---|---|---|
-| **vifm** | terminal (incumbent) | **stays the primary** — the speed comparison was no contest, and its integrations are load-bearing |
-| **yazi** | terminal, Rust | the "rich preview" browser — kitty-graphics previews vifm can't do; kept in the trial set |
+| **vifm** | terminal (incumbent) | **stays the primary** — the vim of file managers: lean, decades-proven, packaged everywhere; its integrations are load-bearing (bias admitted — years of muscle memory) |
+| **yazi** | terminal, Rust | fast, and ships out of the box what the ranger + ueberzug era needed real configuration for; kept as the rich-preview lane |
 | **ranger** | terminal, Python | the baseline TUI; mature, slower — its best ideas got absorbed instead |
 | **nemo** | GUI, GTK3 | **the intended default GUI manager** (`xdg-mime` wiring lands when the trial concludes) |
 | **thunar** | GUI, GTK3 | solid, lighter than nemo; kept as the alternative |
@@ -41,15 +41,27 @@ integration scripts against — are things no challenger replicates without
 years of config. That was the frame going in: challengers had to beat vifm
 *plus* its wiring, not vifm alone.
 
-**yazi made the strongest case.** It speaks the kitty graphics protocol
-natively, so images preview *inside the panel*, asynchronously — precisely
-the gap that forced hestia's elaborate vifm↔imv side-window integration
-(vifm's preview pane can't render kitty graphics; that experiment failed
-twice before the side-window design). Async I/O means no UI stalls on slow
-Samba or Tailscale mounts, and a Lua plugin ecosystem moves fast. And yet
-the daily-driving verdict was unambiguous: this vifm setup was faster —
-"very, very, very faster" was the live assessment — in the keystrokes-to-done
-sense that matters when a file manager is muscle memory. The moat held.
+**yazi made the strongest case.** It's fast, and it ships *out of the box*
+what the previous terminal generation had to assemble by hand: in the
+ranger + ueberzug era, image previews in a terminal file manager meant an
+X11-bound shim and a decent amount of configuration to get right — yazi
+speaks the kitty graphics protocol natively and previews asynchronously,
+zero setup. That's precisely the gap that forced hestia's elaborate
+vifm↔imv side-window integration (vifm's preview pane can't render kitty
+graphics; that experiment failed twice before the side-window design).
+Async I/O means no UI stalls on slow Samba or Tailscale mounts, and a Lua
+plugin ecosystem moves fast.
+
+The verdict, then, is a trade — the same one vim users make when they stay
+on vim rather than Neovim. vifm plus its scripts sacrifices some
+out-of-the-box features and convenience for speed and total control, and
+after years of daily driving, the keystrokes-to-done comparison favoured the
+incumbent decisively ("very, very, very faster" was the live assessment).
+Bias is involved — years of vifm muscle memory don't judge fairly, and this
+chapter says so. But one argument for vifm needs no fairness: the project is
+old, still actively maintained, and packaged in nearly every distro
+repository. Like vim, you can land on almost any box and find it — and for
+a tool you make muscle memory of, being everywhere is a feature.
 
 ![yazi — the wildcharm flavour, previewing hestia's own showcase images](img/fm-yazi.png)
 
@@ -71,6 +83,8 @@ on launch, with thunar as the lighter alternative.
 
 ![nemo — hestia-dark chrome, Yaru-hestia accent folders](img/fm-nemo.png)
 
+![thunar — the lighter GTK3 alternative, same theme for free](img/fm-thunar.png)
+
 **The KDE pair earned its keep by breaking.** krusader and dolphin launched
 as dark-Fusion-with-blue-highlights — the Hestia `kdeglobals` colour scheme
 that already themed Kdenlive was being ignored. The lesson (now permanent in
@@ -80,6 +94,8 @@ pieces — the scheme pre-selected in their rc files *and* a Qt platform theme
 platform theme, a KDE app never reads `kdeglobals` at all. As a side effect,
 bare-Qt apps now theme too — a whole deferred work track resolved by a trial
 failure.
+
+![krusader — the twin-panel classic on the Hestia scheme, accent active-panel bars](img/fm-krusader.png)
 
 ![dolphin — the Hestia kdeglobals scheme via the Qt platform theme](img/fm-dolphin.png)
 
@@ -119,8 +135,10 @@ state: dark, accent-locked chrome, hestia-red folders.
 - **In-pane graphics in vifm don't work** (kitty protocol, tried twice) —
   if panel previews matter, that's yazi's lane; vifm's answer is the imv
   side-window integration.
-- **Speed verdicts need daily driving, not benchmarks** — yazi wins feature
-  tables; the keystrokes-to-done comparison went decisively the other way.
+- **Daily-driving verdicts carry bias — admit it and weigh it** — yazi wins
+  the feature table; keystrokes-to-done favoured years of vifm muscle
+  memory. The tiebreaker that needs no fairness: ubiquity. Like vim, vifm
+  is packaged nearly everywhere, and for muscle-memory tools that counts.
 - **Trial sets pay rent in stolen ideas** — miller columns and the tree
   preview came from living with the losers.
 

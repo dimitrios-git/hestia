@@ -7,3 +7,6 @@ bootstrap/host_vars/*.yml
 # seam, docs/personalizing.md). The committed template is local.yml.example.
 bootstrap/local.yml
 __pycache__/
+
+# plain-mesh render harness deps (themes/plain-mesh/README.md: npm install)
+themes/plain-mesh/node_modules/

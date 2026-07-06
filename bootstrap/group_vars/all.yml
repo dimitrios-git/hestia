@@ -64,10 +64,17 @@ enable_file_managers: false # install the file-manager evaluation set (ranger/ya
 enable_image_viewers: false # install the image-viewer keeper (ristretto)
 # Package-ish toggle (no role): gates the `wallpapers` apt group below (libmpv2,
 # mpvpaper's runtime) AND the wpaperd/awww/mpvpaper localbin entries (their
-# `enabled:` key). Default OFF — an EVALUATION set (2026-07, the file-manager
-# process): none is in Debian apt and none ships prebuilt binaries, so the
-# claude agent builds them once and publishes the sha256-verified set as a
-# hestia release (the Yaru pattern; amd64-only until a rebuild). Candidates:
+# `enabled:` key) AND the `wallpapers` role (the plain-mesh assets). Default ON
+# since the 2026-07 VERDICT: the default hestia background is the plain-mesh
+# loop (themes/plain-mesh/, stoa's tci ambient lattice as seamless per-variant
+# videos) played per-output by mpvpaper via user/sway/wallpaper.sh (exec_always
+# in the generated theme fragment — it also retires the solid-ground swaybg,
+# which reload respawns above the wallpaper layer). Set false for a lean spin:
+# the fragment's solid ground is the no-op fallback. None of the tools is in
+# Debian apt and none ships prebuilt binaries, so the claude agent builds them
+# once and publishes the sha256-verified set as a hestia release (the Yaru
+# pattern; amd64-only until a rebuild). The tool set (verdict: all three stay —
+# wpaperd is the stills alternative, awww the transition play):
 # wpaperd (+wpaperctl — built-in per-output slideshows from a directory,
 # hw-accelerated transitions, the config-file fit), awww (+awww-daemon — the
 # maintained successor of the archived swww; runtime `awww img` switching with
@@ -78,7 +85,7 @@ enable_image_viewers: false # install the image-viewer keeper (ristretto)
 # timing-dependent (live: swaybg hid wpaperd; `swaymsg reload` respawns it on
 # top, so re-kill after a reload). Pick the default, wire its exec + verdict
 # here, trim then.
-enable_wallpapers: false    # install the wallpaper evaluation set (wpaperd/awww/mpvpaper)
+enable_wallpapers: true     # wallpaper stack: mpvpaper+wpaperd+awww binaries AND the plain-mesh default background
 # Default OFF — installs the prebuilt #d7005f Yaru ICON theme (a ~27 MB sha256-verified
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
@@ -153,6 +160,7 @@ dotfile_links:
   # they're rendered — see templated_configs below — into the same dir.)
   - { src: user/sway/start-waybar.sh,       dest: "{{ target_home }}/.config/sway/scripts/start-waybar.sh" }
   - { src: user/sway/screenshot.sh,         dest: "{{ target_home }}/.config/sway/scripts/screenshot.sh" }
+  - { src: user/sway/wallpaper.sh,          dest: "{{ target_home }}/.config/sway/scripts/wallpaper.sh" }
   - { src: user/waybar/config,              dest: "{{ target_home }}/.config/waybar/config" }
   - { src: user/waybar/style.css,           dest: "{{ target_home }}/.config/waybar/style.css" }
   # GENERATED colour tokens (render.py) — @import'ed by style.css. src picked by

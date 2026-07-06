@@ -1,0 +1,20 @@
+---
+# Download the plain-mesh wallpaper assets (no root) — both variants for each
+# resolution in wallpaper_resolutions, video + static PNG. get_url with a
+# checksum is idempotent: an existing, matching file is left alone.
+
+- name: Ensure the backgrounds dir exists
+  ansible.builtin.file:
+    path: "{{ wallpapers_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download the plain-mesh assets (sha256-verified)
+  ansible.builtin.get_url:
+    url: "{{ wallpapers_base_url }}/plain-mesh-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
+    dest: "{{ wallpapers_dir }}/plain-mesh-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
+    checksum: "sha256:{{ wallpapers_sha256['plain-mesh-' ~ item.0 ~ '-' ~ item.1 ~ '.' ~ item.2] }}"
+    mode: "0644"
+  loop: "{{ ['dark', 'light'] | product(wallpaper_resolutions, ['mp4', 'png']) | list }}"
+  loop_control:
+    label: "plain-mesh-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"

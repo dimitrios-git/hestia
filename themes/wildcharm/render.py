@@ -382,8 +382,15 @@ set $accent    {r["accent"]}
 set $accent_fg {r["accent_fg"]}
 set $focus     {focus}
 
-# Desktop background
+# Desktop background — the solid ground is the base and the fallback; the
+# plain-mesh wallpaper (below) layers over it when its assets are installed.
 output * bg {r["bg"]} solid_color
+
+# Default wallpaper — per-output plain-mesh loops via mpvpaper (the wallpaper
+# verdict; assets from the `wallpapers` role). exec_always is load-bearing: a
+# reload respawns swaybg ABOVE the wallpaper layer, and the re-run re-kills
+# it. No-ops (solid ground stays) when mpvpaper/assets are absent.
+exec_always $HOME/.config/sway/scripts/wallpaper.sh {variant}
 
 # Mouse cursor — sway's own cursor (window drags, resize, the bare desktop).
 # Clients draw their own: GTK reads the gsettings exec below + settings.ini,

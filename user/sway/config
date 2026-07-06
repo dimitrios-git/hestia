@@ -64,10 +64,13 @@ workspace 8 output $right_mon
 workspace 10 output $right_mon
 
 gaps inner 8
-# Cancel the top edge gap so windows sit flush under Waybar (no gutter),
-# while keeping inner gaps between windows.
-gaps top -8
-smart_gaps on
+# The top edge keeps the same 8px gutter as the tiles, so windows never touch
+# Waybar (until 2026-07 a `gaps top -8` cancelled it for a flush look — dropped
+# with the wallpaper work, where breathing room around tiles is the point).
+# smart_gaps stays OFF for the same reason: it would collapse ALL gaps on
+# single-window workspaces, putting that lone window flush against the bar
+# (and edge-to-edge over the wallpaper) again.
+smart_gaps off
 
 ### Input configuration
 

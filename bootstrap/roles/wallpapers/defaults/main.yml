@@ -1,12 +1,18 @@
 ---
-# plain-mesh wallpaper assets (themes/plain-mesh/ is the render harness; the
+# Mesh wallpaper assets (themes/plain-mesh/ is the render harness; the
 # wallpaper-evaluation verdict made the mpvpaper-played mesh loop the default
 # background). Downloaded per host from a hestia release, sha256-verified;
 # get_url is self-idempotent (existing files are checksum-matched, not
 # re-downloaded). A new render = new release tag + refreshed checksums here.
 
-wallpapers_release: plain-mesh-v1
-wallpapers_base_url: "https://github.com/dimitrios-git/hestia/releases/download/{{ wallpapers_release }}"
+# Which flavour this host runs: plain-mesh (the quiet default) or flash-mesh
+# (accent flashes firing through the lattice — the approved 2026-07 tuning).
+# Set per host in host_vars; the role downloads THAT flavour's assets and
+# stamps it into the default-flavour marker user/sway/wallpaper.sh reads.
+# Each flavour lives on its own release tag (<flavour>-v1).
+wallpaper_flavour: plain-mesh
+
+wallpapers_base_url: "https://github.com/dimitrios-git/hestia/releases/download/{{ wallpaper_flavour }}-v1"
 wallpapers_dir: "{{ target_home }}/.local/share/backgrounds/hestia"
 
 # Which resolutions to fetch — BOTH variants each, loop video + static PNG
@@ -15,8 +21,8 @@ wallpapers_dir: "{{ target_home }}/.local/share/backgrounds/hestia"
 # when an output's exact resolution is missing (mpv scales cleanly).
 wallpaper_resolutions: [1920x1080, 1920x1200, 2560x1440, 2560x1600, 3840x2160, 1200x1920]
 
-# sha256 per release asset — pinned from plain-mesh-v1 (filled by the render
-# publish; regenerate with `sha256sum plain-mesh-*` in the render outdir)
+# sha256 per release asset, ALL flavours in one dict (filled by each render
+# publish; regenerate with `sha256sum <flavour>-mesh-*` in the render outdir)
 wallpapers_sha256:
   plain-mesh-dark-1200x1920.mp4: "98dc9e29e3199dd3cf0eb66201fdfee00342d6bc589fd2c54ff71be2efed94c5"
   plain-mesh-dark-1200x1920.png: "40932a6d488f9c927b5781c8179d33c4a22915565bc2732bac73cfa50810493e"

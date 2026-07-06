@@ -31,7 +31,20 @@
 # imv windows (the old pgrep-only check misses the pre-imv window).
 #
 # Re-press while imv is open: jump it to the cursor file (imv-msg goto <index>,
-# index from the session map) and focus — no second pane.
+# index from the session map) and focus — no second pane. If the cursor file
+# is NOT in the open session (vifm moved to another directory, or the file is
+# new), the old imv is torn down and a fresh session launches on this dir.
+#
+# TWO-WAY SYNC: imv→vifm is event-driven (each j/k bind execs
+# imv-vifm-return.sh). vifm→imv can't be — vifm has no cursor-move autocmd
+# (only DirEnter) — so a detached WATCHER (__watch mode) polls the launching
+# vifm's cursor over `--remote-expr 'expand("%c:p")'` (~5ms a call) while imv
+# lives, and gotos imv to it. So vifm keeps its powers during a browse:
+# `/search` + `n`, marks, `gs` — the cursor lands, imv follows. Feedback-fight
+# guard (imv j/k → vifm goto → watcher must NOT push imv back): the return
+# script records each imv-originated sync in a marker file the watcher skips,
+# and the watcher only acts on a cursor position STABLE for two consecutive
+# polls (a fast imv-side scroll never presents a stable, unmarked position).
 
 cur=$1
 dir=$2
@@ -46,6 +59,8 @@ cache="${XDG_CACHE_HOME:-$HOME/.cache}/imv-vifm-thumbs"
 session="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-session.list"
 launchlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-launch.lock"
 genlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-thumbgen.lock"
+watchlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-watch.lock"
+lastsync="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-lastsync"
 mkdir -p "$cache"
 
 vid_re='\.(mp4|mkv|avi|mov|webm|flv|m4v|mpe?g|wmv|ts|m2v|ogv|3gp|vob)$'
@@ -232,6 +247,44 @@ if [ "$cur" = "__backfill" ]; then
     exit 0
 fi
 
+# Internal: `imv-browse.sh __watch` — the vifm→imv cursor watcher (see
+# header). Waits for imv to appear (spawned just before the launcher execs
+# it), then follows the launching vifm's cursor until imv exits. PID-locked
+# so only one watcher runs.
+if [ "$cur" = "__watch" ]; then
+    echo $$ > "$watchlock"
+    trap 'rm -f "$watchlock"' EXIT INT TERM
+    imvpid=
+    i=0
+    while [ $i -lt 50 ]; do
+        imvpid=$(pgrep -u "$USER" -x imv-wayland | head -1)
+        [ -n "$imvpid" ] && break
+        i=$((i + 1)); sleep 0.1
+    done
+    [ -n "$imvpid" ] || exit 0
+    prev= last=
+    while kill -0 "$imvpid" 2>/dev/null; do
+        sleep 0.15
+        c=$(vifm --server-name "${VIFM_SERVER_NAME:-vifm}" \
+                 --remote-expr 'expand("%c:p")' 2>/dev/null)
+        [ -n "$c" ] || continue
+        if [ "$c" != "$prev" ]; then prev=$c; continue; fi   # not stable yet
+        [ "$c" = "$last" ] && continue                        # already synced
+        if [ "$c" = "$(cat "$lastsync" 2>/dev/null)" ]; then
+            # imv-originated move: absorb it and CONSUME the marker — left in
+            # place it would also block a later genuine vifm return to this
+            # same file (re-check before rm narrows the race with a marker
+            # being rewritten by a concurrent imv keypress).
+            [ "$c" = "$(cat "$lastsync" 2>/dev/null)" ] && rm -f "$lastsync"
+            last=$c; continue
+        fi
+        idx=$(cur="$c" awk -F '\037' 'index($0, "\037") && substr($0, index($0, "\037") + 1) == ENVIRON["cur"] { print NR; exit }' "$session" 2>/dev/null)
+        [ -n "$idx" ] && imv-msg "$imvpid" goto "$idx" >/dev/null 2>&1
+        last=$c
+    done
+    exit 0
+fi
+
 pid=$(pgrep -u "$USER" -x imv-wayland | head -1)
 if [ -n "$pid" ]; then
     # imv already open: select the cursor file by its line number in the
@@ -240,9 +293,18 @@ if [ -n "$pid" ]; then
     # self-corrects; the path-keyed resolution the other direction uses is
     # in imv-vifm-return.sh).
     idx=$(cur="$cur" awk -F '\037' 'index($0, "\037") && substr($0, index($0, "\037") + 1) == ENVIRON["cur"] { print NR; exit }' "$session" 2>/dev/null)
-    [ -n "$idx" ] && imv-msg "$pid" goto "$idx"
-    swaymsg '[app_id="imv"] focus' >/dev/null 2>&1
-    exit 0
+    if [ -n "$idx" ]; then
+        imv-msg "$pid" goto "$idx"
+        swaymsg '[app_id="imv"] focus' >/dev/null 2>&1
+        exit 0
+    fi
+    # Cursor file isn't in the open session — vifm is in another directory
+    # (or the file appeared after launch): retire this imv and fall through
+    # to a fresh launch on the current dir. (imv-msg quit skips imv's q bind,
+    # so no layout restore fires — we re-split just below anyway.)
+    imv-msg "$pid" quit 2>/dev/null
+    sleep 0.2
+    kill "$pid" 2>/dev/null
 fi
 
 # Launch lock: only ONE first-open may be in flight. A repeated Enter while
@@ -290,5 +352,15 @@ set -f; IFS='
 # shellcheck disable=SC2086  # the split IS the point
 set -- $display
 set +f; unset IFS
+
+# vifm→imv cursor watcher (the __watch mode above): spawned detached just
+# before imv, it waits for the imv PID, then follows vifm's cursor until imv
+# exits. Seed the imv-origin marker with the cursor file so the watcher's
+# first stable read (= where we're opening) isn't treated as a user move.
+printf '%s' "$cur" > "$lastsync"
+if ! { [ -e "$watchlock" ] && kill -0 "$(cat "$watchlock" 2>/dev/null)" 2>/dev/null; }; then
+    setsid -f "$(readlink -f -- "$0")" __watch _ >/dev/null 2>&1
+fi
+
 rm -f "$launchlock"; trap - EXIT INT TERM
 exec env imv_config="$HOME/.config/imv/config-vifm" imv-wayland -n "$(display_of "$cur")" "$@"

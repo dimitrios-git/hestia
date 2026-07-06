@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 (async () => {
-  const [outdir, bg, line, w = '3840', h = '2160', fps = '24', loopT = '120', start = '0'] = process.argv.slice(2);
+  const [outdir, bg, line, w = '3840', h = '2160', fps = '24', loopT = '120', start = '0', extra = ''] = process.argv.slice(2);
   if (!outdir || !bg || !line) { console.error('usage: node render.js <outdir> <bg> <line> [w] [h] [fps] [loopT] [start]'); process.exit(2); }
   fs.mkdirSync(outdir, { recursive: true });
 
@@ -27,7 +27,8 @@ const path = require('path');
   });
   const page = await browser.newPage();
   const url = 'file://' + path.resolve(__dirname, 'mesh.html') +
-    `?w=${w}&h=${h}&bg=${encodeURIComponent(bg)}&line=${encodeURIComponent(line)}&loop=${loopT}`;
+    `?w=${w}&h=${h}&bg=${encodeURIComponent(bg)}&line=${encodeURIComponent(line)}&loop=${loopT}` +
+    (extra ? `&${extra}` : '');
   await page.goto(url, { waitUntil: 'load' });
   await page.waitForFunction('window.meshReady === true', { timeout: 30000 });
 

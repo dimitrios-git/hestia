@@ -7,8 +7,25 @@ backdrop), rendered as **seamless 120 s loop videos** (per resolution, per
 **mpvpaper** via `user/sway/wallpaper.sh` (the wallpaper-evaluation verdict,
 2026-07); the static frames serve wpaperd/swaybg and any no-video spin.
 
-"plain" is the family name — future flavours (accent flashes, blast effects)
-join alongside as `<flavour>-mesh-*`.
+"plain" is the family name; flavours join alongside as `<flavour>-mesh-*`,
+each on its own release tag, selected per host by the `wallpaper_flavour`
+host_var (the role stamps it into the `default-flavour` marker wallpaper.sh
+reads). Shipped flavours:
+
+- **plain-mesh** — the quiet lattice alone (`plain-mesh-v1`)
+- **flash-mesh** — accent flashes fire through the lattice: nodes ignite in
+  `#d7005f` (fast attack, smooth decay) and the pulse bleeds one hop down the
+  web edges. Deterministic + loop-periodic (seeded event schedule, wrapped-time
+  envelopes; events only pick nodes that project comfortably inside the
+  viewport — computed per aspect, so portrait gets its own set). Parameters are
+  dimitrios's approved 2026-07 tuning, baked as the defaults in
+  `mesh-scene.js` (`flashCount 33, flashDur 3.3, seed 33`; `flash-mesh-v1`).
+
+The scene itself lives in **`mesh-scene.js`** — shared verbatim between the
+bake page (`mesh.html`) and the live tuning page (`preview/`), so what you
+tune is what bakes. Build the tuning page with `preview/build-preview.sh
+[outdir]` (single self-contained HTML, three.js inlined — open via file://,
+tune, "show / copy parameters", paste the JSON to bake a new flavour).
 
 ## Why the loop is seamless
 
@@ -27,9 +44,9 @@ One-time setup (needs node + chromium; both on the reference host):
 
     cd themes/plain-mesh && npm install
 
-Then render the full matrix (resolutions × dark/light) and encode:
+Then render a flavour's full matrix (resolutions × dark/light) and encode:
 
-    ./render-matrix.sh /path/to/outdir
+    ./render-matrix.sh /path/to/outdir [plain|flash]
 
 Per-resolution/variant knobs live at the top of `render-matrix.sh`; colours
 are the tci ambient values on the hestia grounds (dark: `#cfc8ba` on

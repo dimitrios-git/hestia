@@ -1,7 +1,9 @@
 ---
-# Download the plain-mesh wallpaper assets (no root) — both variants for each
-# resolution in wallpaper_resolutions, video + static PNG. get_url with a
-# checksum is idempotent: an existing, matching file is left alone.
+# Download the selected mesh-flavour wallpaper assets (no root) — both
+# variants for each resolution in wallpaper_resolutions, video + static PNG.
+# get_url with a checksum is idempotent: an existing, matching file is left
+# alone. Switching wallpaper_flavour downloads the new set alongside the old
+# (files are flavour-prefixed) and re-stamps the marker wallpaper.sh reads.
 
 - name: Ensure the backgrounds dir exists
   ansible.builtin.file:
@@ -9,12 +11,18 @@
     state: directory
     mode: "0755"
 
-- name: Download the plain-mesh assets (sha256-verified)
+- name: Download the {{ wallpaper_flavour }} assets (sha256-verified)
   ansible.builtin.get_url:
-    url: "{{ wallpapers_base_url }}/plain-mesh-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
-    dest: "{{ wallpapers_dir }}/plain-mesh-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
-    checksum: "sha256:{{ wallpapers_sha256['plain-mesh-' ~ item.0 ~ '-' ~ item.1 ~ '.' ~ item.2] }}"
+    url: "{{ wallpapers_base_url }}/{{ wallpaper_flavour }}-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
+    dest: "{{ wallpapers_dir }}/{{ wallpaper_flavour }}-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
+    checksum: "sha256:{{ wallpapers_sha256[wallpaper_flavour ~ '-' ~ item.0 ~ '-' ~ item.1 ~ '.' ~ item.2] }}"
     mode: "0644"
   loop: "{{ ['dark', 'light'] | product(wallpaper_resolutions, ['mp4', 'png']) | list }}"
   loop_control:
-    label: "plain-mesh-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
+    label: "{{ wallpaper_flavour }}-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
+
+- name: Stamp the default-flavour marker (read by user/sway/wallpaper.sh)
+  ansible.builtin.copy:
+    content: "{{ wallpaper_flavour }}\n"
+    dest: "{{ wallpapers_dir }}/default-flavour"
+    mode: "0644"

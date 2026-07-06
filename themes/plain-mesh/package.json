@@ -5,5 +5,8 @@
   "dependencies": {
     "puppeteer-core": "^24.0.0",
     "three": "0.184.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
   }
 }

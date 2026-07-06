@@ -3,116 +3,56 @@
 <head>
 <meta charset="utf-8">
 <style>html,body{margin:0;padding:0;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">
+{ "imports": { "three": "./node_modules/three/build/three.module.js" } }
+</script>
 </head>
 <body>
 <script type="module">
-// Standalone render of thecodingidiot's ambient WebLattice (CurriculumMap3D.tsx)
-// for the hestia wallpaper: hexField + undulation + drift, verbatim geometry,
-// with the three motion frequencies SNAPPED to integer cycles of LOOP_T so
-// frame N wraps seamlessly to frame 0. Driven by an external deterministic
-// clock: window.renderFrame(t) renders the scene at exactly time t.
-import * as THREE from './node_modules/three/build/three.module.js';
+// Frame-stepped bake page for every mesh flavour. The scene itself (geometry,
+// motion, flash layer, loop-snapping) is mesh-scene.js — shared verbatim with
+// the live preview page, so what was tuned there is what bakes here. Driven
+// by an external deterministic clock: window.renderFrame(t) renders exactly
+// time t.
+//
+// URL params: w, h, bg, line, accent, loop, flavour=plain|flash, and the
+// flash knobs (count, dur, peak, spread, spreadDelay, spreadPeak, seed) —
+// flash defaults are the approved tuning baked into mesh-scene.js P.
+import * as THREE from 'three';
+import { P, COLORS, buildScene } from './mesh-scene.js';
 
-const params = new URLSearchParams(location.search);
-const W = parseInt(params.get('w') || '3840', 10);
-const H = parseInt(params.get('h') || '2160', 10);
-const BG = params.get('bg') || '#1a1a1a';
-const LINE = params.get('line') || '#cfc8ba';
-const LOOP_T = parseFloat(params.get('loop') || '120');
+const q = new URLSearchParams(location.search);
+const W = parseInt(q.get('w') || '3840', 10);
+const H = parseInt(q.get('h') || '2160', 10);
 
-// Loop-snapped frequencies (originals: undulate 0.5, rot 0.05, sway 0.06).
-// k chosen nearest to omega*LOOP_T/2pi so the character stays; rot/sway share
-// k=1 at T=120 but run 90 degrees out of phase, so their motions stay distinct.
-const TAU = Math.PI * 2;
-const W_UND = TAU * Math.max(1, Math.round(0.5 * LOOP_T / TAU)) / LOOP_T;
-const W_ROT = TAU * Math.max(1, Math.round(0.05 * LOOP_T / TAU)) / LOOP_T;
-const W_SWY = TAU * Math.max(1, Math.round(0.06 * LOOP_T / TAU)) / LOOP_T;
-const PH_SWY = Math.PI / 2;
+P.variant = 'dark';   // colours come explicitly; the variant key is just a slot
+COLORS.dark = {
+  bg: q.get('bg') || COLORS.dark.bg,
+  line: q.get('line') || COLORS.dark.line,
+  accent: q.get('accent') || COLORS.dark.accent,
+};
+P.loopT = parseFloat(q.get('loop') || P.loopT);
+if ((q.get('flavour') || 'plain') === 'plain') {
+  P.flashCount = 0;   // plain = the lattice alone
+} else {
+  if (q.get('count')) P.flashCount = parseInt(q.get('count'), 10);
+  if (q.get('dur')) P.flashDur = parseFloat(q.get('dur'));
+  if (q.get('peak')) P.flashPeak = parseFloat(q.get('peak'));
+  if (q.get('spread')) P.spread = q.get('spread') !== 'false';
+  if (q.get('spreadDelay')) P.spreadDelay = parseFloat(q.get('spreadDelay'));
+  if (q.get('spreadPeak')) P.spreadPeak = parseFloat(q.get('spreadPeak'));
+  if (q.get('seed')) P.seed = parseInt(q.get('seed'), 10);
+}
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(W, H);
 renderer.setPixelRatio(1);
 document.body.appendChild(renderer.domElement);
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(BG);
-const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
-camera.position.set(0, 0, 6);
+const scene = buildScene(renderer, W, H);
+scene.rebuild();   // pick up the URL-driven P/COLORS
 
-// hexField — verbatim from CurriculumMap3D.tsx, halfX sized so the lattice
-// (living at z=-3.6..-4.5, ~10 world units from the camera) overfills a 16:9
-// frustum there (half-width ~7.4) plus sway/rotation margin.
-function hexField(halfX) {
-  const s = 1.05;
-  const dx = s * 1.5;
-  const cols = Math.ceil((halfX + 2) / dx) * 2 + 1;
-  const rows = 6;
-  const grid = [];
-  const pts = [];
-  for (let c = 0; c < cols; c++) {
-    grid[c] = [];
-    for (let r = 0; r < rows; r++) {
-      const x = (c - (cols - 1) / 2) * dx;
-      const y = (r - (rows - 1) / 2) * s * Math.sqrt(3) + (c % 2 ? (s * Math.sqrt(3)) / 2 : 0);
-      const z = -3.6 - ((c + r) % 3) * 0.45;
-      const v = new THREE.Vector3(x, y, z);
-      grid[c][r] = v;
-      pts.push(v);
-    }
-  }
-  const seg = [];
-  const link = (a, b) => { if (a && b) seg.push(a, b); };
-  for (let c = 0; c < cols; c++) {
-    for (let r = 0; r < rows; r++) {
-      const a = grid[c][r];
-      link(a, grid[c]?.[r + 1]);
-      link(a, grid[c + 1]?.[r]);
-      if (c % 2) link(a, grid[c + 1]?.[r + 1]);
-      else link(a, grid[c + 1]?.[r - 1]);
-    }
-  }
-  return { points: pts, segments: seg };
-}
-
-const hex = hexField(10);
-const toArray = (vs) => {
-  const a = new Float32Array(vs.length * 3);
-  vs.forEach((v, i) => { a[i * 3] = v.x; a[i * 3 + 1] = v.y; a[i * 3 + 2] = v.z; });
-  return a;
-};
-const segBase = toArray(hex.segments);
-const ptBase = toArray(hex.points);
-
-const hexGeo = new THREE.BufferGeometry();
-hexGeo.setAttribute('position', new THREE.Float32BufferAttribute(segBase.slice(), 3));
-const ptGeo = new THREE.BufferGeometry();
-ptGeo.setAttribute('position', new THREE.Float32BufferAttribute(ptBase.slice(), 3));
-
-const group = new THREE.Group();
-group.add(new THREE.LineSegments(hexGeo,
-  new THREE.LineBasicMaterial({ color: LINE, transparent: true, opacity: 0.1 })));
-const pm = new THREE.PointsMaterial({ color: LINE, size: 0.05, transparent: true, opacity: 0.45, sizeAttenuation: true });
-group.add(new THREE.Points(ptGeo, pm));
-scene.add(group);
-
-function undulate(geo, base, t) {
-  const arr = geo.attributes.position.array;
-  for (let i = 0; i < base.length; i += 3) {
-    const x = base[i];
-    const y = base[i + 1];
-    arr[i + 2] = base[i + 2] + Math.sin(t * W_UND + x * 0.22 + y * 0.18) * 0.35;
-  }
-  geo.attributes.position.needsUpdate = true;
-}
-
-window.renderFrame = (t) => {
-  undulate(hexGeo, segBase, t);
-  undulate(ptGeo, ptBase, t);
-  group.rotation.z = Math.sin(t * W_ROT) * 0.04;
-  group.position.x = Math.sin(t * W_SWY + PH_SWY) * 0.25;
-  renderer.render(scene, camera);
-  return true;
-};
+window.renderFrame = (t) => { scene.renderFrame(t); return true; };
 window.meshReady = true;
 </script>
 </body>

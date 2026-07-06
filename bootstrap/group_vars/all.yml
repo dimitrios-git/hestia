@@ -167,6 +167,7 @@ dotfile_links:
   # `theme_variant` (M7).
   - { src: "user/waybar/theme-{{ theme_variant }}.css", dest: "{{ target_home }}/.config/waybar/theme.css" }
   - { src: user/waybar/scripts/cpu.sh,      dest: "{{ target_home }}/.config/waybar/scripts/cpu.sh" }
+  - { src: user/waybar/scripts/audio.sh,    dest: "{{ target_home }}/.config/waybar/scripts/audio.sh" }
   - { src: user/waybar/scripts/gpu.sh,      dest: "{{ target_home }}/.config/waybar/scripts/gpu.sh" }
   - { src: user/waybar/scripts/gpu-watch.sh, dest: "{{ target_home }}/.config/waybar/scripts/gpu-watch.sh" }
   - { src: user/waybar/scripts/weather.sh,   dest: "{{ target_home }}/.config/waybar/scripts/weather.sh" }

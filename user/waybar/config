@@ -4,7 +4,7 @@
     "height": 32,
     "modules-left": ["custom/launcher", "sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
-    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu", "power-profiles-daemon", "pulseaudio", "sway/language", "network", "bluetooth", "custom/usb", "custom/notifications", "custom/weather", "clock", "custom/power"],
+    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu", "power-profiles-daemon", "custom/audio", "sway/language", "network", "bluetooth", "custom/usb", "custom/notifications", "custom/weather", "clock", "custom/power"],
 
     "custom/gpu": {
         "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
@@ -73,11 +73,16 @@
         "on-click": "pgrep -x htop >/dev/null && pkill -x htop || kitty --class floatterm -e htop"
     },
 
-    "pulseaudio": {
-        "format": "<span size='xx-large' rise='-3072'>󰕾</span> {volume:>2}%",
-        "format-muted": "<span size='xx-large' rise='-3072'>󰖁</span> muted",
-        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-        "on-click-right": "pgrep -x pulsemixer >/dev/null && pkill -x pulsemixer || kitty --class floatterm -e pulsemixer"
+    "custom/audio": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 1,
+        "signal": 8,
+        "exec": "$HOME/.config/waybar/scripts/audio.sh",
+        "on-click": "$HOME/.config/waybar/scripts/audio.sh toggle-mute",
+        "on-click-right": "$HOME/.config/waybar/scripts/audio.sh mixer",
+        "on-scroll-up": "$HOME/.config/waybar/scripts/audio.sh up",
+        "on-scroll-down": "$HOME/.config/waybar/scripts/audio.sh down"
     },
 
     "clock": {

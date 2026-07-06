@@ -1,0 +1,25 @@
+# wpaperd — wallpaper daemon (wallpaper EVALUATION set, enable_wallpapers).
+# Symlinked to ~/.config/wpaperd/config.toml by the dotfiles role.
+#
+# Start it by hand while trialling (`wpaperd -d`, or an `exec wpaperd -d` sway
+# line once it wins) — then `pkill -x swaybg`: the theme fragment's solid
+# ground (sway `output * bg`) shares wpaperd's background layer and the
+# stacking order is timing-dependent (live 2026-07: swaybg WON and hid the
+# wallpaper; killing swaybg is the reliable trial move, and `swaymsg reload`
+# respawns it on top — re-kill after a reload). Killing wpaperd instead needs
+# a reload to bring the solid colour back. Runtime control: `wpaperctl`
+# (next/previous/pause/resume/toggle-pause/set). wpaperd expands `~` itself,
+# so this file stays host-portable (no rendering needed).
+#
+# Sections are per-output (`swaymsg -t get_outputs` for names); `default` is
+# the base every section inherits, `any` catches unlisted outputs. Slideshow =
+# point `path` at a directory + set `duration`.
+
+[default]
+mode = "fit-border-color"
+duration = "30m"
+sorting = "random"
+transition-time = 400
+
+[any]
+path = "~/Pictures/Wallpapers"

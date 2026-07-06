@@ -62,6 +62,23 @@ enable_file_managers: false # install the file-manager evaluation set (ranger/ya
 # covered the main surfaces but menus/icons stayed unthemed — not worth the
 # road; it also saves its theme on exit, see the 6f5051a clobber story).
 enable_image_viewers: false # install the image-viewer keeper (ristretto)
+# Package-ish toggle (no role): gates the `wallpapers` apt group below (libmpv2,
+# mpvpaper's runtime) AND the wpaperd/awww/mpvpaper localbin entries (their
+# `enabled:` key). Default OFF — an EVALUATION set (2026-07, the file-manager
+# process): none is in Debian apt and none ships prebuilt binaries, so the
+# claude agent builds them once and publishes the sha256-verified set as a
+# hestia release (the Yaru pattern; amd64-only until a rebuild). Candidates:
+# wpaperd (+wpaperctl — built-in per-output slideshows from a directory,
+# hw-accelerated transitions, the config-file fit), awww (+awww-daemon — the
+# maintained successor of the archived swww; runtime `awww img` switching with
+# animated transitions, no native slideshow — user/bin/awww-slideshow fills
+# that), mpvpaper (video wallpapers via libmpv; playlists double as
+# slideshows). Daemons start MANUALLY while trialling, then `pkill -x swaybg`
+# — the solid-ground swaybg shares their background layer and the stacking is
+# timing-dependent (live: swaybg hid wpaperd; `swaymsg reload` respawns it on
+# top, so re-kill after a reload). Pick the default, wire its exec + verdict
+# here, trim then.
+enable_wallpapers: false    # install the wallpaper evaluation set (wpaperd/awww/mpvpaper)
 # Default OFF — installs the prebuilt #d7005f Yaru ICON theme (a ~27 MB sha256-verified
 # download into ~/.local, no root, no build toolchain). The theme is built on demand by
 # the claude agent and published as a hestia release; turn on per host to theme icons.
@@ -208,6 +225,11 @@ dotfile_links:
   - { src: "user/yazi/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/yazi/theme.toml" }
   - { src: user/ranger/rc.conf,             dest: "{{ target_home }}/.config/ranger/rc.conf" }
   - { src: "user/ranger/colorschemes/wildcharm-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/wildcharm.py" }
+  # wallpaper evaluation (enable_wallpapers gates the BINARIES via localbin;
+  # these config/helper symlinks are unconditional — same ruling as yazi/ranger)
+  - { src: user/wpaperd/config.toml,        dest: "{{ target_home }}/.config/wpaperd/config.toml" }
+  - { src: user/bin/awww-slideshow,         dest: "{{ target_home }}/.local/bin/awww-slideshow" }
+  - { src: user/bin/mpvpaper-slideshow,     dest: "{{ target_home }}/.local/bin/mpvpaper-slideshow" }
   - { src: user/xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
   # (gtk-3.0 settings.ini moved to templated_configs — M7: its theme name follows
   # `theme_variant`; the css overlays stay variant-invariant symlinks.)
@@ -344,6 +366,54 @@ localbin_binaries:
       x86_64-unknown-linux-gnu: "1c9096f0a83b8102c194385f644cdeff93cc8269426163c9d033041ebd537bd2"
       aarch64-unknown-linux-gnu: "c38b07961e7fc4c76503fd0f4a1b4bd0b379a99835b818cd899b0315c728e1e1"
 
+  # Wallpaper EVALUATION set (gated: `enabled` rides enable_wallpapers). None of
+  # these is in Debian apt and none publishes prebuilt binaries (wpaperd/awww are
+  # cargo builds, mpvpaper is meson; swww — awww's archived predecessor — is
+  # dead upstream), so the claude agent builds them once (see the toggle comment
+  # above) and publishes the stripped binaries as `raw:` assets on the hestia
+  # release `wallpapers-v1` — x86_64-only until a rebuild adds arches. Runtime
+  # deps are all in Debian base (awww: liblz4-1) or the gated `wallpapers` apt
+  # group (mpvpaper: libmpv2).
+  - name: wpaperd          # wallpaper daemon — per-output slideshows, transitions
+    version: "1.3.0"
+    url: "https://github.com/dimitrios-git/hestia/releases/download/wallpapers-v1/wpaperd-{ver}-{arch}"
+    raw: true
+    enabled: "{{ enable_wallpapers | bool }}"
+    checksums:
+      x86_64: "33f07b9349cd73ecb64e818292f0f9515301c52af9d60d774f6474346d8378ba"
+
+  - name: wpaperctl        # wpaperd's runtime control CLI (next/previous/pause/set)
+    version: "1.3.0"
+    url: "https://github.com/dimitrios-git/hestia/releases/download/wallpapers-v1/wpaperctl-{ver}-{arch}"
+    raw: true
+    enabled: "{{ enable_wallpapers | bool }}"
+    checksums:
+      x86_64: "21825cd6fc24ded16b635b11fd24ab7df71d8d0eacce0f645c3566722b929bc5"
+
+  - name: awww             # animated-transition wallpaper client (swww successor)
+    version: "0.12.1"
+    url: "https://github.com/dimitrios-git/hestia/releases/download/wallpapers-v1/awww-{ver}-{arch}"
+    raw: true
+    enabled: "{{ enable_wallpapers | bool }}"
+    checksums:
+      x86_64: "8b3c6837db9713d33773427e6435009613b8a1da4532fcce930f99829e0cac1e"
+
+  - name: awww-daemon      # awww's daemon half (start before `awww img`)
+    version: "0.12.1"
+    url: "https://github.com/dimitrios-git/hestia/releases/download/wallpapers-v1/awww-daemon-{ver}-{arch}"
+    raw: true
+    enabled: "{{ enable_wallpapers | bool }}"
+    checksums:
+      x86_64: "b01375a2bf5ff0a630ce5ecdcff6b70534eabe3ac8025b9183dc719035ccf520"
+
+  - name: mpvpaper         # video wallpapers via libmpv (runtime: the gated libmpv2)
+    version: "1.8"
+    url: "https://github.com/dimitrios-git/hestia/releases/download/wallpapers-v1/mpvpaper-{ver}-{arch}"
+    raw: true
+    enabled: "{{ enable_wallpapers | bool }}"
+    checksums:
+      x86_64: "02a9c66a197c34a6c8b6c4728050dc861f129273dd7f1377d0a6fc4bcd500d77"
+
 # --- apt packages, grouped by concern (deps documented across CLAUDE.md) -------
 # Dependency-audited 2026-06-21 (swept every config for invoked binaries). Things
 # that are NOT apt packages, or are heavy/optional, are listed in README.md /
@@ -371,6 +441,7 @@ apt_packages:
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
   image_viewers: [ristretto]                     # enable_image_viewers (default off; the evaluation keeper)
+  wallpapers: [libmpv2]                          # enable_wallpapers (default off; mpvpaper's runtime — the binaries themselves ride localbin on the same toggle)
   # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)
   # outside Plasma — start-sway exports QT_QPA_PLATFORMTHEME=kde when it's installed.
   # Needed by the KDE file managers (dolphin/krusader don't self-apply a scheme) and
@@ -392,6 +463,7 @@ package_group_features:
   file_managers: "{{ enable_file_managers | bool }}"
   qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
   image_viewers: "{{ enable_image_viewers | bool }}"
+  wallpapers:  "{{ enable_wallpapers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"
   firefox:     "{{ enable_firefox | bool }}"

@@ -1,0 +1,67 @@
+#!/bin/bash
+# mpvpaper-slideshow — different videos (or stills, mixed freely) per monitor:
+# one mpvpaper instance per output, each dealt its OWN independently-shuffled
+# playlist, advanced by mpvpaper's native slideshow timer. Part of the
+# wallpaper EVALUATION set (enable_wallpapers); symlinked into ~/.local/bin.
+#
+# Usage: mpvpaper-slideshow [-n SECS] [-o "MPV OPTS"] DIR
+#   -n  seconds per playlist entry (default 1800; mpvpaper adds loop options)
+#   -o  extra mpv options appended to the defaults (e.g. "panscan=1.0")
+# Independent `shuf` per output is what guarantees monitors diverge — mpv's
+# own shuffle could deal two instances the same order. Stills hold for the
+# full -n via image-display-duration=inf (mpv's 1s default would skip them
+# early). Runs in the foreground managing its children — background it with
+# `&`; stopping it (Ctrl-C / `pkill -f mpvpaper-slideshow`) stops every
+# instance (`pkill -x` can't match: the kernel comm name truncates at 15
+# chars). Outputs are read once at launch — restart after monitor hotplug.
+# Remember the solid-ground gotcha: `pkill -x swaybg` after starting.
+
+set -u
+
+secs=1800
+extra=""
+while getopts n:o: opt; do
+    case $opt in
+        n) secs=$OPTARG ;;
+        o) extra=$OPTARG ;;
+        *) echo "usage: mpvpaper-slideshow [-n SECS] [-o \"MPV OPTS\"] DIR" >&2; exit 2 ;;
+    esac
+done
+shift $((OPTIND - 1))
+dir=${1:?usage: mpvpaper-slideshow [-n SECS] [-o "MPV OPTS"] DIR}
+
+[ -d "$dir" ] || { echo "mpvpaper-slideshow: not a directory: $dir" >&2; exit 1; }
+
+# Media whitelist (videos + stills mpv renders) — sidecars like .xmp stay out
+media_find() {
+    find "$dir" -maxdepth 1 -type f ! -name '.*' \( \
+        -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o \
+        -iname '*.mov' -o -iname '*.avi' -o -iname '*.m4v' -o \
+        -iname '*.gif' -o -iname '*.png' -o -iname '*.jpg' -o \
+        -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.bmp' \) -print
+}
+
+[ -n "$(media_find | head -1)" ] || { echo "mpvpaper-slideshow: no playable media in $dir" >&2; exit 1; }
+
+mapfile -t outputs < <(mpvpaper -d 2>/dev/null | sed -n 's/.*Output: \([^ ]*\).*/\1/p')
+[ ${#outputs[@]} -gt 0 ] || { echo "mpvpaper-slideshow: no outputs found (is the compositor running?)" >&2; exit 1; }
+
+rt=${XDG_RUNTIME_DIR:-/tmp}
+playlists=()
+cleanup() {
+    trap - EXIT INT TERM
+    # shellcheck disable=SC2046  # job pids are space-safe by construction
+    kill $(jobs -p) 2>/dev/null
+    rm -f "${playlists[@]}"
+    exit 0
+}
+trap cleanup EXIT INT TERM
+
+for out in "${outputs[@]}"; do
+    pl="$rt/mpvpaper-slideshow.$$.$out.m3u"
+    media_find | shuf > "$pl"
+    playlists+=("$pl")
+    mpvpaper -n "$secs" -o "no-audio image-display-duration=inf $extra" "$out" "$pl" &
+done
+
+wait

@@ -34,12 +34,13 @@ entire wallpaper tool stack.
 ## The ride
 
 **The incumbent's moat turned out to be integration, not features.** vifm's
-git suite (`:gc` lists exactly the files a branch changed as a jump list,
-`:gs` highlights them inline, `:gd` diffs the cursor file against the branch
+git suite (`gc` lists exactly the files a branch changed as a jump list,
+`gs` highlights them inline, `:gd` diffs the cursor file against the branch
 base) and its `--remote` client-server — which the imv image-browsing
 integration scripts against — are things no challenger replicates without
 years of config. That was the frame going in: challengers had to beat vifm
-*plus* its wiring, not vifm alone.
+*plus* its wiring, not vifm alone. The moat is itemised, with live examples
+and screenshots, in **[vifm in hestia: the integration, in detail](vifm.md)**.
 
 **yazi made the strongest case.** It's fast, and it ships *out of the box*
 what the previous terminal generation had to assemble by hand: in the
@@ -144,7 +145,7 @@ state: dark, accent-locked chrome, hestia-red folders.
 
 ## Where it lives
 
-- vifm: `user/vifm/` (vifmrc, generated colorschemes, `scripts/`)
+- vifm: `user/vifm/` (vifmrc, generated colorschemes, `scripts/`) — deep dive: [vifm.md](vifm.md)
 - yazi + ranger themes: `user/yazi/`, `user/ranger/` (generated pairs)
 - Qt fix: `bootstrap/roles/qt_theme/`, the `qt_platform` apt group,
   `system/sway-session/start-sway.j2`

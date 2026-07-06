@@ -21,6 +21,9 @@ unchanged.
 | [Wallpapers](wallpapers.md) | Three engines trialled, none survived as "just a wallpaper tool" — the verdict became a generated, seamlessly-looping mesh rendered from hestia's own design system |
 | [File managers](file-managers.md) | Seven contenders against vifm — the incumbent won on speed, stole the losers' best ideas, and the trial's failures fixed Qt theming for everything |
 
+**Deep dives** — single-tool pages behind a chapter, for the load-bearing
+pieces: [vifm](vifm.md) (the file-managers moat, itemised with live examples).
+
 **Coming:** image viewers
 (ristretto and the three that fell), music (cmus + cava as one window),
 notifications (mako + the Waybar bell), theming (one palette, thirty-four

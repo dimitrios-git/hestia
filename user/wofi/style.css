@@ -6,7 +6,7 @@
    to GTK — @import/@define-color fragments do NOT work here (wofi loads the
    preprocessed text, so relative imports never resolve). Slot order (line - 1,
    from render.py WOFI_SLOTS):
-     0 bg · 1 text · 2 muted · 3 border · 4 surface · 5 accent · 6 accent_fg
+     0 bg · 1 text · 2 muted · 3 border · 4 surface · 5 accent · 6 accent_fg · 7 focus (sway client.focused cyan)
    Edit palette.yml + re-render to change a colour. */
 
 * {
@@ -17,7 +17,8 @@
 window {
     background-color: --wofi-color0;
     color: --wofi-color1;
-    border: 2px solid --wofi-color5;
+    /* the launcher IS the focused window — frame it like one (sway $focus) */
+    border: 2px solid --wofi-color7;
 }
 
 #outer-box {

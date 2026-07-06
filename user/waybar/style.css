@@ -116,7 +116,7 @@ window#waybar {
 
 /* Power menu — accent ⏻ pinned at the far right (the slot the launcher swirl
    vacated); click opens the power.sh wofi menu (lock/logout/suspend/reboot/
-   shutdown, destructive ones behind the swaynag orange banner). */
+   shutdown, destructive ones behind the swaynag accent banner). */
 #custom-power {
     color: @accent;
     padding: 0 16px 0 14px;

@@ -502,13 +502,17 @@ default-timeout=0
 # colors file: newline-separated hexes, line N referenced as --wofi-color<N-1>
 # in style.css, path wired by `colors=` in the wofi config (relative paths
 # resolve against ~/.config/wofi). SLOT ORDER (style.css documents it too):
-WOFI_SLOTS = ["bg", "text", "muted", "border", "surface", "accent", "accent_fg"]
+WOFI_SLOTS = ["bg", "text", "muted", "border", "surface", "accent", "accent_fg", "focus"]
 
 
 def render_wofi_colors(variant: str) -> str:
     # NO comments/provenance in this file — wofi parses every line as a hex
-    r = vroles(variant)
-    return "\n".join(r[slot] for slot in WOFI_SLOTS) + "\n"
+    # "focus" = the variant's bright_cyan, the same slot sway's client.focused
+    # border rides ($focus in the theme fragment) — the launcher IS the focused
+    # window, so its frame speaks the focus colour, not the accent
+    r, a = vroles(variant), vansi(variant)
+    vals = {**r, "focus": a["bright_cyan"]}
+    return "\n".join(vals[slot] for slot in WOFI_SLOTS) + "\n"
 
 
 def render_swaylock(variant: str) -> str:
@@ -574,21 +578,25 @@ text-caps-lock-color={b(r["text"])}
 
 def render_swaynag(variant: str) -> str:
     # Typeless dialogs keep the quiet dark base with an accent line; the two
-    # built-in types are FULL-FILL banners so they can't be missed — warning
-    # (the $mod+Shift+e exit confirm, and the power-menu confirms) is a solid
-    # orange bar with ink text, error the accent fill with accent_fg. Buttons/
-    # details keep the global sunken+text treatment on every section — the
-    # neutral wells read fine on the fills and the emitter stays one loop.
+    # built-in types are FULL-ACCENT banners (2026-07 redesign — they read as
+    # the waybar accent baseline grown into a bar; the earlier orange warning
+    # dropped so every destructive confirm speaks the one accent language).
+    # Buttons on the accent are inverse chips — accent_fg fill, accent text —
+    # flat (border-size 0) with roomier padding/gaps, the "modern" available
+    # in swaynag's flat-rectangle vocabulary (no corner radius exists).
+    # Typeless keeps the sunken-well buttons on the dark base.
     r, a, e = vroles(variant), vansi(variant), vext(variant)
     def b(h):
         return h.lstrip("#")
+    accent_chip = (r["accent_fg"], r["accent"])
+    sunken_well = (e["sunken"], r["text"])
     sections = [
         ("global / default (dialogs with no -t): dark base, accent line",
-         None, r["bg"], r["text"], r["border"], r["accent"]),
-        ("warning (the sway exit confirm passes -t warning): full orange banner",
-         "warning", a["bright_yellow"], e["ink"], a["yellow"], a["yellow"]),
-        ("error: full accent banner",
-         "error", r["accent"], r["accent_fg"], r["accent_dark"], r["accent_dark"]),
+         None, r["bg"], r["text"], r["border"], r["accent"], sunken_well),
+        ("warning (the sway exit confirm + power-menu confirms pass -t warning):",
+         "warning", r["accent"], r["accent_fg"], r["accent_dark"], r["accent_dark"], accent_chip),
+        ("error: same accent banner — one language for everything loud",
+         "error", r["accent"], r["accent_fg"], r["accent_dark"], r["accent_dark"], accent_chip),
     ]
     out = [f"# {PROVENANCE}",
            f"# swaynag — wildcharm dialogs, {variant} (config-dark / config-light pair; the",
@@ -599,20 +607,29 @@ def render_swaynag(variant: str) -> str:
            "# do NOT layer the global options — only keys set INSIDE a type's [section]",
            "# override its presets, so the theme is restated in full per section.",
            ""]
-    for title, section, bg, text, border, accent_line in sections:
+    for title, section, bg, text, border, accent_line, (btn_bg, btn_fg) in sections:
         out.append(f"# --- {title} ---")
         if section:
             out.append(f"[{section}]")
         else:
-            out.append("font=Lilex Nerd Font Mono 11")
+            out += [
+                "font=Lilex Nerd Font Mono 11",
+                "# flat, roomy buttons (geometry is global-only — set before any [section])",
+                "button-border-size=0",
+                "button-padding=8",
+                "button-gap=10",
+                "button-dismiss-gap=10",
+                "button-margin-right=6",
+                "message-padding=12",
+            ]
         out += [
             f"background={b(bg)}",
             f"border={b(border)}",
             f"border-bottom={b(accent_line)}",
             "border-bottom-size=2",
             f"text={b(text)}",
-            f"button-background={b(e['sunken'])}",
-            f"button-text={b(r['text'])}",
+            f"button-background={b(btn_bg)}",
+            f"button-text={b(btn_fg)}",
             f"details-background={b(e['sunken'])}",
             "",
         ]

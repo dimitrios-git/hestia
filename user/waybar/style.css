@@ -102,7 +102,7 @@ window#waybar {
 #power-profiles-daemon,
 #custom-cpu,
 #memory,
-#pulseaudio,
+#custom-audio,
 #language,
 #clock {
     padding: 0 14px;
@@ -130,7 +130,7 @@ window#waybar {
     border-bottom: 2px solid @accent;
 }
 
-#pulseaudio.muted {
+#custom-audio.muted {
     color: @icon_muted;
 }
 

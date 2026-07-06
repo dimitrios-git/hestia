@@ -92,7 +92,9 @@ started at the cursor file. The wiring underneath is the deep part:
   have wandered elsewhere while imv was open.
 - **Videos ride along as ▶ posters.** imv can't play video, so the script
   feeds it cached poster thumbnails with a play-button overlay; a session map
-  resolves every imv index back to the real file. Posters are generated
+  resolves imv's current item back to the real file — keyed by display path,
+  not index, because imv silently drops entries it can't decode and one
+  corrupt file used to shift every mapping after it. Posters are generated
   *cursor-first*: only the selected file's poster is made synchronously, the
   rest show a generic ▶ tile while an idle-priority worker backfills the
   cache — and the launcher maps the whole list in one batch pass, because at

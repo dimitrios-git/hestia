@@ -5,10 +5,13 @@
 # parses each part as an imv command, and inline shell quoting in a bind gets
 # mangled — a bare script path has nothing to misparse.
 #
-# Resolves imv's `$imv_current_index` to the ORIGINAL file via the session map
-# imv-browse.sh wrote (line N = imv item N) — because for a video, imv shows a
-# thumbnail, so $imv_current_file is the thumb, not the video. ($imv_pid is the
-# imv instance.)
+# Resolves imv's `$imv_current_file` to the ORIGINAL file via the session map
+# imv-browse.sh wrote (`display<US>original` per line, US = 0x1f) — because
+# for a video, imv shows a thumbnail, so $imv_current_file is the thumb/pend
+# path, not the video. Resolution is BY PATH, deliberately NOT by
+# $imv_current_index: imv silently drops entries it can't load, which shifts
+# every later index — index-resolution made one corrupt file mis-map every
+# video after it (caught live). ($imv_pid is the imv instance.)
 #
 #   (no arg)  live sync — move vifm's cursor onto the current item (each j/k)
 #   quit      also restore vifm's dual-pane preview, then close imv (q)
@@ -26,7 +29,8 @@ mpvlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-mpv.lock"
 # exec'd imv with it). A bare --remote reaches the FIRST vifm server instead —
 # with several vifms open, the restore/sync landed in the wrong window.
 vremote() { vifm --server-name "${VIFM_SERVER_NAME:-vifm}" --remote "$@"; }
-orig=$(sed -n "${imv_current_index}p" "$session" 2>/dev/null)
+# display path -> original (ENVIRON, not awk -v: -v mangles backslashes)
+orig=$(f="$imv_current_file" awk -F '\037' 'index($0, "\037") && $1 == ENVIRON["f"] { print substr($0, index($0, "\037") + 1); exit }' "$session" 2>/dev/null)
 [ -n "$orig" ] || orig=$imv_current_file   # fallback (images-only / no map)
 
 is_video() {

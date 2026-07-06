@@ -24,7 +24,7 @@ Claude Code runs here as a dedicated, unprivileged **`claude`** Linux user (own 
 
 ## File layout and naming convention
 
-Top level: **`user/`** (the human's home-deployed configs — one subdir per tool), **`system/`** (root-owned `/etc` configs), **`bootstrap/`** (the Ansible installer), **`themes/`** (the theme single-source-of-truth — `wildcharm/palette.yml`; see *Theming* / `docs/theming.md`), **`docs/`**. The `user/` grouping is a flat namespace — *not* `users/<name>/`: per-user values are parameterised (host_vars/templating, §6), so a username sub-level would be empty ceremony (see `docs/repo-structure-design.md` §7).
+Top level: **`user/`** (the human's home-deployed configs — one subdir per tool), **`system/`** (root-owned `/etc` configs), **`bootstrap/`** (the Ansible installer), **`themes/`** (the theme single-source-of-truth — `wildcharm/palette.yml`; see *Theming* / `docs/theming.md`), **`docs/`** (maintainer design docs/runbooks), **`showcase/`** (READER-facing docs: per-category evaluation-trace chapters + screenshots — index `showcase/README.md`; each concluded evaluation ships its chapter in/beside the verdict PR; plain markdown + relative `img/` paths so chapters syndicate to the stoa charalampidis app unchanged). The `user/` grouping is a flat namespace — *not* `users/<name>/`: per-user values are parameterised (host_vars/templating, §6), so a username sub-level would be empty ceremony (see `docs/repo-structure-design.md` §7).
 
 Active `user/` configs are either:
 - **Dot-prefixed** in the repo, symlinked into `$HOME` — `user/vim/.vimrc` → `~/.vimrc`, `user/bash/.bashrc` → `~/.bashrc`, `user/git/.gitignore_global` → `~/.gitignore_global`.

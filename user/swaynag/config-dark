@@ -9,6 +9,13 @@
 
 # --- global / default (dialogs with no -t): dark base, accent line ---
 font=Lilex Nerd Font Mono 11
+# flat, roomy buttons (geometry is global-only — set before any [section])
+button-border-size=0
+button-padding=8
+button-gap=10
+button-dismiss-gap=10
+button-margin-right=6
+message-padding=12
 background=1a1a1a
 border=3a3a3a
 border-bottom=d7005f
@@ -18,24 +25,24 @@ button-background=111111
 button-text=e0e0e0
 details-background=111111
 
-# --- warning (the sway exit confirm passes -t warning): full orange banner ---
+# --- warning (the sway exit confirm + power-menu confirms pass -t warning): ---
 [warning]
-background=ffaf00
-border=d78700
-border-bottom=d78700
+background=d7005f
+border=9b0040
+border-bottom=9b0040
 border-bottom-size=2
-text=000000
-button-background=111111
-button-text=e0e0e0
+text=ffffff
+button-background=ffffff
+button-text=d7005f
 details-background=111111
 
-# --- error: full accent banner ---
+# --- error: same accent banner — one language for everything loud ---
 [error]
 background=d7005f
 border=9b0040
 border-bottom=9b0040
 border-bottom-size=2
 text=ffffff
-button-background=111111
-button-text=e0e0e0
+button-background=ffffff
+button-text=d7005f
 details-background=111111

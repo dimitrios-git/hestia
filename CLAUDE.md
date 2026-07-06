@@ -95,6 +95,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/ranger/colorschemes/wildcharm-{{ theme_variant }}.py` | `~/.config/ranger/colorschemes/wildcharm.py` |
 | `user/wpaperd/config.toml` | `~/.config/wpaperd/config.toml` |
 | `user/bin/awww-slideshow` | `~/.local/bin/awww-slideshow` |
+| `user/bin/mpvpaper-slideshow` | `~/.local/bin/mpvpaper-slideshow` |
 | `user/xdg-desktop-portal/sway-portals.conf` | `~/.config/xdg-desktop-portal/sway-portals.conf` |
 | `user/gtk/gtk-3.0/gtk.css` | `~/.config/gtk-3.0/gtk.css` |
 | `user/gtk/gtk-4.0/settings.ini` | `~/.config/gtk-4.0/settings.ini` |

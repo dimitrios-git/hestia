@@ -229,6 +229,7 @@ dotfile_links:
   # these config/helper symlinks are unconditional — same ruling as yazi/ranger)
   - { src: user/wpaperd/config.toml,        dest: "{{ target_home }}/.config/wpaperd/config.toml" }
   - { src: user/bin/awww-slideshow,         dest: "{{ target_home }}/.local/bin/awww-slideshow" }
+  - { src: user/bin/mpvpaper-slideshow,     dest: "{{ target_home }}/.local/bin/mpvpaper-slideshow" }
   - { src: user/xdg-desktop-portal/sway-portals.conf, dest: "{{ target_home }}/.config/xdg-desktop-portal/sway-portals.conf" }
   # (gtk-3.0 settings.ini moved to templated_configs — M7: its theme name follows
   # `theme_variant`; the css overlays stay variant-invariant symlinks.)

@@ -3,26 +3,31 @@
 # it) has transitions but no built-in cycling. Part of the wallpaper
 # EVALUATION set (enable_wallpapers); symlinked into ~/.local/bin.
 #
-# Usage: awww-slideshow [-d SECONDS] [-t TRANSITION] DIR
-#   -d  seconds between wallpapers (default 1800)
+# Usage: awww-slideshow [-d SECONDS] [-t TRANSITION] [-s] DIR
+#   -d  seconds between wallpaper changes (default 1800)
 #   -t  awww transition type (default random; see `awww img --help`)
-# Needs a running `awww-daemon` (started separately). Loops forever in a
-# shuffled order, reshuffling each full pass — run it backgrounded or from an
-# `exec` line. Images: anything awww loads (png/jpg/webp/gif/...).
+#   -s  same image on every output (default: a DIFFERENT image per output,
+#       dealt from one shuffled deck — trial parity with wpaperd's per-output
+#       behaviour; outputs re-queried each tick, so hotplug just works)
+# Needs a running `awww-daemon` (started separately). Loops forever,
+# reshuffling the deck as it empties — run it backgrounded or from an `exec`
+# line. Remember the solid-ground gotcha: `pkill -x swaybg` after starting.
 
-set -eu
+set -u
 
 delay=1800
 transition=random
-while getopts d:t: opt; do
+same=false
+while getopts d:t:s opt; do
     case $opt in
         d) delay=$OPTARG ;;
         t) transition=$OPTARG ;;
-        *) echo "usage: awww-slideshow [-d SECONDS] [-t TRANSITION] DIR" >&2; exit 2 ;;
+        s) same=true ;;
+        *) echo "usage: awww-slideshow [-d SECONDS] [-t TRANSITION] [-s] DIR" >&2; exit 2 ;;
     esac
 done
 shift $((OPTIND - 1))
-dir=${1:?usage: awww-slideshow [-d SECONDS] [-t TRANSITION] DIR}
+dir=${1:?usage: awww-slideshow [-d SECONDS] [-t TRANSITION] [-s] DIR}
 
 [ -d "$dir" ] || { echo "awww-slideshow: not a directory: $dir" >&2; exit 1; }
 
@@ -37,19 +42,48 @@ img_find() {
 }
 
 fails=0
+set_img() {  # $1 image, $2 outputs ("" = all)
+    if awww img ${2:+-o "$2"} --transition-type "$transition" "$1"; then
+        fails=0
+    else
+        # a corrupt file shouldn't end the show — but a dead daemon must
+        fails=$((fails + 1))
+        echo "awww-slideshow: skipping $1 (failure $fails/5)" >&2
+        [ "$fails" -ge 5 ] && { echo "awww-slideshow: 5 consecutive failures — is awww-daemon running?" >&2; exit 1; }
+        return 1
+    fi
+}
+
+deck=()
+next_img() {  # -> $img; reshuffles when the deck runs dry
+    if [ ${#deck[@]} -eq 0 ]; then
+        mapfile -d '' deck < <(img_find -print0 | shuf -z)
+        [ ${#deck[@]} -gt 0 ] || return 1
+    fi
+    img=${deck[0]}
+    deck=("${deck[@]:1}")
+}
+
 while :; do
-    while IFS= read -r -d '' img; do
-        if awww img "$img" --transition-type "$transition"; then
-            fails=0
-        else
-            # a corrupt file shouldn't end the show — but a dead daemon must
+    # no usable images (yet): don't spin
+    if [ -z "$(img_find -print -quit)" ]; then
+        sleep "$delay"; continue
+    fi
+    if $same; then
+        next_img && set_img "$img" ""
+    else
+        # one shuffled deck, one card per output (sed strips the leading
+        # ": " namespace prefix awww's query prints)
+        outs=$(awww query 2>/dev/null | sed -E 's/^[^A-Za-z0-9]*//; s/:.*$//')
+        if [ -z "$outs" ]; then
             fails=$((fails + 1))
-            echo "awww-slideshow: skipping $img (failure $fails/5)" >&2
-            [ "$fails" -ge 5 ] && { echo "awww-slideshow: 5 consecutive failures — is awww-daemon running?" >&2; exit 1; }
-            continue
+            echo "awww-slideshow: no outputs from awww query (failure $fails/5) — is awww-daemon running?" >&2
+            [ "$fails" -ge 5 ] && exit 1
+            sleep "$delay"; continue
         fi
-        sleep "$delay"
-    done < <(img_find -print0 | shuf -z)
-    # no usable images: don't spin
-    [ -n "$(img_find -print -quit)" ] || sleep "$delay"
+        while IFS= read -r out; do
+            next_img && set_img "$img" "$out"
+        done <<< "$outs"
+    fi
+    sleep "$delay"
 done

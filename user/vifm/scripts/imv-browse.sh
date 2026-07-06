@@ -16,7 +16,10 @@
 # (nice/ionice) background worker then backfills the real posters
 # sequentially, so the NEXT visit to the directory has them — placeholders
 # already shown in the current imv session stay placeholders (imv's list is
-# fixed at launch). A PID-checked launch lock makes an Enter-storm harmless:
+# fixed at launch). The display list is mapped in ONE python pass, not a
+# per-file shell loop — the loop's ~6 forks per file were a second,
+# independent multi-second hang on huge dirs. A PID-checked launch lock
+# makes an Enter-storm harmless:
 # while one launch is in flight, further invocations exit instead of stacking
 # imv windows (the old pgrep-only check misses the pre-imv window).
 #
@@ -102,7 +105,8 @@ gen_thumb() {
 
 # Display path imv should show for a file: itself for images; for videos the
 # cached poster, else the shared placeholder (never the raw video — imv can't
-# decode it).
+# decode it). ONLY for one-off lookups (the cursor file): each call costs ~6
+# subprocesses, so the full list goes through display_list below instead.
 display_of() {
     if is_video "$1"; then
         t=$(thumb_for "$1"); [ -s "$t" ] && printf '%s' "$t" || printf '%s' "$placeholder"
@@ -111,10 +115,45 @@ display_of() {
     fi
 }
 
+# The whole-list mapper: reads original paths on stdin, prints the display
+# path for each (same rules as display_of, byte-identical sha1 keys), and
+# writes to $3 the backfill queue — ONLY the videos still missing a poster,
+# so a fully-cached directory spawns no worker at all. One process for the
+# whole list: the per-file shell version (grep+readlink+stat+sha1sum+cut per
+# file) cost ~7s of pure fork overhead on a 2000-video directory — THE
+# residual hang after posters went cursor-first.
+display_list() {
+    python3 -c '
+import sys, os, re, hashlib
+cache, placeholder, qf = (a.encode() for a in sys.argv[1:4])
+vid = re.compile(rb"\.(mp4|mkv|avi|mov|webm|flv|m4v|mpe?g|wmv|ts|m2v|ogv|3gp|vob)$", re.I)
+out, queue = sys.stdout.buffer, []
+for f in sys.stdin.buffer.read().splitlines():
+    if not f:
+        continue
+    if vid.search(f):
+        try:
+            key = hashlib.sha1(os.path.realpath(f) + b"\x1f"
+                               + str(int(os.stat(f).st_mtime)).encode()).hexdigest()[:40]
+            t = os.path.join(cache, key.encode() + b".jpg")
+            if os.path.getsize(t) > 0:
+                out.write(t + b"\n")
+                continue
+        except OSError:
+            pass
+        queue.append(f)
+        out.write(placeholder + b"\n")
+    else:
+        out.write(f + b"\n")
+with open(qf, "wb") as fh:
+    fh.write(b"\n".join(queue) + (b"\n" if queue else b""))
+' "$cache" "$placeholder" "$1"
+}
+
 # Internal: `imv-browse.sh __backfill <listfile>` — the detached worker.
-# Generates missing posters for every video in the list, one at a time, at
-# idle CPU/IO priority, then removes the list. Lock-guarded by PID so only
-# one worker runs at a time.
+# Generates the missing posters (the list is pre-filtered by display_list),
+# one at a time, at idle CPU/IO priority, then removes the list. Lock-guarded
+# by PID so only one worker runs at a time.
 if [ "$cur" = "__backfill" ]; then
     qf=$dir
     echo $$ > "$genlock"
@@ -122,7 +161,7 @@ if [ "$cur" = "__backfill" ]; then
     renice -n 19 -p $$ >/dev/null 2>&1
     ionice -c 3 -p $$ 2>/dev/null
     while IFS= read -r f; do
-        [ -n "$f" ] && is_video "$f" && gen_thumb "$f"
+        [ -n "$f" ] && gen_thumb "$f"
     done < "$qf"
     exit 0
 fi
@@ -154,15 +193,21 @@ gen_placeholder
 # else gets it from the background worker below.
 is_video "$cur" && gen_thumb "$cur"
 
-# Backfill the rest in a single detached worker (self-invocation with the
-# __backfill mode above): idle CPU/IO priority, strictly sequential, so it is
-# invisible next to the foreground session. Lock-guarded — if a worker is
-# already busy (this dir or another), skip; the next visit retries. The
-# worker outlives this script (which execs imv) and holds no tty.
-if ! { [ -e "$genlock" ] && kill -0 "$(cat "$genlock" 2>/dev/null)" 2>/dev/null; }; then
-    qf="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-thumbqueue.$$"
-    printf '%s\n' "$origs" > "$qf"
+# One pass: the display list for imv + the queue of posters still missing
+# (runs after the cursor's gen_thumb, so its fresh poster is already seen).
+qf="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-thumbqueue.$$"
+display=$(printf '%s\n' "$origs" | display_list "$qf")
+
+# Backfill the missing posters in a single detached worker (self-invocation
+# with the __backfill mode above): idle CPU/IO priority, strictly sequential,
+# so it is invisible next to the foreground session. Lock-guarded — if a
+# worker is already busy (this dir or another), skip; the next visit retries.
+# The worker outlives this script (which execs imv) and holds no tty.
+if [ -s "$qf" ] \
+   && ! { [ -e "$genlock" ] && kill -0 "$(cat "$genlock" 2>/dev/null)" 2>/dev/null; }; then
     setsid -f "$(readlink -f -- "$0")" __backfill "$qf" >/dev/null 2>&1
+else
+    rm -f "$qf"
 fi
 
 # First open: integrated layout, then imv on the DISPLAY list at the cursor file.
@@ -170,9 +215,9 @@ vremote -c only
 swaymsg split horizontal
 set --
 while IFS= read -r f; do
-    [ -n "$f" ] && set -- "$@" "$(display_of "$f")"
+    [ -n "$f" ] && set -- "$@" "$f"
 done <<EOF
-$origs
+$display
 EOF
 rm -f "$launchlock"; trap - EXIT INT TERM
 exec env imv_config="$HOME/.config/imv/config-vifm" imv-wayland -n "$(display_of "$cur")" "$@"

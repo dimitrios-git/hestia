@@ -95,7 +95,9 @@ started at the cursor file. The wiring underneath is the deep part:
   resolves every imv index back to the real file. Posters are generated
   *cursor-first*: only the selected file's poster is made synchronously, the
   rest show a generic ▶ tile while an idle-priority worker backfills the
-  cache — so a 2000-video directory opens as fast as a 5-video one. **Enter on a video opens
+  cache — and the launcher maps the whole list in one batch pass, because at
+  2000 files even a per-file shell loop is a multi-second hang — so a
+  2000-video directory opens as fast as a 5-video one. **Enter on a video opens
   mpv tiled below** — single-instance and debounced, because focus returning
   to imv used to re-fire the bind and fork-bomb mpv (a PID-checked lock plus
   a ~2-second cooldown absorbs the spurious re-fires).

@@ -90,13 +90,13 @@ input type:keyboard {
     bindsym $mod+Shift+q kill
     # Launcher — TOGGLE like the waybar popups/qalc: a re-press closes the open
     # wofi instead of stacking another (wofi has no built-in single-instance).
-    bindsym $mod+d exec sh -c 'pgrep -x wofi >/dev/null && pkill -x wofi || wofi --show drun'
+    bindsym $mod+d exec sh -c 'pgrep -u "$USER" -x wofi >/dev/null && pkill -u "$USER" -x wofi || wofi --show drun'
     # Music: cmus + cava visualizer side by side
     bindsym $mod+m exec kitty --session music.session
     # Calculator: qalc (Qalculate CLI) in a floatterm — the floatterm app_id
     # triggers the `floating enable, resize set 800 600` rule above. Toggles like
     # the waybar widgets (pgrep -x): a second $mod+c closes it instead of stacking.
-    bindsym $mod+c exec pgrep -x qalc >/dev/null && pkill -x qalc || kitty --class floatterm -e qalc
+    bindsym $mod+c exec pgrep -u "$USER" -x qalc >/dev/null && pkill -u "$USER" -x qalc || kitty --class floatterm -e qalc
 
     # Drag floating windows with $mod + left mouse, resize with $mod + right.
     floating_modifier $mod normal
@@ -266,8 +266,8 @@ for_window [app_id="^FFPWA-"]  inhibit_idle fullscreen
 # makoctl dismiss -n <id> clears that one notification (not -a, which would also
 # drop unrelated notifications on every wake).
 exec_always pkill swayidle; swayidle -w \
-    timeout 270 'pkill -x gammastep; gammastep -O 6500 -b 0.4 & notify-send -p -u critical -t 30000 "Locking in 30 seconds" > "$XDG_RUNTIME_DIR/lock-warn.id"' \
-        resume 'pkill -x gammastep; id=$(cat "$XDG_RUNTIME_DIR/lock-warn.id" 2>/dev/null); [ -n "$id" ] && makoctl dismiss -n "$id"; rm -f "$XDG_RUNTIME_DIR/lock-warn.id"' \
+    timeout 270 'pkill -u "$USER" -x gammastep; gammastep -O 6500 -b 0.4 & notify-send -p -u critical -t 30000 "Locking in 30 seconds" > "$XDG_RUNTIME_DIR/lock-warn.id"' \
+        resume 'pkill -u "$USER" -x gammastep; id=$(cat "$XDG_RUNTIME_DIR/lock-warn.id" 2>/dev/null); [ -n "$id" ] && makoctl dismiss -n "$id"; rm -f "$XDG_RUNTIME_DIR/lock-warn.id"' \
     timeout 300 'swaylock -f' \
     timeout 600 'swaymsg "output * dpms off"' \
     resume 'swaymsg "output * dpms on"' \

@@ -19,7 +19,7 @@
 [ "$1" = menu ] || exit 0
 
 # Toggle: close an already-open power menu instead of stacking another.
-pkill -f 'wofi.*-p Power' 2>/dev/null && exit 0
+pkill -u "$USER" -f 'wofi.*-p Power' 2>/dev/null && exit 0
 
 glyph() { /usr/bin/printf "\\U$1"; }
 

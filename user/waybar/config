@@ -34,7 +34,7 @@
         "tooltip-format": "{controller_alias}\t{status}",
         "tooltip-format-connected": "{controller_alias}\t{status}\n{device_enumerate}",
         "tooltip-format-enumerate-connected": "{device_alias}",
-        "on-click": "pgrep -x bluetuith >/dev/null && pkill -x bluetuith || kitty --class floatterm -e bluetuith",
+        "on-click": "pgrep -u $USER -x bluetuith >/dev/null && pkill -u $USER -x bluetuith || kitty --class floatterm -e bluetuith",
         "on-click-right": "rfkill toggle bluetooth"
     },
 
@@ -45,7 +45,7 @@
         "tooltip-format-wifi": "{essid} ({signalStrength}%)\n{ipaddr}",
         "tooltip-format-ethernet": "{ifname}: {ipaddr}",
         "tooltip-format-disconnected": "Disconnected",
-        "on-click": "pgrep -x nmtui >/dev/null && pkill -x nmtui || kitty --class floatterm -e nmtui"
+        "on-click": "pgrep -u $USER -x nmtui >/dev/null && pkill -u $USER -x nmtui || kitty --class floatterm -e nmtui"
     },
 
     "sway/language": {
@@ -63,14 +63,14 @@
         "return-type": "json",
         "interval": 2,
         "exec": "$HOME/.config/waybar/scripts/cpu.sh",
-        "on-click": "pgrep -x htop >/dev/null && pkill -x htop || kitty --class floatterm -e htop"
+        "on-click": "pgrep -u $USER -x htop >/dev/null && pkill -u $USER -x htop || kitty --class floatterm -e htop"
     },
 
     "memory": {
         "format": "<span size='xx-large' rise='-3072'>󰍛</span> {used:>4.1f}G",
         "interval": 2,
         "tooltip-format": "RAM  {used:0.1f} / {total:0.1f} GiB ({percentage}%)\nfree {avail:0.1f} GiB · swap {swapUsed:0.1f} / {swapTotal:0.1f} GiB",
-        "on-click": "pgrep -x htop >/dev/null && pkill -x htop || kitty --class floatterm -e htop"
+        "on-click": "pgrep -u $USER -x htop >/dev/null && pkill -u $USER -x htop || kitty --class floatterm -e htop"
     },
 
     "custom/audio": {
@@ -127,7 +127,7 @@
     "custom/launcher": {
         "format": "<span size='xx-large' rise='-3072'></span>",
         "tooltip-format": "Applications",
-        "on-click": "pgrep -x wofi >/dev/null && pkill -x wofi || wofi --show drun"
+        "on-click": "pgrep -u $USER -x wofi >/dev/null && pkill -u $USER -x wofi || wofi --show drun"
     },
 
     "custom/power": {

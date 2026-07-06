@@ -25,7 +25,7 @@ case ${1-} in
     toggle-mute) wpctl set-mute "$SINK" toggle 2>/dev/null && refresh; exit 0 ;;
     up)          wpctl set-volume -l 1.0 "$SINK" 2%+ 2>/dev/null && refresh; exit 0 ;;
     down)        wpctl set-volume "$SINK" 2%- 2>/dev/null && refresh; exit 0 ;;
-    mixer)       pgrep -x pulsemixer >/dev/null && pkill -x pulsemixer || kitty --class floatterm -e pulsemixer; exit 0 ;;
+    mixer)       pgrep -u "$USER" -x pulsemixer >/dev/null && pkill -u "$USER" -x pulsemixer || kitty --class floatterm -e pulsemixer; exit 0 ;;
 esac
 
 # no audio server / no default sink -> hide (print nothing)

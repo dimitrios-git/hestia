@@ -81,11 +81,20 @@ Opening an image (or video) runs `imv-browse.sh`: vifm collapses to a single
 pane, sway splits, and **imv opens tiled beside it** on the folder's media,
 started at the cursor file. The wiring underneath is the deep part:
 
-- **The cursor follows both ways.** Every `j`/`k` inside imv tells vifm to
-  `:goto` the corresponding file — select *without opening* (a plain remote
-  open would relaunch imv in a loop). Every message targets the launching
-  vifm instance by server name; a bare `--remote` reaches whichever vifm
-  registered first, which live-debugging proved is rarely the one you meant.
+- **The cursor follows both ways — genuinely.** Every `j`/`k` inside imv
+  tells vifm to `:goto` the corresponding file — select *without opening* (a
+  plain remote open would relaunch imv in a loop). And since 2026-07 the
+  reverse holds too: a watcher polls vifm's cursor while imv is open, so you
+  can keep driving from **vifm** — `/search` a pattern and press `n` through
+  the matches, and imv previews each hit. vifm's whole navigation vocabulary
+  doubles as a media-preview driver. (A marker-plus-debounce handshake stops
+  the two syncs from fighting over the cursor.) The watcher also minds the
+  session: park the cursor on a non-media file and imv shows an empty frame
+  instead of a stale image; leave the folder and imv closes itself, handing
+  the preview pane back. Every message targets the
+  launching vifm instance by server name; a bare `--remote` reaches whichever
+  vifm registered first, which live-debugging proved is rarely the one you
+  meant.
 - **`q` restores the world** — the dual-pane preview layout comes back, the
   cursor lands on whatever you were last viewing. **`h`** goes one directory
   up — computed from the *image's* path, not vifm's cwd, because you may

@@ -23,6 +23,7 @@
 
 session="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-session.list"
 mpvlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-mpv.lock"
+lastsync="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-lastsync"
 
 # Target THE LAUNCHING vifm instance: $VIFM_SERVER_NAME is exported by vifmrc
 # (v:servername) and reaches us through imv's environment (imv-browse.sh
@@ -94,6 +95,13 @@ case "$1" in
         ' _ "$orig" "$mpvlock" >/dev/null 2>&1
         ;;
     *)
+        # The trailing blank "no preview" tile is not a real item — never
+        # sync vifm onto it (j/k passing over it just shows the empty frame).
+        case "$orig" in */imv-vifm-thumbs/blank.jpg) exit 0 ;; esac
+        # Mark this vifm move as imv-originated BEFORE issuing it, so the
+        # vifm→imv watcher (imv-browse.sh __watch) doesn't bounce it back —
+        # without the marker, a fast j/k run in imv would fight the watcher.
+        printf '%s' "$orig" > "$lastsync"
         vremote -c "goto '$orig'"
         ;;
 esac

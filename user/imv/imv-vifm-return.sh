@@ -21,15 +21,19 @@
 # :goto SELECTS without opening (a plain `--remote <file>` would re-open it).
 # vifm --remote no-ops if no vifm server is running.
 
-session="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-session.list"
-mpvlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-mpv.lock"
-lastsync="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-lastsync"
+# Per-vifm-instance session state — the same names imv-browse.sh derives
+# ($VIFM_SERVER_NAME reaches us through imv's environment), so concurrent
+# browse sessions from different vifm windows never read each other's map.
+sname=${VIFM_SERVER_NAME:-vifm}
+session="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-session.$sname.list"
+mpvlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-mpv.$sname.lock"
+lastsync="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-lastsync.$sname"
 
 # Target THE LAUNCHING vifm instance: $VIFM_SERVER_NAME is exported by vifmrc
 # (v:servername) and reaches us through imv's environment (imv-browse.sh
 # exec'd imv with it). A bare --remote reaches the FIRST vifm server instead —
 # with several vifms open, the restore/sync landed in the wrong window.
-vremote() { vifm --server-name "${VIFM_SERVER_NAME:-vifm}" --remote "$@"; }
+vremote() { vifm --server-name "$sname" --remote "$@"; }
 # display path -> original (ENVIRON, not awk -v: -v mangles backslashes)
 orig=$(f="$imv_current_file" awk -F '\037' 'index($0, "\037") && $1 == ENVIRON["f"] { print substr($0, index($0, "\037") + 1); exit }' "$session" 2>/dev/null)
 [ -n "$orig" ] || orig=$imv_current_file   # fallback (images-only / no map)

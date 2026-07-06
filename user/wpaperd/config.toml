@@ -2,8 +2,12 @@
 # Symlinked to ~/.config/wpaperd/config.toml by the dotfiles role.
 #
 # Start it by hand while trialling (`wpaperd -d`, or an `exec wpaperd -d` sway
-# line once it wins); it layers over the theme fragment's solid ground, and
-# killing it brings the solid colour back. Runtime control: `wpaperctl`
+# line once it wins) — then `pkill -x swaybg`: the theme fragment's solid
+# ground (sway `output * bg`) shares wpaperd's background layer and the
+# stacking order is timing-dependent (live 2026-07: swaybg WON and hid the
+# wallpaper; killing swaybg is the reliable trial move, and `swaymsg reload`
+# respawns it on top — re-kill after a reload). Killing wpaperd instead needs
+# a reload to bring the solid colour back. Runtime control: `wpaperctl`
 # (next/previous/pause/resume/toggle-pause/set). wpaperd expands `~` itself,
 # so this file stays host-portable (no rendering needed).
 #

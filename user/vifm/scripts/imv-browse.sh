@@ -89,13 +89,15 @@ gen_thumb() {
     f=$1; t=$(thumb_for "$f")
     [ -s "$t" ] && return
     tmp="$t.$$.jpg"   # .jpg so ffmpeg/ffmpegthumbnailer infer the output format
+    # timeout: a corrupt file / stalled network mount must never wedge the
+    # launch (cursor poster is synchronous) or dead-end the backfill queue
     if command -v ffmpegthumbnailer >/dev/null 2>&1; then
-        ffmpegthumbnailer -i "$f" -o "$tmp" -s 1280 -q 8 2>/dev/null
+        timeout 15 ffmpegthumbnailer -i "$f" -o "$tmp" -s 1280 -q 8 2>/dev/null
     else
         # fallback: a frame ~1s in, else the very first frame (short clips)
-        ffmpeg -y -loglevel error -ss 1 -i "$f" -frames:v 1 \
+        timeout 15 ffmpeg -y -loglevel error -ss 1 -i "$f" -frames:v 1 \
             -vf "scale='min(1280,iw)':-2" "$tmp" </dev/null 2>/dev/null
-        [ -s "$tmp" ] || ffmpeg -y -loglevel error -i "$f" -frames:v 1 \
+        [ -s "$tmp" ] || timeout 15 ffmpeg -y -loglevel error -i "$f" -frames:v 1 \
             -vf "scale='min(1280,iw)':-2" "$tmp" </dev/null 2>/dev/null
     fi
     [ -s "$tmp" ] || { rm -f "$tmp"; return; }
@@ -210,14 +212,17 @@ else
     rm -f "$qf"
 fi
 
-# First open: integrated layout, then imv on the DISPLAY list at the cursor file.
+# First open: integrated layout, then imv on the DISPLAY list at the cursor
+# file. argv is built by ONE newline field-split (glob off) — the incremental
+# `set -- "$@" f` read-loop recopies the whole list per item, O(N^2): ~1s of
+# pure shell at 2700 files. (Newlines in filenames are already unsupported —
+# the session map is line-based.)
 vremote -c only
 swaymsg split horizontal
-set --
-while IFS= read -r f; do
-    [ -n "$f" ] && set -- "$@" "$f"
-done <<EOF
-$display
-EOF
+set -f; IFS='
+'
+# shellcheck disable=SC2086  # the split IS the point
+set -- $display
+set +f; unset IFS
 rm -f "$launchlock"; trap - EXIT INT TERM
 exec env imv_config="$HOME/.config/imv/config-vifm" imv-wayland -n "$(display_of "$cur")" "$@"

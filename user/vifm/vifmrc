@@ -77,7 +77,7 @@ filextype {*.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.mpeg,*.vob,
 
 " Audio — play in cmus (falls back to mpv --no-video if cmus isn't running)
 filetype {*.wav,*.mp3,*.flac,*.ogg,*.m4a,*.opus,*.aac,*.wv}
-       \ {Play in cmus} sh -c 'if pgrep -x cmus >/dev/null; then cmus-remote -f "$@"; else mpv --no-video "$@"; fi' _ %f,
+       \ {Play in cmus} sh -c 'if pgrep -u "$USER" -x cmus >/dev/null; then cmus-remote -f "$@"; else mpv --no-video "$@"; fi' _ %f,
        \ {Queue in cmus} cmus-remote -q %f,
        \ {mpv (no video)} mpv --no-video %f
 

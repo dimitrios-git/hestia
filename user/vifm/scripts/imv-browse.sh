@@ -84,7 +84,7 @@ display_of() {
     fi
 }
 
-pid=$(pgrep -x imv-wayland | head -1)
+pid=$(pgrep -u "$USER" -x imv-wayland | head -1)
 if [ -n "$pid" ]; then
     # imv already open: select the cursor file by its index in the session map.
     idx=$(grep -nxF -- "$cur" "$session" 2>/dev/null | head -1 | cut -d: -f1)

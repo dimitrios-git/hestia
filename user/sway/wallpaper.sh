@@ -55,11 +55,11 @@ while read -r out w h; do
     [ -n "$file" ] || continue
     # already papering this output with this file? (script's own cmdline never
     # contains "mpvpaper", so no pgrep -f self-match)
-    if pgrep -f "mpvpaper .*$out $file" >/dev/null 2>&1; then
+    if pgrep -u "$USER" -f "mpvpaper .*$out $file" >/dev/null 2>&1; then
         running=true
         continue
     fi
-    pkill -f "mpvpaper .*$out " 2>/dev/null   # stale variant/file on this output
+    pkill -u "$USER" -f "mpvpaper .*$out " 2>/dev/null   # stale variant/file on this output
     mpvpaper -f -p -o "no-audio loop" "$out" "$file"
     running=true
 done <<< "$outputs"
@@ -69,6 +69,6 @@ done <<< "$outputs"
 # reload-respawned swaybg exists before the kill.
 if $running; then
     sleep 1
-    pkill -x swaybg 2>/dev/null
+    pkill -u "$USER" -x swaybg 2>/dev/null
 fi
 exit 0

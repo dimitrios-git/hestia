@@ -5,7 +5,7 @@
 # waybar; waybar`: kill any running instance, give the session a moment to settle
 # AND wait for sway to report an active output, then exec waybar. Used by an
 # exec_always line in sway/config — see CLAUDE.md (Waybar).
-pkill -x waybar 2>/dev/null
+pkill -u "$USER" -x waybar 2>/dev/null
 
 # brief settle, then wait (up to ~5s) for at least one active output
 sleep 0.5

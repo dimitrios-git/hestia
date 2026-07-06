@@ -1,0 +1,9 @@
+{
+  "name": "plain-mesh-render",
+  "private": true,
+  "description": "Deterministic render harness for the plain-mesh wallpaper loops (see README.md)",
+  "dependencies": {
+    "puppeteer-core": "^24.0.0",
+    "three": "0.184.0"
+  }
+}

@@ -246,7 +246,7 @@ def_kdenlive=$(cur enable_kdenlive); def_kdenlive=${def_kdenlive:-false}
 def_thunderbird=$(cur enable_thunderbird); def_thunderbird=${def_thunderbird:-false}
 def_filemgrs=$(cur enable_file_managers); def_filemgrs=${def_filemgrs:-false}
 def_imgviewers=$(cur enable_image_viewers); def_imgviewers=${def_imgviewers:-false}
-def_wallpapers=$(cur enable_wallpapers); def_wallpapers=${def_wallpapers:-false}
+def_wallpapers=$(cur enable_wallpapers); def_wallpapers=${def_wallpapers:-true}
 def_firefox=$(cur enable_firefox); def_firefox=${def_firefox:-true}
 def_ffpwa=$(cur enable_firefoxpwa); def_ffpwa=${def_ffpwa:-true}
 def_trading=$(cur enable_trading); def_trading=${def_trading:-false}
@@ -298,7 +298,7 @@ askyn enable_kdenlive    "Install Kdenlive? (heavy — Qt6/KF6 video editor)" "$
 askyn enable_thunderbird "Install Thunderbird? (email client, hestia-themed)" "$def_thunderbird"
 askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)" "$def_filemgrs"
 askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)" "$def_imgviewers"
-askyn enable_wallpapers  "Install the wallpaper evaluation set? (wpaperd/awww/mpvpaper — prebuilt, amd64)" "$def_wallpapers"
+askyn enable_wallpapers  "Install the wallpaper stack? (plain-mesh default background + wpaperd/awww/mpvpaper — prebuilt, amd64)" "$def_wallpapers"
 askyn enable_firefox     "Install Firefox ESR? (the desktop browser)" "$def_firefox"
 askyn enable_firefoxpwa  "Install firefoxpwa? (PWA support — vendor apt repo)" "$def_ffpwa"
 askyn enable_trading     "Install trading apps? (TradingView Desktop — vendor .deb)" "$def_trading"

@@ -1,0 +1,21 @@
+---
+# plain-mesh wallpaper assets (themes/plain-mesh/ is the render harness; the
+# wallpaper-evaluation verdict made the mpvpaper-played mesh loop the default
+# background). Downloaded per host from a hestia release, sha256-verified;
+# get_url is self-idempotent (existing files are checksum-matched, not
+# re-downloaded). A new render = new release tag + refreshed checksums here.
+
+wallpapers_release: plain-mesh-v1
+wallpapers_base_url: "https://github.com/dimitrios-git/hestia/releases/download/{{ wallpapers_release }}"
+wallpapers_dir: "{{ target_home }}/.local/share/backgrounds/hestia"
+
+# Which resolutions to fetch — BOTH variants each, loop video + static PNG
+# (the PNG serves wpaperd/swaybg and any no-video spin). Trim per host in
+# host_vars; user/sway/wallpaper.sh falls back to the largest installed file
+# when an output's exact resolution is missing (mpv scales cleanly).
+wallpaper_resolutions: [1920x1080, 1920x1200, 2560x1440, 2560x1600, 3840x2160, 1200x1920]
+
+# sha256 per release asset — pinned from plain-mesh-v1 (filled by the render
+# publish; regenerate with `sha256sum plain-mesh-*` in the render outdir)
+wallpapers_sha256:
+  PLACEHOLDER: "pending"

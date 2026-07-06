@@ -22,6 +22,9 @@
       tags: [fonts]
     - role: localbin   # pinned prebuilt binaries (bluetuith) into ~/.local/bin (no root)
       tags: [localbin]
+    - role: wallpapers # plain-mesh wallpaper loops + stills into ~/.local/share/backgrounds (no root)
+      tags: [wallpapers]
+      when: enable_wallpapers | bool
     - role: gtk_theme  # hestia GTK3 theme (recoloured adw-gtk3) into ~/.local/share/themes (no root)
       tags: [gtk_theme]
     - role: qt_theme   # hestia Qt/KDE colour scheme into ~/.config/kdeglobals + ~/.local/share/color-schemes (no root)

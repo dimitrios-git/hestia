@@ -18,6 +18,9 @@
 window#waybar {
     background-color: @bg;
     color: @text;
+    /* accent baseline — separates the bar from the workspace (2px, the
+       default_border/wofi width; @accent is variant-invariant) */
+    border-bottom: 2px solid @accent;
 }
 
 /* App launcher — the accent Debian swirl at the far left (start-menu spot);

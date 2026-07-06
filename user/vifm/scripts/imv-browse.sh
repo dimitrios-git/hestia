@@ -53,15 +53,34 @@ dir=$2
 # name first: vifmrc exports $VIFM_SERVER_NAME (v:servername) to its children,
 # and imv inherits it through us for imv-vifm-return.sh. Without this, a second
 # open vifm got the collapse/sync commands meant for this one.
-vremote() { vifm --server-name "${VIFM_SERVER_NAME:-vifm}" --remote "$@"; }
+sname=${VIFM_SERVER_NAME:-vifm}
+vremote() { vifm --server-name "$sname" --remote "$@"; }
 
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/imv-vifm-thumbs"
-session="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-session.list"
-launchlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-launch.lock"
-genlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-thumbgen.lock"
-watchlock="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-watch.lock"
-lastsync="${XDG_RUNTIME_DIR:-/tmp}/imv-vifm-lastsync"
+rt="${XDG_RUNTIME_DIR:-/tmp}"
+# Per-vifm-instance session state (suffixed by the server name), so browse
+# sessions from different vifm windows coexist. The thumbnail cache, its
+# worker + genlock, and the queue stay GLOBAL (shared resource).
+session="$rt/imv-vifm-session.$sname.list"
+launchlock="$rt/imv-vifm-launch.$sname.lock"
+watchlock="$rt/imv-vifm-watch.$sname.lock"
+lastsync="$rt/imv-vifm-lastsync.$sname"
+imvpidf="$rt/imv-vifm-imv.$sname.pid"
+genlock="$rt/imv-vifm-thumbgen.lock"
 mkdir -p "$cache"
+
+# THIS session's imv PID, or nothing. The launcher execs imv, so its own $$
+# BECOMES imv's PID — recorded in $imvpidf before the exec, validated here
+# against /proc comm (PID reuse). Never found by pgrep: a bare
+# `pgrep imv-wayland` matches ANY imv — a standalone one, or another vifm
+# window's session — and the new-directory teardown used to KILL it
+# (caught live: opening a preview in a second vifm closed the first imv).
+our_imv() {
+    p=$(cat "$imvpidf" 2>/dev/null)
+    case $p in '' | *[!0-9]*) return 1 ;; esac
+    [ "$(cat "/proc/$p/comm" 2>/dev/null)" = "imv-wayland" ] || return 1
+    printf '%s' "$p"
+}
 
 vid_re='\.(mp4|mkv|avi|mov|webm|flv|m4v|mpe?g|wmv|ts|m2v|ogv|3gp|vob)$'
 img_re='\.(jpe?g|png|gif|bmp|tiff?|webp|avif|ico|svg)$'
@@ -270,11 +289,13 @@ fi
 if [ "$cur" = "__watch" ]; then
     echo $$ > "$watchlock"
     trap 'rm -f "$watchlock"' EXIT INT TERM
+    # wait for THIS session's imv (the launcher's exec'd PID) — never pgrep,
+    # which could latch onto a standalone imv or another session's
     imvpid=
     i=0
     while [ $i -lt 50 ]; do
-        imvpid=$(pgrep -u "$USER" -x imv-wayland | head -1)
-        [ -n "$imvpid" ] && break
+        imvpid=$(our_imv) && break
+        imvpid=
         i=$((i + 1)); sleep 0.1
     done
     [ -n "$imvpid" ] || exit 0
@@ -329,30 +350,31 @@ if [ "$cur" = "__watch" ]; then
     exit 0
 fi
 
-pid=$(pgrep -u "$USER" -x imv-wayland | head -1)
-if [ -n "$pid" ]; then
-    # imv already open: select the cursor file by its line number in the
-    # session map (imv's goto only takes an index — if imv dropped an
+if pid=$(our_imv); then
+    # THIS session's imv is open: select the cursor file by its line number
+    # in the session map (imv's goto only takes an index — if imv dropped an
     # unloadable entry this can land one off, and the next j/k sync
     # self-corrects; the path-keyed resolution the other direction uses is
-    # in imv-vifm-return.sh).
+    # in imv-vifm-return.sh). Focus by PID — [app_id="imv"] would grab
+    # whichever imv sway finds first.
     idx=$(cur="$cur" awk -F '\037' 'index($0, "\037") && substr($0, index($0, "\037") + 1) == ENVIRON["cur"] { print NR; exit }' "$session" 2>/dev/null)
     if [ -n "$idx" ]; then
         imv-msg "$pid" goto "$idx"
-        swaymsg '[app_id="imv"] focus' >/dev/null 2>&1
+        swaymsg "[pid=$pid] focus" >/dev/null 2>&1
         exit 0
     fi
     # Cursor file isn't in the open session — vifm is in another directory
-    # (or the file appeared after launch): retire this imv and fall through
-    # to a fresh launch on the current dir. (imv-msg quit skips imv's q bind,
-    # so no layout restore fires — we re-split just below anyway.)
+    # (or the file appeared after launch): retire OUR imv (only ours — a
+    # standalone imv or another vifm's session is untouchable) and fall
+    # through to a fresh launch on the current dir. (imv-msg quit skips
+    # imv's q bind, so no layout restore fires — we re-split just below.)
     imv-msg "$pid" quit 2>/dev/null
     sleep 0.2
     kill "$pid" 2>/dev/null
 fi
 
 # Launch lock: only ONE first-open may be in flight. A repeated Enter while
-# this launch prepares (the pgrep above can't see imv yet) exits silently
+# this launch prepares (the our_imv check above can't see imv yet) exits silently
 # instead of stacking a second launch. PID-checked, so a crashed launcher
 # leaves no dead-end.
 if [ -e "$launchlock" ] && kill -0 "$(cat "$launchlock" 2>/dev/null)" 2>/dev/null; then
@@ -411,4 +433,8 @@ if ! { [ -e "$watchlock" ] && kill -0 "$(cat "$watchlock" 2>/dev/null)" 2>/dev/n
 fi
 
 rm -f "$launchlock"; trap - EXIT INT TERM
+# exec preserves the PID: $$ IS the imv PID. Recorded per server name so
+# every later command (re-press, watcher, teardown) targets exactly THIS
+# session's imv and no other instance.
+echo $$ > "$imvpidf"
 exec env imv_config="$HOME/.config/imv/config-vifm" imv-wayland -n "$(display_of "$cur")" "$@"

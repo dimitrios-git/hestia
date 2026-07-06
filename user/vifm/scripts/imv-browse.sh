@@ -279,23 +279,37 @@ if [ "$cur" = "__watch" ]; then
     done
     [ -n "$imvpid" ] || exit 0
     blankidx=$(( $(wc -l < "$session" 2>/dev/null || echo 0) + 1 ))
-    prev= last=
+    prev= last= dirmiss=0
     while kill -0 "$imvpid" 2>/dev/null; do
         sleep 0.15
+        # expand() returns macro-expanded values SHELL-ESCAPED ("my\ pictures")
+        # while $dir/$cur/the session map hold raw paths — unescape or every
+        # comparison fails in any folder with a space (caught live: imv closed
+        # the instant it opened there, "pictures worked, my pictures didn't").
         d=$(vifm --server-name "${VIFM_SERVER_NAME:-vifm}" \
-                 --remote-expr 'expand("%d")' 2>/dev/null)
+                 --remote-expr 'expand("%d")' 2>/dev/null | sed 's/\\\(.\)/\1/g')
         if [ -n "$d" ] && [ "$d" != "$dir" ]; then
-            # vifm moved to another folder: this session is over — restore
-            # the dual-pane preview and close imv (the imv death also ends
-            # this loop; kill is the fallback for a wedged imv).
-            vremote -c 'vsplit' -c 'view!'
-            imv-msg "$imvpid" quit 2>/dev/null
-            sleep 0.5
-            kill "$imvpid" 2>/dev/null
-            exit 0
+            # vifm seems to have moved to another folder. Close ONLY on two
+            # consecutive such reads of an absolute path — one garbled/error
+            # read (a busy server) must not kill the session.
+            case $d in
+                /*) dirmiss=$((dirmiss + 1)) ;;
+                *)  dirmiss=0 ;;
+            esac
+            if [ "$dirmiss" -ge 2 ]; then
+                # session over: restore the dual-pane preview and close imv
+                # (imv's death also ends this loop; kill = wedged-imv fallback).
+                vremote -c 'vsplit' -c 'view!'
+                imv-msg "$imvpid" quit 2>/dev/null
+                sleep 0.5
+                kill "$imvpid" 2>/dev/null
+                exit 0
+            fi
+            continue
         fi
+        dirmiss=0
         c=$(vifm --server-name "${VIFM_SERVER_NAME:-vifm}" \
-                 --remote-expr 'expand("%c:p")' 2>/dev/null)
+                 --remote-expr 'expand("%c:p")' 2>/dev/null | sed 's/\\\(.\)/\1/g')
         [ -n "$c" ] || continue
         if [ "$c" != "$prev" ]; then prev=$c; continue; fi   # not stable yet
         [ "$c" = "$last" ] && continue                        # already synced

@@ -99,6 +99,18 @@ gen_placeholder() {
     mv "$tmp" "$placeholder" 2>/dev/null
 }
 
+# The blank "no preview" tile (plain ground, no ▶): appended as one EXTRA
+# last item of every imv list; the watcher steers imv onto it whenever
+# vifm's cursor is not on a media file of this session, so imv goes visibly
+# empty instead of freezing on the last image (or paying a relaunch).
+blank="$cache/blank.jpg"
+gen_blank() {
+    [ -s "$blank" ] && return
+    tmp="$blank.$$.jpg"
+    magick -size 960x540 xc:'#1a1a1a' "$tmp" 2>/dev/null || return
+    mv "$tmp" "$blank" 2>/dev/null
+}
+
 # Generate a video thumbnail (poster frame + ▶ overlay) if not already cached.
 gen_thumb() {
     f=$1; t=$(thumb_for "$f")
@@ -247,10 +259,14 @@ if [ "$cur" = "__backfill" ]; then
     exit 0
 fi
 
-# Internal: `imv-browse.sh __watch` — the vifm→imv cursor watcher (see
+# Internal: `imv-browse.sh __watch <dir>` — the vifm→imv cursor watcher (see
 # header). Waits for imv to appear (spawned just before the launcher execs
 # it), then follows the launching vifm's cursor until imv exits. PID-locked
-# so only one watcher runs.
+# so only one watcher runs. Also the session's chaperone: vifm LEAVING <dir>
+# closes imv (restoring the dual-pane preview first), and a cursor parked on
+# anything that isn't this session's media (unsupported file, a directory,
+# `..`) steers imv onto the trailing blank tile — visibly empty, no stale
+# image, no relaunch.
 if [ "$cur" = "__watch" ]; then
     echo $$ > "$watchlock"
     trap 'rm -f "$watchlock"' EXIT INT TERM
@@ -262,9 +278,22 @@ if [ "$cur" = "__watch" ]; then
         i=$((i + 1)); sleep 0.1
     done
     [ -n "$imvpid" ] || exit 0
+    blankidx=$(( $(wc -l < "$session" 2>/dev/null || echo 0) + 1 ))
     prev= last=
     while kill -0 "$imvpid" 2>/dev/null; do
         sleep 0.15
+        d=$(vifm --server-name "${VIFM_SERVER_NAME:-vifm}" \
+                 --remote-expr 'expand("%d")' 2>/dev/null)
+        if [ -n "$d" ] && [ "$d" != "$dir" ]; then
+            # vifm moved to another folder: this session is over — restore
+            # the dual-pane preview and close imv (the imv death also ends
+            # this loop; kill is the fallback for a wedged imv).
+            vremote -c 'vsplit' -c 'view!'
+            imv-msg "$imvpid" quit 2>/dev/null
+            sleep 0.5
+            kill "$imvpid" 2>/dev/null
+            exit 0
+        fi
         c=$(vifm --server-name "${VIFM_SERVER_NAME:-vifm}" \
                  --remote-expr 'expand("%c:p")' 2>/dev/null)
         [ -n "$c" ] || continue
@@ -279,7 +308,8 @@ if [ "$cur" = "__watch" ]; then
             last=$c; continue
         fi
         idx=$(cur="$c" awk -F '\037' 'index($0, "\037") && substr($0, index($0, "\037") + 1) == ENVIRON["cur"] { print NR; exit }' "$session" 2>/dev/null)
-        [ -n "$idx" ] && imv-msg "$imvpid" goto "$idx" >/dev/null 2>&1
+        # not this session's media -> the blank tile (last imv item)
+        imv-msg "$imvpid" goto "${idx:-$blankidx}" >/dev/null 2>&1
         last=$c
     done
     exit 0
@@ -318,6 +348,7 @@ echo $$ > "$launchlock"
 trap 'rm -f "$launchlock"' EXIT INT TERM
 
 gen_placeholder
+gen_blank
 # The SELECTED file gets its real poster now (one file, bounded); everyone
 # else gets it from the background worker below.
 is_video "$cur" && gen_thumb "$cur"
@@ -352,6 +383,9 @@ set -f; IFS='
 # shellcheck disable=SC2086  # the split IS the point
 set -- $display
 set +f; unset IFS
+# the blank "no preview" tile rides along as one extra LAST item (indexes
+# 1..N still equal the session map's lines; the watcher gotos N+1)
+set -- "$@" "$blank"
 
 # vifm→imv cursor watcher (the __watch mode above): spawned detached just
 # before imv, it waits for the imv PID, then follows vifm's cursor until imv
@@ -359,7 +393,7 @@ set +f; unset IFS
 # first stable read (= where we're opening) isn't treated as a user move.
 printf '%s' "$cur" > "$lastsync"
 if ! { [ -e "$watchlock" ] && kill -0 "$(cat "$watchlock" 2>/dev/null)" 2>/dev/null; }; then
-    setsid -f "$(readlink -f -- "$0")" __watch _ >/dev/null 2>&1
+    setsid -f "$(readlink -f -- "$0")" __watch "$dir" >/dev/null 2>&1
 fi
 
 rm -f "$launchlock"; trap - EXIT INT TERM

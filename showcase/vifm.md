@@ -88,7 +88,10 @@ started at the cursor file. The wiring underneath is the deep part:
   can keep driving from **vifm** — `/search` a pattern and press `n` through
   the matches, and imv previews each hit. vifm's whole navigation vocabulary
   doubles as a media-preview driver. (A marker-plus-debounce handshake stops
-  the two syncs from fighting over the cursor.) Every message targets the
+  the two syncs from fighting over the cursor.) The watcher also minds the
+  session: park the cursor on a non-media file and imv shows an empty frame
+  instead of a stale image; leave the folder and imv closes itself, handing
+  the preview pane back. Every message targets the
   launching vifm instance by server name; a bare `--remote` reaches whichever
   vifm registered first, which live-debugging proved is rarely the one you
   meant.

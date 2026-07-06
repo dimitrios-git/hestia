@@ -95,6 +95,9 @@ case "$1" in
         ' _ "$orig" "$mpvlock" >/dev/null 2>&1
         ;;
     *)
+        # The trailing blank "no preview" tile is not a real item — never
+        # sync vifm onto it (j/k passing over it just shows the empty frame).
+        case "$orig" in */imv-vifm-thumbs/blank.jpg) exit 0 ;; esac
         # Mark this vifm move as imv-originated BEFORE issuing it, so the
         # vifm→imv watcher (imv-browse.sh __watch) doesn't bounce it back —
         # without the marker, a fast j/k run in imv would fight the watcher.

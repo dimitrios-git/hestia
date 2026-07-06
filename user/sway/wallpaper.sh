@@ -21,8 +21,9 @@ command -v mpvpaper >/dev/null 2>&1 || exit 0
 [ -d "$DIR" ] || exit 0
 
 # Which mesh flavour to play — the wallpapers role stamps its wallpaper_flavour
-# host_var into the marker (plain-mesh = quiet default, flash-mesh = accent
-# flashes); absent marker = plain-mesh (pre-flavour installs).
+# var into the marker (flash-mesh = the default since 2026-07; plain-mesh = the
+# quiet alternative); an absent marker falls back to plain-mesh, because
+# pre-flavour installs only ever downloaded the plain assets.
 flavour=$(cat "$DIR/default-flavour" 2>/dev/null) || flavour=plain-mesh
 case $flavour in *-mesh) ;; *) flavour=plain-mesh ;; esac
 

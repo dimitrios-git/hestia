@@ -5,12 +5,13 @@
 # get_url is self-idempotent (existing files are checksum-matched, not
 # re-downloaded). A new render = new release tag + refreshed checksums here.
 
-# Which flavour this host runs: plain-mesh (the quiet default) or flash-mesh
-# (accent flashes firing through the lattice — the approved 2026-07 tuning).
-# Set per host in host_vars; the role downloads THAT flavour's assets and
-# stamps it into the default-flavour marker user/sway/wallpaper.sh reads.
-# Each flavour lives on its own release tag (<flavour>-v1).
-wallpaper_flavour: plain-mesh
+# Which flavour this host runs: flash-mesh (THE hestia default since 2026-07 —
+# accent flashes firing through the lattice, the approved tuning) or plain-mesh
+# (the quiet no-flash alternative). Override per host in host_vars; the role
+# downloads THAT flavour's assets and stamps it into the default-flavour
+# marker user/sway/wallpaper.sh reads. Each flavour lives on its own release
+# tag (<flavour>-v1).
+wallpaper_flavour: flash-mesh
 
 wallpapers_base_url: "https://github.com/dimitrios-git/hestia/releases/download/{{ wallpaper_flavour }}-v1"
 wallpapers_dir: "{{ target_home }}/.local/share/backgrounds/hestia"

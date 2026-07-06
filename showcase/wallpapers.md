@@ -1,6 +1,6 @@
 # Wallpapers: from "no wallpaper story" to a generated mesh
 
-![The hestia desktop — plain-mesh ground, vifm floating, Waybar on top](img/desktop-dark.png)
+![The hestia desktop — flash-mesh ground mid-flash, vifm floating, Waybar on top](img/desktop-dark.png)
 
 Until mid-2026, hestia's desktop background was a solid colour — the theme's
 ground (`#1a1a1a` dark, `#f5f5f5` light), painted by sway's own `output * bg`.
@@ -72,7 +72,7 @@ content and becomes an artifact of the design system: palette-true,
 variant-wired, licensing-clean, reproducible. That takes video. **mpvpaper
 became the default engine because the mesh became the default background.**
 
-## plain-mesh: the default background
+## plain-mesh: the base flavour
 
 ![plain-mesh, dark](img/plain-mesh-dark.png)
 ![plain-mesh, light](img/plain-mesh-light.png)
@@ -97,13 +97,15 @@ reload *respawns* swaybg above the wallpaper layer. That's the trial's
 stacking race, solved by construction. No assets or no mpvpaper? The script
 no-ops and the solid ground stays — nothing breaks on a lean spin.
 
-## flash-mesh: the first flavour
+## flash-mesh: the first flavour — and the default
 
 ![flash-mesh — a node fires and the pulse bleeds down the web](img/flash-mesh-dark.png)
 
 Flavours extend the family as `<flavour>-mesh`: same lattice, new behaviour,
-own release tag, selected per host by one variable. The first is
-**flash-mesh**: every few seconds a node ignites in the accent (`#d7005f`),
+own release tag, selected per host by one variable (`wallpaper_flavour`; the
+quiet plain-mesh remains the no-flash alternative). The first is
+**flash-mesh** — promoted to hestia's default within a day of shipping:
+every few seconds a node ignites in the accent (`#d7005f`),
 fast attack, smooth decay, the pulse bleeding one hop down its web edges at
 reduced strength. Deterministic and loop-periodic like everything else — a
 seeded schedule of events evaluated on wrapped time deltas.

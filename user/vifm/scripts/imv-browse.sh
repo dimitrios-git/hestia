@@ -4,9 +4,16 @@
 #
 # Browses images AND videos in one imv window. imv can't play video, so each
 # video is shown as a cached **poster-frame thumbnail with a ▶ overlay**; imv
-# just sees images. A session map (one original path per line, line N = imv item
-# N) lets everything downstream resolve imv's `$imv_current_index` back to the
-# real file: the live cursor sync (imv-vifm-return.sh), and Enter→mpv on a video.
+# just sees images. A session map (one `display<US>original` pair per line,
+# US = 0x1f) lets everything downstream resolve imv's current item back to the
+# real file: the live cursor sync (imv-vifm-return.sh), and Enter→mpv on a
+# video. Resolution is BY DISPLAY PATH ($imv_current_file), NOT by index: imv
+# silently DROPS entries it can't load (one corrupt image / unsupported
+# format), shifting every later index — resolved-by-index, one bad file made
+# every subsequent poster "belong" to the wrong video (caught live). For the
+# path to be a unique key, uncached videos each get their OWN placeholder
+# hardlink (<thumbkey>.pend.jpg — imv canonicalizes symlinks, so those would
+# all report as placeholder.jpg; hardlinks report verbatim).
 #
 # PRIORITY ORDER (redesigned 2026-07 after a 2000-video directory locked the
 # whole flow for minutes): the SELECTED file first, the session second,
@@ -99,12 +106,14 @@ gen_thumb() {
 }
 
 # Display path imv should show for a file: itself for images; for videos the
-# cached poster, else the shared placeholder (never the raw video — imv can't
-# decode it). ONLY for one-off lookups (the cursor file): each call costs ~6
-# subprocesses, so the full list goes through display_list below instead.
+# cached poster, else the video's OWN placeholder hardlink (never the raw
+# video — imv can't decode it). Must mirror build_lists' mapping. ONLY for
+# one-off lookups (the cursor file, `-n`): each call costs ~6 subprocesses,
+# so the full list goes through build_lists below instead.
 display_of() {
     if is_video "$1"; then
-        t=$(thumb_for "$1"); [ -s "$t" ] && printf '%s' "$t" || printf '%s' "$placeholder"
+        t=$(thumb_for "$1")
+        [ -s "$t" ] && printf '%s' "$t" || printf '%s' "${t%.jpg}.pend.jpg"
     else
         printf '%s' "$1"
     fi
@@ -113,9 +122,13 @@ display_of() {
 # The whole-directory pass, ONE python process (the per-file shell version —
 # grep+readlink+stat+sha1sum+cut per file — cost ~7s of pure fork overhead on
 # a 2000-video directory): lists the media, sorts it, writes the session map
-# (originals) and the backfill queue (ONLY the videos still missing a poster,
-# so a fully-cached directory spawns no worker at all), and prints the display
-# list — same display rules as display_of, byte-identical sha1 keys.
+# (display<US>original pairs) and the backfill queue (ONLY the videos still
+# missing a poster, so a fully-cached directory spawns no worker at all), and
+# prints the display list — same display rules as display_of, byte-identical
+# sha1 keys. Each uncached video gets its own placeholder HARDLINK
+# (<key>.pend.jpg) so its display path is a unique key (see header); stale
+# pend links are pruned here — the pass only ever runs with no imv open, so
+# none of them is on screen.
 #
 # THE ORDER REPLICATES VIFM 0.14 EXACTLY (sort.c + utils/utf8.c for
 # `sort +name` with `set sortnumbers`): sort key = NFKD compat-decomposition
@@ -156,25 +169,48 @@ names = [e.name for e in os.scandir(dirp)
          and (vid.search(e.name) or img.search(e.name))]
 names.sort(key=functools.cmp_to_key(lambda a, b: libc.strverscmp(key(a), key(b))))
 
+# prune stale pend hardlinks (no imv is open when this pass runs)
+for e in os.scandir(cache):
+    if e.name.endswith(b".pend.jpg"):
+        try:
+            os.unlink(e.path)
+        except OSError:
+            pass
+
 out, queue = sys.stdout.buffer, []
 with open(session, "wb") as smap:
     for n in names:
         f = os.path.join(dirp, n)
-        smap.write(f + b"\n")
         if vid.search(n):
             try:
                 k = hashlib.sha1(os.path.realpath(f) + b"\x1f"
                                  + str(int(os.stat(f).st_mtime)).encode()).hexdigest()[:40]
-                t = os.path.join(cache, k.encode() + b".jpg")
-                if os.path.getsize(t) > 0:
-                    out.write(t + b"\n")
-                    continue
             except OSError:
-                pass
-            queue.append(f)
-            out.write(placeholder + b"\n")
+                k = None
+            disp = None
+            if k is not None:
+                t = os.path.join(cache, k.encode() + b".jpg")
+                try:
+                    if os.path.getsize(t) > 0:
+                        disp = t
+                except OSError:
+                    pass
+            if disp is None:
+                queue.append(f)
+                disp = placeholder              # last-resort shared fallback
+                if k is not None:
+                    pend = os.path.join(cache, k.encode() + b".pend.jpg")
+                    try:
+                        os.link(placeholder, pend)
+                        disp = pend
+                    except FileExistsError:
+                        disp = pend
+                    except OSError:
+                        pass
         else:
-            out.write(f + b"\n")
+            disp = f
+        smap.write(disp + b"\x1f" + f + b"\n")
+        out.write(disp + b"\n")
 with open(qf, "wb") as fh:
     fh.write(b"\n".join(queue) + (b"\n" if queue else b""))
 PYEOF
@@ -198,8 +234,12 @@ fi
 
 pid=$(pgrep -u "$USER" -x imv-wayland | head -1)
 if [ -n "$pid" ]; then
-    # imv already open: select the cursor file by its index in the session map.
-    idx=$(grep -nxF -- "$cur" "$session" 2>/dev/null | head -1 | cut -d: -f1)
+    # imv already open: select the cursor file by its line number in the
+    # session map (imv's goto only takes an index — if imv dropped an
+    # unloadable entry this can land one off, and the next j/k sync
+    # self-corrects; the path-keyed resolution the other direction uses is
+    # in imv-vifm-return.sh).
+    idx=$(cur="$cur" awk -F '\037' 'index($0, "\037") && substr($0, index($0, "\037") + 1) == ENVIRON["cur"] { print NR; exit }' "$session" 2>/dev/null)
     [ -n "$idx" ] && imv-msg "$pid" goto "$idx"
     swaymsg '[app_id="imv"] focus' >/dev/null 2>&1
     exit 0

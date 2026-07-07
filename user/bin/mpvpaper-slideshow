@@ -61,7 +61,7 @@ for out in "${outputs[@]}"; do
     pl="$rt/mpvpaper-slideshow.$$.$out.m3u"
     media_find | shuf > "$pl"
     playlists+=("$pl")
-    mpvpaper -n "$secs" -o "no-audio image-display-duration=inf $extra" "$out" "$pl" &
+    mpvpaper -n "$secs" -o "no-audio image-display-duration=inf stop-screensaver=no $extra" "$out" "$pl" &
 done
 
 wait

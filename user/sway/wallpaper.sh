@@ -60,7 +60,12 @@ while read -r out w h; do
         continue
     fi
     pkill -u "$USER" -f "mpvpaper .*$out " 2>/dev/null   # stale variant/file on this output
-    mpvpaper -f -p -o "no-audio loop" "$out" "$file"
+    # stop-screensaver=no is load-bearing: mpv defaults to yes, which raises a
+    # Wayland idle-inhibitor on wlroots for as long as it plays. A looping video
+    # wallpaper is always playing, so that inhibitor is held FOREVER and swayidle
+    # -w honours it — the pre-lock dim / lock / DPMS-off never fire. The wallpaper
+    # isn't media you're watching, so it must not inhibit idle.
+    mpvpaper -f -p -o "no-audio loop stop-screensaver=no" "$out" "$file"
     running=true
 done <<< "$outputs"
 

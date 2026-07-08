@@ -106,6 +106,12 @@ enable_firefox: true        # install firefox-esr (the desktop browser)
 # connector — the FFPWA-* windows (Netflix/YouTube/…) the sway config already
 # handles. The in-Firefox extension + per-site installs stay manual.
 enable_firefoxpwa: true     # install firefoxpwa from its vendor repo (firefoxpwa role)
+# Google Chrome (the `chrome` role): google-chrome-stable from Google's own
+# signed apt repo — NOT in Debian apt (that ships `chromium`; Chrome is the
+# Google proprietary build). amd64-only; the role self-skips on other arches.
+# Default OFF — an extra desktop browser on top of Firefox/chromium; turn on
+# per host if you want it.
+enable_chrome: false        # install Google Chrome from Google's vendor repo (chrome role)
 # Trading apps (the `trading` role): TradingView Desktop from the vendor's
 # rolling "latest" .deb (no apt repo and no versioned URLs exist — nothing to
 # pin; TLS-trust, installed only when absent). JForex4 joins the role when it

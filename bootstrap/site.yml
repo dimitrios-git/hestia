@@ -45,6 +45,9 @@
     - role: firefoxpwa # PWAsForFirefox native connector from its vendor apt repo (root); the Firefox extension + per-site installs stay manual
       tags: [system, firefoxpwa]
       when: enable_firefoxpwa | default(true) | bool
+    - role: chrome     # Google Chrome from Google's vendor apt repo (root); amd64-only, self-skips elsewhere
+      tags: [system, chrome]
+      when: enable_chrome | default(false) | bool
     - role: trading    # trading apps — TradingView Desktop from the vendor's rolling .deb (root); JForex4 later
       tags: [system, trading]
       when: enable_trading | default(false) | bool

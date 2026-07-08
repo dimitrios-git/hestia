@@ -125,6 +125,7 @@ enable_image_viewers: $enable_image_viewers
 enable_wallpapers: $enable_wallpapers
 enable_firefox: $enable_firefox
 enable_firefoxpwa: $enable_firefoxpwa
+enable_chrome: $enable_chrome
 enable_trading: $enable_trading
 enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
@@ -249,6 +250,7 @@ def_imgviewers=$(cur enable_image_viewers); def_imgviewers=${def_imgviewers:-fal
 def_wallpapers=$(cur enable_wallpapers); def_wallpapers=${def_wallpapers:-true}
 def_firefox=$(cur enable_firefox); def_firefox=${def_firefox:-true}
 def_ffpwa=$(cur enable_firefoxpwa); def_ffpwa=${def_ffpwa:-true}
+def_chrome=$(cur enable_chrome); def_chrome=${def_chrome:-false}
 def_trading=$(cur enable_trading); def_trading=${def_trading:-false}
 def_yaruicons=$(cur enable_yaru_icons); def_yaruicons=${def_yaruicons:-false}
 # NVIDIA: detect a card via lspci (pciutils), else the PCI vendor id 0x10de in sysfs.
@@ -301,6 +303,7 @@ askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)
 askyn enable_wallpapers  "Install the wallpaper stack? (plain-mesh default background + wpaperd/awww/mpvpaper — prebuilt, amd64)" "$def_wallpapers"
 askyn enable_firefox     "Install Firefox ESR? (the desktop browser)" "$def_firefox"
 askyn enable_firefoxpwa  "Install firefoxpwa? (PWA support — vendor apt repo)" "$def_ffpwa"
+askyn enable_chrome      "Install Google Chrome? (vendor apt repo — amd64 only)" "$def_chrome"
 askyn enable_trading     "Install trading apps? (TradingView Desktop — vendor .deb)" "$def_trading"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
@@ -342,6 +345,7 @@ cat <<EOF
     enable_wallpapers  = $enable_wallpapers
     enable_firefox     = $enable_firefox
     enable_firefoxpwa  = $enable_firefoxpwa
+    enable_chrome      = $enable_chrome
     enable_trading     = $enable_trading
     enable_nvidia      = $enable_nvidia
     enable_razer       = $enable_razer

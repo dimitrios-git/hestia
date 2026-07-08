@@ -1,0 +1,55 @@
+---
+# Install Google Chrome (google-chrome-stable) from Google's official signed apt
+# repo — it is NOT in Debian apt (Debian ships `chromium`; Chrome is the Google
+# proprietary build). Root (become). Same vendor-repo shape as `firefoxpwa`/
+# `tailscale`: add the signing key + a sources file, then apt-install.
+#
+# The signing key ships ASCII-armored and apt (trixie) accepts armored .asc
+# keyrings in signed-by, so no dearmor step (like firefoxpwa). We write our
+# sources file at the SAME path the package's own postinst uses
+# (`/etc/apt/sources.list.d/google-chrome.list`) so the two don't accumulate —
+# ours just gets there first (and is what lets apt FIND the package to begin
+# with). Chrome's cron/postinst may rewrite that file to point at its own
+# dearmored key under /etc/apt/keyrings; harmless (same repo URL), and a
+# re-run of this role reasserts our reproducible key+source.
+#
+# Chrome is amd64-ONLY — no armhf/arm64/i386 vendor build — so the role
+# self-skips on other arches (like `trading`).
+
+- name: Detect CPU architecture
+  ansible.builtin.command: uname -m
+  register: _chrome_arch
+  changed_when: false
+
+- name: "chrome: no vendor build for this arch -> skip"
+  ansible.builtin.debug:
+    msg: "Google Chrome ships amd64 only — skipping on {{ _chrome_arch.stdout }}."
+  when: _chrome_arch.stdout != 'x86_64'
+
+- name: Install Google Chrome from the vendor apt repo
+  when: _chrome_arch.stdout == 'x86_64'
+  block:
+    - name: Install the Google apt signing key (armored)
+      ansible.builtin.get_url:
+        url: https://dl.google.com/linux/linux_signing_key.pub
+        dest: /usr/share/keyrings/google-chrome.asc
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Add the Google Chrome apt repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/google-chrome.list
+        content: "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.asc] https://dl.google.com/linux/chrome/deb/ stable main\n"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Install google-chrome-stable (refresh the cache so the new repo is seen)
+      ansible.builtin.apt:
+        name: google-chrome-stable
+        state: present
+        update_cache: true
+      become: true

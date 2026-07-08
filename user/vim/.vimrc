@@ -47,9 +47,6 @@ set nobackup nowritebackup
 "        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 call plug#begin('~/.vim/plugged')
 
-" Historic Vim themes
-Plug 'vim/colorschemes'
-
 " Code completion
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
@@ -121,7 +118,7 @@ if filereadable(expand('~/.vim/hestia-background.vim'))
 else
   set background=dark
 endif
-colo hestia   " wildcharm + the hestia ground/text (user/vim/colors/hestia.vim)
+colo hestia   " hestia's own self-contained scheme (user/vim/colors/hestia.vim)
 
 " --- CoC.nvim Configuration ---
 " Use Tab for completion and navigation

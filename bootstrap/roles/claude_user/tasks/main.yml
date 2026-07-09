@@ -95,6 +95,19 @@
     creates: "/var/lib/systemd/linger/{{ claude_user }}"
   become: true
 
+# claude's linger means logind always sees >1 active session, which promotes the
+# human's reboot/poweroff to the *-multiple-sessions polkit actions (auth_admin_keep) —
+# so the waybar power menu's Reboot/Shutdown silently no-op (no polkit agent on the
+# swaynag button). Restore them for an active sudo-group session. See system/polkit/.
+- name: Allow an active admin to reboot/poweroff despite claude's lingering session
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/system/polkit/49-hestia-power.rules"
+    dest: /etc/polkit-1/rules.d/49-hestia-power.rules
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
 # --- claude's local identity (keys + git config; prints the manual GitHub steps) --
 - name: Set up claude's identity
   ansible.builtin.import_tasks: identity.yml

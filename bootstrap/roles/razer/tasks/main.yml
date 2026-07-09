@@ -97,9 +97,50 @@
         append: true
       become: true
 
+    # openrazer-daemon (vendor unit, enabled by preset) starts at session login, and
+    # sometimes loses the boot race with the razer module binding the device / the
+    # session DBus coming up — it then exits non-zero and stays down ("Failed to start
+    # openrazer-daemon.service" at boot; a manual start afterwards works). A user drop-in
+    # with Restart=on-failure lets systemd retry once the device/bus is ready. Deployed
+    # to the user's ~/.config (NOT the vendor unit at /usr/lib, which apt would clobber);
+    # StartLimitIntervalSec=0 disables the retry rate-limit so a slow enumeration can't
+    # exhaust the burst budget before the device appears. Written as the user (no become).
+    - name: Ensure the openrazer-daemon user drop-in dir exists
+      ansible.builtin.file:
+        path: "{{ target_home }}/.config/systemd/user/openrazer-daemon.service.d"
+        state: directory
+        mode: "0755"
+
+    - name: Install the Restart=on-failure drop-in (survive the boot race)
+      ansible.builtin.copy:
+        dest: "{{ target_home }}/.config/systemd/user/openrazer-daemon.service.d/override.conf"
+        mode: "0644"
+        content: |
+          # Managed by hestia (bootstrap/roles/razer). openrazer-daemon can lose the
+          # boot race with the razer module/udev/session-DBus and exit non-zero; retry
+          # until the device/bus is ready instead of staying dead for the session.
+          [Unit]
+          StartLimitIntervalSec=0
+
+          [Service]
+          Restart=on-failure
+          RestartSec=2
+      register: _rz_override
+
+    - name: Reload the user systemd manager so the drop-in applies
+      # Tolerant: during a headless/SSH run the user bus may be absent — the file is on
+      # disk regardless and takes effect at the next login / daemon-reload.
+      ansible.builtin.command: systemctl --user daemon-reload
+      changed_when: false
+      failed_when: false
+      when: _rz_override is changed
+
     - name: The manual tail (printed, not automated)
       ansible.builtin.debug:
         msg: >-
           OpenRazer + Polychromatic installed. Manual: RE-LOGIN if plugdev was
           just added, and REBOOT (or unplug/replug the device) so the DKMS
-          module binds — then run `polychromatic-controller`.
+          module binds — then run `polychromatic-controller`. The daemon now
+          carries a Restart=on-failure drop-in, so it recovers from the login
+          race on its own (applies next login / after a `systemctl --user
+          daemon-reload`).

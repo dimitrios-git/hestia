@@ -1,0 +1,14 @@
+/* comment; TODO: selectors, props, values, at-rules */
+:root {
+  --accent: #d7005f;
+  --gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .card:hover > .title {
+    color: var(--accent);
+    margin: 0 auto;
+    transform: translateY(-2px) scale(1.05);
+    background: rgba(26, 26, 26, 0.9);
+  }
+}

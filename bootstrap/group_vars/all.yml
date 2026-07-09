@@ -117,6 +117,11 @@ enable_chrome: false        # install Google Chrome from Google's vendor repo (c
 # pin; TLS-trust, installed only when absent). JForex4 joins the role when it
 # lands. Default OFF — proprietary + niche; turn on per host.
 enable_trading: false       # install trading apps (TradingView Desktop; JForex4 later)
+# Theming testbench (the `testbench` role, no root): generates a disposable demo
+# folder of per-language code samples + dircolors/ls file-type fixtures so theme
+# changes can be eyeballed across editors + file managers from one place. Default
+# OFF — a maintainer/theming aid, not part of a normal install.
+enable_testbench: false     # generate the theming testbench folder (testbench role)
 
 # --- Theme variant (M7, docs/theme-roadmap.md) ----------------------------------
 # dark|light — selects which GENERATED theme fragments the dotfiles role links

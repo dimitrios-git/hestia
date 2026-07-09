@@ -623,7 +623,12 @@ def render_swaynag(variant: str) -> str:
                 "font=Lilex Nerd Font Mono 11",
                 "# flat, roomy buttons (geometry is global-only — set before any [section])",
                 "button-border-size=0",
-                "button-padding=8",
+                # button-padding matches message-padding on purpose: swaynag draws
+                # buttons top-pinned (not vertically centred) and sizes the bar from the
+                # message, so a smaller button-padding leaves the extra height as a gap
+                # *below* the buttons (top-heavy). Equal paddings make the buttons fill
+                # the bar height → symmetric top/bottom. (No top-padding key exists.)
+                "button-padding=12",
                 "button-gap=10",
                 "button-dismiss-gap=10",
                 "button-margin-right=6",

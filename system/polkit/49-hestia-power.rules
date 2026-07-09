@@ -1,0 +1,23 @@
+// hestia — let a desktop admin reboot / power off / halt from the GUI even though
+// the `claude` agent user lingers.
+//
+// claude has lingering enabled (a permanent systemd user session so its services
+// run without a login), so logind ALWAYS sees more than one active session. That
+// promotes the human's reboot/poweroff from org.freedesktop.login1.{reboot,power-off}
+// (allowed for the active session) to the *-multiple-sessions variants, whose default
+// is auth_admin_keep — an admin-password prompt. The waybar power menu runs the action
+// from a swaynag button (`sh -c 'systemctl reboot'`) with no polkit agent to answer
+// that prompt, so Reboot/Shutdown silently do nothing (Cancel/Suspend still work).
+//
+// Grant the *-multiple-sessions actions to an ACTIVE session owned by a `sudo`-group
+// user. That's no weaker than the status quo — such a user can already `sudo reboot`
+// without friction; this just removes the GUI dead-end. Deployed by the claude_user
+// role (the role that enables claude's linger); remove it and this file is moot.
+polkit.addRule(function(action, subject) {
+    if (subject.active && subject.isInGroup("sudo") &&
+        (action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+         action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+         action.id == "org.freedesktop.login1.halt-multiple-sessions")) {
+        return polkit.Result.YES;
+    }
+});

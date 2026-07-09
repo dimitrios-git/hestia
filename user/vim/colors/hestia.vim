@@ -24,71 +24,75 @@ hi! link PopupNotification Todo
 hi! link PopupSelected PmenuSel
 hi! link CurSearch IncSearch
 
-" treesitter / LSP captures -> standard groups (nvim parity with Vim)
-hi! link @comment Comment
-hi! link @comment.documentation Comment
-hi! link @comment.todo Todo
-hi! link @comment.note Todo
-hi! link @comment.warning Todo
-hi! link @comment.error Error
-hi! link @constant Constant
-hi! link @constant.builtin Constant
-hi! link @constant.macro PreProc
-hi! link @number Constant
-hi! link @number.float Constant
-hi! link @boolean Constant
-hi! link @character Constant
-hi! link @character.special Special
-hi! link @string String
-hi! link @string.documentation String
-hi! link @string.escape Special
-hi! link @string.regexp Special
-hi! link @string.special Special
-hi! link @string.special.symbol Constant
-hi! link @string.special.url Underlined
-hi! link @string.special.path Underlined
-hi! link @keyword Statement
-hi! link @conditional Statement
-hi! link @repeat Statement
-hi! link @label Statement
-hi! link @exception Statement
-hi! link @include Statement
-hi! link @type.qualifier Statement
-hi! link @operator Normal
-hi! link @punctuation Normal
-hi! link @punctuation.delimiter Normal
-hi! link @punctuation.bracket Normal
-hi! link @punctuation.special Special
-hi! link @function Function
-hi! link @function.builtin Function
-hi! link @function.call Normal
-hi! link @function.method Function
-hi! link @function.method.call Normal
-hi! link @function.macro PreProc
-hi! link @constructor Function
-hi! link @type Type
-hi! link @type.builtin Type
-hi! link @type.definition Type
-hi! link @attribute PreProc
-hi! link @attribute.builtin PreProc
-hi! link @variable Normal
-hi! link @variable.builtin Normal
-hi! link @variable.parameter Normal
-hi! link @variable.member Normal
-hi! link @property Normal
-hi! link @field Normal
-hi! link @module Normal
-hi! link @module.builtin Normal
-hi! link @namespace Normal
-hi! link @tag Statement
-hi! link @tag.attribute Type
-hi! link @tag.delimiter Normal
-hi! link @markup.link.url Underlined
-hi! link @markup.raw String
-hi! link @lsp.type.namespace Normal
-hi! link @lsp.type.variable Normal
-hi! link @lsp.type.property Normal
-hi! link @lsp.type.parameter Normal
+" treesitter / LSP captures -> standard groups (nvim parity with Vim).
+" Nvim-ONLY: Vim has no treesitter, and older Vim patchlevels reject the
+" @ in these group names (W18) — so guard the whole block on has('nvim').
+if has('nvim')
+  hi! link @comment Comment
+  hi! link @comment.documentation Comment
+  hi! link @comment.todo Todo
+  hi! link @comment.note Todo
+  hi! link @comment.warning Todo
+  hi! link @comment.error Error
+  hi! link @constant Constant
+  hi! link @constant.builtin Constant
+  hi! link @constant.macro PreProc
+  hi! link @number Constant
+  hi! link @number.float Constant
+  hi! link @boolean Constant
+  hi! link @character Constant
+  hi! link @character.special Special
+  hi! link @string String
+  hi! link @string.documentation String
+  hi! link @string.escape Special
+  hi! link @string.regexp Special
+  hi! link @string.special Special
+  hi! link @string.special.symbol Constant
+  hi! link @string.special.url Underlined
+  hi! link @string.special.path Underlined
+  hi! link @keyword Statement
+  hi! link @conditional Statement
+  hi! link @repeat Statement
+  hi! link @label Statement
+  hi! link @exception Statement
+  hi! link @include Statement
+  hi! link @type.qualifier Statement
+  hi! link @operator Normal
+  hi! link @punctuation Normal
+  hi! link @punctuation.delimiter Normal
+  hi! link @punctuation.bracket Normal
+  hi! link @punctuation.special Special
+  hi! link @function Function
+  hi! link @function.builtin Function
+  hi! link @function.call Normal
+  hi! link @function.method Function
+  hi! link @function.method.call Normal
+  hi! link @function.macro PreProc
+  hi! link @constructor Function
+  hi! link @type Type
+  hi! link @type.builtin Type
+  hi! link @type.definition Type
+  hi! link @attribute PreProc
+  hi! link @attribute.builtin PreProc
+  hi! link @variable Normal
+  hi! link @variable.builtin Normal
+  hi! link @variable.parameter Normal
+  hi! link @variable.member Normal
+  hi! link @property Normal
+  hi! link @field Normal
+  hi! link @module Normal
+  hi! link @module.builtin Normal
+  hi! link @namespace Normal
+  hi! link @tag Statement
+  hi! link @tag.attribute Type
+  hi! link @tag.delimiter Normal
+  hi! link @markup.link.url Underlined
+  hi! link @markup.raw String
+  hi! link @lsp.type.namespace Normal
+  hi! link @lsp.type.variable Normal
+  hi! link @lsp.type.property Normal
+  hi! link @lsp.type.parameter Normal
+endif
 
 if &background ==# 'dark'
   if (has('termguicolors') && &termguicolors) || has('gui_running')

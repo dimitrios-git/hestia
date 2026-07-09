@@ -42,6 +42,22 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-09 — simpler-language pass (data/markup).** These diverge MORE than
+  the code languages — treesitter and TextMate disagree a lot on JSON/YAML/CSS/
+  SQL structure. Dominant pattern: **object keys / property names** — nvim leaves
+  them plain (`@property`→Normal), the blog coloured them, and JSON keys / CSS
+  properties were accidentally **yellow-italic** (their `support.type.property-name`
+  scope hit the builtin-type italic rule — a bug). Decision (user): keys →
+  **plain everywhere**. New `scopes.yml` rule maps `support.type.property-name` /
+  `entity.name.tag.yaml` / `meta.object-literal.key` → text, with an explicit
+  `font_style: ""` — TextMate resolves fontStyle INDEPENDENTLY of foreground by
+  specificity, so a bare-fg rule inherits italic from the less-specific scope
+  (render.py now emits `fontStyle:""` when font_style is set-but-empty). The
+  small per-language quirks (sql `COUNT`→@type, `DESC`→@attribute; go
+  `package`→@keyword.import, const→@constant; html `href`→@_attr) are nvim
+  *treesitter-grammar* capture choices — not fixable via the link table without
+  custom queries, and the blog is usually more correct — so left as accepted
+  grammar differences. 0.8.0.
 - **2026-07-09 — per-language sweep (nvim-treesitter ↔ Shiki, both live).** With
   all treesitter parsers + Shiki drivable, swept the testbench languages. `self`/
   `this`: already coherent (pink italic) in nvim + blog for py/ts/java/rust/cpp —

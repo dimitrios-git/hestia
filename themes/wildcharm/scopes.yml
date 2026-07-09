@@ -141,6 +141,21 @@ rules:
       - punctuation.separator
       - punctuation.terminator
 
+  # Object keys / property names -> plain (the VALUES carry the colour), matching
+  # nvim's @property (Normal). These scopes are MORE specific than the rules they
+  # would otherwise hit — support.type.property-name (json/css) was landing on
+  # the builtin-type ITALIC rule (yellow-italic keys, a bug); entity.name.tag.yaml
+  # (yaml keys) was landing on the Tag rule (blue). Listing them here (more
+  # segments) wins and keeps them plain, while real HTML tags/attributes stay
+  # coloured.
+  - name: Object key / property name (plain)
+    role: text
+    font_style: ""   # explicit clear — else italic leaks from support.type
+    scopes:
+      - support.type.property-name
+      - entity.name.tag.yaml
+      - meta.object-literal.key
+
   - name: Tag
     role: keyword
     scopes: [entity.name.tag, punctuation.definition.tag]

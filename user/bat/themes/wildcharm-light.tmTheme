@@ -193,6 +193,16 @@
     </dict>
 
     <dict>
+      <key>name</key><string>Object key / property name (plain)</string>
+      <key>scope</key><string>support.type.property-name, entity.name.tag.yaml, meta.object-literal.key</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#1a1a1a</string>
+        <key>fontStyle</key><string></string>
+      </dict>
+    </dict>
+
+    <dict>
       <key>name</key><string>Tag</string>
       <key>scope</key><string>entity.name.tag, punctuation.definition.tag</string>
       <key>settings</key>

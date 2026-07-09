@@ -143,7 +143,11 @@ def token_colors(colors: dict) -> list:
             settings["background"] = colors["error_bg"]
         elif role:
             settings["foreground"] = colors[role]
-        if rule.get("font_style"):
+        # `is not None` so font_style: "" is emitted as fontStyle:"" — an
+        # explicit CLEAR (TextMate resolves fontStyle independently of
+        # foreground by specificity, so a bare fg rule would otherwise inherit
+        # italic/bold from a less-specific scope; see the keys/property rule).
+        if rule.get("font_style") is not None:
             settings["fontStyle"] = rule["font_style"]
         out.append({"name": rule["name"], "scope": rule["scopes"], "settings": settings})
     return out

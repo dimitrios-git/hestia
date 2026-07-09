@@ -50,7 +50,16 @@ rules:
   - name: Language variable (self/this)
     role: constant
     font_style: italic
-    scopes: [variable.language]
+    # `variable.language` catches self/this in USE + this in most grammars.
+    # In a PARAM list, MagicPython scopes self/cls as
+    # variable.parameter.function.language.special.* — more specific than the
+    # Parameter rule's `variable.parameter`, so listing it here wins and self
+    # stays pink there too (params without .language.special stay plain). Other
+    # grammars' this/self add their scopes here as the testbench surfaces them.
+    scopes:
+      - variable.language
+      - variable.parameter.function.language.special.self
+      - variable.parameter.function.language.special.cls
 
   - name: Keyword (vim Statement, not bold)
     role: keyword
@@ -105,7 +114,9 @@ rules:
       - punctuation.definition.decorator
       - meta.annotation
       - storage.type.annotation
-      - meta.attribute
+      # NB: NOT `meta.attribute` — MagicPython scopes member access
+      # (self.count -> meta.member.access.meta.attribute) under it, which would
+      # wrongly colour every `obj.member`. Rust attributes need their own scope.
 
   - name: Parameter (italic)
     role: text

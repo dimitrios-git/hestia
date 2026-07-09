@@ -1697,8 +1697,12 @@ def render_vim() -> str:
     ]
     L += [f"hi! link {x} {y}" for x, y in VIM_LINKS]
     L.append("")
-    L.append('" treesitter / LSP captures -> standard groups (nvim parity with Vim)')
-    L += [f"hi! link {x} {y}" for x, y in VIM_TS_LINKS]
+    L.append('" treesitter / LSP captures -> standard groups (nvim parity with Vim).')
+    L.append('" Nvim-ONLY: Vim has no treesitter, and older Vim patchlevels reject the')
+    L.append('" @ in these group names (W18) — so guard the whole block on has(\'nvim\').')
+    L.append("if has('nvim')")
+    L += [f"  hi! link {x} {y}" for x, y in VIM_TS_LINKS]
+    L.append("endif")
     L.append("")
     # truecolor (gui) — always evaluated; harmless when a cterm block also runs
     for i, v in enumerate(("dark", "light")):

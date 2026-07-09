@@ -14,21 +14,26 @@
   changed_when: false
 
 - name: Enable contrib + non-free + non-free-firmware for the driver
+  # When nvidia_backports is on, the same .sources file also enables <codename>-backports
+  # so a >= 555 driver (explicit sync — see defaults/main.yml) is installable from there.
   ansible.builtin.deb822_repository:
     name: hestia-nvidia
     types: [deb]
     uris: "{{ nvidia_mirror_uri }}"
-    suites: ["{{ _deb_codename.stdout }}"]
+    suites: "{{ [_deb_codename.stdout] + ([_deb_codename.stdout ~ '-backports'] if nvidia_backports | bool else []) }}"
     components: "{{ nvidia_components }}"
     signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
     state: present
   become: true
 
 - name: Install the NVIDIA driver + kernel headers
+  # default_release pins the driver (and the deps it needs pulled) to backports when
+  # enabled — backports has priority 100, so without this apt would keep the base 550.
   ansible.builtin.apt:
     name: "{{ nvidia_packages }}"
     state: present
     update_cache: true
+    default_release: "{{ (_deb_codename.stdout ~ '-backports') if nvidia_backports | bool else omit }}"
   become: true
   register: _nvidia_apt
 

@@ -43,7 +43,7 @@ bootstrap/
     samba/              # Samba share: /etc/samba/smb.conf + /srv/smbshare (become)
     claude_user/        # `claude` agent user + /srv/devshare + /srv/clipshare + ACLs + identity (keys, git config) (become)
     credentials/        # login auto-unlock: gnome-keyring launcher-untangle (become)
-    nvidia/             # opt-in proprietary NVIDIA driver from non-free (become; default off)
+    nvidia/             # opt-in proprietary NVIDIA driver from non-free, backports by default for explicit sync (become; default off)
   gen-symlink-table.py  # regenerate CLAUDE.md's symlink + rendered-template tables from the manifest
 ```
 

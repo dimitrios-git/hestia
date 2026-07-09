@@ -35,7 +35,7 @@ if has('nvim')
   hi! link @comment.warning Todo
   hi! link @comment.error Error
   hi! link @constant Constant
-  hi! link @constant.builtin Constant
+  hi! link @constant.builtin hestiaBuiltinConst
   hi! link @constant.macro PreProc
   hi! link @number Constant
   hi! link @number.float Constant
@@ -63,20 +63,20 @@ if has('nvim')
   hi! link @punctuation.bracket Normal
   hi! link @punctuation.special Special
   hi! link @function Function
-  hi! link @function.builtin Function
+  hi! link @function.builtin hestiaBuiltinFunc
   hi! link @function.call Normal
   hi! link @function.method Function
   hi! link @function.method.call Normal
   hi! link @function.macro PreProc
   hi! link @constructor Function
   hi! link @type Type
-  hi! link @type.builtin Type
+  hi! link @type.builtin hestiaBuiltinType
   hi! link @type.definition Type
   hi! link @attribute PreProc
   hi! link @attribute.builtin PreProc
   hi! link @variable Normal
-  hi! link @variable.builtin Normal
-  hi! link @variable.parameter Normal
+  hi! link @variable.builtin hestiaParam
+  hi! link @variable.parameter hestiaParam
   hi! link @variable.member Normal
   hi! link @property Normal
   hi! link @field Normal
@@ -182,6 +182,10 @@ if &background ==# 'dark'
   hi DiagnosticUnderlineWarn guifg=NONE guibg=NONE guisp=#ffaf00 gui=undercurl cterm=undercurl
   hi DiagnosticUnderlineInfo guifg=NONE guibg=NONE guisp=#00afff gui=undercurl cterm=undercurl
   hi DiagnosticUnderlineHint guifg=NONE guibg=NONE guisp=#00d7d7 gui=undercurl cterm=undercurl
+  hi hestiaBuiltinFunc guifg=#ff87ff guibg=NONE gui=italic cterm=italic
+  hi hestiaBuiltinConst guifg=#ff5f87 guibg=NONE gui=italic cterm=italic
+  hi hestiaBuiltinType guifg=#ffaf00 guibg=NONE gui=italic cterm=italic
+  hi hestiaParam guifg=#e0e0e0 guibg=NONE gui=italic cterm=italic
 else
   if (has('termguicolors') && &termguicolors) || has('gui_running')
     let g:terminal_ansi_colors = ['#000000', '#af0000', '#008700', '#af5f00', '#005faf', '#870087', '#008787', '#8a8a8a', '#808080', '#d70000', '#5faf5f', '#d78700', '#0087d7', '#af00af', '#00afaf', '#ffffff']
@@ -270,6 +274,10 @@ else
   hi DiagnosticUnderlineWarn guifg=NONE guibg=NONE guisp=#af5f00 gui=undercurl cterm=undercurl
   hi DiagnosticUnderlineInfo guifg=NONE guibg=NONE guisp=#005faf gui=undercurl cterm=undercurl
   hi DiagnosticUnderlineHint guifg=NONE guibg=NONE guisp=#008787 gui=undercurl cterm=undercurl
+  hi hestiaBuiltinFunc guifg=#870087 guibg=NONE gui=italic cterm=italic
+  hi hestiaBuiltinConst guifg=#af0000 guibg=NONE gui=italic cterm=italic
+  hi hestiaBuiltinType guifg=#875f00 guibg=NONE gui=italic cterm=italic
+  hi hestiaParam guifg=#1a1a1a guibg=NONE gui=italic cterm=italic
 endif
 
 if s:t_Co >= 256
@@ -355,6 +363,10 @@ if s:t_Co >= 256
     hi DiagnosticUnderlineWarn ctermfg=NONE ctermbg=NONE cterm=undercurl
     hi DiagnosticUnderlineInfo ctermfg=NONE ctermbg=NONE cterm=undercurl
     hi DiagnosticUnderlineHint ctermfg=NONE ctermbg=NONE cterm=undercurl
+    hi hestiaBuiltinFunc ctermfg=213 ctermbg=NONE cterm=italic
+    hi hestiaBuiltinConst ctermfg=204 ctermbg=NONE cterm=italic
+    hi hestiaBuiltinType ctermfg=214 ctermbg=NONE cterm=italic
+    hi hestiaParam ctermfg=254 ctermbg=NONE cterm=italic
   else
     hi Normal ctermfg=234 ctermbg=255 cterm=NONE
     hi Statusline ctermfg=231 ctermbg=59 cterm=bold
@@ -437,6 +449,10 @@ if s:t_Co >= 256
     hi DiagnosticUnderlineWarn ctermfg=NONE ctermbg=NONE cterm=undercurl
     hi DiagnosticUnderlineInfo ctermfg=NONE ctermbg=NONE cterm=undercurl
     hi DiagnosticUnderlineHint ctermfg=NONE ctermbg=NONE cterm=undercurl
+    hi hestiaBuiltinFunc ctermfg=90 ctermbg=NONE cterm=italic
+    hi hestiaBuiltinConst ctermfg=124 ctermbg=NONE cterm=italic
+    hi hestiaBuiltinType ctermfg=94 ctermbg=NONE cterm=italic
+    hi hestiaParam ctermfg=234 ctermbg=NONE cterm=italic
   endif
   unlet s:t_Co
   finish

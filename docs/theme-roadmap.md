@@ -42,6 +42,21 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-09 — phase B kickoff: builtins + parameters (italic, stack-wide).**
+  First tasteful DETAIL on top of the phase-A parity. `*.builtin`
+  (function/constant/type) and `variable.parameter` now render in their coarse
+  role's COLOUR but ITALIC — distinction without a new hue, keeping the tight
+  wildcharm palette. Coherent across the stack from one SSOT: nvim links the
+  `@*.builtin`/`@variable.parameter` captures to new `hestiaBuiltin*`/`hestiaParam`
+  intermediate groups (plain names, defined-but-unused in Vim); `scopes.yml`
+  splits `support.*` / `constant.language` / `variable.parameter` into italic
+  rules for bat/Shiki/VSCode. Shiki (VSCode-grade grammars) expresses it in more
+  places than bat. Extends the pre-existing `variable.language` (self/this)
+  italic. Added C/C++/Java treesitter parsers (`trees.lua`). No palette values
+  (font-style only) → stays 0.8.0. **thecodingidiot needs a re-vendor** of the
+  regenerated `dist/shiki/*.json` to pick this up (cross-repo, see hestia.ts).
+  Next phase-B candidates: members/properties, function call-vs-def, decorators,
+  and unifying operators (vim leaves them plain, bat/Shiki colour them blue).
 - **2026-07-09 — treesitter/LSP parity for nvim (phase A).** nvim highlights
   code via finer-grained `@*` captures whose defaults OVER-colour vs Vim
   (builtins/constructors → Special purple, punctuation → Delimiter, operators →

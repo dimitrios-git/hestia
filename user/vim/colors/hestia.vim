@@ -65,9 +65,9 @@ if has('nvim')
   hi! link @punctuation.special Special
   hi! link @function Function
   hi! link @function.builtin hestiaBuiltinFunc
-  hi! link @function.call Normal
+  hi! link @function.call Function
   hi! link @function.method Function
-  hi! link @function.method.call Normal
+  hi! link @function.method.call Function
   hi! link @function.macro PreProc
   hi! link @constructor Function
   hi! link @type Type

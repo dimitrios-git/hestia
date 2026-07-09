@@ -146,6 +146,16 @@
     </dict>
 
     <dict>
+      <key>name</key><string>Builtin primitive type (italic) — C/C++ int/unsigned/...</string>
+      <key>scope</key><string>storage.type.built-in, storage.type.primitive</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#875f00</string>
+        <key>fontStyle</key><string>italic</string>
+      </dict>
+    </dict>
+
+    <dict>
       <key>name</key><string>Preprocessor / import</string>
       <key>scope</key><string>meta.preprocessor, keyword.control.import, keyword.control.export, keyword.control.directive, keyword.control.at-rule</string>
       <key>settings</key>

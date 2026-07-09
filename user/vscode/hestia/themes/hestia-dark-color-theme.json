@@ -233,6 +233,17 @@
       }
     },
     {
+      "name": "Builtin primitive type (italic) — C/C++ int/unsigned/...",
+      "scope": [
+        "storage.type.built-in",
+        "storage.type.primitive"
+      ],
+      "settings": {
+        "foreground": "#ffaf00",
+        "fontStyle": "italic"
+      }
+    },
+    {
       "name": "Preprocessor / import",
       "scope": [
         "meta.preprocessor",

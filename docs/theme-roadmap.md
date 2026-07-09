@@ -42,6 +42,20 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-09 — per-language sweep (nvim-treesitter ↔ Shiki, both live).** With
+  all treesitter parsers + Shiki drivable, swept the testbench languages. `self`/
+  `this`: already coherent (pink italic) in nvim + blog for py/ts/java/rust/cpp —
+  `@variable.builtin` ↔ `variable.language.<lang>` (Python's param-position was
+  the only special case, fixed earlier). Three real gaps: **function CALL sites**
+  — the TextMate grammars colour them magenta (entity.name.function) in every
+  language, nvim left them plain → nvim `@function.call`/`@function.method.call`
+  → Function (magenta everywhere; Python calls stay plain in the *blog* only,
+  scoped meta.function-call, an accepted residual). **C/C++ builtin primitive
+  types** (int/unsigned) — italic in nvim (`@type.builtin`) but not the blog
+  (scoped `storage.type.built-in`, hit the plain Storage rule) → new italic rule.
+  **TS builtin globals** (console/window) — nvim over-pinks them via
+  `@variable.builtin` (same capture as `this`), NOT cleanly separable without a
+  custom query → left pink (keeping `self`/`this` pink is worth it). 0.8.0.
 - **2026-07-09 — cross-language coherence pass (testbench-driven).** Rendered the
   testbench samples and found Vim's REGEX colouring is wildly inconsistent per
   language (self = grey/pink/yellow across py/rust/java; import = cyan/purple/

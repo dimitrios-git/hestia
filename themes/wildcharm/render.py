@@ -1502,8 +1502,10 @@ VIM_TS_LINKS = [
     ("@punctuation.special", "Special"),
     # functions — def name + builtins coloured; plain call sites plain (Vim)
     ("@function", "Function"), ("@function.builtin", "hestiaBuiltinFunc"),
-    ("@function.call", "Normal"), ("@function.method", "Function"),
-    ("@function.method.call", "Normal"), ("@function.macro", "PreProc"),
+    # call sites coloured like definitions (magenta) — the TextMate grammars do
+    # this for every language (entity.name.function), so nvim matches
+    ("@function.call", "Function"), ("@function.method", "Function"),
+    ("@function.method.call", "Function"), ("@function.macro", "PreProc"),
     ("@constructor", "Function"),
     # types — yellow, builtins included
     ("@type", "Type"), ("@type.builtin", "hestiaBuiltinType"), ("@type.definition", "Type"),

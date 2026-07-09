@@ -9,9 +9,13 @@
 # trusts installed extensions), so the deployable artifact is a .vsix built by
 # vsce. The role is idempotent on the extension VERSION: it repackages and
 # reinstalls only when user/vscode/hestia/package.json's version differs from
-# what `code --list-extensions --show-versions` reports. Bump the version when
-# the theme changes (the render/PR flow already does) and a bootstrap run rolls
-# it out.
+# what `code --list-extensions --show-versions` reports. render.py OWNS that
+# version — it syncs package.json's version to the palette version on every
+# render (render_vscode_pkg). COROLLARY: any change to a generated theme
+# artifact MUST bump the palette version (patch min), or the vsix version won't
+# move and VS Code won't see the change (this bit us: the version sat at 0.7.1
+# through several theme changes, so the role kept skipping). After install,
+# RELOAD the VS Code window (or restart) for it to re-read the theme.
 #
 # The theme JSONs are GENERATED (themes/wildcharm/render.py). The role runs
 # `render.py --check` first and FAILS on stale artifacts rather than silently

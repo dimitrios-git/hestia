@@ -42,6 +42,22 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-09 — treesitter/LSP parity for nvim (phase A).** nvim highlights
+  code via finer-grained `@*` captures whose defaults OVER-colour vs Vim
+  (builtins/constructors → Special purple, punctuation → Delimiter, operators →
+  Operator blue). Linked the `@*` captures (and the `@lsp.type.*` that don't
+  chain) to the standard groups Vim uses, so nvim renders with hestia's group
+  identity — keywords blue, strings green, constants pink (not purple),
+  types yellow, functions magenta; symbolic operators / punctuation / plain &
+  member variables / module names / call sites → Normal (verified against
+  vim-python: it leaves `= + ==` plain, colours `and`/keywords blue — the table
+  matches). Exact token parity is impossible (vim-regex and treesitter tokenise
+  differently, and vim's own operator colouring is language-specific — e.g.
+  lua.vim colours symbolic operators; nvim renders those calmer, which is the
+  parity-over-richness intent). Diagnostics (`Diagnostic*` + underlines) mapped
+  to the palette. **Phase B** (richer treesitter detail, balanced across the
+  hestia app stack — bat/VSCode/…) is deferred as a gradual effort. Links are
+  variant-invariant and harmless in Vim (the `@*` groups go unused there).
 - **2026-07-09 (0.8.0) — vimdiff FILLS in the palette, Claude-style.** New
   `diff:` section (dark + light): the `DiffAdd/DiffChange/DiffText/DiffDelete`
   *backgrounds*, a low-saturation tinted row that KEEPS the code's syntax
@@ -275,7 +291,7 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 
 | Consumer | Artifact | Repo | Status |
 |---|---|---|---|
-| vim / nvim | `user/vim/colors/hestia.vim` (**GENERATED** from palette.yml by render.py, self-contained since 2026-07; was a wildcharm wrapper) | hestia | ✅ palette-driven — dark reproduces wildcharm, light on the AA values; treesitter/LSP/diff-fills still to come |
+| vim / nvim | `user/vim/colors/hestia.vim` (**GENERATED** from palette.yml by render.py, self-contained since 2026-07; was a wildcharm wrapper) | hestia | ✅ palette-driven; Claude-style diff fills (0.8.0); treesitter `@*`/LSP/diagnostics linked for nvim↔vim parity (phase A). Remaining: plugin groups; phase-B richer treesitter detail |
 | bat (+ vifm preview) | `user/bat/themes/wildcharm-{dark,light}.tmTheme` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.4.0; light pair since 0.7.0 |
 | glow | `user/glow/wildcharm-{dark,light}.json` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.7.0 |
 | Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/wildcharm/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: 0.6.0 changed three light syntax values (the `#f5f5f5`-gate deviations; the light `editor.background` stays `#ffffff` via `code_surface`) — copy the regenerated pair over |

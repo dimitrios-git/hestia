@@ -1462,6 +1462,59 @@ VIM_LINKS = [
     ("CurSearch", "IncSearch"),
 ]
 
+# Treesitter capture groups -> standard groups, for PARITY with Vim's regex
+# syntax (phase A). Neovim highlights via these finer-grained @* captures and
+# its defaults OVER-colour vs Vim — builtins/constructors -> Special (purple),
+# punctuation -> Delimiter, operators -> Operator (blue). We relink them to the
+# coarse groups Vim actually uses so nvim == vim; the things Vim leaves plain
+# (symbolic operators, punctuation, plain/member variables, module names, call
+# sites) link to Normal. Harmless in Vim (the @* groups just go unused). Richer
+# treesitter-specific colour (phase B, stack-wide) is deliberately deferred.
+VIM_TS_LINKS = [
+    # comments
+    ("@comment", "Comment"), ("@comment.documentation", "Comment"),
+    ("@comment.todo", "Todo"), ("@comment.note", "Todo"),
+    ("@comment.warning", "Todo"), ("@comment.error", "Error"),
+    # literals / constants — builtins to their natural group, NOT Special
+    ("@constant", "Constant"), ("@constant.builtin", "Constant"),
+    ("@constant.macro", "PreProc"), ("@number", "Constant"),
+    ("@number.float", "Constant"), ("@boolean", "Constant"),
+    ("@character", "Constant"), ("@character.special", "Special"),
+    # strings — escapes/regex special (Vim colours these too)
+    ("@string", "String"), ("@string.documentation", "String"),
+    ("@string.escape", "Special"), ("@string.regexp", "Special"),
+    ("@string.special", "Special"), ("@string.special.symbol", "Constant"),
+    ("@string.special.url", "Underlined"), ("@string.special.path", "Underlined"),
+    # keywords / statements — all blue, like Vim (sub-captures fall back here)
+    ("@keyword", "Statement"), ("@conditional", "Statement"),
+    ("@repeat", "Statement"), ("@label", "Statement"),
+    ("@exception", "Statement"), ("@include", "Statement"),
+    ("@type.qualifier", "Statement"),
+    # symbolic operators + punctuation — Vim leaves these plain
+    ("@operator", "Normal"), ("@punctuation", "Normal"),
+    ("@punctuation.delimiter", "Normal"), ("@punctuation.bracket", "Normal"),
+    ("@punctuation.special", "Special"),
+    # functions — def name + builtins coloured; plain call sites plain (Vim)
+    ("@function", "Function"), ("@function.builtin", "Function"),
+    ("@function.call", "Normal"), ("@function.method", "Function"),
+    ("@function.method.call", "Normal"), ("@function.macro", "PreProc"),
+    ("@constructor", "Function"),
+    # types — yellow, builtins included
+    ("@type", "Type"), ("@type.builtin", "Type"), ("@type.definition", "Type"),
+    ("@attribute", "PreProc"), ("@attribute.builtin", "PreProc"),
+    # variables / members / modules — Vim leaves these Normal
+    ("@variable", "Normal"), ("@variable.builtin", "Normal"),
+    ("@variable.parameter", "Normal"), ("@variable.member", "Normal"),
+    ("@property", "Normal"), ("@field", "Normal"),
+    ("@module", "Normal"), ("@module.builtin", "Normal"), ("@namespace", "Normal"),
+    # markup / tags (html, markdown)
+    ("@tag", "Statement"), ("@tag.attribute", "Type"), ("@tag.delimiter", "Normal"),
+    ("@markup.link.url", "Underlined"), ("@markup.raw", "String"),
+    # LSP semantic tokens chain to @* by nvim default; pin the ones that don't
+    ("@lsp.type.namespace", "Normal"), ("@lsp.type.variable", "Normal"),
+    ("@lsp.type.property", "Normal"), ("@lsp.type.parameter", "Normal"),
+]
+
 # Neovim's :terminal reads g:terminal_color_0..15; Vim reads g:terminal_ansi_colors.
 VIM_ANSI = {
     "dark": "['#000000', '#d7005f', '#00af5f', '#d78700', '#0087d7', '#d787d7', '#00afaf', '#d0d0d0', '#767676', '#ff5f87', '#00d75f', '#ffaf00', '#00afff', '#ff87ff', '#00d7d7', '#ffffff']",
@@ -1498,6 +1551,8 @@ def _vim_rows(variant: str) -> list:
         stlnc = (a["bright_black"], r["bg"], "reverse")
         split = a["bright_black"]
         moremsg, question, warnmsg = a["bright_green"], a["bright_magenta"], a["bright_yellow"]
+        # nvim diagnostics — err on link (bright_red, AA) not the accent fill
+        diag = (r["link"], a["bright_yellow"], a["bright_blue"], a["bright_cyan"], a["bright_green"])
     else:
         tab_bg, tabsel_bg = r["surface_alt"], e["ui_dark"]
         tool_bg = e["ui_dark"]
@@ -1510,6 +1565,7 @@ def _vim_rows(variant: str) -> list:
         stlnc = (ink, r["surface_alt"], N)                # inactive: light-grey bar
         split = e["ui_dark"]
         moremsg, question, warnmsg = a["green"], a["magenta"], a["yellow"]
+        diag = (s["error"], a["yellow"], a["blue"], a["cyan"], a["green"])
     return [
         ("Normal", r["text"], r["bg"], N),
         ("Statusline", stl[0], stl[1], stl[2]),
@@ -1583,6 +1639,17 @@ def _vim_rows(variant: str) -> list:
         ("Added", s["diff_add"], N, N),
         ("Changed", s["diff_change"], N, N),
         ("Removed", s["diff_delete"], N, N),
+        # nvim diagnostics (harmless in Vim; the underlines carry the colour as
+        # guisp, the sign/virtual-text variants chain to these by nvim default)
+        ("DiagnosticError", diag[0], N, N),
+        ("DiagnosticWarn", diag[1], N, N),
+        ("DiagnosticInfo", diag[2], N, N),
+        ("DiagnosticHint", diag[3], N, N),
+        ("DiagnosticOk", diag[4], N, N),
+        ("DiagnosticUnderlineError", N, N, "undercurl", diag[0]),
+        ("DiagnosticUnderlineWarn", N, N, "undercurl", diag[1]),
+        ("DiagnosticUnderlineInfo", N, N, "undercurl", diag[2]),
+        ("DiagnosticUnderlineHint", N, N, "undercurl", diag[3]),
     ]
 
 
@@ -1629,6 +1696,9 @@ def render_vim() -> str:
         "",
     ]
     L += [f"hi! link {x} {y}" for x, y in VIM_LINKS]
+    L.append("")
+    L.append('" treesitter / LSP captures -> standard groups (nvim parity with Vim)')
+    L += [f"hi! link {x} {y}" for x, y in VIM_TS_LINKS]
     L.append("")
     # truecolor (gui) — always evaluated; harmless when a cterm block also runs
     for i, v in enumerate(("dark", "light")):

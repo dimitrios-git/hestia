@@ -94,6 +94,19 @@ rules:
       - keyword.control.directive
       - keyword.control.at-rule
 
+  # Decorators / attributes / annotations -> preproc (cyan), matching nvim's
+  # @attribute. More-specific scope than entity.name.function, so it wins over
+  # the Function rule for @decorator-style tokens.
+  - name: Decorator / attribute / annotation
+    role: preproc
+    scopes:
+      - entity.name.function.decorator
+      - meta.decorator
+      - punctuation.definition.decorator
+      - meta.annotation
+      - storage.type.annotation
+      - meta.attribute
+
   - name: Parameter (italic)
     role: text
     font_style: italic

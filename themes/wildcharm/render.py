@@ -1481,7 +1481,7 @@ VIM_TS_LINKS = [
     # literals / constants — builtins to their natural group, NOT Special
     ("@constant", "Constant"), ("@constant.builtin", "hestiaBuiltinConst"),
     ("@constant.macro", "PreProc"), ("@number", "Constant"),
-    ("@number.float", "Constant"), ("@boolean", "Constant"),
+    ("@number.float", "Constant"), ("@boolean", "hestiaBuiltinConst"),
     ("@character", "Constant"), ("@character.special", "Special"),
     # strings — escapes/regex special (Vim colours these too)
     ("@string", "String"), ("@string.documentation", "String"),
@@ -1491,7 +1491,9 @@ VIM_TS_LINKS = [
     # keywords / statements — all blue, like Vim (sub-captures fall back here)
     ("@keyword", "Statement"), ("@conditional", "Statement"),
     ("@repeat", "Statement"), ("@label", "Statement"),
-    ("@exception", "Statement"), ("@include", "Statement"),
+    ("@exception", "Statement"),
+    # imports/includes -> cyan (PreProc), like bat/Shiki keyword.control.import
+    ("@include", "PreProc"), ("@keyword.import", "PreProc"),
     ("@type.qualifier", "Statement"),
     # symbolic operators -> blue (unify with bat/Shiki keyword.operator);
     # punctuation stays plain
@@ -1507,7 +1509,7 @@ VIM_TS_LINKS = [
     ("@type", "Type"), ("@type.builtin", "hestiaBuiltinType"), ("@type.definition", "Type"),
     ("@attribute", "PreProc"), ("@attribute.builtin", "PreProc"),
     # variables / members / modules — Vim leaves these Normal
-    ("@variable", "Normal"), ("@variable.builtin", "hestiaParam"),
+    ("@variable", "Normal"), ("@variable.builtin", "hestiaSelf"),
     ("@variable.parameter", "hestiaParam"), ("@variable.member", "Normal"),
     ("@property", "Normal"), ("@field", "Normal"),
     ("@module", "Normal"), ("@module.builtin", "Normal"), ("@namespace", "Normal"),
@@ -1662,6 +1664,7 @@ def _vim_rows(variant: str) -> list:
         ("hestiaBuiltinConst", s["constant"], N, "italic"),
         ("hestiaBuiltinType", s["type"], N, "italic"),
         ("hestiaParam", r["text"], N, "italic"),
+        ("hestiaSelf", s["constant"], N, "italic"),  # self/this/cls — pink italic
     ]
 
 

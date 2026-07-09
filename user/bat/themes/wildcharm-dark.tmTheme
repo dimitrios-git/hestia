@@ -155,6 +155,15 @@
     </dict>
 
     <dict>
+      <key>name</key><string>Decorator / attribute / annotation</string>
+      <key>scope</key><string>entity.name.function.decorator, meta.decorator, punctuation.definition.decorator, meta.annotation, storage.type.annotation, meta.attribute</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#00d7d7</string>
+      </dict>
+    </dict>
+
+    <dict>
       <key>name</key><string>Parameter (italic)</string>
       <key>scope</key><string>variable.parameter</string>
       <key>settings</key>

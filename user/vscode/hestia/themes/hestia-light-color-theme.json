@@ -244,6 +244,20 @@
       }
     },
     {
+      "name": "Decorator / attribute / annotation",
+      "scope": [
+        "entity.name.function.decorator",
+        "meta.decorator",
+        "punctuation.definition.decorator",
+        "meta.annotation",
+        "storage.type.annotation",
+        "meta.attribute"
+      ],
+      "settings": {
+        "foreground": "#005f5f"
+      }
+    },
+    {
       "name": "Parameter (italic)",
       "scope": [
         "variable.parameter"

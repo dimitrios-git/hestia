@@ -61,6 +61,16 @@ if [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; then
     export GBM_BACKEND=nvidia-drm
     export __GLX_VENDOR_LIBRARY_NAME=nvidia
     export WLR_NO_HARDWARE_CURSORS=1
+    # Interim explicit-sync fix for the Chromium/Electron flicker + damage-only
+    # ("squares under the cursor") repaints on NVIDIA. The base trixie driver (550)
+    # lacks EGL_ANDROID_native_fence_sync, so wlroots' default GLES2 renderer can't do
+    # explicit sync on it; the Vulkan renderer syncs through NVIDIA's (good) Vulkan
+    # timeline semaphores instead, sidestepping the broken path — no driver change or
+    # reboot, just a re-login. Once the driver is >= 555 (nvidia_backports, explicit sync
+    # native on GLES2) this is redundant — comment it out then. If sway ever fails to
+    # start with it set, drop to a VT (Ctrl+Alt+F2) and comment this line in
+    # /usr/local/bin/start-sway (or re-render via the sway_session role) to recover.
+    export WLR_RENDERER=vulkan
     # Escape hatches if a release misbehaves on NVIDIA (uncomment as needed):
     #export SWAY_IGNORE_NVIDIA=1
     #export XWAYLAND_NO_GLAMOR=1

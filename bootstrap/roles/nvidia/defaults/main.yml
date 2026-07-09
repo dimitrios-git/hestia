@@ -8,3 +8,12 @@ nvidia_components: [contrib, non-free, non-free-firmware]
 nvidia_packages:
   - nvidia-driver
   - linux-headers-amd64
+# Pull the driver from <codename>-backports rather than the base suite. Debian stable
+# freezes the NVIDIA driver at the version it shipped with (trixie = 550.163.01), which
+# PREDATES explicit sync — the EGL_ANDROID_native_fence_sync primitive, added upstream in
+# driver 555. On a compositor that offers explicit sync (sway >= 1.10 / wlroots >= 0.18,
+# both present here) the 550 driver has to fall back to implicit sync, which it handles
+# poorly: Chromium/Electron apps (Chrome, Edge, VSCode) flash and repaint only the damaged
+# region under the cursor. A backports driver (>= 555) restores explicit sync and fixes it.
+# Requires a REBOOT to load, like any driver change. Set false to stay on the base suite.
+nvidia_backports: true

@@ -212,6 +212,18 @@
       }
     },
     {
+      "name": "Object key / property name (plain)",
+      "scope": [
+        "support.type.property-name",
+        "entity.name.tag.yaml",
+        "meta.object-literal.key"
+      ],
+      "settings": {
+        "foreground": "#e0e0e0",
+        "fontStyle": ""
+      }
+    },
+    {
       "name": "Tag",
       "scope": [
         "entity.name.tag",

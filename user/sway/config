@@ -228,7 +228,11 @@ exec $HOME/.config/sway/scripts/credential-unlock.sh
 ### Bar, notifications, idle
 
 exec_always $HOME/.config/sway/scripts/start-waybar.sh
-exec_always pkill mako; mako
+# Restart mako on every reload. Scoped -u "$USER" -x like the rest of the config
+# (a bare `pkill mako` isn't user-scoped — the claude agent runs its own mako headless
+# on this box); 2>/dev/null swallows the harmless exit-1 pkill logs at boot, when there's
+# no mako yet to kill — the `; mako` then starts it regardless.
+exec_always pkill -u "$USER" -x mako 2>/dev/null; mako
 
 bindsym $mod+ctrl+l exec swaylock -f
 

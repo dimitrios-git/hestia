@@ -1493,8 +1493,9 @@ VIM_TS_LINKS = [
     ("@repeat", "Statement"), ("@label", "Statement"),
     ("@exception", "Statement"), ("@include", "Statement"),
     ("@type.qualifier", "Statement"),
-    # symbolic operators + punctuation — Vim leaves these plain
-    ("@operator", "Normal"), ("@punctuation", "Normal"),
+    # symbolic operators -> blue (unify with bat/Shiki keyword.operator);
+    # punctuation stays plain
+    ("@operator", "Statement"), ("@punctuation", "Normal"),
     ("@punctuation.delimiter", "Normal"), ("@punctuation.bracket", "Normal"),
     ("@punctuation.special", "Special"),
     # functions — def name + builtins coloured; plain call sites plain (Vim)
@@ -1622,7 +1623,7 @@ def _vim_rows(variant: str) -> list:
         ("SpellCap", N, N, "undercurl", a["cyan"]),
         ("SpellLocal", N, N, "undercurl", a["green"]),
         ("SpellRare", N, N, "undercurl", a["bright_magenta"]),
-        ("Comment", s["comment"], N, N),
+        ("Comment", s["comment"], N, "italic"),
         ("Constant", s["constant"], N, N),
         ("String", s["string"], N, N),
         ("Identifier", s["identifier"], N, N),

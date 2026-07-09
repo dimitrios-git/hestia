@@ -72,7 +72,7 @@
 
     <dict>
       <key>name</key><string>Language variable (self/this)</string>
-      <key>scope</key><string>variable.language</string>
+      <key>scope</key><string>variable.language, variable.parameter.function.language.special.self, variable.parameter.function.language.special.cls</string>
       <key>settings</key>
       <dict>
         <key>foreground</key><string>#ff5f87</string>
@@ -156,7 +156,7 @@
 
     <dict>
       <key>name</key><string>Decorator / attribute / annotation</string>
-      <key>scope</key><string>entity.name.function.decorator, meta.decorator, punctuation.definition.decorator, meta.annotation, storage.type.annotation, meta.attribute</string>
+      <key>scope</key><string>entity.name.function.decorator, meta.decorator, punctuation.definition.decorator, meta.annotation, storage.type.annotation</string>
       <key>settings</key>
       <dict>
         <key>foreground</key><string>#00d7d7</string>

@@ -148,7 +148,9 @@
     {
       "name": "Language variable (self/this)",
       "scope": [
-        "variable.language"
+        "variable.language",
+        "variable.parameter.function.language.special.self",
+        "variable.parameter.function.language.special.cls"
       ],
       "settings": {
         "foreground": "#ff5f87",
@@ -250,8 +252,7 @@
         "meta.decorator",
         "punctuation.definition.decorator",
         "meta.annotation",
-        "storage.type.annotation",
-        "meta.attribute"
+        "storage.type.annotation"
       ],
       "settings": {
         "foreground": "#00d7d7"

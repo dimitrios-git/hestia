@@ -26,9 +26,24 @@
     state: present
   become: true
 
+- name: Fetch the backports index before pinning to it
+  # Chicken-and-egg: the apt module sets APT::Default-Release for the WHOLE call, and apt
+  # validates that value against the release lists it has ALREADY downloaded. Setting
+  # default_release=<codename>-backports on the same call that first adds backports fails
+  # with "release is not available in the sources" (the backports index isn't fetched yet).
+  # So refresh the cache here FIRST, with no default_release — that pulls the backports
+  # index in — and only then can the install below pin to it. (Only needed when the flip
+  # is on; the base-suite path indexes fine via the install task's own update_cache.)
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+  when: nvidia_backports | bool
+
 - name: Install the NVIDIA driver + kernel headers
   # default_release pins the driver (and the deps it needs pulled) to backports when
-  # enabled — backports has priority 100, so without this apt would keep the base 550.
+  # enabled — backports has priority 100, so without this apt would keep the base suite.
+  # Matches the backports Release Codename (n=<codename>-backports), not its Suite
+  # (a=stable-backports). Omitted when the flip is off → normal base-suite install.
   ansible.builtin.apt:
     name: "{{ nvidia_packages }}"
     state: present

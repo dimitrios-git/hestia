@@ -8,12 +8,18 @@ nvidia_components: [contrib, non-free, non-free-firmware]
 nvidia_packages:
   - nvidia-driver
   - linux-headers-amd64
-# Pull the driver from <codename>-backports rather than the base suite. Debian stable
-# freezes the NVIDIA driver at the version it shipped with (trixie = 550.163.01), which
-# PREDATES explicit sync — the EGL_ANDROID_native_fence_sync primitive, added upstream in
-# driver 555. On a compositor that offers explicit sync (sway >= 1.10 / wlroots >= 0.18,
-# both present here) the 550 driver has to fall back to implicit sync, which it handles
-# poorly: Chromium/Electron apps (Chrome, Edge, VSCode) flash and repaint only the damaged
-# region under the cursor. A backports driver (>= 555) restores explicit sync and fixes it.
-# Requires a REBOOT to load, like any driver change. Set false to stay on the base suite.
-nvidia_backports: true
+# Pull the driver from <codename>-backports rather than the base suite. The intent was
+# to get a >= 555 driver — the base trixie driver (550.163.01) predates explicit sync
+# (the EGL_ANDROID_native_fence_sync primitive, added upstream in 555), so on a compositor
+# that offers explicit sync (sway >= 1.10 / wlroots >= 0.18) it falls back to implicit
+# sync, which NVIDIA handles poorly: Chromium/Electron apps (Chrome, Edge, VSCode) flash
+# and repaint only the damaged region under the cursor.
+#
+# DEFAULT OFF, because as of 2026-07 trixie-backports is ALSO on 550 (550.163.01-4~bpo13+1,
+# a backports rebuild of the same version) — so flipping this on today just reinstalls the
+# same driver with no explicit-sync gain. The live fix for the flicker is instead
+# WLR_RENDERER=vulkan in start-sway (the NVIDIA block) — the wlroots Vulkan renderer syncs
+# through NVIDIA's Vulkan timeline semaphores, no driver change. Flip this true once
+# backports actually ships >= 555 (re-check the backports nvidia-driver version first);
+# it needs a REBOOT to load. The plumbing below is kept + fixed so the flip Just Works then.
+nvidia_backports: false

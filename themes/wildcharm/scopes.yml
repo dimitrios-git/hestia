@@ -94,6 +94,14 @@ rules:
     font_style: italic
     scopes: [support.type, support.class]
 
+  # C/C++ scope primitive types as storage.type.built-in.* (NOT support.type),
+  # so they'd hit the plain Storage rule -> add them here (more specific) to
+  # match nvim's @type.builtin italic. int/unsigned/char/... go italic too.
+  - name: Builtin primitive type (italic) — C/C++ int/unsigned/...
+    role: type
+    font_style: italic
+    scopes: [storage.type.built-in, storage.type.primitive]
+
   - name: Preprocessor / import
     role: preproc
     scopes:

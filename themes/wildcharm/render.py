@@ -1744,7 +1744,22 @@ def render_vim() -> str:
     return "\n".join(L) + "\n"
 
 
+def render_vscode_pkg() -> str:
+    """Keep the VS Code extension version in lock-step with the palette version.
+    The vscode_theme role is idempotent on THIS version (code --install-extension
+    no-ops at an equal version), and it used to silently drift because nothing
+    bumped it — so theme changes never reached VS Code. render.py owns it now: a
+    palette bump rolls the extension out. Only the value changes; the rest of
+    package.json is preserved verbatim. (Corollary: any change to a generated
+    artifact must bump the palette version — patch minimum — or VS Code, and
+    other version-gated deploys, won't see it.)"""
+    import re
+    text = (REPO / "user/vscode/hestia/package.json").read_text()
+    return re.sub(r'("version":\s*")[^"]*(")', rf"\g<1>{VERSION}\g<2>", text, count=1)
+
+
 OUTPUTS = {
+    REPO / "user/vscode/hestia/package.json": lambda: render_vscode_pkg(),
     REPO / "user/bat/themes/wildcharm-dark.tmTheme": lambda: render_tmtheme("dark"),
     REPO / "user/bat/themes/wildcharm-light.tmTheme": lambda: render_tmtheme("light"),
     HERE / "dist/shiki/hestia-dark.json": lambda: theme_json("dark", "shiki"),

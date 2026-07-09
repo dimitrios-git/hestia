@@ -42,6 +42,21 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-09 — cross-language coherence pass (testbench-driven).** Rendered the
+  testbench samples and found Vim's REGEX colouring is wildly inconsistent per
+  language (self = grey/pink/yellow across py/rust/java; import = cyan/purple/
+  blue) — so Vim is NOT a unification reference. Goal: the two config-driven
+  consumers (nvim treesitter ↔ bat/Shiki/VSCode TextMate) agree by CONSTRUCT.
+  Audit: most already cohere (comments/strings/escapes/numbers/keywords/
+  operators/builtins/params/functions/types/members). Four gaps closed:
+  **self/this/cls** → pink italic everywhere (nvim `@variable.builtin` →
+  `hestiaSelf`; bat already `variable.language`→constant-italic); **import/
+  include** → cyan/PreProc (nvim `@keyword.import`/`@include` → PreProc; bat
+  already `keyword.control.import`→preproc); **decorators/attributes** → cyan
+  (new `scopes.yml` rule → preproc, matching nvim `@attribute`); **booleans** →
+  pink *italic* (nvim `@boolean` → `hestiaBuiltinConst`, matching bat
+  `constant.language`). Font-style/link only → palette stays 0.8.0. (`@module`/
+  namespace nvim-plain vs bat-yellow left as a language-specific follow-up.)
 - **2026-07-09 — phase B kickoff: builtins + parameters (italic, stack-wide).**
   First tasteful DETAIL on top of the phase-A parity. `*.builtin`
   (function/constant/type) and `variable.parameter` now render in their coarse

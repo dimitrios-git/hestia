@@ -39,7 +39,7 @@ if has('nvim')
   hi! link @constant.macro PreProc
   hi! link @number Constant
   hi! link @number.float Constant
-  hi! link @boolean Constant
+  hi! link @boolean hestiaBuiltinConst
   hi! link @character Constant
   hi! link @character.special Special
   hi! link @string String
@@ -55,7 +55,8 @@ if has('nvim')
   hi! link @repeat Statement
   hi! link @label Statement
   hi! link @exception Statement
-  hi! link @include Statement
+  hi! link @include PreProc
+  hi! link @keyword.import PreProc
   hi! link @type.qualifier Statement
   hi! link @operator Statement
   hi! link @punctuation Normal
@@ -75,7 +76,7 @@ if has('nvim')
   hi! link @attribute PreProc
   hi! link @attribute.builtin PreProc
   hi! link @variable Normal
-  hi! link @variable.builtin hestiaParam
+  hi! link @variable.builtin hestiaSelf
   hi! link @variable.parameter hestiaParam
   hi! link @variable.member Normal
   hi! link @property Normal
@@ -186,6 +187,7 @@ if &background ==# 'dark'
   hi hestiaBuiltinConst guifg=#ff5f87 guibg=NONE gui=italic cterm=italic
   hi hestiaBuiltinType guifg=#ffaf00 guibg=NONE gui=italic cterm=italic
   hi hestiaParam guifg=#e0e0e0 guibg=NONE gui=italic cterm=italic
+  hi hestiaSelf guifg=#ff5f87 guibg=NONE gui=italic cterm=italic
 else
   if (has('termguicolors') && &termguicolors) || has('gui_running')
     let g:terminal_ansi_colors = ['#000000', '#af0000', '#008700', '#af5f00', '#005faf', '#870087', '#008787', '#8a8a8a', '#808080', '#d70000', '#5faf5f', '#d78700', '#0087d7', '#af00af', '#00afaf', '#ffffff']
@@ -278,6 +280,7 @@ else
   hi hestiaBuiltinConst guifg=#af0000 guibg=NONE gui=italic cterm=italic
   hi hestiaBuiltinType guifg=#875f00 guibg=NONE gui=italic cterm=italic
   hi hestiaParam guifg=#1a1a1a guibg=NONE gui=italic cterm=italic
+  hi hestiaSelf guifg=#af0000 guibg=NONE gui=italic cterm=italic
 endif
 
 if s:t_Co >= 256
@@ -367,6 +370,7 @@ if s:t_Co >= 256
     hi hestiaBuiltinConst ctermfg=204 ctermbg=NONE cterm=italic
     hi hestiaBuiltinType ctermfg=214 ctermbg=NONE cterm=italic
     hi hestiaParam ctermfg=254 ctermbg=NONE cterm=italic
+    hi hestiaSelf ctermfg=204 ctermbg=NONE cterm=italic
   else
     hi Normal ctermfg=234 ctermbg=255 cterm=NONE
     hi Statusline ctermfg=231 ctermbg=59 cterm=bold
@@ -453,6 +457,7 @@ if s:t_Co >= 256
     hi hestiaBuiltinConst ctermfg=124 ctermbg=NONE cterm=italic
     hi hestiaBuiltinType ctermfg=94 ctermbg=NONE cterm=italic
     hi hestiaParam ctermfg=234 ctermbg=NONE cterm=italic
+    hi hestiaSelf ctermfg=124 ctermbg=NONE cterm=italic
   endif
   unlet s:t_Co
   finish

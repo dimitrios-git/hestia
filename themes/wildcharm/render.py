@@ -1473,11 +1473,13 @@ def _vim_rows(variant: str) -> list:
     """(group, guifg, guibg, gui_attr[, guisp]) for one variant. Colours resolve
     from palette roles: dark reproduces wildcharm (the palette derives from it)
     save the documented comment/purple/diff-delete deviations; light lands on the
-    palette's AA-tuned values. The few vim-only UI accents with no cross-app role
-    (Visual/lCursor/MatchParen) and the four vimdiff fills stay literal — the
-    fills move to a palette `diff:` section when they gain Claude-style values."""
+    palette's AA-tuned values. The vimdiff fills come from the palette `diff:`
+    section (Claude-style: tinted row bg, guifg=NONE so syntax shows through).
+    Only three vim-only UI accents with no cross-app role stay literal here —
+    Visual/lCursor/MatchParen."""
     r, a, e = vroles(variant), vansi(variant), vext(variant)
     s = PALETTE["syntax"] if variant == "dark" else LIGHT["syntax"]
+    df = PALETTE["diff"] if variant == "dark" else LIGHT["diff"]
     dark = variant == "dark"
     N = "NONE"
     ln, ink, white = e["line_grey"], e["ink"], a["bright_white"]
@@ -1496,8 +1498,6 @@ def _vim_rows(variant: str) -> list:
         stlnc = (a["bright_black"], r["bg"], "reverse")
         split = a["bright_black"]
         moremsg, question, warnmsg = a["bright_green"], a["bright_magenta"], a["bright_yellow"]
-        d_add, d_chg = ("#afffaf", "#5f875f"), (a["white"], "#5f5f5f")
-        d_txt, d_del = ("#afffff", "#5f8787"), ("#ffafaf", "#875f5f")
     else:
         tab_bg, tabsel_bg = r["surface_alt"], e["ui_dark"]
         tool_bg = e["ui_dark"]
@@ -1510,8 +1510,6 @@ def _vim_rows(variant: str) -> list:
         stlnc = (ink, r["surface_alt"], N)                # inactive: light-grey bar
         split = e["ui_dark"]
         moremsg, question, warnmsg = a["green"], a["magenta"], a["yellow"]
-        d_add, d_chg = ("#005f00", "#afd7af"), ("#262626", "#dadada")
-        d_txt, d_del = ("#005f5f", "#afd7d7"), ("#875f5f", "#ffd7d7")
     return [
         ("Normal", r["text"], r["bg"], N),
         ("Statusline", stl[0], stl[1], stl[2]),
@@ -1578,10 +1576,10 @@ def _vim_rows(variant: str) -> list:
         ("Directory", s["keyword"], N, "bold"),
         ("Conceal", ln, N, N),
         ("Ignore", N, N, N),
-        ("DiffAdd", d_add[0], d_add[1], N),
-        ("DiffChange", d_chg[0], d_chg[1], N),
-        ("DiffText", d_txt[0], d_txt[1], N),
-        ("DiffDelete", d_del[0], d_del[1], N),
+        ("DiffAdd", N, df["add_bg"], N),
+        ("DiffChange", N, df["change_bg"], N),
+        ("DiffText", N, df["text_bg"], "bold"),
+        ("DiffDelete", df["delete_fg"], df["delete_bg"], N),
         ("Added", s["diff_add"], N, N),
         ("Changed", s["diff_change"], N, N),
         ("Removed", s["diff_delete"], N, N),

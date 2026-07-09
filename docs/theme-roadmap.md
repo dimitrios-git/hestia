@@ -42,6 +42,17 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-09 (0.8.0) — vimdiff FILLS in the palette, Claude-style.** New
+  `diff:` section (dark + light): the `DiffAdd/DiffChange/DiffText/DiffDelete`
+  *backgrounds*, a low-saturation tinted row that KEEPS the code's syntax
+  highlighting on top (consumer sets `guifg=NONE`) — verified via `:TOhtml`
+  that added-line tokens keep their syntax colours on the tint. Replaces
+  wildcharm's fg-tinting (which recoloured every diff line green/red, losing
+  syntax). add=green, delete=maroon, change=blue, text=brighter blue (Changed
+  == blue, matching `syntax.diff_change`). Consumed by hestia.vim only for now;
+  distinct from `syntax.diff_*` (git-diff-language TEXT in bat/Shiki). Exempt
+  from the AA plain-text gate (fills). Third of the vim own-it phases (after
+  the self-contained detach #177 and the render.py target #178).
 - **2026-07-03 — wofi cannot take CSS fragments; use its colors file.** The
   0.7.0 `@import "theme.css"` approach rendered wofi transparent: wofi
   preprocesses the stylesheet TEXT itself (its `--wofi-color<n>` macro pass)

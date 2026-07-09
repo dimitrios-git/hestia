@@ -31,7 +31,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.7.1"
+version: "0.8.0"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -133,6 +133,21 @@ syntax:
   # apply to them; platform mappings pair error with white/accent_fg.
   error:          "#d7005f"   # roles.accent — vim Error (reverse on white; bat: white on accent_dark)
   todo:           "#af5fff"   # extended.purple — vim Todo (rendered reverse)
+
+# vimdiff FILLS — the DiffAdd/DiffChange/DiffText/DiffDelete *backgrounds*.
+# Claude/GitHub-style: a low-saturation tinted ROW that KEEPS the code's own
+# syntax highlighting on top (the consumer sets guifg=NONE), NOT wildcharm's
+# fg-tinting that recoloured every diff line. Distinct from syntax.diff_* above
+# (those colour git-diff-language TEXT in bat/Shiki); these are the editor's
+# diff-mode row fills, consumed by hestia.vim (0.8.0). Backgrounds + one fg for
+# the deleted text/filler. Exempt from the AA plain-text gate (fills, like
+# error/todo) — the tint is dark enough that syntax text stays legible on it.
+diff:
+  add_bg:     "#163a20"   # added line — muted dark green
+  change_bg:  "#14303f"   # changed line — muted dark blue (Changed == blue, per syntax)
+  text_bg:    "#1d4a63"   # the changed SPAN within a changed line — brighter blue
+  delete_bg:  "#431624"   # deleted line / filler — muted dark maroon
+  delete_fg:  "#ff5f87"   # deleted text on the maroon (ansi.bright_red / roles.link)
 
 # The LIGHT variant (roadmap M3, desktop ramp M7) — from upstream wildcharm's
 # background=light branch (the roadmap doc carries the full upstream reference
@@ -240,3 +255,10 @@ light:
     # reverse/fill roles (same rule as dark — paired, never bare foregrounds)
     error:          "#d70000"   # upstream Error (reverse on white)
     todo:           "#5f00d7"   # upstream Todo (rendered reverse)
+  # vimdiff fills, light — pastel tints (dark syntax text reads on them)
+  diff:
+    add_bg:     "#d3efdb"   # added — light green tint
+    change_bg:  "#d6e7f4"   # changed — light blue tint
+    text_bg:    "#b3d4ec"   # changed span — stronger light blue
+    delete_bg:  "#f6d7de"   # deleted — light red tint
+    delete_fg:  "#af0000"   # deleted text (light syntax.constant red)

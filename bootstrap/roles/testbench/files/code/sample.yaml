@@ -1,0 +1,13 @@
+# comment; TODO: keys, values, anchors
+name: testbench
+version: 0.8.0
+enabled: true
+count: 42
+tags: [dark, light]
+nested:
+  hex: "#d7005f"
+  list:
+    - one
+    - two
+anchor: &base { a: 1 }
+ref: *base

@@ -1,0 +1,10 @@
+{
+  "name": "testbench",
+  "version": "0.8.0",
+  "enabled": true,
+  "count": 42,
+  "ratio": 3.14,
+  "nothing": null,
+  "tags": ["dark", "light"],
+  "nested": { "hex": "#d7005f", "escaped": "line\nbreak" }
+}

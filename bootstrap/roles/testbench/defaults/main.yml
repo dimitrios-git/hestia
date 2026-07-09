@@ -1,0 +1,35 @@
+---
+# Theming testbench (opt-in, no root). Generates a demo folder so theming
+# changes can be eyeballed across editors (vim/nvim/bat/VS Code, from the code/
+# samples) and file managers (ls/vifm/yazi/ranger, from the files/ fixtures)
+# from ONE reproducible place. See the role README.
+
+# Where the testbench is generated. Wiped-and-rebuilt is safe — it holds nothing
+# precious. Override per host in host_vars if you want it elsewhere.
+testbench_dir: "{{ target_home }}/theme-testbench"
+
+# The extension fixtures under files/ — ls/vifm/yazi/ranger colour these by
+# NAME, so empty files are fine (content is irrelevant to file-type colouring).
+# One per dircolors/filetype_colors category (see themes/wildcharm render.py).
+testbench_ext_files:
+  - archive.tar.gz      # archives
+  - archive.zip
+  - bundle.7z
+  - photo.png           # images
+  - photo.jpg
+  - icon.svg
+  - clip.mp4            # video
+  - movie.mkv
+  - song.mp3            # audio
+  - track.flac
+  - manual.pdf          # docs
+  - slides.epub
+  - notes.md            # markdown
+  - script.py           # code (default-coloured; here for completeness)
+  - app.ts
+  - style.css
+  - data.json
+  - config.yaml
+  - Makefile            # no extension, recognised by name
+  - README              # no extension
+  - .hidden             # dotfile

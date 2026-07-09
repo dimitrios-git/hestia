@@ -1,0 +1,122 @@
+---
+# Theming testbench (opt-in, no root, idempotent). Two halves:
+#   code/   — short per-language samples, dense with the constructs that reveal
+#             syntax-theme differences (open in vim/nvim/bat/VS Code side by side)
+#   files/  — filesystem fixtures covering every dircolors/ls file-type category
+#             (open with ls --color / vifm / yazi / ranger)
+# Nothing here is precious — the whole dir can be deleted and re-generated.
+
+- name: Create the testbench directory tree
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ testbench_dir }}"
+    - "{{ testbench_dir }}/code"
+    - "{{ testbench_dir }}/files"
+
+- name: Deploy the guide
+  ansible.builtin.copy:
+    src: INDEX.md
+    dest: "{{ testbench_dir }}/README.md"
+    mode: "0644"
+
+- name: Copy the per-language code samples
+  ansible.builtin.copy:
+    src: code/
+    dest: "{{ testbench_dir }}/code/"
+    mode: "0644"
+
+# ---------------------------------------------------------------- files/ fixtures
+- name: Extension / by-name fixtures (ls & vifm colour these by name)
+  ansible.builtin.copy:
+    content: "testbench fixture — {{ item }}\n"
+    dest: "{{ testbench_dir }}/files/{{ item }}"
+    mode: "0644"
+  loop: "{{ testbench_ext_files }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Empty file
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ testbench_dir }}/files/empty.txt"
+    mode: "0644"
+
+- name: Executable file (ex)
+  ansible.builtin.copy:
+    content: "#!/usr/bin/env bash\necho testbench executable\n"
+    dest: "{{ testbench_dir }}/files/executable.sh"
+    mode: "0755"
+
+- name: Setuid file (su)
+  ansible.builtin.copy:
+    content: "setuid fixture\n"
+    dest: "{{ testbench_dir }}/files/setuid.bin"
+    mode: "04755"
+
+- name: Setgid file (sg)
+  ansible.builtin.copy:
+    content: "setgid fixture\n"
+    dest: "{{ testbench_dir }}/files/setgid.bin"
+    mode: "02755"
+
+- name: Special directories (di / sticky+other-writable tw / sticky st / other-writable ow / setgid)
+  ansible.builtin.file:
+    path: "{{ testbench_dir }}/files/{{ item.name }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop:
+    - { name: "normal-dir", mode: "0755" }       # di
+    - { name: "sticky-tmp", mode: "01777" }      # tw (sticky + other-writable, like /tmp)
+    - { name: "sticky-only", mode: "01755" }     # st (sticky, not other-writable)
+    - { name: "other-writable", mode: "0777" }   # ow
+    - { name: "setgid-dir", mode: "02775" }      # setgid directory
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Valid symlink (ln) -> a real file
+  ansible.builtin.file:
+    path: "{{ testbench_dir }}/files/link-to-notes.md"
+    src: notes.md
+    state: link
+    force: true
+
+- name: Broken symlink (orphan / or)
+  ansible.builtin.file:
+    path: "{{ testbench_dir }}/files/broken.link"
+    src: this-target-does-not-exist
+    state: link
+    force: true
+    follow: false
+
+- name: Hardlink (hl) -> a real file
+  ansible.builtin.file:
+    path: "{{ testbench_dir }}/files/hardlink.txt"
+    src: "{{ testbench_dir }}/files/notes.md"
+    state: hard
+    force: true
+
+- name: Named pipe / FIFO (pi)
+  ansible.builtin.command: "mkfifo {{ testbench_dir }}/files/pipe.fifo"
+  args:
+    creates: "{{ testbench_dir }}/files/pipe.fifo"
+
+- name: Unix-domain socket (so)
+  ansible.builtin.command: >-
+    python3 -c "import socket,sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])"
+    {{ testbench_dir }}/files/demo.sock
+  args:
+    creates: "{{ testbench_dir }}/files/demo.sock"
+  # a bound AF_UNIX socket persists as a filesystem socket node; best-effort
+  ignore_errors: true
+
+# NOTE: block/char DEVICE nodes (bd/cd) need root (mknod) — deliberately not
+# created here (this role is no-root). Inspect real ones under /dev if needed.
+
+- name: Where to find it
+  ansible.builtin.debug:
+    msg: >-
+      Theming testbench generated at {{ testbench_dir }} —
+      `code/` (open in editors) + `files/` (ls --color / vifm). See README.md there.

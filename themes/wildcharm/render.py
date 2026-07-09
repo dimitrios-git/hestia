@@ -24,6 +24,9 @@ symlinks the one `theme_variant` selects to a variant-neutral dest, M7):
   single-file thunderbird userChrome/userContent.css — CSS light-dark()
               carries both variants in one file (TB follows the portal
               color-scheme), so no pair + variant symlink
+  editor      user/vim/colors/hestia.vim — the Vim/Neovim colorscheme, one
+              symlinked file carrying both &background branches (not a pair);
+              dark reproduces wildcharm, light lands on the AA-tuned values
 
 Same tokenColors everywhere; only the per-target chrome differs. The WCAG AA
 contrast gate runs before anything is written — a palette edit that breaks a
@@ -1381,6 +1384,279 @@ class Wildcharm(ColorScheme):
 '''
 
 
+# --------------------------------------------------- vim / neovim colorscheme
+
+# <256-colour degradation: attribute-only, palette-independent (emitted verbatim
+# after the truecolor + 256-colour blocks so a low-colour terminal still gets
+# sane reverse/bold/underline structure).
+VIM_TERM_TAIL = """
+if s:t_Co >= 0
+  hi Normal term=NONE
+  hi ColorColumn term=reverse
+  hi Conceal term=NONE
+  hi Cursor term=reverse
+  hi CursorColumn term=NONE
+  hi CursorLine term=underline
+  hi CursorLineNr term=bold
+  hi DiffAdd term=reverse
+  hi DiffChange term=NONE
+  hi DiffDelete term=reverse
+  hi DiffText term=reverse
+  hi Directory term=NONE
+  hi EndOfBuffer term=NONE
+  hi ErrorMsg term=bold,reverse
+  hi FoldColumn term=NONE
+  hi Folded term=NONE
+  hi IncSearch term=bold,reverse,underline
+  hi LineNr term=NONE
+  hi MatchParen term=bold,underline
+  hi ModeMsg term=bold
+  hi MoreMsg term=NONE
+  hi NonText term=NONE
+  hi Pmenu term=reverse
+  hi PmenuSbar term=reverse
+  hi PmenuSel term=bold
+  hi PmenuThumb term=NONE
+  hi Question term=standout
+  hi Search term=reverse
+  hi SignColumn term=reverse
+  hi SpecialKey term=bold
+  hi SpellBad term=underline
+  hi SpellCap term=underline
+  hi SpellLocal term=underline
+  hi SpellRare term=underline
+  hi StatusLine term=bold,reverse
+  hi StatusLineNC term=bold,underline
+  hi TabLine term=bold,underline
+  hi TabLineFill term=NONE
+  hi Terminal term=NONE
+  hi TabLineSel term=bold,reverse
+  hi Title term=NONE
+  hi VertSplit term=NONE
+  hi Visual term=reverse
+  hi VisualNOS term=NONE
+  hi WarningMsg term=standout
+  hi WildMenu term=bold
+  hi Comment term=bold
+  hi Constant term=NONE
+  hi Error term=bold,reverse
+  hi Identifier term=NONE
+  hi Ignore term=NONE
+  hi PreProc term=NONE
+  hi Special term=NONE
+  hi Statement term=NONE
+  hi Todo term=bold,reverse
+  hi Type term=NONE
+  hi Underlined term=underline
+  unlet s:t_Co
+  finish
+endif
+""".rstrip("\n")
+
+# structural links (variant/t_Co-independent)
+VIM_LINKS = [
+    ("Terminal", "Normal"), ("StatuslineTerm", "Statusline"),
+    ("StatuslineTermNC", "StatuslineNC"), ("LineNrAbove", "LineNr"),
+    ("LineNrBelow", "LineNr"), ("MessageWindow", "Pmenu"),
+    ("PopupNotification", "Todo"), ("PopupSelected", "PmenuSel"),
+    ("CurSearch", "IncSearch"),
+]
+
+# Neovim's :terminal reads g:terminal_color_0..15; Vim reads g:terminal_ansi_colors.
+VIM_ANSI = {
+    "dark": "['#000000', '#d7005f', '#00af5f', '#d78700', '#0087d7', '#d787d7', '#00afaf', '#d0d0d0', '#767676', '#ff5f87', '#00d75f', '#ffaf00', '#00afff', '#ff87ff', '#00d7d7', '#ffffff']",
+    "light": "['#000000', '#af0000', '#008700', '#af5f00', '#005faf', '#870087', '#008787', '#8a8a8a', '#808080', '#d70000', '#5faf5f', '#d78700', '#0087d7', '#af00af', '#00afaf', '#ffffff']",
+}
+
+
+def _vim_rows(variant: str) -> list:
+    """(group, guifg, guibg, gui_attr[, guisp]) for one variant. Colours resolve
+    from palette roles: dark reproduces wildcharm (the palette derives from it)
+    save the documented comment/purple/diff-delete deviations; light lands on the
+    palette's AA-tuned values. The few vim-only UI accents with no cross-app role
+    (Visual/lCursor/MatchParen) and the four vimdiff fills stay literal — the
+    fills move to a palette `diff:` section when they gain Claude-style values."""
+    r, a, e = vroles(variant), vansi(variant), vext(variant)
+    s = PALETTE["syntax"] if variant == "dark" else LIGHT["syntax"]
+    dark = variant == "dark"
+    N = "NONE"
+    ln, ink, white = e["line_grey"], e["ink"], a["bright_white"]
+    # text ON a saturated/dark fill: black on the bright dark-variant fills,
+    # white on the AA-darkened light-variant fills.
+    fill_fg = ink if dark else white
+    if dark:
+        tab_bg, tabsel_bg = a["bright_black"], e["ui_grey"]
+        tool_bg = a["white"]
+        pmenu_bg, pmenu_fg, pmsel_bg = r["surface_alt"], a["white"], e["line_grey"]
+        line_hi, colcol = r["surface"], r["surface_alt"]
+        cur_bg, pthumb = white, a["white"]
+        eob, curnr = a["bright_black"], white
+        vis, lcur, mparen = "#5fd7ff", "#ff5fff", "#ff00af"
+        stl = (e["ui_grey"], r["bg"], "bold,reverse")     # grey bar via reverse
+        stlnc = (a["bright_black"], r["bg"], "reverse")
+        split = a["bright_black"]
+        moremsg, question, warnmsg = a["bright_green"], a["bright_magenta"], a["bright_yellow"]
+        d_add, d_chg = ("#afffaf", "#5f875f"), (a["white"], "#5f5f5f")
+        d_txt, d_del = ("#afffff", "#5f8787"), ("#ffafaf", "#875f5f")
+    else:
+        tab_bg, tabsel_bg = r["surface_alt"], e["ui_dark"]
+        tool_bg = e["ui_dark"]
+        pmenu_bg, pmenu_fg, pmsel_bg = r["surface"], ink, r["surface_alt"]
+        line_hi, colcol = r["surface"], r["surface"]
+        cur_bg, pthumb = ink, a["bright_black"]
+        eob, curnr = ln, ink
+        vis, lcur, mparen = "#0087d7", "#ff00ff", "#ff00af"
+        stl = (white, e["ui_dark"], "bold")               # dark bar + white text
+        stlnc = (ink, r["surface_alt"], N)                # inactive: light-grey bar
+        split = e["ui_dark"]
+        moremsg, question, warnmsg = a["green"], a["magenta"], a["yellow"]
+        d_add, d_chg = ("#005f00", "#afd7af"), ("#262626", "#dadada")
+        d_txt, d_del = ("#005f5f", "#afd7d7"), ("#875f5f", "#ffd7d7")
+    return [
+        ("Normal", r["text"], r["bg"], N),
+        ("Statusline", stl[0], stl[1], stl[2]),
+        ("StatuslineNC", stlnc[0], stlnc[1], stlnc[2]),
+        ("VertSplit", split, N, N),
+        ("TabLine", ink, tab_bg, N),
+        ("TabLineFill", N, r["bg"], N),
+        ("TabLineSel", fill_fg, tabsel_bg, "bold"),
+        ("ToolbarLine", N, N, N),
+        ("ToolbarButton", fill_fg, tool_bg, N),
+        ("QuickFixLine", fill_fg, s["identifier"], N),
+        ("CursorLineNr", curnr, N, "bold"),
+        ("LineNr", ln, N, N),
+        ("NonText", ln, N, N),
+        ("FoldColumn", ln, N, N),
+        ("SpecialKey", ln, N, N),
+        ("EndOfBuffer", eob, N, N),
+        ("Pmenu", pmenu_fg, pmenu_bg, N),
+        ("PmenuSel", pmenu_fg, pmsel_bg, N),
+        ("PmenuThumb", N, pthumb, N),
+        ("PmenuSbar", N, N, N),
+        ("PmenuKind", r["link"] if dark else s["diff_delete"], pmenu_bg, N),
+        ("PmenuKindSel", r["link"] if dark else s["diff_delete"], pmsel_bg, N),
+        ("PmenuExtra", a["bright_black"], pmenu_bg, N),
+        ("PmenuExtraSel", a["bright_black"], pmsel_bg, N),
+        ("PmenuMatch", a["magenta"] if dark else s["identifier"], pmenu_bg, N),
+        ("PmenuMatchSel", a["magenta"] if dark else s["identifier"], pmsel_bg, N),
+        ("SignColumn", N, N, N),
+        ("Error", s["error"], white, "reverse"),
+        ("ErrorMsg", s["error"], white, "reverse"),
+        ("ModeMsg", N, N, "bold"),
+        ("MoreMsg", moremsg, N, N),
+        ("Question", question, N, N),
+        ("WarningMsg", warnmsg, N, N),
+        ("Todo", s["todo"], r["bg"], "reverse"),
+        ("Search", fill_fg, s["string"], N),
+        ("IncSearch", fill_fg, s["type"], N),
+        ("WildMenu", fill_fg, s["type"], N),
+        ("debugPC", s["diff_change"], N, "reverse"),
+        ("debugBreakpoint", a["cyan"], N, "reverse"),
+        ("Cursor", fill_fg, cur_bg, N),
+        ("lCursor", ink, lcur, N),
+        ("Visual", vis, fill_fg, "reverse"),
+        ("VisualNOS", fill_fg, s["keyword"], N),
+        ("CursorLine", N, line_hi, N),
+        ("CursorColumn", N, line_hi, N),
+        ("Folded", a["bright_black"], pmenu_bg, N),
+        ("ColorColumn", N, colcol, N),
+        ("MatchParen", mparen, N, "bold"),
+        ("SpellBad", N, N, "undercurl", s["constant"]),
+        ("SpellCap", N, N, "undercurl", a["cyan"]),
+        ("SpellLocal", N, N, "undercurl", a["green"]),
+        ("SpellRare", N, N, "undercurl", a["bright_magenta"]),
+        ("Comment", s["comment"], N, N),
+        ("Constant", s["constant"], N, N),
+        ("String", s["string"], N, N),
+        ("Identifier", s["identifier"], N, N),
+        ("Statement", s["keyword"], N, N),
+        ("Type", s["type"], N, N),
+        ("PreProc", s["preproc"], N, N),
+        ("Special", s["special"], N, N),
+        ("Underlined", N, N, "underline"),
+        ("Title", N, N, "bold"),
+        ("Directory", s["keyword"], N, "bold"),
+        ("Conceal", ln, N, N),
+        ("Ignore", N, N, N),
+        ("DiffAdd", d_add[0], d_add[1], N),
+        ("DiffChange", d_chg[0], d_chg[1], N),
+        ("DiffText", d_txt[0], d_txt[1], N),
+        ("DiffDelete", d_del[0], d_del[1], N),
+        ("Added", s["diff_add"], N, N),
+        ("Changed", s["diff_change"], N, N),
+        ("Removed", s["diff_delete"], N, N),
+    ]
+
+
+def render_vim() -> str:
+    """The hestia Vim/Neovim colorscheme — one file, both `&background` branches,
+    truecolor + 256-colour, from palette.yml. Symlinked (not include'd), so it is
+    the sole render.py target that is a single file rather than a dark/light pair."""
+    def guiline(row):
+        g, fg, bg, attr = row[0], row[1], row[2], row[3]
+        parts = [f"hi {g}", f"guifg={fg}", f"guibg={bg}"]
+        if len(row) == 5:                       # spell groups carry guisp
+            parts.append(f"guisp={row[4]}")
+        parts += [f"gui={attr}", f"cterm={attr}"]
+        return "  " + " ".join(parts)
+
+    def ctermline(row):
+        g, fg, bg, attr = row[0], row[1], row[2], row[3]
+        cf = "NONE" if fg == "NONE" else str(xterm_index(fg))
+        cb = "NONE" if bg == "NONE" else str(xterm_index(bg))
+        return f"    hi {g} ctermfg={cf} ctermbg={cb} cterm={attr}"
+
+    def ansi_loop():
+        return ("    if has('nvim')\n"
+                "      for s:i in range(len(g:terminal_ansi_colors)) | "
+                "let g:terminal_color_{s:i} = g:terminal_ansi_colors[s:i] | endfor\n"
+                "    endif")
+
+    L = [
+        f'" {PROVENANCE}',
+        '" hestia.vim — hestia\'s editor colorscheme (Vim + Neovim). Inspired by the',
+        '" wildcharm scheme (Maxim Kim); hestia owns it now — the palette was derived',
+        '" from wildcharm, so the look is unchanged save hestia\'s documented deviations',
+        '" (comment/purple/diff-delete on the dark syntax roles; the AA-tuned light',
+        '" values). Vim and Neovim render identically. Edit palette.yml + re-render.',
+        "",
+        "hi clear",
+        "if has('nvim')",
+        "  \" match Vim's default group baseline so unset groups agree across editors",
+        "  silent! source $VIMRUNTIME/colors/vim.lua",
+        "endif",
+        "let g:colors_name = 'hestia'",
+        "",
+        "let s:t_Co = has('gui_running') ? -1 : (&t_Co ?? 0)",
+        "",
+    ]
+    L += [f"hi! link {x} {y}" for x, y in VIM_LINKS]
+    L.append("")
+    # truecolor (gui) — always evaluated; harmless when a cterm block also runs
+    for i, v in enumerate(("dark", "light")):
+        L.append("if &background ==# 'dark'" if i == 0 else "else")
+        L.append("  if (has('termguicolors') && &termguicolors) || has('gui_running')")
+        L.append(f"    let g:terminal_ansi_colors = {VIM_ANSI[v]}")
+        L.append(ansi_loop())
+        L.append("  endif")
+        L += [guiline(row) for row in _vim_rows(v)]
+    L.append("endif")
+    L.append("")
+    # 256-colour cterm indices (nearest xterm-256), then stop
+    L.append("if s:t_Co >= 256")
+    for i, v in enumerate(("dark", "light")):
+        L.append("  if &background ==# 'dark'" if i == 0 else "  else")
+        L += [ctermline(row) for row in _vim_rows(v)]
+    L.append("  endif")
+    L.append("  unlet s:t_Co")
+    L.append("  finish")
+    L.append("endif")
+    L.append(VIM_TERM_TAIL)
+    L.append("")
+    L.append('" vim: et ts=8 sw=2 sts=2')
+    return "\n".join(L) + "\n"
+
+
 OUTPUTS = {
     REPO / "user/bat/themes/wildcharm-dark.tmTheme": lambda: render_tmtheme("dark"),
     REPO / "user/bat/themes/wildcharm-light.tmTheme": lambda: render_tmtheme("light"),
@@ -1417,6 +1693,7 @@ OUTPUTS = {
     REPO / "user/yazi/theme-light.toml": lambda: render_yazi("light"),
     REPO / "user/ranger/colorschemes/wildcharm-dark.py": lambda: render_ranger("dark"),
     REPO / "user/ranger/colorschemes/wildcharm-light.py": lambda: render_ranger("light"),
+    REPO / "user/vim/colors/hestia.vim": lambda: render_vim(),
 }
 
 

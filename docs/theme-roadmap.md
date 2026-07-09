@@ -26,8 +26,9 @@ but either way a layer-3 file is never the place a colour decision lives.
    statement in this table, not a convention scattered across five configs.
 3. **Per-platform artifacts** — each platform maps the syntax roles into its own
    format:
-   - **vim/nvim** → highlight groups (today: built-in `wildcharm` via the
-     `hestia` wrapper — already conformant by definition, see the decision below).
+   - **vim/nvim** → highlight groups (`user/vim/colors/hestia.vim`, **GENERATED**
+     from the palette by `render.py` since 2026-07 — self-contained, was a
+     `wildcharm` wrapper; dark reproduces wildcharm, light on the AA values).
    - **TextMate-scope family** (bat `.tmTheme`, Shiki theme JSON, VS Code theme)
      → **one shared role→scope mapping**; a Shiki theme JSON *is* a VS Code
      theme JSON, so the web theme and the editor theme are the same artifact
@@ -263,7 +264,7 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 
 | Consumer | Artifact | Repo | Status |
 |---|---|---|---|
-| vim / nvim | `user/vim/colors/hestia.vim` (thin wrapper over built-in wildcharm) | hestia | ✅ conformant by definition (dark) |
+| vim / nvim | `user/vim/colors/hestia.vim` (**GENERATED** from palette.yml by render.py, self-contained since 2026-07; was a wildcharm wrapper) | hestia | ✅ palette-driven — dark reproduces wildcharm, light on the AA values; treesitter/LSP/diff-fills still to come |
 | bat (+ vifm preview) | `user/bat/themes/wildcharm-{dark,light}.tmTheme` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.4.0; light pair since 0.7.0 |
 | glow | `user/glow/wildcharm-{dark,light}.json` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.7.0 |
 | Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/wildcharm/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: 0.6.0 changed three light syntax values (the `#f5f5f5`-gate deviations; the light `editor.background` stays `#ffffff` via `code_surface`) — copy the regenerated pair over |

@@ -11,7 +11,7 @@
 font=Lilex Nerd Font Mono 11
 # flat, roomy buttons (geometry is global-only — set before any [section])
 button-border-size=0
-button-padding=8
+button-padding=12
 button-gap=10
 button-dismiss-gap=10
 button-margin-right=6

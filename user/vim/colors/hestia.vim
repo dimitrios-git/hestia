@@ -24,6 +24,72 @@ hi! link PopupNotification Todo
 hi! link PopupSelected PmenuSel
 hi! link CurSearch IncSearch
 
+" treesitter / LSP captures -> standard groups (nvim parity with Vim)
+hi! link @comment Comment
+hi! link @comment.documentation Comment
+hi! link @comment.todo Todo
+hi! link @comment.note Todo
+hi! link @comment.warning Todo
+hi! link @comment.error Error
+hi! link @constant Constant
+hi! link @constant.builtin Constant
+hi! link @constant.macro PreProc
+hi! link @number Constant
+hi! link @number.float Constant
+hi! link @boolean Constant
+hi! link @character Constant
+hi! link @character.special Special
+hi! link @string String
+hi! link @string.documentation String
+hi! link @string.escape Special
+hi! link @string.regexp Special
+hi! link @string.special Special
+hi! link @string.special.symbol Constant
+hi! link @string.special.url Underlined
+hi! link @string.special.path Underlined
+hi! link @keyword Statement
+hi! link @conditional Statement
+hi! link @repeat Statement
+hi! link @label Statement
+hi! link @exception Statement
+hi! link @include Statement
+hi! link @type.qualifier Statement
+hi! link @operator Normal
+hi! link @punctuation Normal
+hi! link @punctuation.delimiter Normal
+hi! link @punctuation.bracket Normal
+hi! link @punctuation.special Special
+hi! link @function Function
+hi! link @function.builtin Function
+hi! link @function.call Normal
+hi! link @function.method Function
+hi! link @function.method.call Normal
+hi! link @function.macro PreProc
+hi! link @constructor Function
+hi! link @type Type
+hi! link @type.builtin Type
+hi! link @type.definition Type
+hi! link @attribute PreProc
+hi! link @attribute.builtin PreProc
+hi! link @variable Normal
+hi! link @variable.builtin Normal
+hi! link @variable.parameter Normal
+hi! link @variable.member Normal
+hi! link @property Normal
+hi! link @field Normal
+hi! link @module Normal
+hi! link @module.builtin Normal
+hi! link @namespace Normal
+hi! link @tag Statement
+hi! link @tag.attribute Type
+hi! link @tag.delimiter Normal
+hi! link @markup.link.url Underlined
+hi! link @markup.raw String
+hi! link @lsp.type.namespace Normal
+hi! link @lsp.type.variable Normal
+hi! link @lsp.type.property Normal
+hi! link @lsp.type.parameter Normal
+
 if &background ==# 'dark'
   if (has('termguicolors') && &termguicolors) || has('gui_running')
     let g:terminal_ansi_colors = ['#000000', '#d7005f', '#00af5f', '#d78700', '#0087d7', '#d787d7', '#00afaf', '#d0d0d0', '#767676', '#ff5f87', '#00d75f', '#ffaf00', '#00afff', '#ff87ff', '#00d7d7', '#ffffff']
@@ -103,6 +169,15 @@ if &background ==# 'dark'
   hi Added guifg=#00af5f guibg=NONE gui=NONE cterm=NONE
   hi Changed guifg=#0087d7 guibg=NONE gui=NONE cterm=NONE
   hi Removed guifg=#ff5f87 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticError guifg=#ff5f87 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticWarn guifg=#ffaf00 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticInfo guifg=#00afff guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticHint guifg=#00d7d7 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticOk guifg=#00d75f guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticUnderlineError guifg=NONE guibg=NONE guisp=#ff5f87 gui=undercurl cterm=undercurl
+  hi DiagnosticUnderlineWarn guifg=NONE guibg=NONE guisp=#ffaf00 gui=undercurl cterm=undercurl
+  hi DiagnosticUnderlineInfo guifg=NONE guibg=NONE guisp=#00afff gui=undercurl cterm=undercurl
+  hi DiagnosticUnderlineHint guifg=NONE guibg=NONE guisp=#00d7d7 gui=undercurl cterm=undercurl
 else
   if (has('termguicolors') && &termguicolors) || has('gui_running')
     let g:terminal_ansi_colors = ['#000000', '#af0000', '#008700', '#af5f00', '#005faf', '#870087', '#008787', '#8a8a8a', '#808080', '#d70000', '#5faf5f', '#d78700', '#0087d7', '#af00af', '#00afaf', '#ffffff']
@@ -182,6 +257,15 @@ else
   hi Added guifg=#005f5f guibg=NONE gui=NONE cterm=NONE
   hi Changed guifg=#005fd7 guibg=NONE gui=NONE cterm=NONE
   hi Removed guifg=#d70000 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticError guifg=#d70000 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticWarn guifg=#af5f00 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticInfo guifg=#005faf guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticHint guifg=#008787 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticOk guifg=#008700 guibg=NONE gui=NONE cterm=NONE
+  hi DiagnosticUnderlineError guifg=NONE guibg=NONE guisp=#d70000 gui=undercurl cterm=undercurl
+  hi DiagnosticUnderlineWarn guifg=NONE guibg=NONE guisp=#af5f00 gui=undercurl cterm=undercurl
+  hi DiagnosticUnderlineInfo guifg=NONE guibg=NONE guisp=#005faf gui=undercurl cterm=undercurl
+  hi DiagnosticUnderlineHint guifg=NONE guibg=NONE guisp=#008787 gui=undercurl cterm=undercurl
 endif
 
 if s:t_Co >= 256
@@ -258,6 +342,15 @@ if s:t_Co >= 256
     hi Added ctermfg=35 ctermbg=NONE cterm=NONE
     hi Changed ctermfg=32 ctermbg=NONE cterm=NONE
     hi Removed ctermfg=204 ctermbg=NONE cterm=NONE
+    hi DiagnosticError ctermfg=204 ctermbg=NONE cterm=NONE
+    hi DiagnosticWarn ctermfg=214 ctermbg=NONE cterm=NONE
+    hi DiagnosticInfo ctermfg=39 ctermbg=NONE cterm=NONE
+    hi DiagnosticHint ctermfg=44 ctermbg=NONE cterm=NONE
+    hi DiagnosticOk ctermfg=41 ctermbg=NONE cterm=NONE
+    hi DiagnosticUnderlineError ctermfg=NONE ctermbg=NONE cterm=undercurl
+    hi DiagnosticUnderlineWarn ctermfg=NONE ctermbg=NONE cterm=undercurl
+    hi DiagnosticUnderlineInfo ctermfg=NONE ctermbg=NONE cterm=undercurl
+    hi DiagnosticUnderlineHint ctermfg=NONE ctermbg=NONE cterm=undercurl
   else
     hi Normal ctermfg=234 ctermbg=255 cterm=NONE
     hi Statusline ctermfg=231 ctermbg=59 cterm=bold
@@ -331,6 +424,15 @@ if s:t_Co >= 256
     hi Added ctermfg=23 ctermbg=NONE cterm=NONE
     hi Changed ctermfg=26 ctermbg=NONE cterm=NONE
     hi Removed ctermfg=160 ctermbg=NONE cterm=NONE
+    hi DiagnosticError ctermfg=160 ctermbg=NONE cterm=NONE
+    hi DiagnosticWarn ctermfg=130 ctermbg=NONE cterm=NONE
+    hi DiagnosticInfo ctermfg=25 ctermbg=NONE cterm=NONE
+    hi DiagnosticHint ctermfg=30 ctermbg=NONE cterm=NONE
+    hi DiagnosticOk ctermfg=28 ctermbg=NONE cterm=NONE
+    hi DiagnosticUnderlineError ctermfg=NONE ctermbg=NONE cterm=undercurl
+    hi DiagnosticUnderlineWarn ctermfg=NONE ctermbg=NONE cterm=undercurl
+    hi DiagnosticUnderlineInfo ctermfg=NONE ctermbg=NONE cterm=undercurl
+    hi DiagnosticUnderlineHint ctermfg=NONE ctermbg=NONE cterm=undercurl
   endif
   unlet s:t_Co
   finish

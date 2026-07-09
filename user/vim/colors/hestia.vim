@@ -57,7 +57,7 @@ if has('nvim')
   hi! link @exception Statement
   hi! link @include Statement
   hi! link @type.qualifier Statement
-  hi! link @operator Normal
+  hi! link @operator Statement
   hi! link @punctuation Normal
   hi! link @punctuation.delimiter Normal
   hi! link @punctuation.bracket Normal
@@ -153,7 +153,7 @@ if &background ==# 'dark'
   hi SpellCap guifg=NONE guibg=NONE guisp=#00afaf gui=undercurl cterm=undercurl
   hi SpellLocal guifg=NONE guibg=NONE guisp=#00af5f gui=undercurl cterm=undercurl
   hi SpellRare guifg=NONE guibg=NONE guisp=#ff87ff gui=undercurl cterm=undercurl
-  hi Comment guifg=#8c8c8c guibg=NONE gui=NONE cterm=NONE
+  hi Comment guifg=#8c8c8c guibg=NONE gui=italic cterm=italic
   hi Constant guifg=#ff5f87 guibg=NONE gui=NONE cterm=NONE
   hi String guifg=#00d75f guibg=NONE gui=NONE cterm=NONE
   hi Identifier guifg=#ff87ff guibg=NONE gui=NONE cterm=NONE
@@ -245,7 +245,7 @@ else
   hi SpellCap guifg=NONE guibg=NONE guisp=#008787 gui=undercurl cterm=undercurl
   hi SpellLocal guifg=NONE guibg=NONE guisp=#008700 gui=undercurl cterm=undercurl
   hi SpellRare guifg=NONE guibg=NONE guisp=#af00af gui=undercurl cterm=undercurl
-  hi Comment guifg=#6c6c6c guibg=NONE gui=NONE cterm=NONE
+  hi Comment guifg=#6c6c6c guibg=NONE gui=italic cterm=italic
   hi Constant guifg=#af0000 guibg=NONE gui=NONE cterm=NONE
   hi String guifg=#005f00 guibg=NONE gui=NONE cterm=NONE
   hi Identifier guifg=#870087 guibg=NONE gui=NONE cterm=NONE
@@ -334,7 +334,7 @@ if s:t_Co >= 256
     hi SpellCap ctermfg=NONE ctermbg=NONE cterm=undercurl
     hi SpellLocal ctermfg=NONE ctermbg=NONE cterm=undercurl
     hi SpellRare ctermfg=NONE ctermbg=NONE cterm=undercurl
-    hi Comment ctermfg=245 ctermbg=NONE cterm=NONE
+    hi Comment ctermfg=245 ctermbg=NONE cterm=italic
     hi Constant ctermfg=204 ctermbg=NONE cterm=NONE
     hi String ctermfg=41 ctermbg=NONE cterm=NONE
     hi Identifier ctermfg=213 ctermbg=NONE cterm=NONE
@@ -420,7 +420,7 @@ if s:t_Co >= 256
     hi SpellCap ctermfg=NONE ctermbg=NONE cterm=undercurl
     hi SpellLocal ctermfg=NONE ctermbg=NONE cterm=undercurl
     hi SpellRare ctermfg=NONE ctermbg=NONE cterm=undercurl
-    hi Comment ctermfg=242 ctermbg=NONE cterm=NONE
+    hi Comment ctermfg=242 ctermbg=NONE cterm=italic
     hi Constant ctermfg=124 ctermbg=NONE cterm=NONE
     hi String ctermfg=22 ctermbg=NONE cterm=NONE
     hi Identifier ctermfg=90 ctermbg=NONE cterm=NONE

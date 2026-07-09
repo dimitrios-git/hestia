@@ -45,13 +45,22 @@
       "name": "Constant",
       "scope": [
         "constant.numeric",
-        "constant.language",
         "constant.character",
-        "constant.other",
-        "support.constant"
+        "constant.other"
       ],
       "settings": {
         "foreground": "#ff5f87"
+      }
+    },
+    {
+      "name": "Builtin constant (italic) — True/None/null, library constants",
+      "scope": [
+        "constant.language",
+        "support.constant"
+      ],
+      "settings": {
+        "foreground": "#ff5f87",
+        "fontStyle": "italic"
       }
     },
     {
@@ -101,7 +110,6 @@
       "name": "Function",
       "scope": [
         "entity.name.function",
-        "support.function",
         "variable.function"
       ],
       "settings": {
@@ -109,16 +117,35 @@
       }
     },
     {
+      "name": "Builtin function (italic) — library/global functions",
+      "scope": [
+        "support.function"
+      ],
+      "settings": {
+        "foreground": "#ff87ff",
+        "fontStyle": "italic"
+      }
+    },
+    {
       "name": "Type / class",
       "scope": [
         "entity.name.type",
         "entity.name.class",
-        "entity.name.namespace",
+        "entity.name.namespace"
+      ],
+      "settings": {
+        "foreground": "#ffaf00"
+      }
+    },
+    {
+      "name": "Builtin type (italic) — library/primitive types",
+      "scope": [
         "support.type",
         "support.class"
       ],
       "settings": {
-        "foreground": "#ffaf00"
+        "foreground": "#ffaf00",
+        "fontStyle": "italic"
       }
     },
     {
@@ -135,11 +162,20 @@
       }
     },
     {
+      "name": "Parameter (italic)",
+      "scope": [
+        "variable.parameter"
+      ],
+      "settings": {
+        "foreground": "#e0e0e0",
+        "fontStyle": "italic"
+      }
+    },
+    {
       "name": "Plain (variables, punctuation)",
       "scope": [
         "variable",
         "variable.other",
-        "variable.parameter",
         "punctuation",
         "meta.brace",
         "punctuation.separator",

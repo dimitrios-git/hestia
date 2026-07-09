@@ -17,6 +17,7 @@ configs.setup({
     'markdown', 'markdown_inline', 'lua', 'vim', 'vimdoc',
     'bash', 'json', 'yaml', 'html', 'css',
     'javascript', 'typescript', 'tsx', 'python',
+    'c', 'cpp', 'java',
   },
   auto_install = false,
   highlight = { enable = true },

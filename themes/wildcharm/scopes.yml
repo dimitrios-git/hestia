@@ -35,10 +35,17 @@ rules:
     role: constant
     scopes:
       - constant.numeric
-      - constant.language
       - constant.character
       - constant.other
-      - support.constant
+
+  # phase-B detail (0.8.x): builtins + parameters get the SAME colour as their
+  # coarse role, distinguished by ITALIC (no new hue) — mirrors the nvim
+  # treesitter @*.builtin / @variable.parameter treatment (hestia.vim's
+  # hestiaBuiltin*/hestiaParam groups) so nvim, bat and Shiki agree by role.
+  - name: Builtin constant (italic) — True/None/null, library constants
+    role: constant
+    font_style: italic
+    scopes: [constant.language, support.constant]
 
   - name: Language variable (self/this)
     role: constant
@@ -59,7 +66,12 @@ rules:
 
   - name: Function
     role: identifier
-    scopes: [entity.name.function, support.function, variable.function]
+    scopes: [entity.name.function, variable.function]
+
+  - name: Builtin function (italic) — library/global functions
+    role: identifier
+    font_style: italic
+    scopes: [support.function]
 
   - name: Type / class
     role: type
@@ -67,8 +79,11 @@ rules:
       - entity.name.type
       - entity.name.class
       - entity.name.namespace
-      - support.type
-      - support.class
+
+  - name: Builtin type (italic) — library/primitive types
+    role: type
+    font_style: italic
+    scopes: [support.type, support.class]
 
   - name: Preprocessor / import
     role: preproc
@@ -79,12 +94,16 @@ rules:
       - keyword.control.directive
       - keyword.control.at-rule
 
+  - name: Parameter (italic)
+    role: text
+    font_style: italic
+    scopes: [variable.parameter]
+
   - name: Plain (variables, punctuation)
     role: text
     scopes:
       - variable
       - variable.other
-      - variable.parameter
       - punctuation
       - meta.brace
       - punctuation.separator

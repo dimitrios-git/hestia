@@ -1468,15 +1468,18 @@ VIM_LINKS = [
 # punctuation -> Delimiter, operators -> Operator (blue). We relink them to the
 # coarse groups Vim actually uses so nvim == vim; the things Vim leaves plain
 # (symbolic operators, punctuation, plain/member variables, module names, call
-# sites) link to Normal. Harmless in Vim (the @* groups just go unused). Richer
-# treesitter-specific colour (phase B, stack-wide) is deliberately deferred.
+# sites) link to Normal. Harmless in Vim (the @* groups just go unused).
+# Phase B (gradual, stack-wide) adds tasteful DETAIL on top of parity: the
+# *.builtin / variable.parameter captures link to the hestiaBuiltin*/hestiaParam
+# intermediate groups (coarse role colour + ITALIC), mirrored in scopes.yml so
+# bat/Shiki/VSCode agree by role. More distinctions land here over time.
 VIM_TS_LINKS = [
     # comments
     ("@comment", "Comment"), ("@comment.documentation", "Comment"),
     ("@comment.todo", "Todo"), ("@comment.note", "Todo"),
     ("@comment.warning", "Todo"), ("@comment.error", "Error"),
     # literals / constants — builtins to their natural group, NOT Special
-    ("@constant", "Constant"), ("@constant.builtin", "Constant"),
+    ("@constant", "Constant"), ("@constant.builtin", "hestiaBuiltinConst"),
     ("@constant.macro", "PreProc"), ("@number", "Constant"),
     ("@number.float", "Constant"), ("@boolean", "Constant"),
     ("@character", "Constant"), ("@character.special", "Special"),
@@ -1495,16 +1498,16 @@ VIM_TS_LINKS = [
     ("@punctuation.delimiter", "Normal"), ("@punctuation.bracket", "Normal"),
     ("@punctuation.special", "Special"),
     # functions — def name + builtins coloured; plain call sites plain (Vim)
-    ("@function", "Function"), ("@function.builtin", "Function"),
+    ("@function", "Function"), ("@function.builtin", "hestiaBuiltinFunc"),
     ("@function.call", "Normal"), ("@function.method", "Function"),
     ("@function.method.call", "Normal"), ("@function.macro", "PreProc"),
     ("@constructor", "Function"),
     # types — yellow, builtins included
-    ("@type", "Type"), ("@type.builtin", "Type"), ("@type.definition", "Type"),
+    ("@type", "Type"), ("@type.builtin", "hestiaBuiltinType"), ("@type.definition", "Type"),
     ("@attribute", "PreProc"), ("@attribute.builtin", "PreProc"),
     # variables / members / modules — Vim leaves these Normal
-    ("@variable", "Normal"), ("@variable.builtin", "Normal"),
-    ("@variable.parameter", "Normal"), ("@variable.member", "Normal"),
+    ("@variable", "Normal"), ("@variable.builtin", "hestiaParam"),
+    ("@variable.parameter", "hestiaParam"), ("@variable.member", "Normal"),
     ("@property", "Normal"), ("@field", "Normal"),
     ("@module", "Normal"), ("@module.builtin", "Normal"), ("@namespace", "Normal"),
     # markup / tags (html, markdown)
@@ -1650,6 +1653,14 @@ def _vim_rows(variant: str) -> list:
         ("DiagnosticUnderlineWarn", N, N, "undercurl", diag[1]),
         ("DiagnosticUnderlineInfo", N, N, "undercurl", diag[2]),
         ("DiagnosticUnderlineHint", N, N, "undercurl", diag[3]),
+        # phase-B syntax detail — intermediate groups the treesitter captures
+        # link to (plain names, so Vim defines-but-ignores them; nvim links its
+        # @* captures to them inside the has('nvim') guard). The COLOUR is the
+        # coarse role; the DISTINCTION is font-style (italic), so no new hues.
+        ("hestiaBuiltinFunc", s["identifier"], N, "italic"),
+        ("hestiaBuiltinConst", s["constant"], N, "italic"),
+        ("hestiaBuiltinType", s["type"], N, "italic"),
+        ("hestiaParam", r["text"], N, "italic"),
     ]
 
 

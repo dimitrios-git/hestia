@@ -121,6 +121,22 @@
   register: _bat_bin
   changed_when: false
 
+# A single BROKEN symlink in the themes dir makes `bat cache --build` abort the
+# WHOLE directory scan ("Failed to load one or more themes … No such file or
+# directory") and fall back to the default theme set — so `--theme=hestia`
+# reports "Unknown theme". This bites on migration: when a theme file is renamed
+# in the repo (e.g. the wildcharm -> hestia rename), the Symlink task adds the
+# new link but never removes the old one, which orphans into a dangling link.
+# Prune any dangling links here (find -xtype l = broken symlinks) so the build
+# below always sees a clean dir. Scoped to the bat themes dir on purpose — a
+# broken link elsewhere is harmless; only bat fails the whole scan on one.
+- name: Prune dangling theme symlinks left by renames (a broken link makes bat skip the whole dir)
+  ansible.builtin.command:
+    cmd: find {{ target_home }}/.config/bat/themes -maxdepth 1 -xtype l -print -delete
+  register: _bat_pruned
+  changed_when: _bat_pruned.stdout | length > 0
+  failed_when: false
+
 - name: Build bat's theme cache so the hestia theme is available
   ansible.builtin.command: "{{ _bat_bin.stdout }} cache --build"
   when: _bat_bin.stdout | length > 0

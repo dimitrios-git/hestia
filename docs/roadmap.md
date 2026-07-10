@@ -48,6 +48,15 @@ example) has gates 1–3 and 5 but a **hollow gate 4**. Turning hestia
 production-ready is, mostly, the work of closing gate 4 across the catalog: making
 each default a *researched* decision rather than an inherited one.
 
+**Two axes, not one ladder.** The gates split into a *research* axis (4 Researched,
+6 Showcased — was there a real trial, is the verdict written?) and an
+*implementation* axis (1 Chosen, 2 Configured, 3 Themed — is the shipped default
+deployed, configured, themed?). They're semi-independent: a category can have a
+showcase chapter (gate 6) while its winner is barely configured (gate 2 hollow).
+File managers is the cautionary example — the evaluation answered *which* tools but
+never hardened them, so an earlier `●●●●●●` score was wrong; the honest read is
+`●◐◐●●◐`. Don't let a written verdict flatter the implementation.
+
 Legend used in the catalog below:
 
 `●` met  ·  `◐` partial, or decided deliberately but without a formal trial  ·
@@ -82,6 +91,27 @@ and gate the merge on it:**
 That's the whole ritual: no templates, no tooling — just *stub-first, merge-gated*.
 It rides the workflow you already use (`showcase/README.md` already says chapters
 ship in/beside the verdict PR; this makes it non-optional).
+
+## Log, don't force — the app logs
+
+Closing every gate on every app *right now* is a push model — a forced march where
+each app is a cliff, which invites avoidance. The catalog runs on a **pull** model
+instead: an app that works well enough sits at "acceptable" and carries a **log** of
+what would make it *ultimate* (every gate closed, genuinely polished). You append a
+line the instant you notice a gap — under **no obligation to fix it then**. Later,
+when you have the appetite, you pick an app and burn down its log.
+
+- **Capture is cheap; action is deferred.** No cliff, no chore.
+- **The log lists only apps with open items.** An app at ultimate has no entry, so
+  the backlog *shrinks* as you polish and *grows* as you spot things — application
+  support grows organically, not by decree.
+- **It pairs with the gates.** The catalog table is the *dashboard* (where each app
+  is, at a glance); the log is the *backlog* — the itemised "what closes this hollow
+  gate" behind the marks.
+
+The logs live in [*Path to ultimate*](#path-to-ultimate--the-app-logs) at the foot
+of this doc. Burning one down is a *pull* — pick an app you have appetite for, not
+the next chore in a queue.
 
 ## The catalog
 
@@ -119,7 +149,7 @@ ship in/beside the verdict PR; this makes it non-optional).
 
 | Category | Default | Gates | Note |
 |---|---|:---:|---|
-| File manager (TUI + GUI) | vifm + nemo | `●●●●●●` | **Fully closed — evaluated + showcased** |
+| File manager (TUI + GUI) | vifm + nemo | `●◐◐●●◐` | Verdict researched & written, but the **chosen GUI default (nemo) isn't hardened** — provisional verdict, no config, `xdg-mime` unwired; see the [app log](#path-to-ultimate--the-app-logs) |
 | Image viewer | imv + ristretto | `●●●●●◐` | Evaluated; showcase chapter pending |
 | **Media / video player** | **mpv** | `●●◐○◐○` | **Snap pick — never researched** |
 | Music player | cmus + cava | `●●●○●◐` | Deep config; showcase pending |
@@ -168,9 +198,11 @@ ship in/beside the verdict PR; this makes it non-optional).
 
 ## Reading the catalog
 
-- **Fully closed (all six gates):** wallpapers, file managers. These are the model
-  for what "done" looks like — a researched default, themed, documented, and a
-  showcase chapter shipped.
+- **Fully closed (all six gates):** wallpapers. The model for what "done" looks
+  like — a researched default, themed, documented, and a showcase chapter shipped.
+  (File managers *looked* closed because it has a chapter, but its winner was never
+  hardened — see *Two axes, not one ladder* above and the app log below. A written
+  verdict is not a finished implementation.)
 - **Production-ready but not showcased (1–5):** the write-up is the only thing
   standing between these and a stoa article.
 - **Hollow gate 4 (the bulk):** works well, looks right, but the default is
@@ -183,3 +215,44 @@ Roughly a third of the catalog is closed or ready, a third is hollow-gate-4 snap
 decisions, and a third are gaps. That distribution is the roadmap: promote snap
 decisions to researched ones, fill gaps deliberately, and let each promotion pay out
 as a showcase chapter.
+
+## Path to ultimate — the app logs
+
+The per-app backlog behind the catalog's hollow gates (see *Log, don't force*).
+**Only apps with open items appear here** — an app at ultimate has no entry. Append
+a line the moment you notice a gap; act when you have appetite. Each item names the
+gate it would close.
+
+### nemo *(chosen GUI default — file managers)*
+
+The trial gave nemo "the nod" but never hardened it; it currently only inherits the
+GTK theme + Yaru icons.
+
+- **Conclude the provisional verdict** — wire `xdg-mime default nemo.desktop
+  inode/directory` so nemo actually *is* the default, as the showcase chapter
+  promised. *(closes gate 1)*
+- **"Open Terminal Here" no-ops** — nemo launches its terminal from the
+  `org.cinnamon.desktop.default-applications.terminal` gsettings key, unset on a
+  non-Cinnamon session; point it at kitty (`exec` + `exec-arg -e`) and deploy via the
+  bootstrap. *(closes part of gate 2)*
+- **Cinnamon-lookup log noise** — nemo probes for a Cinnamon session that will never
+  exist; diagnose benign vs suppressible, then document the finding. *(gate 2/5)*
+- **No tracked config** — add a `user/nemo/` config (actions, defaults) so nemo
+  reaches gate 2 (Configured) rather than only theme-inheriting. *(closes gate 2)*
+- **Theme review** — confirm the hestia-dark chrome + Yaru-hestia accent hold across
+  nemo's surfaces (sidebar, path bar, selection), not just the main list. *(gate 3)*
+
+### ranger *(alternative — kept for comparison, file managers)*
+
+Config is a 12-line stub. Image preview is wired (kitty), the rest is not.
+
+- **No `scope.sh`** — video/PDF/media-info/archive previews are missing (only image
+  preview works). *(gate 2)*
+- **No `rifle.conf`** — opener rules are unset, so `l`/Enter falls to defaults.
+  *(gate 2)*
+
+### yazi *(alternative — kept for comparison, file managers)*
+
+- **Theming shallow** — a theme file exists but was never tested in detail against
+  the wildcharm identity. *(gate 3)*
+- **No detailed config** — keymap/openers/preview left at defaults. *(gate 2)*

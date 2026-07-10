@@ -17,7 +17,7 @@
 # through several theme changes, so the role kept skipping). After install,
 # RELOAD the VS Code window (or restart) for it to re-read the theme.
 #
-# The theme JSONs are GENERATED (themes/wildcharm/render.py). The role runs
+# The theme JSONs are GENERATED (themes/hestia/render.py). The role runs
 # `render.py --check` first and FAILS on stale artifacts rather than silently
 # regenerating at deploy time — generation is a repo-time act (commit the
 # rendered files); deploys must not mutate the repo.
@@ -32,7 +32,7 @@
   block:
     - name: Refuse to deploy stale generated theme artifacts
       ansible.builtin.command:
-        cmd: python3 {{ repo_root }}/themes/wildcharm/render.py --check
+        cmd: python3 {{ repo_root }}/themes/hestia/render.py --check
       changed_when: false
 
     - name: Read the extension version from the repo

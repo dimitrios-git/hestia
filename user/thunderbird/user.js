@@ -2,7 +2,7 @@
 // dotfiles role; user.js is re-applied at every startup, pinning these).
 //
 // Load the profile's chrome/userChrome.css + userContent.css (the GENERATED
-// hestia accent overrides — see themes/wildcharm/render.py):
+// hestia accent overrides — see themes/hestia/render.py):
 user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 // Make Gecko read the CSS AccentColor system colour from the GTK3 theme
 // (hestia's #d7005f) instead of libadwaita's palette + the GNOME accent-color

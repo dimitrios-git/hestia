@@ -1,6 +1,6 @@
 # zathura — wildcharm-themed document viewer (PDF/EPUB/DjVu/CBZ). Behaviour and
 # future non-colour settings live here (direct-edit); ALL colours (+ the recolor
-# block) live in the GENERATED theme-{dark,light} pair (themes/wildcharm/render.py
+# block) live in the GENERATED theme-{dark,light} pair (themes/hestia/render.py
 # — edit palette.yml + re-render), symlinked by the bootstrap as `theme` per
 # `theme_variant`. zathura resolves the include relative to this config's dir.
 # Recolour (dark-mode page inversion) is on by default on the dark desktop, off on

@@ -1,5 +1,5 @@
 /* wofi theme — matches sway / waybar / mako. Colours come from wofi's COLORS
-   FILE (the GENERATED colors-{dark,light} pair, themes/wildcharm/render.py;
+   FILE (the GENERATED colors-{dark,light} pair, themes/hestia/render.py;
    the bootstrap symlinks the `theme_variant` one to ~/.config/wofi/colors,
    wired by `colors=colors` in the wofi config). wofi substitutes the
    --wofi-color<n> macros below from that file's lines BEFORE handing the CSS

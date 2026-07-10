@@ -15,7 +15,7 @@ Three layers. **Edits happen only in layers 1–2; layer 3 artifacts are outputs
 — when generation exists they are rendered, and until then they are hand-copied,
 but either way a layer-3 file is never the place a colour decision lives.
 
-1. **The palette** — `themes/wildcharm/palette.yml`. Raw colours (the ANSI 16 +
+1. **The palette** — `themes/hestia/palette.yml`. Raw colours (the ANSI 16 +
    `extended`) and UI roles (`bg`, `surface`, `accent`, …). Will grow a `light:`
    variant with the *same role names* (milestone 3), sourced from upstream
    wildcharm's `background=light` branch with hestia's deviations applied
@@ -354,7 +354,7 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 | vim / nvim | `user/vim/colors/hestia.vim` (**GENERATED** from palette.yml by render.py, self-contained since 2026-07; was a wildcharm wrapper) | hestia | ✅ palette-driven; Claude-style diff fills (0.8.0); treesitter `@*`/LSP/diagnostics linked for nvim↔vim parity (phase A). Remaining: plugin groups; phase-B richer treesitter detail |
 | bat (+ vifm preview) | `user/bat/themes/wildcharm-{dark,light}.tmTheme` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.4.0; light pair since 0.7.0 |
 | glow | `user/glow/wildcharm-{dark,light}.json` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.7.0 |
-| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/wildcharm/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: 0.6.0 changed three light syntax values (the `#f5f5f5`-gate deviations; the light `editor.background` stays `#ffffff` via `code_surface`) — copy the regenerated pair over |
+| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/hestia/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: 0.6.0 changed three light syntax values (the `#f5f5f5`-gate deviations; the light `editor.background` stays `#ffffff` via `code_surface`) — copy the regenerated pair over |
 | VS Code | `user/vscode/hestia/` extension (GENERATED themes) | hestia | ✅ dark + light full chrome (M7 PR2); verified live on 1.127 (dark, 2026-07-03) — light chrome pending the M7 live pass |
 | VS Code | same JSON + UI-chrome colours | hestia (publish later) | ⬜ M5 |
 
@@ -411,7 +411,7 @@ One milestone ≈ one session ≈ one PR. Update the status here in the same PR.
   change, gated on the `code` binary rather than a manifest entry (VS Code
   itself stays outside the apt manifest — it's Microsoft-repo software).*
 - [x] **M6 — generation (TextMate family).** The scope map became data
-  (`themes/wildcharm/scopes.yml`, layer 2½) and `themes/wildcharm/render.py`
+  (`themes/hestia/scopes.yml`, layer 2½) and `themes/hestia/render.py`
   renders every TM-family artifact from it + `palette.yml`: bat's tmTheme, the
   web Shiki pair (`dist/shiki/`, vendored by stoa), and the VS Code themes —
   same tokenColors everywhere, per-target chrome (bat/VS Code canvas =
@@ -478,10 +478,12 @@ the platform mapping, never in an artifact.
 
 ## Verification
 
-- **Golden sample** — `themes/wildcharm/golden/` (see its README for per-platform
-  render commands): a fixed snippet set — TypeScript, shell, diff, markdown —
-  rendered on every platform for eyeball comparison. Coherence checks always run
-  against the same content; don't edit the samples casually.
+- **Theming testbench** — the `testbench` role (`enable_testbench`, default off)
+  generates `~/theme-testbench/code/`: short per-language samples dense with the
+  constructs that reveal syntax-theme differences, rendered across editors + file
+  managers for eyeball comparison. Coherence checks run against the same content
+  each time. (This superseded the former static `golden/` snippet set, removed
+  2026-07 — the role reproduces it on demand instead of tracking fixtures.)
 - **Contrast**: every plain-text `syntax:` foreground must clear **WCAG AA
   (4.5:1)** against `roles.bg` *and* `roles.surface_alt` (code-block surface) in
   its variant; reverse/fill roles (`error`, `todo`) are checked as pairings

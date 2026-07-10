@@ -42,6 +42,13 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-10 — accent→violet phase 2: GTK + KDE/Qt accent.** No palette bump (role
+  defaults tracking `roles.accent`): `gtk_theme_accent` `#d7005f`→`#7c3aed` (adw-gtk3
+  recolour; the `(version, accent)` marker triggers a rebuild) and the `qt_theme`
+  dark+light schemes' accent/accent_dark/link → violet. KDE's `negative` (error red,
+  `#ff5f87`/`#d70000`) is a separate role and stays red — danger unaffected, matching
+  the palette split. So GTK3 apps (nemo, GIMP, Firefox chooser) + Qt/KDE apps
+  (dolphin, krusader, kdenlive) pick up the violet selection/focus on the next role run.
 - **2026-07-10 (0.10.0) — THE ACCENT: red → violet `#7c3aed` (phase 1 of the purple migration).**
   The identity move: the UI accent flips from wildcharm red `#d7005f` to violet — tci's
   default UI accent, "easier on the eye" for every button/focus/highlight than a

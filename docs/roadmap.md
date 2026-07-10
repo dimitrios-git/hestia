@@ -150,7 +150,7 @@ the next chore in a queue.
 
 | Category | Default | Gates | Note |
 |---|---|:---:|---|
-| File manager (TUI + GUI) | vifm + nemo | `●◐◐●●◐` | Verdict researched & written; nemo now wired as the default (`xdg-mime` + the kitty terminal fix) but **not yet fully hardened** — no tracked config, theme review pending, showcase verdict still provisional; see the [app log](#path-to-ultimate--the-app-logs) |
+| File manager (TUI + GUI) | vifm + nemo | `●◐●●●◐` | vifm (TUI primary) + nemo (GUI default) both hardened & themed (nemo confirmed dark with the `#d7005f` accent). **nautilus is now a 2nd production-ready keeper and a live default-contender** — pending decision, accent-blocked to blue until Debian 14 (see the [app log](#path-to-ultimate--the-app-logs)). Showcase verdict still open (the nemo-vs-nautilus default). thunar/dolphin/rest untested |
 | Image viewer | imv + ristretto | `●●●●●◐` | Evaluated; showcase chapter pending |
 | **Media / video player** | **mpv** | `●●◐○◐○` | **Snap pick — never researched** |
 | Music player | cmus + cava | `●●●○●◐` | Deep config; showcase pending |
@@ -226,20 +226,33 @@ gate it would close.
 
 ### nemo *(chosen GUI default — file managers)*
 
-Session-level wiring is now done via `user/sway/nemo-setup.sh` — default terminal
-(kitty), default folder handler (`xdg-mime inode/directory`), and the
-`90_new-launcher` launcher action disabled (it Depends on `cinnamon-desktop-editor`
-and was logging a missing-dependency warning at every startup). nemo still only
-inherits the GTK theme + Yaru icons and has no config file of its own.
+Hardened + themed (2026-07): session wiring in `user/sway/nemo-setup.sh` (default
+terminal → kitty, default folder handler, the cinnamon-desktop-editor launcher
+action disabled), and confirmed **dark with the exact `#d7005f` accent** live (GTK3
+via the recoloured adw-gtk3, once the GTK_THEME/portal color-scheme saga closed). The
+benign `gtk theme is not known to have nemo support` startup warning is cosmetic
+(nemo's hardcoded theme list) — won't-fix. One item remains:
 
 - **No tracked config** — add a `user/nemo/` config (default view, actions, dconf
   keys) so nemo reaches gate 2 (Configured) rather than only theme-inheriting.
   *(closes gate 2)*
-- **Theme review** — confirm the hestia-dark chrome + Yaru-hestia accent hold across
-  nemo's surfaces (sidebar, path bar, selection), not just the main list. Also
-  addresses the benign `gtk theme is not known to have nemo support (hestia-dark)`
-  startup warning — nemo has a hardcoded list of themes with nemo-specific CSS and
-  falls back to generic for ours. *(gate 3)*
+
+### nautilus *(GTK4/libadwaita — file-managers alternative, now a default-contender)*
+
+Became production-ready as a side effect of the GTK4/libadwaita dark-mode fixes
+(2026-07): clean, minimal, dark. Under consideration as the default GUI manager over
+nemo — better-looking + more minimal, but nemo has the easier functionality. No rush:
+the decision partly resolves itself at Debian 14.
+
+- **The accent constraint (the deciding wrinkle)** — nautilus is libadwaita 1.7, so
+  it's stuck on the **default blue accent**; it can't take hestia's `#d7005f` until
+  libadwaita ≥1.8 / Debian 14 (the staged `gtk-4.0/gtk.css` is inert until then). So
+  today nautilus is dark-but-off-brand while nemo is fully on the hestia identity —
+  the concrete reason nemo stays default for now. Revisit at Debian 14, when the
+  accent catches up and aesthetics-vs-functionality is the only axis left.
+- **Pending decision → the file-managers showcase verdict** — nemo vs nautilus as the
+  default GUI manager is the open call that concludes the (still provisional)
+  file-managers chapter. Capture the trade-off there when it's made.
 
 ### ranger *(alternative — kept for comparison, file managers)*
 

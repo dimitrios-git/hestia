@@ -588,6 +588,13 @@ ring-caps-lock-color={b(a["bright_yellow"])}
 caps-lock-key-hl-color={b(a["bright_yellow"])}
 caps-lock-bs-hl-color={b(a["bright_red"])}
 text-caps-lock-color={b(r["text"])}
+
+# keyboard-layout indicator (the "language" field): match the lock background so
+# the box blends in — swaylock's default is a separate translucent-dark fill,
+# which read as a different background against color= above.
+layout-bg-color={b(r["bg"])}
+layout-border-color={b(r["bg"])}
+layout-text-color={b(r["text"])}
 """
 
 

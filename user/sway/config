@@ -209,6 +209,15 @@ bindsym $mod+r mode "resize"
 # startup (a relogin re-runs it); see also ~/.config/xdg-desktop-portal/.
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
 
+# PolicyKit authentication agent. A sway session runs none by default, so any GUI
+# action needing privilege elevation (nemo's "Open as Root" over gvfs admin://,
+# mounting a system disk, a pkexec prompt) is silently denied — polkit has no agent
+# to raise the password dialog. mate-polkit is the GTK3 agent, so it themes with
+# hestia/adw-gtk3 like the rest of the desktop. Guarded on the binary so a spin
+# without it just skips (no error); `exec` once at login, after the dbus env export
+# above so the agent registers on the right session bus.
+exec sh -c '[ -x /usr/libexec/polkit-mate-authentication-agent-1 ] && exec /usr/libexec/polkit-mate-authentication-agent-1'
+
 # GTK / portal appearance (color-scheme, gtk-theme, icon-theme gsettings) now
 # lives in the theme fragment included at the top — the values are per-variant
 # (prefer-dark + hestia-dark vs prefer-light + hestia). Why gsettings at all:

@@ -430,11 +430,10 @@ def render_waybar_css(variant: str) -> str:
         "accent": r["accent"],
         "accent_fg": r["accent_fg"],
         # per-widget signature accents (style.css): the power ⏻ is DANGER red
-        # (power-off is a destructive action), the launcher logo is the brand
-        # MAGENTA, and the focused-workspace marker is the CYAN that matches
-        # sway's window-focus border ($focus == ansi.bright_cyan).
+        # (power-off is a destructive action) and the focused-workspace marker is
+        # the CYAN that matches sway's window-focus border ($focus == ansi
+        # .bright_cyan). The launcher stays the violet accent (@accent).
         "danger": r["danger"],
-        "magenta": a["magenta"],
         "focus": a["bright_cyan"],
         # muted-state icons (pulseaudio.muted) — ANSI bright_black, the
         # quietest grey that still reads on the bar

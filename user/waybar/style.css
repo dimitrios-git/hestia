@@ -23,11 +23,11 @@ window#waybar {
     border-bottom: 2px solid @accent;
 }
 
-/* App launcher — the magenta Tux (nf-dev-linux) at the far left (start-menu
-   spot); click toggles wofi with the same pgrep toggle as $mod+d, so the
-   launcher is reachable by mouse alone. */
+/* App launcher — the violet-accent Tux (nf-dev-linux) at the far left
+   (start-menu spot); click toggles wofi with the same pgrep toggle as $mod+d,
+   so the launcher is reachable by mouse alone. */
 #custom-launcher {
-    color: @magenta;
+    color: @accent;
     padding: 0 12px 0 10px;
     /* reserved so the hover accent below doesn't shift the layout */
     border-bottom: 2px solid transparent;
@@ -35,7 +35,7 @@ window#waybar {
 
 #custom-launcher:hover {
     background: @surface_alt;
-    border-bottom: 2px solid @magenta;
+    border-bottom: 2px solid @accent;
 }
 
 #workspaces {

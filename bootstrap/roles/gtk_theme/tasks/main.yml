@@ -91,3 +91,20 @@
             path: "{{ _gt_tmp.path | default('') }}"
             state: absent
           when: _gt_tmp.path is defined
+
+# adw-gtk3 ships a gtk-4.0/ (gtk.css → @import libadwaita.css + libadwaita-tweaks.css,
+# a pinned copy of libadwaita's own stylesheet). On a mismatched GTK4 those @-rules fail
+# to parse ("Unknown @ rule", hundreds of them), so a GTK4/libadwaita app that loads
+# GTK_THEME=hestia-dark gets a BROKEN theme and falls back to LIGHT — ignoring the dark
+# color-scheme (seen live on file-roller's Compress dialog from nemo). hestia's GTK4
+# strategy is Adwaita + the portal color-scheme (docs/theming.md), NOT adw-gtk3 for GTK4,
+# so drop the theme's gtk-4.0 entirely: GTK4 apps then fall through to built-in Adwaita
+# and follow prefer-dark, while GTK3 apps keep their gtk-3.0. Unconditional (state:absent
+# is a no-op once gone) so already-installed themes are fixed without a full rebuild.
+- name: Strip the theme's gtk-4.0 (adw-gtk3's copy breaks libadwaita apps into light)
+  ansible.builtin.file:
+    path: "{{ target_home }}/.local/share/themes/{{ item }}/gtk-4.0"
+    state: absent
+  loop:
+    - hestia
+    - hestia-dark

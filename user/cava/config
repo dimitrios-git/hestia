@@ -22,16 +22,18 @@ channels = stereo
 # inherit the terminal (kitty) background
 background = default
 gradient = 1
-# Accent-anchored cool sweep through adjacent hestia hues: dark accent → accent
-# → magenta → blue → cyan, brightening upward. Bottom (low freq) still reads as
-# the system accent; stops are hue-adjacent so cava's interpolation stays clean.
+# Accent-anchored cool sweep through adjacent hestia hues: deep violet → accent
+# violet → light violet → blue → bright blue → cyan, brightening upward (0.10.0:
+# re-anchored on the violet accent, mirroring the red→violet flip). Bottom (low
+# freq) reads as the system accent; stops are hue-adjacent so cava interpolates
+# cleanly. Truecolor (cava supports it), so these are the exact palette hexes.
 gradient_count = 6
-gradient_color_1 = '#88003a'
-gradient_color_2 = '#d7005f'
-gradient_color_3 = '#d787d7'
-gradient_color_4 = '#0087d7'
+gradient_color_1 = '#5b21b6'
+gradient_color_2 = '#7c3aed'
+gradient_color_3 = '#9e77f7'
+gradient_color_4 = '#4a8fe4'
 gradient_color_5 = '#00afff'
-gradient_color_6 = '#00d7d7'
+gradient_color_6 = '#22cdda'
 
 [smoothing]
 # int 0-100 (was 0.77 ≈ no smoothing on this scale); higher = smoother

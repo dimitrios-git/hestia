@@ -225,6 +225,21 @@ exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DE
 # docs/credential-autounlock-design.md.
 exec $HOME/.config/sway/scripts/credential-unlock.sh
 
+### Desktop app integration — default file manager + its terminal
+# nemo is the default GUI file manager. Two things are wired at the session level,
+# both guarded on nemo's presence so a spin without the file-manager set
+# (enable_file_managers=false → no nemo, hence no cinnamon-desktop schema) is a
+# clean no-op instead of a "No such schema" error:
+#   1. nemo's "Open in Terminal" launches
+#      org.cinnamon.desktop.default-applications.terminal, whose schema default is
+#      gnome-terminal — not installed here, so the menu item silently no-ops. Point
+#      it at kitty (exec-arg -e for the run-a-command-in-a-terminal case).
+#   2. Claim inode/directory so a folder opened from any app lands in nemo.
+# The `;` is safe inside the sh -c quotes — a bare top-level `;` would be split by
+# sway (see the mako note below). Runs once at login (dconf + mimeapps.list persist);
+# a relogin re-asserts.
+exec sh -c 'command -v nemo >/dev/null || exit 0; gsettings set org.cinnamon.desktop.default-applications.terminal exec kitty; gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg -e; xdg-mime default nemo.desktop inode/directory'
+
 ### Bar, notifications, idle
 
 exec_always $HOME/.config/sway/scripts/start-waybar.sh

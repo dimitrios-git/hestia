@@ -149,7 +149,7 @@ the next chore in a queue.
 
 | Category | Default | Gates | Note |
 |---|---|:---:|---|
-| File manager (TUI + GUI) | vifm + nemo | `●◐◐●●◐` | Verdict researched & written, but the **chosen GUI default (nemo) isn't hardened** — provisional verdict, no config, `xdg-mime` unwired; see the [app log](#path-to-ultimate--the-app-logs) |
+| File manager (TUI + GUI) | vifm + nemo | `●◐◐●●◐` | Verdict researched & written; nemo now wired as the default (`xdg-mime` + the kitty terminal fix) but **not yet fully hardened** — no tracked config, theme review pending, showcase verdict still provisional; see the [app log](#path-to-ultimate--the-app-logs) |
 | Image viewer | imv + ristretto | `●●●●●◐` | Evaluated; showcase chapter pending |
 | **Media / video player** | **mpv** | `●●◐○◐○` | **Snap pick — never researched** |
 | Music player | cmus + cava | `●●●○●◐` | Deep config; showcase pending |
@@ -225,20 +225,18 @@ gate it would close.
 
 ### nemo *(chosen GUI default — file managers)*
 
-The trial gave nemo "the nod" but never hardened it; it currently only inherits the
-GTK theme + Yaru icons.
+Session-level wiring is now done — `xdg-mime default nemo.desktop inode/directory`
+plus the "Open in Terminal" → kitty fix, both a guarded `exec` in `user/sway/config`.
+nemo still only inherits the GTK theme + Yaru icons and has no config of its own.
 
-- **Conclude the provisional verdict** — wire `xdg-mime default nemo.desktop
-  inode/directory` so nemo actually *is* the default, as the showcase chapter
-  promised. *(closes gate 1)*
-- **"Open Terminal Here" no-ops** — nemo launches its terminal from the
-  `org.cinnamon.desktop.default-applications.terminal` gsettings key, unset on a
-  non-Cinnamon session; point it at kitty (`exec` + `exec-arg -e`) and deploy via the
-  bootstrap. *(closes part of gate 2)*
 - **Cinnamon-lookup log noise** — nemo probes for a Cinnamon session that will never
-  exist; diagnose benign vs suppressible, then document the finding. *(gate 2/5)*
-- **No tracked config** — add a `user/nemo/` config (actions, defaults) so nemo
-  reaches gate 2 (Configured) rather than only theme-inheriting. *(closes gate 2)*
+  exist. **Blocked on the actual log text**: claude can't read dimitrios's session
+  logs (isolated user), so capture the lines — run `nemo` from a kitty terminal, or
+  `journalctl --user -b | grep -i cinnamon` — and paste them so the source can be
+  pinned (benign chatter vs a suppressible setting). *(gate 2/5)*
+- **No tracked config** — add a `user/nemo/` config (default view, actions, dconf
+  keys) so nemo reaches gate 2 (Configured) rather than only theme-inheriting.
+  *(closes gate 2)*
 - **Theme review** — confirm the hestia-dark chrome + Yaru-hestia accent hold across
   nemo's surfaces (sidebar, path bar, selection), not just the main list. *(gate 3)*
 

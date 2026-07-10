@@ -216,6 +216,30 @@ augroup HestiaNerdTreeFolderIcon
   autocmd FileType nerdtree call s:HestiaNerdTreeIcons()
 augroup END
 
+" Per-extension NERDTree icon colours drawn from the hestia SYNTAX palette, so
+" the file tree coheres with the code highlighting (chose to hestia-fy vim's file
+" colours rather than chase VS Code's icon theme — VS Code file icons come from a
+" separate icon-theme extension). Set per theme_variant — the syntax hues differ
+" dark/light (Memphis, palette 0.10.0). vim-nerdtree-syntax-highlight takes bare
+" RRGGBB; extensions not listed keep the plugin's own colour, unknown ones fall to
+" the neutral grey (s:HestiaNerdTreeIcons), folders stay violet. Extend freely.
+if &background ==# 'light'
+  let s:ndc = {'grn':'247534','crl':'cc1800','mag':'c60777','pur':'733af4','tel':'08717a','blu':'1c65bd','ylw':'855f12'}
+else
+  let s:ndc = {'grn':'32a148','crl':'ff4f38','mag':'f840ac','pur':'9e77f7','tel':'0cb2c0','blu':'4a8fe4','ylw':'e0a020'}
+endif
+let g:NERDTreeExtensionHighlightColor = {
+      \ 'py': s:ndc.ylw, 'pyi': s:ndc.ylw,
+      \ 'c': s:ndc.blu, 'h': s:ndc.blu, 'cpp': s:ndc.blu, 'cc': s:ndc.blu, 'hpp': s:ndc.blu,
+      \ 'ts': s:ndc.blu, 'tsx': s:ndc.blu, 'jsx': s:ndc.blu, 'lua': s:ndc.blu,
+      \ 'js': s:ndc.ylw, 'mjs': s:ndc.ylw, 'cjs': s:ndc.ylw, 'json': s:ndc.ylw,
+      \ 'css': s:ndc.tel, 'scss': s:ndc.tel, 'sass': s:ndc.tel, 'go': s:ndc.tel, 'sql': s:ndc.tel,
+      \ 'html': s:ndc.crl, 'htm': s:ndc.crl, 'java': s:ndc.crl, 'rs': s:ndc.crl,
+      \ 'sh': s:ndc.grn, 'bash': s:ndc.grn, 'zsh': s:ndc.grn, 'vim': s:ndc.grn,
+      \ 'md': s:ndc.pur, 'markdown': s:ndc.pur,
+      \ 'yaml': s:ndc.mag, 'yml': s:ndc.mag, 'toml': s:ndc.mag,
+      \ }
+
 " --- CtrlP Configuration ---
 let g:ctrlp_map = '<c-p>'
 let g:ctrlp_cmd = 'CtrlP'

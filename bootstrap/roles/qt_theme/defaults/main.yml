@@ -1,5 +1,5 @@
 ---
-# The hestia Qt/KDE colour schemes — the wildcharm palette (themes/hestia/palette.yml)
+# The hestia Qt/KDE colour schemes — the hestia palette (themes/hestia/palette.yml)
 # expressed as KDE colour schemes, one per `theme_variant` (M7). It themes Qt /
 # KDE-Frameworks apps (currently Kdenlive) the way gtk_theme themes GTK3 apps: no root,
 # no Kvantum, no env var. KDE apps read the colours straight from ~/.config/kdeglobals

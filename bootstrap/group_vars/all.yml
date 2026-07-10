@@ -147,7 +147,7 @@ ssh_key_file: "id_ed25519"  # private key in ~/.ssh that the login hook loads
 # from this list, not hand-maintained (kills doc-vs-reality drift).
 dotfile_links:
   - { src: user/vim/.vimrc,                 dest: "{{ target_home }}/.vimrc" }
-  # hestia editor colorscheme (wildcharm + near-black bg). In ~/.vim/colors so both
+  # hestia editor colorscheme (palette-driven, near-black bg). In ~/.vim/colors so both
   # Vim and Neovim find it (nvim prepends ~/.vim to its runtimepath).
   - { src: user/vim/colors/hestia.vim,      dest: "{{ target_home }}/.vim/colors/hestia.vim" }
   # theme-variant selector sourced by .vimrc before `colo hestia` (M7): the src is
@@ -218,10 +218,10 @@ dotfile_links:
   # src picked by `theme_variant` (M7).
   - { src: "user/zathura/theme-{{ theme_variant }}", dest: "{{ target_home }}/.config/zathura/theme" }
   - { src: user/vifm/vifmrc,                dest: "{{ target_home }}/.config/vifm/vifmrc" }
-  # GENERATED colorscheme pair (render.py) — dest keeps the `wildcharm` name so
-  # vifmrc's `colorscheme wildcharm` needs no variant logic; src picked by
+  # GENERATED colorscheme pair (render.py) — dest keeps the `hestia` name so
+  # vifmrc's `colorscheme hestia` needs no variant logic; src picked by
   # `theme_variant` (M7).
-  - { src: "user/vifm/colors/wildcharm-{{ theme_variant }}.vifm", dest: "{{ target_home }}/.config/vifm/colors/wildcharm.vifm" }
+  - { src: "user/vifm/colors/hestia-{{ theme_variant }}.vifm", dest: "{{ target_home }}/.config/vifm/colors/hestia.vifm" }
   # vifm quick-view dispatcher (catch-all fileviewer) — syntax-highlighted code
   # preview via bat; executable bit comes from the source file.
   - { src: user/vifm/scripts/preview.sh,    dest: "{{ target_home }}/.config/vifm/scripts/preview.sh" }
@@ -229,22 +229,22 @@ dotfile_links:
   - { src: user/vifm/scripts/imv-browse.sh, dest: "{{ target_home }}/.config/vifm/scripts/imv-browse.sh" }
   # vifm :gc/:gs helper — lists branch-vs-main changed files (+ ancestor dirs)
   - { src: user/vifm/scripts/git-changed.sh, dest: "{{ target_home }}/.config/vifm/scripts/git-changed.sh" }
-  # bat — config + the wildcharm syntax theme. The theme is compiled into bat's
+  # bat — config + the hestia syntax theme. The theme is compiled into bat's
   # cache by the dotfiles role (`bat cache --build`) after this link is made.
   - { src: user/bat/config,                 dest: "{{ target_home }}/.config/bat/config" }
-  # GENERATED tmTheme pair (render.py) — dest keeps the `wildcharm` name (bat
+  # GENERATED tmTheme pair (render.py) — dest keeps the `hestia` name (bat
   # selects themes by file stem; config --theme untouched); src picked by
   # `theme_variant` (M7). Cache rebuilt by this role's `bat cache --build`.
-  - { src: "user/bat/themes/wildcharm-{{ theme_variant }}.tmTheme", dest: "{{ target_home }}/.config/bat/themes/wildcharm.tmTheme" }
+  - { src: "user/bat/themes/hestia-{{ theme_variant }}.tmTheme", dest: "{{ target_home }}/.config/bat/themes/hestia.tmTheme" }
   # GENERATED glamour style pair (render.py) — dest keeps the name glow.yml points
   # at; src picked by `theme_variant` (M7).
-  - { src: "user/glow/wildcharm-{{ theme_variant }}.json", dest: "{{ target_home }}/.config/glow/wildcharm.json" }
+  - { src: "user/glow/hestia-{{ theme_variant }}.json", dest: "{{ target_home }}/.config/glow/hestia.json" }
   # file-manager evaluation themes (enable_file_managers gates the APPS; the
   # config symlinks below are unconditional — harmless without the app, and a
   # manual install picks them straight up, same ruling as every other config)
   - { src: "user/yazi/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/yazi/theme.toml" }
   - { src: user/ranger/rc.conf,             dest: "{{ target_home }}/.config/ranger/rc.conf" }
-  - { src: "user/ranger/colorschemes/wildcharm-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/wildcharm.py" }
+  - { src: "user/ranger/colorschemes/hestia-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/hestia.py" }
   # wallpaper evaluation (enable_wallpapers gates the BINARIES via localbin;
   # these config/helper symlinks are unconditional — same ruling as yazi/ranger)
   - { src: user/wpaperd/config.toml,        dest: "{{ target_home }}/.config/wpaperd/config.toml" }

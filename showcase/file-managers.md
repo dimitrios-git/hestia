@@ -1,6 +1,6 @@
 # File managers: seven contenders against an incumbent that fought back
 
-![vifm — miller columns, tree preview, the wildcharm theme](img/fm-vifm.png)
+![vifm — miller columns, tree preview, the hestia theme](img/fm-vifm.png)
 
 hestia's file manager has always been **vifm** — not as a default that nobody
 questioned, but as an accumulation of deep integrations: a vim-grade config,
@@ -64,7 +64,7 @@ old, still actively maintained, and packaged in nearly every distro
 repository. Like vim, you can land on almost any box and find it — and for
 a tool you make muscle memory of, being everywhere is a feature.
 
-![yazi — the wildcharm flavour, previewing hestia's own showcase images](img/fm-yazi.png)
+![yazi — the hestia flavour, previewing hestia's own showcase images](img/fm-yazi.png)
 
 **The trial's best outcome: the incumbent stole from the challengers.**
 Living with ranger and yazi made one thing obvious — the *parent | current |
@@ -75,7 +75,7 @@ driven by the same `LS_COLORS` as `ls` — so with the quick-view pane on,
 vifm now reads as the ranger triple, with vifm's speed. The evaluation
 improved the winner instead of replacing it.
 
-![ranger — the baseline triple, wildcharm colorscheme](img/fm-ranger.png)
+![ranger — the baseline triple, hestia colorscheme](img/fm-ranger.png)
 
 **The GUI half had a different job**: pick the everyday graphical manager
 for the spin. **nemo** won the nod (pending the final `xdg-mime` wiring) —
@@ -116,7 +116,7 @@ state: dark, accent-locked chrome, hestia-red folders.
   git suite, preview script, and imv integration under `user/vifm/`
 - The trial set rides **`enable_file_managers`** (default off): the
   `file_managers` apt group + the yazi/ya `localbin` entries
-- **All eight are themed**: yazi and ranger have **generated** wildcharm
+- **All eight are themed**: yazi and ranger have **generated** hestia
   pairs (same render pipeline as everything else — their file-type colours
   come from the same table as vifm's and `ls`'s, so all four agree by
   construction); the GTK trio follows the hestia theme; the KDE pair reads

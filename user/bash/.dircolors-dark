@@ -4,7 +4,7 @@
 #
 # The file-TYPE colours come from the SAME per-variant table as vifm's generated
 # colorscheme (render.py filetype_colors), so `ls` and vifm agree by construction.
-# Indices 16-255 are the standard xterm cube (not the wildcharm-remapped 0-15).
+# Indices 16-255 are the standard xterm cube (not the hestia-remapped 0-15).
 #
 # Loaded by .bashrc: `test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)"`.
 
@@ -42,7 +42,7 @@ STICKY 01;38;5;39
 OTHER_WRITABLE 38;5;39
 STICKY_OTHER_WRITABLE 38;5;39
 
-# --- extension layer (restrained, wildcharm hues) ------------------------------
+# --- extension layer (restrained, hestia hues) ------------------------------
 # vifm shows regular files in the plain fg, so this is a deliberate enhancement on
 # top of the vifm-matched types — delete this block for exact `ls`==vifm parity.
 # archives / compressed

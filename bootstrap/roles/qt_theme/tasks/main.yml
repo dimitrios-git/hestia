@@ -1,5 +1,5 @@
 ---
-# Install the hestia Qt/KDE colour scheme (the wildcharm palette as a KDE colour scheme).
+# Install the hestia Qt/KDE colour scheme (the hestia palette as a KDE colour scheme).
 # No root, no Kvantum: KDE-Frameworks apps read colours from ~/.config/kdeglobals
 # (KColorScheme) and discover the named scheme in ~/.local/share/color-schemes
 # (KColorSchemeManager — e.g. Kdenlive's theme selector). One template renders to both

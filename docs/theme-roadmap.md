@@ -352,8 +352,8 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 | Consumer | Artifact | Repo | Status |
 |---|---|---|---|
 | vim / nvim | `user/vim/colors/hestia.vim` (**GENERATED** from palette.yml by render.py, self-contained since 2026-07; was a wildcharm wrapper) | hestia | ✅ palette-driven; Claude-style diff fills (0.8.0); treesitter `@*`/LSP/diagnostics linked for nvim↔vim parity (phase A). Remaining: plugin groups; phase-B richer treesitter detail |
-| bat (+ vifm preview) | `user/bat/themes/wildcharm-{dark,light}.tmTheme` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.4.0; light pair since 0.7.0 |
-| glow | `user/glow/wildcharm-{dark,light}.json` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.7.0 |
+| bat (+ vifm preview) | `user/bat/themes/hestia-{dark,light}.tmTheme` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.4.0; light pair since 0.7.0 |
+| glow | `user/glow/hestia-{dark,light}.json` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.7.0 |
 | Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/hestia/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: 0.6.0 changed three light syntax values (the `#f5f5f5`-gate deviations; the light `editor.background` stays `#ffffff` via `code_surface`) — copy the regenerated pair over |
 | VS Code | `user/vscode/hestia/` extension (GENERATED themes) | hestia | ✅ dark + light full chrome (M7 PR2); verified live on 1.127 (dark, 2026-07-03) — light chrome pending the M7 live pass |
 | VS Code | same JSON + UI-chrome colours | hestia (publish later) | ⬜ M5 |

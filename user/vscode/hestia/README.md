@@ -1,6 +1,6 @@
 # hestia — VS Code theme (dark + light)
 
-The wildcharm-derived hestia theme as a VS Code extension. The theme JSONs are
+The hestia theme as a VS Code extension. The theme JSONs are
 **generated** — `themes/hestia/render.py` renders them from `palette.yml` +
 `scopes.yml` (never edit them by hand). The token colours are byte-identical to
 what bat and the web code blocks (stoa/thecodingidiot) render; the dark UI

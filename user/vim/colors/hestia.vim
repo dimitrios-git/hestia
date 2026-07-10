@@ -103,7 +103,7 @@ if &background ==# 'dark'
     endif
   endif
   hi Normal guifg=#e0e0e0 guibg=#1a1a1a gui=NONE cterm=NONE
-  hi Statusline guifg=#9e9e9e guibg=#1a1a1a gui=bold,reverse cterm=bold,reverse
+  hi Statusline guifg=#ffffff guibg=#7c3aed gui=bold cterm=bold
   hi StatuslineNC guifg=#767676 guibg=#1a1a1a gui=reverse cterm=reverse
   hi VertSplit guifg=#767676 guibg=NONE gui=NONE cterm=NONE
   hi TabLine guifg=#000000 guibg=#767676 gui=NONE cterm=NONE
@@ -196,7 +196,7 @@ else
     endif
   endif
   hi Normal guifg=#1a1a1a guibg=#f5f5f5 gui=NONE cterm=NONE
-  hi Statusline guifg=#ffffff guibg=#5f5f5f gui=bold cterm=bold
+  hi Statusline guifg=#ffffff guibg=#7c3aed gui=bold cterm=bold
   hi StatuslineNC guifg=#000000 guibg=#dadada gui=NONE cterm=NONE
   hi VertSplit guifg=#5f5f5f guibg=NONE gui=NONE cterm=NONE
   hi TabLine guifg=#000000 guibg=#dadada gui=NONE cterm=NONE
@@ -286,7 +286,7 @@ endif
 if s:t_Co >= 256
   if &background ==# 'dark'
     hi Normal ctermfg=254 ctermbg=234 cterm=NONE
-    hi Statusline ctermfg=247 ctermbg=234 cterm=bold,reverse
+    hi Statusline ctermfg=231 ctermbg=99 cterm=bold
     hi StatuslineNC ctermfg=243 ctermbg=234 cterm=reverse
     hi VertSplit ctermfg=243 ctermbg=NONE cterm=NONE
     hi TabLine ctermfg=16 ctermbg=243 cterm=NONE
@@ -373,7 +373,7 @@ if s:t_Co >= 256
     hi hestiaSelf ctermfg=203 ctermbg=NONE cterm=italic
   else
     hi Normal ctermfg=234 ctermbg=255 cterm=NONE
-    hi Statusline ctermfg=231 ctermbg=59 cterm=bold
+    hi Statusline ctermfg=231 ctermbg=99 cterm=bold
     hi StatuslineNC ctermfg=16 ctermbg=253 cterm=NONE
     hi VertSplit ctermfg=59 ctermbg=NONE cterm=NONE
     hi TabLine ctermfg=16 ctermbg=253 cterm=NONE

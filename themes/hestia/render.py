@@ -1570,7 +1570,7 @@ def _vim_rows(variant: str) -> list:
         cur_bg, pthumb = white, a["white"]
         eob, curnr = a["bright_black"], white
         vis, lcur, mparen = "#5fd7ff", "#ff5fff", "#ff00af"
-        stl = (e["ui_grey"], r["bg"], "bold,reverse")     # grey bar via reverse
+        stl = (r["accent_fg"], r["accent"], "bold")       # white on the violet accent (matches waybar/swaynag)
         stlnc = (a["bright_black"], r["bg"], "reverse")
         split = a["bright_black"]
         moremsg, question, warnmsg = a["bright_green"], a["bright_magenta"], a["bright_yellow"]
@@ -1584,7 +1584,7 @@ def _vim_rows(variant: str) -> list:
         cur_bg, pthumb = ink, a["bright_black"]
         eob, curnr = ln, ink
         vis, lcur, mparen = "#0087d7", "#ff00ff", "#ff00af"
-        stl = (white, e["ui_dark"], "bold")               # dark bar + white text
+        stl = (r["accent_fg"], r["accent"], "bold")       # white on the violet accent (matches waybar/swaynag)
         stlnc = (ink, r["surface_alt"], N)                # inactive: light-grey bar
         split = e["ui_dark"]
         moremsg, question, warnmsg = a["green"], a["magenta"], a["yellow"]

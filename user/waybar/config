@@ -125,7 +125,7 @@
     },
 
     "custom/launcher": {
-        "format": "<span size='xx-large' rise='-3072'>󰌽</span>",
+        "format": "<span size='xx-large' rise='-3072'></span>",
         "tooltip-format": "Applications",
         "on-click": "pgrep -u $USER -x wofi >/dev/null && pkill -u $USER -x wofi || wofi --show drun"
     },

@@ -140,9 +140,9 @@ set -o vi
 # matches everything else (default buildkit blue is unreadable on near-black):
 #   run     -> blue   #0087d7  (progress / active step)
 #   warning -> yellow #d78700
-#   error   -> attention red #d7005f  (kept red; the accent is now violet)
+#   error   -> attention red #d70000  (the hestia red; the accent is now violet)
 #   cancel  -> grey   #767676  (muted)
-export BUILDKIT_COLORS="run=0,135,215:warning=215,135,0:error=215,0,95:cancel=118,118,118"
+export BUILDKIT_COLORS="run=0,135,215:warning=215,135,0:error=215,0,0:cancel=118,118,118"
 
 # Local user binaries (e.g. ~/.local/bin, where bluetuith lives) on PATH.
 # Guarded so it isn't re-prepended when already inherited (the greetd login

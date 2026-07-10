@@ -23,11 +23,11 @@ window#waybar {
     border-bottom: 2px solid @accent;
 }
 
-/* App launcher — the accent Debian swirl at the far left (start-menu spot);
-   click toggles wofi with the same pgrep toggle as $mod+d, so the launcher
-   is reachable by mouse alone. Was the decorative far-right custom/debian. */
+/* App launcher — the magenta Tux (nf-dev-linux) at the far left (start-menu
+   spot); click toggles wofi with the same pgrep toggle as $mod+d, so the
+   launcher is reachable by mouse alone. */
 #custom-launcher {
-    color: @accent;
+    color: @magenta;
     padding: 0 12px 0 10px;
     /* reserved so the hover accent below doesn't shift the layout */
     border-bottom: 2px solid transparent;
@@ -35,7 +35,7 @@ window#waybar {
 
 #custom-launcher:hover {
     background: @surface_alt;
-    border-bottom: 2px solid @accent;
+    border-bottom: 2px solid @magenta;
 }
 
 #workspaces {
@@ -55,7 +55,7 @@ window#waybar {
 
 #workspaces button.focused {
     color: @text;
-    border-top: 2px solid @accent;
+    border-top: 2px solid @focus;   /* cyan — matches sway's window-focus border */
 }
 
 #workspaces button.visible {
@@ -116,9 +116,9 @@ window#waybar {
 
 /* Power menu — accent ⏻ pinned at the far right (the slot the launcher swirl
    vacated); click opens the power.sh wofi menu (lock/logout/suspend/reboot/
-   shutdown, destructive ones behind the swaynag accent banner). */
+   shutdown, destructive ones behind the swaynag danger banner). */
 #custom-power {
-    color: @accent;
+    color: @danger;   /* red — power-off is a destructive action */
     padding: 0 16px 0 14px;
     border-left: 1px solid @border;
     /* reserved so the hover accent below doesn't shift the layout */
@@ -127,7 +127,7 @@ window#waybar {
 
 #custom-power:hover {
     background: @surface_alt;
-    border-bottom: 2px solid @accent;
+    border-bottom: 2px solid @danger;
 }
 
 #custom-audio.muted {

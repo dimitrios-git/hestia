@@ -31,7 +31,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.8.1"
+version: "0.9.0"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -111,35 +111,54 @@ extended:
   # light in both variants). Admitted 0.7.0 with the vifm/cmus generation.
   ink:        "#000000"
 
+# The tci "Memphis" brand palette (source of the syntax hues since 0.9.0) — the
+# five accent colours thecodingidiot has used since before hestia existed
+# (apps/thecodingidiot/app/globals.css --color-*: the per-tier accents). hestia's
+# syntax layer is now re-anchored on THESE hues — the identity move that made the
+# code-highlighting "ours" rather than wildcharm's (decision 2026-07-10, 0.9.0).
+# Variant-invariant SOURCE hues (they are lightness-corrected per ground in the
+# syntax tables below — as UI accents they fail AA as 13px text; see the study).
+# The two functional anchors (blue keyword, yellow type) have NO brand colour —
+# the Memphis set carries no blue or yellow, and syntax needs that warm/cool
+# split to scan — so they stay hestia-chosen, not brand.
+brand:
+  green:   "#2b8a3e"   # -> syntax.string
+  teal:    "#0cb2c0"   # -> syntax.preproc  (the "cyan"/f-tier accent)
+  magenta: "#f725a0"   # -> syntax.identifier (functions)  (c-tier accent)
+  coral:   "#ff4f38"   # -> syntax.constant  (the "red"/g-tier accent)
+  purple:  "#8b5cf6"   # -> syntax.special/string_special  (default-tier accent)
+
 # Syntax-highlighting roles (layer 2 — docs/theme-roadmap.md). What a colour
-# means IN CODE, resolved from the palette above; the canonical mapping is the
-# wildcharm.vim DARK variant (decision 2026-07-03), with hestia's documented
-# deviations (comment on dim; bg/default text come from roles, not upstream's
-# pure #000000/#d0d0d0). Every syntax consumer (vim, bat tmTheme, Shiki/VS Code,
-# glow) renders FROM this table — never map a scope to a hex an artifact invents.
-# Anything not listed renders as roles.text (vim leaves it Normal — this
-# includes plain variables and punctuation). A light: resolution of the same
-# role names lands with milestone 3 (upstream source table is in the roadmap).
+# means IN CODE. SINCE 0.9.0 the hues come from the tci Memphis brand (above),
+# NOT wildcharm — the deliberate "make it ours" re-anchor. Method: keep each
+# brand HUE, correct only its LIGHTNESS per ground until it clears WCAG AA on the
+# ground (targeting ~5.2 so raised surfaces mostly hold too); functional anchors
+# (keyword/type) and the neutral comment grey stay hestia-chosen. This DECOUPLES
+# the syntax layer from the terminal ANSI 16 (still wildcharm) — bat/vim-code now
+# read Memphis while ls/prompt read wildcharm ANSI; accepted (bat is its own
+# truecolor theme). The accent red #d7005f stays RESERVED for error/UI — never a
+# syntax hue, so coral (constant) can't be misread as it. Every syntax consumer
+# (vim, bat tmTheme, Shiki/VS Code, glow) renders FROM this table. Anything not
+# listed renders as roles.text (vim leaves it Normal). Full study + the ΔE/AA
+# numbers: docs/theme-roadmap.md (0.9.0 decision).
 syntax:
-  comment:        "#8c8c8c"   # roles.dim — upstream #767676 lightened for AA (documented deviation)
-  string:         "#00d75f"   # ansi.bright_green — vim String
-  string_special: "#af87ff"   # extended.purple — escapes/regex (vim SpecialChar -> Special)
-  constant:       "#ff5f87"   # ansi.bright_red — numbers, booleans, chars (vim Constant)
-  identifier:     "#ff87ff"   # ansi.bright_magenta — functions + members (vim Identifier/Function)
-  keyword:        "#00afff"   # ansi.bright_blue — statements, operators, storage (vim Statement)
-  type:           "#ffaf00"   # ansi.bright_yellow — types, classes (vim Type)
-  preproc:        "#00d7d7"   # ansi.bright_cyan — imports, macros, at-rules (vim PreProc)
-  special:        "#af87ff"   # extended.purple — delimiters, tags, specials (vim Special)
-  diff_add:       "#00af5f"   # ansi.green — vim Added
-  diff_change:    "#0087d7"   # ansi.blue — vim Changed
-  diff_delete:    "#ff5f87"   # ansi.bright_red — deviation: upstream Removed is #d7005f, but the
-                              # accent is a FILL in hestia; bright_red is the accent-coloured TEXT
-                              # (roles.link) and is what git diff + the bat theme already use
+  comment:        "#8c8c8c"   # roles.dim — neutral grey, NOT brand (comments recede); AA-lightened
+  string:         "#32a148"   # brand.green,   lightness-corrected for dark AA (5.24:1; brand #2b8a3e is 3.98)
+  string_special: "#9e77f7"   # brand.purple,  dark-corrected (5.33:1) — escapes/regex
+  constant:       "#ff4f38"   # brand.coral,   LITERAL (passes dark AA at 5.33:1) — numbers, booleans, chars
+  identifier:     "#f840ac"   # brand.magenta, dark-corrected (5.24:1) — functions + members
+  keyword:        "#4a8fe4"   # functional blue (no brand blue) — statements, operators, storage
+  type:           "#e0a020"   # functional yellow (no brand yellow) — types, classes
+  preproc:        "#0cb2c0"   # brand.teal,    LITERAL (passes dark AA at 6.75:1) — imports, macros, at-rules
+  special:        "#9e77f7"   # brand.purple,  dark-corrected — delimiters, tags, specials
+  diff_add:       "#32a148"   # brand green — vim Added (== string green)
+  diff_change:    "#4a8fe4"   # keyword blue — vim Changed
+  diff_delete:    "#ff4f38"   # brand coral — vim Removed (== constant; "delete == red")
   # error/todo are REVERSE/FILL treatments (the colour is a background or is
   # reversed), not plain foreground text — the AA-vs-surface rule above doesn't
   # apply to them; platform mappings pair error with white/accent_fg.
   error:          "#d7005f"   # roles.accent — vim Error (reverse on white; bat: white on accent_dark)
-  todo:           "#af87ff"   # extended.purple — vim Todo (rendered reverse)
+  todo:           "#9e77f7"   # brand.purple (dark-corrected) — vim Todo (rendered reverse)
 
 # vimdiff FILLS — the DiffAdd/DiffChange/DiffText/DiffDelete *backgrounds*.
 # Claude/GitHub-style: a low-saturation tinted ROW that KEEPS the code's own
@@ -154,7 +173,7 @@ diff:
   change_bg:  "#14303f"   # changed line — muted dark blue (Changed == blue, per syntax)
   text_bg:    "#1d4a63"   # the changed SPAN within a changed line — brighter blue
   delete_bg:  "#431624"   # deleted line / filler — muted dark maroon
-  delete_fg:  "#ff5f87"   # deleted text on the maroon (ansi.bright_red / roles.link)
+  delete_fg:  "#ff4f38"   # deleted text on the maroon (brand.coral, == syntax.diff_delete)
 
 # The LIGHT variant (roadmap M3, desktop ramp M7) — from upstream wildcharm's
 # background=light branch (the roadmap doc carries the full upstream reference
@@ -242,38 +261,32 @@ light:
     sunken:     "#ffffff"   # light counterpart of extended.sunken — the
                             # below-ground fill flips past the ground to pure
                             # white (swaylock inside-circle, swaynag buttons)
+  # LIGHT syntax — the Memphis brand hues (roles.brand) lightness-corrected DOWN
+  # for AA on the #f5f5f5 desktop ground (0.9.0, the "make it ours" re-anchor;
+  # mirror of dark, which corrects UP). Targeted ~5.2:1 on the ground; Comment,
+  # Constant and Function land just under AA on the RAISED surface (#e4e4e4) —
+  # accepted, the same posture as dark's dim-on-surface and the prior light
+  # values (code sits on the ground / #ffffff web surface, where all clear AA).
   syntax:
-    comment:        "#6c6c6c"   # deviation — upstream #8a8a8a fails AA (3.45:1 on
-                                # white); xterm 242: 4.82:1 on the #f5f5f5 ground
-    string:         "#005f00"   # deviation (0.6.0) — upstream #008700 fell to
-                                # 4.31:1 on the desktop ground; one green cube
-                                # step darker (xterm 22), 7.30:1
-    string_special: "#5f00d7"   # upstream Special, verbatim (7.81:1)
-    constant:       "#af0000"   # upstream Constant, verbatim (6.82:1)
-    identifier:     "#870087"   # upstream Identifier/Function, verbatim (8.09:1)
-    keyword:        "#005faf"   # upstream Statement, verbatim (5.92:1)
-    type:           "#875f00"   # deviation (0.6.0) — upstream #af5f00 fell to
-                                # 4.32:1 on the desktop ground; one red cube step
-                                # darker (xterm 94), 5.25:1
-    preproc:        "#005f5f"   # deviation — upstream #008787 fails AA; one cube
-                                # step darker (xterm 23), 6.87:1
-    special:        "#5f00d7"   # upstream Special, verbatim
-    diff_add:       "#005f5f"   # deviation (0.6.0) — the M3 #00875f fell to
-                                # 4.16:1 on the desktop ground; xterm 23 is the
-                                # only AA-passing hue-true step (6.87:1). NOTE:
-                                # collides with preproc — accepted (light already
-                                # shares special==string_special, and imports vs
-                                # added-diff-lines never co-occur ambiguously)
-    diff_change:    "#005fd7"   # deviation — upstream #0087d7 fails AA; xterm 26,
-                                # 5.32:1, distinct from keyword
-    diff_delete:    "#d70000"   # upstream Removed, verbatim (4.95:1)
+    comment:        "#6c6c6c"   # neutral grey, NOT brand — 4.82:1 on the ground
+    string:         "#247534"   # brand.green,   light-corrected (5.25:1)
+    string_special: "#733af4"   # brand.purple,  light-corrected (5.29:1) — escapes/regex
+    constant:       "#cc1800"   # brand.coral,   light-corrected (5.21:1) — numbers, booleans
+    identifier:     "#c60777"   # brand.magenta, light-corrected (5.21:1) — functions
+    keyword:        "#1c65bd"   # functional blue (no brand blue) — 5.28:1
+    type:           "#855f12"   # functional yellow (no brand yellow) — 5.29:1
+    preproc:        "#08717a"   # brand.teal,    light-corrected (5.27:1) — imports, at-rules
+    special:        "#733af4"   # brand.purple,  light-corrected
+    diff_add:       "#247534"   # brand green — vim Added (== string)
+    diff_change:    "#1c65bd"   # keyword blue — vim Changed
+    diff_delete:    "#cc1800"   # brand coral — vim Removed (== constant)
     # reverse/fill roles (same rule as dark — paired, never bare foregrounds)
-    error:          "#d70000"   # upstream Error (reverse on white)
-    todo:           "#5f00d7"   # upstream Todo (rendered reverse)
+    error:          "#d70000"   # Error (reverse on white) — kept red, not brand
+    todo:           "#733af4"   # brand.purple (light-corrected) — Todo (rendered reverse)
   # vimdiff fills, light — pastel tints (dark syntax text reads on them)
   diff:
     add_bg:     "#d3efdb"   # added — light green tint
     change_bg:  "#d6e7f4"   # changed — light blue tint
     text_bg:    "#b3d4ec"   # changed span — stronger light blue
     delete_bg:  "#f6d7de"   # deleted — light red tint
-    delete_fg:  "#af0000"   # deleted text (light syntax.constant red)
+    delete_fg:  "#cc1800"   # deleted text (brand.coral, == light syntax.diff_delete)

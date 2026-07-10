@@ -42,6 +42,39 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-10 (0.9.0) — the syntax layer re-anchored on the tci Memphis brand ("make it ours").**
+  The first deliberate break from wildcharm: the code-highlighting hues now come
+  from thecodingidiot's own five brand accents (`apps/thecodingidiot/app/
+  globals.css` — green `#2b8a3e`, teal `#0cb2c0`, magenta `#f725a0`, coral
+  `#ff4f38`, purple `#8b5cf6`; the per-tier accents the site used before hestia
+  existed), captured in the new `palette.yml` **`brand:`** block. Motivation:
+  the WCAG numbers were good but the palette wasn't *ours*. Key realisation from
+  the measurement study (rendered on real Shiki output): the brand hues already
+  sit at the **same wheel positions** as hestia's wildcharm syntax hues
+  (teal↔preproc, magenta↔function, purple↔special, coral↔constant, green↔string),
+  so this is a **shade re-tune, not a re-architecture**. **Method:** keep each
+  brand HUE, correct only its LIGHTNESS per ground until it clears AA (brand
+  colours are UI accents — as 13px text purple/green miss AA even on dark, and
+  on light *nothing* clears 4.5, so a per-variant corrected shade is unavoidable,
+  exactly the discipline hestia already ran). Roles: string=green, function=
+  magenta, constant=coral, escape/special=purple, preproc=teal; **keyword-blue
+  `#4a8fe4` and type-yellow `#e0a020` stay hestia-chosen functional anchors** (the
+  Memphis set has no blue or yellow, and syntax needs that warm/cool split to
+  scan); comment stays neutral grey; **accent red `#d7005f` stays RESERVED for
+  error/UI** — never a syntax hue, so coral can't be misread as it. On **dark** the
+  brand teal + coral go in at their **literal** brand values (they pass AA
+  unchanged). Result is measurably *better* separated than 0.8.x: min pairwise
+  ΔE (CIEDE2000) 14.6→**19.9** dark, 14.3→**19.7** light, no AA-on-ground fails
+  either variant (light Comment/Constant/Function sit just under AA on the raised
+  `#e4e4e4` surface — accepted, code renders on the ground / `#ffffff` web
+  surface). **Consequence — the syntax layer is now DECOUPLED from the terminal
+  ANSI 16** (still wildcharm): bat/vim-code read Memphis while ls/prompt/cmus read
+  wildcharm ANSI. Accepted — bat is its own truecolor theme; a follow-up could
+  re-anchor the ANSI 16 too for full terminal coherence (deferred, its own call).
+  Consumers touched: hestia.vim, bat tmTheme, Shiki pair, VS Code pair, glow —
+  all re-rendered (`render.py --check` clean). **thecodingidiot needs a Shiki
+  re-vendor.** Diff fills (vimdiff row backgrounds) kept; only their `delete_fg`
+  moved to coral for coherence.
 - **2026-07-10 (0.8.1) — dark Special/escape purple lifted #af5fff→#af87ff (readability).**
   First independent (post-wildcharm) tuning of a syntax hue, driven by a
   measurement pass rendered on real Shiki output (the thecodingidiot pipeline).

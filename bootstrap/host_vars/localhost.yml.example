@@ -40,8 +40,8 @@ enable_tailscale: true
 cmus_music_dir: "/mnt/storage/Music"   # e.g. an external mount
 
 # Desktop theme variant: dark|light (default dark). Flips the whole desktop —
-# the generated kitty/sway/waybar theme fragments, vim's background, GTK_THEME
-# in start-sway, and the gtk-3.0 settings.ini. To switch: change it here, re-run
+# the generated kitty/sway/waybar theme fragments, vim's background, the GTK gsettings
+# and the gtk-3.0 settings.ini. To switch: change it here, re-run
 # the playbook (./setup.sh --yes, or --tags dotfiles,sway_session), RE-LOGIN.
 theme_variant: "dark"
 

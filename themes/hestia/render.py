@@ -405,8 +405,9 @@ exec_always $HOME/.config/sway/scripts/wallpaper.sh {variant}
 seat * xcursor_theme {cursor} 24
 
 # GTK / portal appearance for this variant (CLAUDE.md GTK section): color-scheme
-# is what Firefox/portal-aware/libadwaita apps follow; gtk-theme is what the
-# portal file chooser reads (in-process GTK3 apps follow start-sway's GTK_THEME).
+# is what GTK4/libadwaita + Firefox + portal-aware apps follow; gtk-theme is what
+# GTK3 apps (and the portal file chooser) follow — GTK_THEME is deliberately unset
+# (it broke GTK4 dark mode), so gsettings is the single GTK theme source now.
 # `exec` runs at login only — not re-run on `swaymsg reload`.
 exec gsettings set org.gnome.desktop.interface color-scheme {scheme}
 exec gsettings set org.gnome.desktop.interface gtk-theme {gtk_theme}

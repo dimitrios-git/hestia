@@ -132,6 +132,7 @@ the next chore in a queue.
 | On-screen display (vol/brightness) | — none | `◐◐–○◐○` | Faked with notify-send today |
 | Output hotplug | — none | | Candidate: kanshi |
 | Portals / screen-share | xdg-desktop-portal | `●●–◐●○` | wlr + gtk routing |
+| Polkit auth agent | mate-polkit | `●●◐◐●○` | GTK agent for GUI privilege prompts (nemo Open-as-Root, disk mounts, pkexec) — sway ran none before; started from the sway config |
 | Login / session | greetd + tuigreet | `●●◐◐●○` | |
 
 ### Terminal & editing

@@ -70,7 +70,7 @@ VARIANTS = {
         "text": ROLES["text"],
         "link": ROLES["link"],
         "error_fg": "#ffffff",
-        "error_bg": ROLES["accent_dark"],
+        "error_bg": ROLES["danger_dark"],   # 0.10.0: danger red (light already uses syntax.error red)
         # surfaces the plain-text roles must clear AA against. Since 0.5.0 the
         # web code surface IS the ground (it reads raised on tci's darker
         # page); surface_alt is transient (hover/line-highlight), not a body-
@@ -496,8 +496,8 @@ text-color={r["text"]}
 border-color={r["accent"]}
 
 [urgency=high]
-background-color={r["accent"]}
-border-color={r["accent_dark"]}
+background-color={r["danger"]}
+border-color={r["danger_dark"]}
 text-color={r["accent_fg"]}
 default-timeout=0
 """
@@ -563,8 +563,9 @@ ring-ver-color={b(a["blue"])}
 line-ver-color={b(r["bg"])}
 text-ver-color={b(r["text"])}
 
-# wrong password: ring = bright_red, inside = accent_dark, text = accent_fg
-inside-wrong-color={b(r["accent_dark"])}
+# wrong password: ring = bright_red, inside = danger_dark (0.10.0: red, not the
+# now-violet accent), text = accent_fg
+inside-wrong-color={b(r["danger_dark"])}
 ring-wrong-color={b(a["bright_red"])}
 line-wrong-color={b(r["bg"])}
 text-wrong-color={b(r["accent_fg"])}
@@ -596,15 +597,19 @@ def render_swaynag(variant: str) -> str:
     r, a, e = vroles(variant), vansi(variant), vext(variant)
     def b(h):
         return h.lstrip("#")
-    accent_chip = (r["accent_fg"], r["accent"])
+    # Since 0.10.0 the destructive-confirm banners (warning/error) speak DANGER
+    # red, not the brand accent — the accent went violet, but "reboot? / exit?"
+    # is a careful-now prompt, so it stays red. The typeless dialog keeps the
+    # quiet accent (violet) line — it's decorative, not a loud confirm.
+    danger_chip = (r["accent_fg"], r["danger"])
     sunken_well = (e["sunken"], r["text"])
     sections = [
         ("global / default (dialogs with no -t): dark base, accent line",
          None, r["bg"], r["text"], r["border"], r["accent"], sunken_well),
         ("warning (the sway exit confirm + power-menu confirms pass -t warning):",
-         "warning", r["accent"], r["accent_fg"], r["accent_dark"], r["accent_dark"], accent_chip),
-        ("error: same accent banner — one language for everything loud",
-         "error", r["accent"], r["accent_fg"], r["accent_dark"], r["accent_dark"], accent_chip),
+         "warning", r["danger"], r["accent_fg"], r["danger_dark"], r["danger_dark"], danger_chip),
+        ("error: same danger banner — one language for everything loud",
+         "error", r["danger"], r["accent_fg"], r["danger_dark"], r["danger_dark"], danger_chip),
     ]
     out = [f"# {PROVENANCE}",
            f"# swaynag — hestia dialogs, {variant} (config-dark / config-light pair; the",
@@ -686,7 +691,7 @@ set notification-bg         "{r["surface"]}"
 set notification-fg         "{r["text"]}"
 set notification-warning-bg "{a["yellow"]}"
 set notification-warning-fg "{warn_fg}"
-set notification-error-bg   "{r["accent_dark"]}"
+set notification-error-bg   "{r["danger_dark"]}"
 set notification-error-fg   "{r["accent_fg"]}"
 
 # --- search highlights (translucent so the text shows through) ---

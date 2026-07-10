@@ -786,7 +786,9 @@ def render_vifm(variant: str) -> str:
         hl("CmdLine", "none", r["text"]),
         "\n\" title / tab bar",
         hl("TopLine", "none", ui_fg, r["surface"]),
-        hl("TopLineSel", "bold", bar_fg, ui_fg),
+        # active pane's path/title bar → the violet accent (matches StatusLine
+        # below + TabLineSel; the inactive TopLine stays a quiet grey)
+        hl("TopLineSel", "bold", r["accent_fg"], r["accent"]),
         hl("TabLine", "none", tab_fg, r["surface_alt"]),
         hl("TabLineSel", "bold", e["ink"], r["accent"]),
         "\n\" status line / messages — the accent lives here (accent status bar)",

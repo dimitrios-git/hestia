@@ -22,10 +22,10 @@ qt_theme_schemes:
     border:      "#3a3a3a"   # roles.border      — button alt, separators
     text:        "#e0e0e0"   # roles.text        — primary foreground
     dim:         "#8c8c8c"   # roles.dim         — inactive / tertiary text
-    accent:      "#d7005f"   # roles.accent      — selection, focus, highlights
-    accent_dark: "#9b0040"   # roles.accent_dark — alternate selection fill
+    accent:      "#7c3aed"   # roles.accent      — selection, focus, highlights (violet, 0.10.0)
+    accent_dark: "#5b21b6"   # roles.accent_dark — alternate selection fill
     accent_fg:   "#ffffff"   # roles.accent_fg   — text ON the accent fill
-    link:        "#ff5f87"   # roles.link        — links, hover decoration
+    link:        "#9e77f7"   # roles.link        — links, hover decoration (violet on dark)
     positive:    "#00af5f"   # ansi.green        — success foreground
     neutral:     "#d78700"   # ansi.yellow       — warning foreground
     negative:    "#ff5f87"   # ansi.bright_red   — error foreground
@@ -38,10 +38,10 @@ qt_theme_schemes:
     border:      "#c6c6c6"   # light.roles.border
     text:        "#1a1a1a"   # light.roles.text
     dim:         "#626262"   # light.roles.dim
-    accent:      "#d7005f"   # light.roles.accent
-    accent_dark: "#9b0040"   # light.roles.accent_dark
+    accent:      "#7c3aed"   # light.roles.accent (violet, 0.10.0)
+    accent_dark: "#5b21b6"   # light.roles.accent_dark
     accent_fg:   "#ffffff"   # light.roles.accent_fg
-    link:        "#d7005f"   # light link = the accent (no separate role)
+    link:        "#7c3aed"   # light link = the accent (no separate role)
     positive:    "#008700"   # light.ansi.green
     neutral:     "#af5f00"   # light.ansi.yellow
     negative:    "#d70000"   # light.ansi.bright_red

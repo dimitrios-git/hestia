@@ -32,7 +32,7 @@ include ~/.config/sway/theme.conf
 
 # Window colors:          border    bg        text       indicator  child_border
 # ($focus = the variant's cyan, from the theme fragment — focus reads apart
-# from the red accent surfaces; urgent keeps the accent)
+# from the violet accent surfaces; urgent keeps the accent)
 client.focused            $focus    $surface  $text      $focus     $focus
 client.focused_inactive   $border   $bg       $dim       $border    $border
 client.unfocused          $border   $bg       $dim       $border    $border

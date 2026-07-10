@@ -412,7 +412,7 @@ seat * xcursor_theme {cursor} 24
 exec gsettings set org.gnome.desktop.interface color-scheme {scheme}
 exec gsettings set org.gnome.desktop.interface gtk-theme {gtk_theme}
 exec gsettings set org.gnome.desktop.interface cursor-theme {cursor}
-# Icon theme: the #d7005f-accent Yaru built by the opt-in yaru_icons role
+# Icon theme: the #7c3aed-accent Yaru built by the opt-in yaru_icons role
 # (Yaru-hestia). Guard on the theme actually existing so a spin without that
 # role doesn't force a missing theme.
 exec sh -c 'test -d "$HOME/.local/share/icons/Yaru-hestia" && gsettings set org.gnome.desktop.interface icon-theme Yaru-hestia'

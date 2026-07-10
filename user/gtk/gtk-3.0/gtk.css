@@ -1,8 +1,8 @@
 /* GTK 3 user overlay — loaded on top of the hestia-dark theme (recoloured adw-gtk3 from
- * the gtk_theme role), which already carries the #d7005f accent (its baked
+ * the gtk_theme role), which already carries the #7c3aed accent (its baked
  * @accent_bg_color). This file is just a belt-and-suspenders override for any GTK3 widget
  * that still keys off the legacy theme_selected_bg_color, plus a home for future tweaks. */
-@define-color theme_selected_bg_color #d7005f;   /* accent: selection / highlight bg */
+@define-color theme_selected_bg_color #7c3aed;   /* accent: selection / highlight bg */
 @define-color theme_selected_fg_color #ffffff;   /* text on the accent */
 
 /* Ristretto's thumbnail bar (RsttoIconBar) cairo-draws its own selection from
@@ -17,10 +17,10 @@
  * nowhere), and the values must be literal colours (the style-property GdkRGBA
  * parser choked on mix()/@named forms — the rule silently did nothing). */
 * {
-    -RsttoIconBar-active-item-fill-color: #d7005f;
+    -RsttoIconBar-active-item-fill-color: #7c3aed;
     -RsttoIconBar-active-item-border-color: #9b0040;
     -RsttoIconBar-active-item-text-color: #ffffff;
     -RsttoIconBar-cursor-item-fill-color: #9b0040;
-    -RsttoIconBar-cursor-item-border-color: #d7005f;
+    -RsttoIconBar-cursor-item-border-color: #7c3aed;
     -RsttoIconBar-cursor-item-text-color: #ffffff;
 }

@@ -45,9 +45,9 @@
 	branch = "#d78700 bold"    ; yellow — match the prompt's branch
 	header = "#767676"         ; dim
 	added = "#00af5f"          ; staged → green (match prompt +N)
-	changed = "#d7005f"        ; unstaged → accent (match prompt !N)
-	untracked = "#d7005f"      ; untracked → accent (match prompt ?N)
-	nobranch = "#d7005f bold"  ; accent (attention)
+	changed = "#d7005f"        ; unstaged → attention red (match prompt !N)
+	untracked = "#d7005f"      ; untracked → attention red (match prompt ?N)
+	nobranch = "#d7005f bold"  ; attention red (the accent is now violet; red kept for attention, per the split)
 [color "diff"]
 	meta = "#767676 bold"      ; the "diff --git" header, de-emphasised
 	frag = "#00afaf"           ; @@ hunk headers (cyan)

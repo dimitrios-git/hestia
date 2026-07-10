@@ -140,7 +140,7 @@ set -o vi
 # matches everything else (default buildkit blue is unreadable on near-black):
 #   run     -> blue   #0087d7  (progress / active step)
 #   warning -> yellow #d78700
-#   error   -> accent #d7005f  (attention == accent, as everywhere else)
+#   error   -> attention red #d7005f  (kept red; the accent is now violet)
 #   cancel  -> grey   #767676  (muted)
 export BUILDKIT_COLORS="run=0,135,215:warning=215,135,0:error=215,0,95:cancel=118,118,118"
 

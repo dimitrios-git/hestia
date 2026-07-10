@@ -17,6 +17,9 @@ set showcmd
 set showmode
 set showmatch
 set cursorline
+set laststatus=2             " always show the statusline (white-on-violet accent
+                            " bar); default 1 only shows it with 2+ windows, so a
+                            " lone buffer had no status bar until NERDTree opened
 
 " --- Indentation and Tabs ---
 set shiftwidth=2
@@ -92,10 +95,16 @@ Plug 'nvim-treesitter/nvim-treesitter', {'branch': 'master', 'do': ':TSUpdate'}
 " File explorer
 Plug 'preservim/nerdtree'
 
+" Colour NERDTree icons per file extension (VSCode-like). Loads BEFORE
+" vim-devicons (which must be last) and decorates the glyphs it injects; its
+" default per-extension palette is on, folders get hestia violet via the
+" s:HestiaNerdTreeIcons override below, and unknown extensions fall back to the
+" neutral grey there. Needs :PlugInstall + a vim restart to take effect.
+Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
+
 " Filetype/folder glyphs (Nerd Font) for NERDTree, CtrlP, etc. MUST be the LAST
 " plugin loaded — it patches the others at load time, so anything it decorates
-" has to already be registered. Monochrome by design; colour-by-filetype would
-" be a separate companion plugin (vim-nerdtree-syntax-highlight).
+" has to already be registered.
 Plug 'ryanoasis/vim-devicons'
 
 call plug#end()
@@ -175,18 +184,20 @@ nnoremap <silent> <leader>g :CocList grep<CR>
 " normal-mode <C-n> = cursor-down).
 nnoremap <silent> <C-n> :NERDTreeToggle<CR>
 
-" Colour NERDTree's vim-devicons icons to mirror the GTK file manager: folders
-" hestia accent red (#d7005f), every other icon a neutral grey — icon only, the
-" name keeps its normal colour. devicons injects the glyph into NERDTree's [...]
-" flag region, so ALL icons inherit `NERDTreeFlags` (which links to `Number` →
-" a hestia red — that's the stray red shade on file icons). Recolour that to
-" grey for the default, then a syntax match over the folder glyph overrides
-" folders back to accent red; it wins because containedin=ALL nests it inside
-" the flag region. The folder match is built from devicons' own folder-symbol
-" variables (no hardcoded codepoint), so it tracks whatever glyph the plugin
-" uses across versions. cterm cells are exact (247=#9e9e9e, 161=#d7005f), so the
-" colours hold with or without 'termguicolors'. (NERDTree colours via highlight
-" groups, not LS_COLORS/dircolors — those don't apply here.)
+" Colour NERDTree's vim-devicons icons: folders hestia accent VIOLET (#7c3aed);
+" other icons are coloured per file extension by vim-nerdtree-syntax-highlight
+" (VSCode-like) when it's installed, and fall back to a neutral grey otherwise —
+" icon only, the name keeps its normal colour. devicons injects the glyph into
+" NERDTree's [...] flag region, so ALL icons inherit `NERDTreeFlags` (which links
+" to `Number` → a red — the stray red shade on file icons). Recolour that to grey
+" for the default (unknown extensions), then a syntax match over the folder glyph
+" overrides folders to accent violet; it wins because containedin=ALL nests it
+" inside the flag region. The extension-coloured glyphs are the plugin's own
+" groups, so they sit on top of the grey default. The folder match is built from
+" devicons' own folder-symbol variables (no hardcoded codepoint), so it tracks
+" whatever glyph the plugin uses across versions. cterm cells are exact
+" (247=#9e9e9e, 99≈#7c3aed), so the colours hold with or without 'termguicolors'.
+" (NERDTree colours via highlight groups, not LS_COLORS/dircolors.)
 function! s:HestiaNerdTreeIcons() abort
   " neutral icon grey per variant: dark extended.ui_grey, light roles.dim
   if &background ==# 'light'
@@ -198,7 +209,7 @@ function! s:HestiaNerdTreeIcons() abort
         \   . get(g:, 'DevIconsDefaultFolderOpenSymbol', '')
   if empty(l:syms) | return | endif
   execute 'syntax match hestiaDevIconFolder /[' . l:syms . ']/ containedin=ALL'
-  highlight hestiaDevIconFolder guifg=#d7005f ctermfg=161
+  highlight hestiaDevIconFolder guifg=#7c3aed ctermfg=99
 endfunction
 augroup HestiaNerdTreeFolderIcon
   autocmd!
@@ -252,11 +263,11 @@ lua << EOF
       heading = { sign = false },
       code = { sign = false, width = 'block' },
     })
-    -- Theme headings to the hestia accent red (#d7005f); the heading wash
+    -- Theme headings to the hestia accent violet (#7c3aed); the heading wash
     -- follows the variant (dark extended.heading_bg, light its counterpart)
-    local heading_bg = vim.o.background == 'light' and '#ffd7d7' or '#1a0a12'
+    local heading_bg = vim.o.background == 'light' and '#e9ddff' or '#150a24'
     for i = 1, 6 do
-      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i, { fg = '#d7005f', bold = true })
+      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i, { fg = '#7c3aed', bold = true })
       vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i .. 'Bg', { bg = heading_bg })
     end
   end

@@ -42,6 +42,14 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-10 (0.10.1) — unify the hestia red on a TRUE red `#d70000`.** The retired
+  accent red `#d7005f` (a rose/cerise, hue 333°) read pink/magenta in the power-off
+  confirm; retuned to `#d70000` (hue 0°, white-on 5.40) everywhere it means "red" —
+  `roles.danger`/`danger_dark` (→`#9b0000`), ANSI `color1` (both variants), `syntax.error`,
+  and the hardcoded terminal reds (git status, buildkit; prompt/man `-D` follow color1
+  automatically). One red now, matching the light variant which already used `#d70000`.
+  Re-rendered all consumers (`render.py --check` clean). Violet accent unaffected; light
+  `bright_red` stays the Memphis coral `#d11800` (no color1/color9 collision).
 - **2026-07-10 — accent→violet phase 4: terminal accents (cava + cmus).** Config-only,
   no palette bump. **cava** sweep re-anchored on violet (truecolor: deep violet →
   accent → light violet → blue → bright blue → cyan). **cmus** is 256-colour (no

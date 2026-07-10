@@ -29,11 +29,12 @@
 {% endif %}
 
 # --- hestia colours (from palette.yml) ---------------------------------------
-# Aligned to the bash prompt so the accent means ONE thing across both: the prompt
-# shows the branch in yellow (#d78700) and the dirty counts (!N/?N) in the accent
-# (#d7005f). So here too: branch = yellow, staged/added = green, dirty
-# (changed/untracked) = accent. Diff lines stay clean red/green (line-level, off
-# the accent — git's default `old`=red would otherwise be color1 == #d7005f).
+# Aligned to the bash prompt so attention reads ONE way across both: the prompt
+# shows the branch in yellow (#d78700) and the dirty counts (!N/?N) in the
+# attention red (#d70000 — the hestia red / color1, NOT the violet accent). So
+# here too: branch = yellow, staged/added = green, dirty (changed/untracked) =
+# red. Diff lines stay clean red/green (line-level; git's default `old`=red is
+# color1 == #d70000).
 # git 2.26+ renders #hex as 24-bit truecolor; values with '#' must be quoted.
 [color]
 	ui = auto
@@ -45,9 +46,9 @@
 	branch = "#d78700 bold"    ; yellow — match the prompt's branch
 	header = "#767676"         ; dim
 	added = "#00af5f"          ; staged → green (match prompt +N)
-	changed = "#d7005f"        ; unstaged → attention red (match prompt !N)
-	untracked = "#d7005f"      ; untracked → attention red (match prompt ?N)
-	nobranch = "#d7005f bold"  ; attention red (the accent is now violet; red kept for attention, per the split)
+	changed = "#d70000"        ; unstaged → attention red (match prompt !N)
+	untracked = "#d70000"      ; untracked → attention red (match prompt ?N)
+	nobranch = "#d70000 bold"  ; attention red (the accent is now violet; red kept for attention, per the split)
 [color "diff"]
 	meta = "#767676 bold"      ; the "diff --git" header, de-emphasised
 	frag = "#00afaf"           ; @@ hunk headers (cyan)

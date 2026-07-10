@@ -12,9 +12,11 @@
 #   - dim/muted lightened so secondary/tertiary text clears WCAG AA on these
 #     surfaces (wildcharm's greys are tuned against #000000);
 #   - accent_fg + link roles added (text ON the accent fill; accent-coloured text).
-# The accent is wildcharm's own red #d7005f — NOT Debian red #ce0056, which was
-# dropped so the theme is uniform with, and original to, the scheme it is built
-# on. Every app config in this repo draws its colours from the values below.
+# The accent is VIOLET #7c3aed (tci's brand accent, adopted 0.10.0). The wildcharm
+# red #d7005f it replaced lives on — retuned to a TRUE red #d70000 (0.10.1) — as
+# the `danger` role + ANSI color1 (it read pink/magenta at #d7005f; #d70000 is a
+# clearer red, and matches the light variant's existing red). Debian red #ce0056
+# was the accent until 2026-06. Every app config draws its colours from below.
 #
 # This file is currently applied BY HAND — when theming an app you read the right
 # value here and write the literal hex into that app's config (see docs/theming.md
@@ -31,7 +33,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.10.0"
+version: "0.10.1"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -72,8 +74,11 @@ roles:
   # critical/high-urgency notifications, destructive confirms and wrong-password
   # states stay red (universal "careful"); the brand/focus accent is violet. This
   # is the wildcharm red pair, now a semantic role of its own (both variants).
-  danger:      "#d7005f"   # error / critical / destructive-confirm / wrong-password FILL (white-on 5.18:1)
-  danger_dark: "#9b0040"   # darker danger — wrong-password inside, sunken danger fills (white-on 8.51:1)
+  danger:      "#d70000"   # error / critical / destructive-confirm / wrong-password FILL (white-on 5.40:1).
+                           # A TRUE red (0.10.1) — the old #d7005f rose read pink/magenta in the power
+                           # confirm; unified with ANSI color1 + syntax.error + the terminal reds so
+                           # hestia has ONE red (matches the light variant, which already used #d70000).
+  danger_dark: "#9b0000"   # darker danger — wrong-password inside, sunken danger fills
   white:       "#ffffff"   # max-contrast text
 
 # The 16-colour ANSI palette. Terminal apps map their colour slots to these
@@ -85,12 +90,13 @@ roles:
 # LITERAL brand values land in the vivid slots (magenta #f725a0, teal #0cb2c0,
 # coral #ff4f38). KEPT wildcharm as functional anchors: blue (4/12) + yellow
 # (3/11) — Memphis has neither, and the terminal needs the warm/cool split.
-# INVARIANT: color1 == accent #d7005f (cava/cmus/prompt track it). Greys + black
+# color1 is the terminal RED #d70000 (0.10.1 — was the accent #d7005f until the
+# accent went violet 0.10.0; now unified with roles.danger onto a true red). Greys + black
 # + white unchanged. Method mirrors syntax: keep the brand hue, tune lightness
 # for legibility (base ~4.7 / bright ~6.8 on the dark ground). See roadmap 0.9.1.
 ansi:
   black:          "#1a1a1a"   # [0]
-  red:            "#d7005f"   # [1]  the accent (INVARIANT — color01 == accent)
+  red:            "#d70000"   # [1]  terminal red (was the accent #d7005f; retired to violet 0.10.0, unified to a true red 0.10.1)
   green:          "#2f9844"   # [2]  brand.green, dark-tuned (4.72:1)
   yellow:         "#d78700"   # [3]  functional anchor (no brand yellow)
   blue:           "#0087d7"   # [4]  functional anchor (no brand blue)
@@ -163,8 +169,9 @@ brand:
 # (keyword/type) and the neutral comment grey stay hestia-chosen. This DECOUPLES
 # the syntax layer from the terminal ANSI 16 (still wildcharm) — bat/vim-code now
 # read Memphis while ls/prompt read wildcharm ANSI; accepted (bat is its own
-# truecolor theme). The accent red #d7005f stays RESERVED for error/UI — never a
-# syntax hue, so coral (constant) can't be misread as it. Every syntax consumer
+# truecolor theme). The DANGER red #d70000 stays RESERVED for error/UI (and the
+# violet accent for brand/focus) — neither is a syntax hue, so coral (constant)
+# can't be misread as danger nor magenta (function) as the accent. Every syntax consumer
 # (vim, bat tmTheme, Shiki/VS Code, glow) renders FROM this table. Anything not
 # listed renders as roles.text (vim leaves it Normal). Full study + the ΔE/AA
 # numbers: docs/theme-roadmap.md (0.9.0 decision).
@@ -184,7 +191,7 @@ syntax:
   # error/todo are REVERSE/FILL treatments (the colour is a background or is
   # reversed), not plain foreground text — the AA-vs-surface rule above doesn't
   # apply to them; platform mappings pair error with white/accent_fg.
-  error:          "#d7005f"   # roles.accent — vim Error (reverse on white; bat: white on accent_dark)
+  error:          "#d70000"   # roles.danger — vim Error (reverse on white; bat: white on danger_dark)
   todo:           "#9e77f7"   # brand.purple (dark-corrected) — vim Todo (rendered reverse)
 
 # vimdiff FILLS — the DiffAdd/DiffChange/DiffText/DiffDelete *backgrounds*.
@@ -240,21 +247,21 @@ light:
                               # dim guidance). No separate light link role.
     accent_dark:  "#5b21b6"   # same as dark — darker violet, sunken accent fills
     accent_fg:    "#ffffff"   # text ON the accent fill — same as dark (white-on 5.70:1)
-    danger:       "#d7005f"   # DANGER red, same both variants (0.10.0) — error / critical /
+    danger:       "#d70000"   # DANGER red, same both variants (true red, 0.10.1) — error / critical /
                               # destructive-confirm / wrong-password. On the light ground 4.75:1.
-    danger_dark:  "#9b0040"   # darker danger — sunken danger fills (white-on 8.51:1)
+    danger_dark:  "#9b0000"   # darker danger — sunken danger fills
   # The light ANSI 16 — since 0.9.1 the SAME Memphis re-anchor as dark (the
   # chromatic slots re-hued to the brand, darkened for AA on the #f5f5f5 ground;
   # mirror of the dark ANSI note above). Re-hued: green (2/10), magenta (5/13),
   # cyan->teal (6/14), bright_red->coral (9) — all light-corrected. KEPT wildcharm
   # (upstream light) as functional anchors: blue (4/12) + yellow (3/11) — Memphis
-  # has neither. INVARIANT: color1 == accent #d7005f (BOTH variants, or every
-  # accent-tracks-colour-1 consumer — cmus bars, prompt dirty counts — silently
-  # drifts to a plain red on light; caught live 0.7.1). color7 "white" mid-grey +
-  # color0 "black" pure black kept; bg is NOT color0 on light.
+  # has neither. color1 is the terminal RED #d70000 (0.10.1; was the accent
+  # #d7005f until the accent went violet 0.10.0). Terminal consumers — cmus bars,
+  # prompt dirty counts — now track this true red directly, not the accent.
+  # color7 "white" mid-grey + color0 "black" pure black kept; bg is NOT color0 on light.
   ansi:
     black:          "#000000"   # [0]
-    red:            "#d7005f"   # [1]  the accent (INVARIANT — color01 == accent)
+    red:            "#d70000"   # [1]  terminal red (was the accent #d7005f; unified to a true red 0.10.1)
     green:          "#237133"   # [2]  brand.green, light-tuned (5.53:1)
     yellow:         "#af5f00"   # [3]  functional anchor (no brand yellow)
     blue:           "#005faf"   # [4]  functional anchor (no brand blue)

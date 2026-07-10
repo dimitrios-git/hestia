@@ -1,14 +1,14 @@
 #!/bin/sh
 # vifm quick-view dispatcher — the catch-all `fileviewer {*}` in vifmrc.
-# Syntax-highlights text/code with bat (wildcharm theme + git change gutter),
+# Syntax-highlights text/code with bat (hestia theme + git change gutter),
 # and degrades cleanly:
 # directory listing for dirs, file-type + hexdump peek for binaries, and plain
 # head(1) when bat isn't installed. Always exits 0 so vifm never shows an error.
 #
 #   $1 = file path (vifm %f)   $2 = pane width (%pw)   $3 = pane height (%ph)
 #
-# bat needs the wildcharm theme built into its cache once: `bat cache --build`
-# after ~/.config/bat/themes/wildcharm.tmTheme is in place (the dotfiles role
+# bat needs the hestia theme built into its cache once: `bat cache --build`
+# after ~/.config/bat/themes/hestia.tmTheme is in place (the dotfiles role
 # does this). Until then bat falls back to its default theme.
 
 f="$1"
@@ -38,7 +38,7 @@ bat_view() {
     # same safe.directory whitelist as git (libgit2 reads it); if libgit2 can't
     # read the repo it just omits the gutter — never errors.
     "$BAT" --color=always --style=changes --paging=never --wrap=never \
-           --theme=wildcharm --terminal-width="$w" --line-range=":$h" -- "$f"
+           --theme=hestia --terminal-width="$w" --line-range=":$h" -- "$f"
 }
 
 if [ -d "$f" ]; then

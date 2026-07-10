@@ -1,4 +1,4 @@
-# themes/wildcharm/palette.yml — the single source of truth for hestia's theme.
+# themes/hestia/palette.yml — the single source of truth for hestia's theme.
 #
 # hestia is based on the `wildcharm` vim colorscheme (Maxim Kim, in the official
 # vim/colorschemes repo; palette derived from "quiet" by @neutaaaaan) — a dark,

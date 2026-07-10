@@ -96,7 +96,7 @@ if [ -x /usr/bin/dircolors ]; then
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
-    # less/man colours on the wildcharm palette (-D <class><colour>; '+' keeps the
+    # less/man colours on the hestia palette (-D <class><colour>; '+' keeps the
     # original attribute, lowercase=normal, UPPER=bright, two letters=fg+bg):
     #   d+r  bold      -> accent red  (man section headers / commands)
     #   u+b  underline -> blue        (man args / options)
@@ -135,7 +135,7 @@ fi
 # enable vi mode
 set -o vi
 
-# docker/buildkit build output on the wildcharm palette. BUILDKIT_COLORS takes
+# docker/buildkit build output on the hestia palette. BUILDKIT_COLORS takes
 # either colour names or R,G,B triples — pin to exact hex-as-RGB so the build log
 # matches everything else (default buildkit blue is unreadable on near-black):
 #   run     -> blue   #0087d7  (progress / active step)

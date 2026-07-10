@@ -1,8 +1,8 @@
 # bat (https://github.com/sharkdp/bat) — hestia defaults.
 #
-# The wildcharm theme is a custom .tmTheme linked into ~/.config/bat/themes/ and
+# The hestia theme is a custom .tmTheme linked into ~/.config/bat/themes/ and
 # compiled into bat's binary cache by the dotfiles role (`bat cache --build`).
 # Until that build has run, bat falls back to its built-in default theme.
---theme="wildcharm"
+--theme="hestia"
 --style="numbers,changes"
 --italic-text=always

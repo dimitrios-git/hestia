@@ -1,7 +1,7 @@
 # hestia — VS Code theme (dark + light)
 
-The wildcharm-derived hestia theme as a VS Code extension. The theme JSONs are
-**generated** — `themes/wildcharm/render.py` renders them from `palette.yml` +
+The hestia theme as a VS Code extension. The theme JSONs are
+**generated** — `themes/hestia/render.py` renders them from `palette.yml` +
 `scopes.yml` (never edit them by hand). The token colours are byte-identical to
 what bat and the web code blocks (stoa/thecodingidiot) render; the dark UI
 chrome maps the palette roles (canvas `bg`, panels `surface`, accent status
@@ -36,6 +36,6 @@ code --install-extension ./hestia-theme-*.vsix   # add --force for same-version
 Then pick **hestia dark** / **hestia light** in *Preferences: Color Theme*
 (a one-time choice — installs/upgrades don't switch your active theme).
 
-Verify against the golden sample: open
-`themes/wildcharm/golden/sample.ts` — it must agree hue-for-hue with
-`vim themes/wildcharm/golden/sample.ts` and with bat.
+Verify against the theming testbench (`enable_testbench` role →
+`~/theme-testbench/code/`): open a sample such as `sample.ts` in VS Code — it must
+agree hue-for-hue with `vim ~/theme-testbench/code/sample.ts` and with bat.

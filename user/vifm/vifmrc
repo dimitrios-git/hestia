@@ -2,7 +2,7 @@
 
 " General
 
-colorscheme wildcharm
+colorscheme hestia
 
 set vicmd=vim
 set trash
@@ -136,10 +136,10 @@ fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}
 "     style's bold, not colour). CLICOLOR_FORCE makes glow emit well-formed SGR
 "     (like bat --color=always), which vifm renders cleanly. Note: forced notty
 "     output is 16-colour (no truecolor), so it's an approximation of the
-"     wildcharm hex — the full-screen open (real TTY) still gets truecolor.
-"   * -s passes the wildcharm style so the 16-colour mapping stays on-theme.
+"     hestia hex — the full-screen open (real TTY) still gets truecolor.
+"   * -s passes the hestia style so the 16-colour mapping stays on-theme.
 fileviewer {*.md,*.markdown}
-         \ CLICOLOR_FORCE=1 glow -s ~/.config/glow/wildcharm.json -w %pw %f
+         \ CLICOLOR_FORCE=1 glow -s ~/.config/glow/hestia.json -w %pw %f
 
 " PDF — requires poppler-utils
 fileviewer {*.pdf}
@@ -157,7 +157,7 @@ fileviewer {*.zip}
 fileviewer {*.7z}
          \ 7z l %f
 
-" Everything else — syntax-highlighted code/text preview via bat (wildcharm
+" Everything else — syntax-highlighted code/text preview via bat (hestia
 " theme), with a binary/directory fallback. Catch-all goes LAST so the specific
 " viewers above win (vifm uses the first matching :fileviewer). preview.sh lives
 " in ~/.config/vifm/scripts (on vifm's PATH); %pw/%ph size output to the pane.

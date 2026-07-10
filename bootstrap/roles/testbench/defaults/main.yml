@@ -10,7 +10,7 @@ testbench_dir: "{{ target_home }}/theme-testbench"
 
 # The extension fixtures under files/ — ls/vifm/yazi/ranger colour these by
 # NAME, so empty files are fine (content is irrelevant to file-type colouring).
-# One per dircolors/filetype_colors category (see themes/wildcharm render.py).
+# One per dircolors/filetype_colors category (see themes/hestia render.py).
 testbench_ext_files:
   - archive.tar.gz      # archives
   - archive.zip

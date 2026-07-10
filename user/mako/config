@@ -1,5 +1,5 @@
 # mako — notification daemon. Behaviour lives here (direct-edit); colours live in
-# the GENERATED theme-{dark,light}.conf pair (themes/wildcharm/render.py — edit
+# the GENERATED theme-{dark,light}.conf pair (themes/hestia/render.py — edit
 # palette.yml + re-render), symlinked by the bootstrap as theme.conf per
 # `theme_variant`. Reload with `makoctl reload`.
 

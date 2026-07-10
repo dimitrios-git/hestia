@@ -24,7 +24,7 @@ set $term kitty
 set $menu wmenu-run
 
 # Colors — GENERATED variant fragment (user/sway/theme-{dark,light}.conf,
-# rendered by themes/wildcharm/render.py; the bootstrap symlinks the
+# rendered by themes/hestia/render.py; the bootstrap symlinks the
 # `theme_variant` one to ~/.config/sway/theme.conf). Defines the $colour vars,
 # the desktop background, and the per-variant gsettings execs (color-scheme /
 # gtk-theme). Edit palette.yml + re-render, not the fragment.

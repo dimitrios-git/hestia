@@ -18,7 +18,7 @@ you are → what the cursor is on*. The preview pane dispatches by type:
 
 | Under the cursor | Rendered by |
 |---|---|
-| code / text | `bat` (wildcharm theme — same syntax table as vim, the web, VS Code) |
+| code / text | `bat` (hestia theme — same syntax table as vim, the web, VS Code) |
 | Markdown | `glow` (forced-colour through the pipe; a 16-colour approximation of the theme) |
 | directories | `tree -C`, two levels, driven by the same `LS_COLORS` as `ls` — so the tree, `ls`, and vifm's own file-type colours agree by construction |
 | PDFs | `pdftotext` |
@@ -183,4 +183,4 @@ this page starts from zero. That's the argument the
   bridge launcher)
 - `user/imv/config-vifm` + `user/imv/imv-vifm-return.sh` — imv's side of the
   bridge (dedicated config; standalone imv stays stock)
-- `user/vifm/colors/` — the generated wildcharm pair
+- `user/vifm/colors/` — the generated hestia pair

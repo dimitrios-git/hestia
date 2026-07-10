@@ -1,5 +1,5 @@
 ---
-# The hestia Qt/KDE colour schemes — the wildcharm palette (themes/wildcharm/palette.yml)
+# The hestia Qt/KDE colour schemes — the hestia palette (themes/hestia/palette.yml)
 # expressed as KDE colour schemes, one per `theme_variant` (M7). It themes Qt /
 # KDE-Frameworks apps (currently Kdenlive) the way gtk_theme themes GTK3 apps: no root,
 # no Kvantum, no env var. KDE apps read the colours straight from ~/.config/kdeglobals
@@ -8,7 +8,7 @@
 # the inactive variant stays selectable in-app. Bare-Qt (non-KDE) apps ignore kdeglobals
 # and need a qt6ct follow-up.
 #
-# Values mirror themes/wildcharm/palette.yml (roles.* plus a few ansi.* for the semantic
+# Values mirror themes/hestia/palette.yml (roles.* plus a few ansi.* for the semantic
 # foregrounds). Kept as hex here — like gtk_theme's gtk_theme_accent — and converted to
 # Breeze's "R,G,B" decimals in the template. Edit the palette first, then match here.
 # (0.7.0: dark `negative` moved from the never-admitted #da4453 onto ansi.bright_red —

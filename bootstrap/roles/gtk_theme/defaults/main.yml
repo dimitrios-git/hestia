@@ -7,6 +7,6 @@
 gtk_theme_adw_version: "6.5"
 gtk_theme_adw_url: "https://github.com/lassekongo83/adw-gtk3/releases/download/v{{ gtk_theme_adw_version }}/adw-gtk3v{{ gtk_theme_adw_version }}.tar.xz"
 gtk_theme_adw_sha256: "a81780fadfc432be0fc3d89c4ebb41aa28e4f032d42c36f9789c57dd10cfa41c"
-# Accent baked into the theme — the hestia palette accent (themes/wildcharm/palette.yml →
+# Accent baked into the theme — the hestia palette accent (themes/hestia/palette.yml →
 # roles.accent). Changing it changes the idempotency marker, triggering a rebuild.
 gtk_theme_accent: "#d7005f"

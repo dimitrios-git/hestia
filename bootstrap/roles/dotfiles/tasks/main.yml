@@ -111,7 +111,7 @@
     label: "{{ item.src }} -> {{ item.dest }}"
 
 # bat compiles the .tmTheme files under ~/.config/bat/themes into its binary
-# cache; without this build `--theme=wildcharm` (used by vifm's preview and the
+# cache; without this build `--theme=hestia` (used by vifm's preview and the
 # bat config) isn't found and bat silently falls back to its default theme. On
 # Debian the binary is `batcat`. Runs after the theme link above (no become —
 # the cache lives in ~/.cache/bat). Rebuilding a derived cache is idempotent in
@@ -121,7 +121,7 @@
   register: _bat_bin
   changed_when: false
 
-- name: Build bat's theme cache so the wildcharm theme is available
+- name: Build bat's theme cache so the hestia theme is available
   ansible.builtin.command: "{{ _bat_bin.stdout }} cache --build"
   when: _bat_bin.stdout | length > 0
   changed_when: false

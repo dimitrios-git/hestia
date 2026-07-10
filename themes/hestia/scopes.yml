@@ -1,8 +1,8 @@
-# themes/wildcharm/scopes.yml — the TextMate-family scope map (layer 2½).
+# themes/hestia/scopes.yml — the TextMate-family scope map (layer 2½).
 #
 # ONE ordered rule list maps syntax ROLES (palette.yml `syntax:` tables) to
 # TextMate scopes, shared by every TM consumer: bat (.tmTheme), the web Shiki
-# pair (stoa/thecodingidiot), and the VS Code themes. `themes/wildcharm/
+# pair (stoa/thecodingidiot), and the VS Code themes. `themes/hestia/
 # render.py` renders all of them from this file + palette.yml — edit a scope
 # decision HERE (once, for every consumer), edit a colour in palette.yml.
 #

@@ -179,7 +179,7 @@ nnoremap <silent> <C-n> :NERDTreeToggle<CR>
 " hestia accent red (#d7005f), every other icon a neutral grey — icon only, the
 " name keeps its normal colour. devicons injects the glyph into NERDTree's [...]
 " flag region, so ALL icons inherit `NERDTreeFlags` (which links to `Number` →
-" a wildcharm red — that's the stray red shade on file icons). Recolour that to
+" a hestia red — that's the stray red shade on file icons). Recolour that to
 " grey for the default, then a syntax match over the folder glyph overrides
 " folders back to accent red; it wins because containedin=ALL nests it inside
 " the flag region. The folder match is built from devicons' own folder-symbol
@@ -252,7 +252,7 @@ lua << EOF
       heading = { sign = false },
       code = { sign = false, width = 'block' },
     })
-    -- Theme headings to the wildcharm accent red (#d7005f); the heading wash
+    -- Theme headings to the hestia accent red (#d7005f); the heading wash
     -- follows the variant (dark extended.heading_bg, light its counterpart)
     local heading_bg = vim.o.background == 'light' and '#ffd7d7' or '#1a0a12'
     for i = 1, 6 do

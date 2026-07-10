@@ -1,4 +1,4 @@
-/* GTK 4 / libadwaita accent — hestia #d7005f (themes/hestia/palette.yml).
+/* GTK 4 / libadwaita accent — hestia #7c3aed (themes/hestia/palette.yml).
  *
  * libadwaita 1.6+ (this box runs 1.7) recolours via CSS custom-property variables
  * on :root; the legacy `@define-color accent_bg_color` form no longer reaches the
@@ -8,6 +8,6 @@
  * that voids the whole rule). The system/portal accent can't carry arbitrary hex,
  * but user CSS always wins. Read at app startup — restart the app to apply. */
 :root {
-  --accent-bg-color: #d7005f;   /* accent fill: buttons, switches, selection */
+  --accent-bg-color: #7c3aed;   /* accent fill: buttons, switches, selection */
   --accent-fg-color: #ffffff;   /* text / icons on the accent fill */
 }

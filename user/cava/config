@@ -1,5 +1,5 @@
-# cava — accent-anchored cool sweep through the hestia palette (accent #d7005f
-# → magenta → blue → cyan). The visualiser is the one place the palette plays.
+# cava — accent-anchored cool sweep through the hestia palette (violet accent
+# #7c3aed → blue → cyan). The visualiser is the one place the palette plays.
 
 [general]
 framerate = 60

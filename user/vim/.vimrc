@@ -166,9 +166,15 @@ autocmd CursorHold * silent call CocActionAsync('highlight')
 command! -nargs=0 Format :call CocActionAsync('format')
 command! -nargs=0 OR :call CocActionAsync('runCommand', 'editor.action.organizeImport')
 
+" Python LSP: coc-pyright (Pyright), NOT the deprecated/unmaintained coc-python
+" (the old MS-python extension) — that one throws
+"   [coc.nvim]: UnhandledRejection: TypeError: Reflect.hasOwnMetadata is not a function
+" on Python files under modern Node (its reflect-metadata/decorator use broke).
+" On an existing install also run :CocUninstall coc-python (dropping it from this
+" list stops the auto-install, but coc doesn't remove an already-installed one).
 let g:coc_global_extensions = [
   \ 'coc-sh', 'coc-json', 'coc-tsserver', 'coc-html', 'coc-css', 'coc-emmet',
-  \ 'coc-lists', 'coc-pairs', 'coc-yaml', 'coc-python', 'coc-eslint',
+  \ 'coc-lists', 'coc-pairs', 'coc-yaml', 'coc-pyright', 'coc-eslint',
   \ 'coc-prettier', 'coc-snippets', 'coc-highlight', 'coc-xml', 'coc-yank',
   \ 'coc-git', '@yaegassy/coc-tailwindcss3'
 \ ]

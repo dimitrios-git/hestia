@@ -21,7 +21,7 @@ The proprietary-driver env (`GBM_BACKEND=nvidia-drm`,
 when an NVIDIA GPU is live** — detected at launch via `/dev/nvidia0` or the `nvidia`
 entry in `/proc/modules`. On an AMD/Intel box none of that is exported (those vars
 would otherwise break rendering), so the same script is correct everywhere. The
-generic Wayland env (`XDG_*`, `MOZ_ENABLE_WAYLAND`, `GTK_THEME`) is always set.
+generic Wayland env (`XDG_*`, `MOZ_ENABLE_WAYLAND`) is always set.
 
 Pairs with the opt-in `nvidia` role (`enable_nvidia`), but doesn't depend on it — the
 guard is on the *running* hardware, not the install toggle.

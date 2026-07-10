@@ -1,7 +1,7 @@
 ---
 # Deploy the Sway session launch chain (root). Idempotent: writes only when the
 # rendered/tracked files change.
-#   * start-sway.j2 -> /usr/local/bin/start-sway (TEMPLATED — GTK_THEME follows
+#   * start-sway.j2 -> /usr/local/bin/start-sway (TEMPLATED — sets the session env, per
 #     `theme_variant`; the launcher greetd runs, on PATH for the session user).
 #     Applies NVIDIA workarounds only when an NVIDIA GPU is live.
 #   * greetd config.toml -> /etc/greetd (the `tuigreet … --cmd start-sway` line).

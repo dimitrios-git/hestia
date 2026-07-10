@@ -126,9 +126,9 @@ enable_testbench: false     # generate the theming testbench folder (testbench r
 # --- Theme variant (M7, docs/theme-roadmap.md) ----------------------------------
 # dark|light — selects which GENERATED theme fragments the dotfiles role links
 # (kitty/sway/waybar theme.*, the vim background selector) and what the rendered
-# configs carry (GTK_THEME in start-sway, the gtk-3.0 settings.ini theme name).
+# configs carry (the gsettings gtk-theme + gtk-3.0 settings.ini theme name).
 # Flip it in host_vars, re-run the playbook (`./setup.sh --yes`, or
-# `--tags dotfiles,sway_session`), then RE-LOGIN — GTK_THEME and the sway
+# `--tags dotfiles,sway_session`), then RE-LOGIN — the sway
 # gsettings execs only apply to a new session.
 theme_variant: dark
 

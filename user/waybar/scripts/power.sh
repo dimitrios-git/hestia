@@ -38,8 +38,16 @@ sel=$(printf '%s\n%s\n%s\n%s\n%s\n' \
 
 # confirm MESSAGE BUTTON-LABEL COMMAND — swaynag auto-reads the themed config,
 # so the warning renders as the full-orange banner with a black-text message.
+# The command is run **detached** (`setsid -f`): swaynag executes a button's
+# command and then EXITS immediately, and a command still running at that instant
+# is reaped with it. That's fine for instant actions (`swaymsg exit`), but it
+# silently killed `systemctl reboot`/`poweroff` mid-flight — they need a logind
+# D-Bus round-trip to land, so the button "fired" and the machine did nothing
+# (a race the mate-polkit auth agent's added latency tipped over the edge, 2026-07;
+# CanReboot said yes and the swaynag button fired, but the process died before the
+# call completed). setsid runs it in a new session so swaynag's exit can't reap it.
 confirm() {
-    swaynag -t warning -m "$1" -B "$2" "$3" -s Cancel
+    swaynag -t warning -m "$1" -B "$2" "setsid -f $3" -s Cancel
 }
 
 case $sel in

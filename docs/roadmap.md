@@ -226,20 +226,20 @@ gate it would close.
 
 ### nemo *(chosen GUI default — file managers)*
 
-Session-level wiring is now done — `xdg-mime default nemo.desktop inode/directory`
-plus the "Open in Terminal" → kitty fix, both a guarded `exec` in `user/sway/config`.
-nemo still only inherits the GTK theme + Yaru icons and has no config of its own.
+Session-level wiring is now done via `user/sway/nemo-setup.sh` — default terminal
+(kitty), default folder handler (`xdg-mime inode/directory`), and the
+`90_new-launcher` launcher action disabled (it Depends on `cinnamon-desktop-editor`
+and was logging a missing-dependency warning at every startup). nemo still only
+inherits the GTK theme + Yaru icons and has no config file of its own.
 
-- **Cinnamon-lookup log noise** — nemo probes for a Cinnamon session that will never
-  exist. **Blocked on the actual log text**: claude can't read dimitrios's session
-  logs (isolated user), so capture the lines — run `nemo` from a kitty terminal, or
-  `journalctl --user -b | grep -i cinnamon` — and paste them so the source can be
-  pinned (benign chatter vs a suppressible setting). *(gate 2/5)*
 - **No tracked config** — add a `user/nemo/` config (default view, actions, dconf
   keys) so nemo reaches gate 2 (Configured) rather than only theme-inheriting.
   *(closes gate 2)*
 - **Theme review** — confirm the hestia-dark chrome + Yaru-hestia accent hold across
-  nemo's surfaces (sidebar, path bar, selection), not just the main list. *(gate 3)*
+  nemo's surfaces (sidebar, path bar, selection), not just the main list. Also
+  addresses the benign `gtk theme is not known to have nemo support (hestia-dark)`
+  startup warning — nemo has a hardcoded list of themes with nemo-specific CSS and
+  falls back to generic for ours. *(gate 3)*
 
 ### ranger *(alternative — kept for comparison, file managers)*
 

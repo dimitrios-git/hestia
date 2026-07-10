@@ -31,7 +31,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.8.0"
+version: "0.8.1"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -83,9 +83,16 @@ ansi:
 # Colours wildcharm uses beyond the ANSI 16 (xterm-256 indices) — upstream
 # values admitted under the never-invent rule, not new shades.
 extended:
-  purple: "#af5fff"   # xterm 135 — wildcharm's Special/Todo purple (#875fff, xterm 99)
-                      # lifted one 256-palette step for AA on hestia surfaces
-                      # (4.24:1 on the #1a1a1a ground -> 4.89:1; same as roles.dim)
+  purple: "#af87ff"   # xterm 141 — wildcharm's Special/Todo purple (#875fff, xterm 99)
+                      # lifted for AA on ALL hestia dark surfaces (0.8.1 readability
+                      # pass): the former xterm 135 #af5fff cleared the #1a1a1a ground
+                      # (4.89) but DIPPED below AA on the raised greys (4.25 on #262626,
+                      # 3.71 on #303030) — the only syntax hue that did. #af87ff lifts
+                      # the green channel one cube step: 6.41 on bg, 5.57 on #262626,
+                      # 4.86 on #303030 — AA everywhere. It stays a lavender-purple, ΔE
+                      # 14.6 (CIEDE2000) from the magenta identifier #ff87ff (vs 17.2
+                      # before — the brighten narrows the gap but the two still read
+                      # apart at 13px; #bd93ff was rejected for closing it to 12.3).
   # wildcharm.vim UI-group greys, admitted 0.6.0 (they'd lived only in configs —
   # the roadmap backlog item). Consumers: vim devicons/NERDTree neutral icon grey
   # + vifm CurrLine (ui_grey), vifm Border/LineNr (line_grey).
@@ -116,13 +123,13 @@ extended:
 syntax:
   comment:        "#8c8c8c"   # roles.dim — upstream #767676 lightened for AA (documented deviation)
   string:         "#00d75f"   # ansi.bright_green — vim String
-  string_special: "#af5fff"   # extended.purple — escapes/regex (vim SpecialChar -> Special)
+  string_special: "#af87ff"   # extended.purple — escapes/regex (vim SpecialChar -> Special)
   constant:       "#ff5f87"   # ansi.bright_red — numbers, booleans, chars (vim Constant)
   identifier:     "#ff87ff"   # ansi.bright_magenta — functions + members (vim Identifier/Function)
   keyword:        "#00afff"   # ansi.bright_blue — statements, operators, storage (vim Statement)
   type:           "#ffaf00"   # ansi.bright_yellow — types, classes (vim Type)
   preproc:        "#00d7d7"   # ansi.bright_cyan — imports, macros, at-rules (vim PreProc)
-  special:        "#af5fff"   # extended.purple — delimiters, tags, specials (vim Special)
+  special:        "#af87ff"   # extended.purple — delimiters, tags, specials (vim Special)
   diff_add:       "#00af5f"   # ansi.green — vim Added
   diff_change:    "#0087d7"   # ansi.blue — vim Changed
   diff_delete:    "#ff5f87"   # ansi.bright_red — deviation: upstream Removed is #d7005f, but the
@@ -132,7 +139,7 @@ syntax:
   # reversed), not plain foreground text — the AA-vs-surface rule above doesn't
   # apply to them; platform mappings pair error with white/accent_fg.
   error:          "#d7005f"   # roles.accent — vim Error (reverse on white; bat: white on accent_dark)
-  todo:           "#af5fff"   # extended.purple — vim Todo (rendered reverse)
+  todo:           "#af87ff"   # extended.purple — vim Todo (rendered reverse)
 
 # vimdiff FILLS — the DiffAdd/DiffChange/DiffText/DiffDelete *backgrounds*.
 # Claude/GitHub-style: a low-saturation tinted ROW that KEEPS the code's own
@@ -218,6 +225,14 @@ light:
   # Light UI greys beyond the 16 (upstream wildcharm.vim light UI groups,
   # admitted 0.6.0) — the light counterparts of extended.ui_grey/line_grey.
   extended:
+    purple:     "#5f00d7"   # light counterpart of extended.purple (added 0.8.1
+                            # with the dark-purple readability pass). Mirrors
+                            # light.syntax.special/string_special (== the light
+                            # "purple" concept, as dark unifies extended.purple ==
+                            # special == string_special); 7.81:1 on the #f5f5f5
+                            # ground. Before this key, the sole consumer (yazi
+                            # which-key desc) fell through vext() to the DARK
+                            # #af87ff — 2.49:1 on light, a latent AA miss
     line_grey:  "#b2b2b2"   # xterm 249 — upstream light LineNr
     ui_dark:    "#5f5f5f"   # xterm 59  — upstream light StatusLine bg; also the
                             # light cursor-bar fill (vifm CurrLine / cmus sel —

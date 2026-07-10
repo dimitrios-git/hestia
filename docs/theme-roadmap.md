@@ -52,6 +52,14 @@ but either way a layer-3 file is never the place a colour decision lives.
   **prompt's git-dirty counts stay RED** (option b — they're a danger/attention signal,
   matching the accent/danger split; staged=green, unstaged/untracked=red). ANSI color1
   itself stays red everywhere (git/ls/errors).
+- **2026-07-10 — accent→violet phase 5: flash-mesh WALLPAPERS.** The default background's
+  accent flashes go violet. Only `themes/plain-mesh/mesh-scene.js` `COLORS.{dark,light}.accent`
+  changed (`#d7005f`→`#7c3aed`); re-rendered the full matrix (6 res × dark/light × mp4+t0-png,
+  24 assets) via the headless-chromium harness (GPU ~0.06–0.14 s/frame), verified violet in both
+  variants. Published **`flash-mesh-v2`**; the `wallpapers` role now versions flavours
+  independently (`wallpaper_flavour_versions`: flash-mesh v2, plain-mesh v1 — plain-mesh has no
+  flashes, so it's accent-independent and unchanged) and carries the 24 new checksums. `get_url`
+  re-downloads on checksum mismatch, so the v1→v2 swap is native (no marker/creates gotcha).
 - **2026-07-10 — accent→violet phase 2: GTK + KDE/Qt accent.** No palette bump (role
   defaults tracking `roles.accent`): `gtk_theme_accent` `#d7005f`→`#7c3aed` (adw-gtk3
   recolour; the `(version, accent)` marker triggers a rebuild) and the `qt_theme`

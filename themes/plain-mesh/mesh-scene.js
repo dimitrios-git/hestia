@@ -34,8 +34,8 @@ export const P = {
 };
 
 export const COLORS = {
-  dark:  { bg: '#1a1a1a', line: '#cfc8ba', accent: '#d7005f' },
-  light: { bg: '#f5f5f5', line: '#3a352c', accent: '#d7005f' },
+  dark:  { bg: '#1a1a1a', line: '#cfc8ba', accent: '#7c3aed' },
+  light: { bg: '#f5f5f5', line: '#3a352c', accent: '#7c3aed' },
 };
 
 // mulberry32 — tiny deterministic PRNG (event schedule must be reproducible)

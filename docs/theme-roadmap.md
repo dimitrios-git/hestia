@@ -42,6 +42,25 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-10 (0.8.1) — dark Special/escape purple lifted #af5fff→#af87ff (readability).**
+  First independent (post-wildcharm) tuning of a syntax hue, driven by a
+  measurement pass rendered on real Shiki output (the thecodingidiot pipeline).
+  The escape/regex/delimiter purple (`extended.purple`, consumed by
+  `syntax.string_special` / `special` / `todo`) was the **only** dark syntax
+  colour that cleared the `#1a1a1a` code ground (4.89:1) but **dipped below AA on
+  the raised greys** — 4.25 on `#262626` (terminal CursorLine, vifm preview),
+  3.71 on `#303030`. Moved one xterm cube step up the green channel to **#af87ff
+  (xterm 141)**: 6.41 on bg, 5.57 on `#262626`, 4.86 on `#303030` — AA on every
+  surface, on-cube (never-invent held). It stays a lavender-purple; CIEDE2000 to
+  the magenta identifier `#ff87ff` narrows 17.2→14.6 (still apart at 13px). A
+  brighter `#bd93ff` (7.28:1) was **rejected** for closing that gap to 12.3 —
+  visibly bleeding into function-call colour on real code (user verdict on the
+  demo). Also added **`light.extended.purple: #5f00d7`**: light had no purple key,
+  so its lone consumer (yazi which-key desc) fell through `vext()` to the dark
+  hex — a latent 2.49:1 AA miss on the `#f5f5f5` ground, now 7.81:1 and coherent
+  with `light.syntax.special` (mirrors dark's unified purple). Everything else
+  left exactly as inherited — the rest of the palette already clears AA on the
+  ground. **thecodingidiot needs a re-vendor** of the Shiki pair (dark changes).
 - **2026-07-09 — simpler-language pass (data/markup).** These diverge MORE than
   the code languages — treesitter and TextMate disagree a lot on JSON/YAML/CSS/
   SQL structure. Dominant pattern: **object keys / property names** — nvim leaves

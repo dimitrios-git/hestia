@@ -6,3 +6,6 @@
 --theme="hestia"
 --style="numbers,changes"
 --italic-text=always
+# Don't wrap long lines — truncate at the terminal edge (a `>` marker), matching
+# vim/neovim's `nowrap`. In a pager bat makes the truncated lines scroll sideways.
+--wrap="never"

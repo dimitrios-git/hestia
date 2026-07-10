@@ -30,14 +30,14 @@ elif command -v batcat >/dev/null 2>&1; then
 fi
 
 bat_view() {
-    # --style=changes adds bat's git gutter (+ added, ~ modified) — a quick cue
-    # for UNCOMMITTED edits (working tree vs HEAD; NOT branch-vs-base — that's
-    # what :gd in vifmrc is for). Needs bat built with git support + the file in
-    # a repo; bat degrades to no gutter otherwise (incl. non-git files, so no
-    # wasted column). On the claude-owned /srv/devshare repos it relies on the
-    # same safe.directory whitelist as git (libgit2 reads it); if libgit2 can't
-    # read the repo it just omits the gutter — never errors.
-    "$BAT" --color=always --style=changes --paging=never --wrap=never \
+    # --style=numbers,changes: line numbers + bat's git gutter (+ added,
+    # ~ modified) — a quick cue for UNCOMMITTED edits (working tree vs HEAD; NOT
+    # branch-vs-base — that's what :gd in vifmrc is for). Needs bat built with git
+    # support + the file in a repo; bat degrades to no gutter otherwise (incl.
+    # non-git files, so no wasted column). On the claude-owned /srv/devshare repos
+    # it relies on the same safe.directory whitelist as git (libgit2 reads it); if
+    # libgit2 can't read the repo it just omits the gutter — never errors.
+    "$BAT" --color=always --style=numbers,changes --paging=never --wrap=never \
            --theme=hestia --terminal-width="$w" --line-range=":$h" -- "$f"
 }
 

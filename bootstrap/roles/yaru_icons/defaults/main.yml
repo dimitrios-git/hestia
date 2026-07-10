@@ -1,13 +1,13 @@
 ---
-# Install the prebuilt **Yaru-hestia** icon theme (hestia red #d7005f accent) into
+# Install the prebuilt **Yaru-hestia** icon theme (hestia violet #7c3aed accent) into
 # ~/.local/share/icons — no root, no build toolchain on the target. The theme is
 # built on demand by the `claude` agent and published as a hestia GitHub release;
 # this role just downloads + sha256-verifies + extracts it (the same pull pattern
 # as the localbin/fonts roles). See docs/theming.md and the GTK/Adwaita section of
 # CLAUDE.md. The build/maintenance recipe lives in this role's README.md.
-yaru_icons_release: "yaru-hestia-v2"        # the hestia release tag holding the asset (v2 = hestia red #d7005f)
+yaru_icons_release: "yaru-hestia-v3"        # the hestia release tag holding the asset (v3 = hestia violet #7c3aed)
 yaru_icons_url: "https://github.com/dimitrios-git/hestia/releases/download/{{ yaru_icons_release }}/Yaru-hestia-icons.tar.gz"
-yaru_icons_sha256: "6926f9107203391b8da0a4a20c437fbeccc4d30c49dc979ed1b5ecc09863f9a8"
+yaru_icons_sha256: "f4993ae99bbaa37f6ead04ce3bedc9dfd6ecc189f798f75368e855af2d8b8208"
 
 yaru_icons_theme: "Yaru-hestia"             # the active icon theme (settings.ini / gsettings select this)
 yaru_icons_bundled: [Yaru, Yaru-hestia]     # dirs the tarball extracts (base + accent overlay)

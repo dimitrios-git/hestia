@@ -37,23 +37,41 @@ sel=$(printf '%s\n%s\n%s\n%s\n%s\n' \
       | wofi --dmenu -i -p Power -W 320 -H 270) || exit 0
 
 # confirm MESSAGE BUTTON-LABEL COMMAND — swaynag auto-reads the themed config,
-# so the warning renders as the full-orange banner with a black-text message.
-# The command is run **detached** (`setsid -f`): swaynag executes a button's
-# command and then EXITS immediately, and a command still running at that instant
-# is reaped with it. That's fine for instant actions (`swaymsg exit`), but it
-# silently killed `systemctl reboot`/`poweroff` mid-flight — they need a logind
-# D-Bus round-trip to land, so the button "fired" and the machine did nothing
-# (a race the mate-polkit auth agent's added latency tipped over the edge, 2026-07;
-# CanReboot said yes and the swaynag button fired, but the process died before the
-# call completed). setsid runs it in a new session so swaynag's exit can't reap it.
+# so the warning renders as the full-accent banner with a black-text message.
 confirm() {
-    swaynag -t warning -m "$1" -B "$2" "setsid -f $3" -s Cancel
+    swaynag -t warning -m "$1" -B "$2" "$3" -s Cancel
+}
+
+# Reboot/shutdown: systemd REFUSES while another user holds a session ("User X is
+# logged in. Please retry after … logging out other users") — and only proceeds
+# with `-i`, which ends those sessions. On this box that's the lingering `claude`
+# agent, so the menu needs `-i`; we NAME who'll be logged out so a real user's
+# session makes you think twice and the claude agent doesn't. logind then
+# authorises the reboot via the `*-multiple-sessions` polkit rule (system/polkit/,
+# claude_user role) with no admin prompt.
+#
+# This is the actual wall — NOT the polkit rule and NOT swaynag reaping the command
+# (both earlier chases were red herrings: `pkcheck`/`CanReboot` returned yes and the
+# button fired; systemd's own multi-user check is what silently refused).
+other_sessions() {
+    loginctl list-users --no-legend 2>/dev/null \
+      | awk -v me="$USER" '$2 != me { print $2 }' | paste -sd, -
+}
+
+confirm_power() {  # $1 = verb (reboot|poweroff)   $2 = label (Reboot|Shut down)
+    who=$(other_sessions)
+    if [ -n "$who" ]; then
+        confirm "$2 now? Other sessions are still open and will be ended: $who." \
+                "$2 anyway" "systemctl $1 -i"
+    else
+        confirm "$2 the machine?" "$2" "systemctl $1"
+    fi
 }
 
 case $sel in
     "$lock")     exec swaylock -f ;;
     "$suspend")  exec systemctl suspend ;;
     "$logout")   confirm "End the Wayland session? Unsaved work in open apps will be lost." "Yes, log out" "swaymsg exit" ;;
-    "$reboot")   confirm "Reboot the machine?" "Reboot" "systemctl reboot" ;;
-    "$shutdown") confirm "Shut down the machine?" "Shut down" "systemctl poweroff" ;;
+    "$reboot")   confirm_power reboot "Reboot" ;;
+    "$shutdown") confirm_power poweroff "Shut down" ;;
 esac

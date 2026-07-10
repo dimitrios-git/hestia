@@ -29,6 +29,27 @@ elif command -v batcat >/dev/null 2>&1; then
     BAT=batcat
 fi
 
+# Truncate each preview line to $w visible columns, ANSI-aware (SGR escapes don't
+# count toward width). WHY: vifm 0.14 has no nowrap option for the preview and
+# WRAPS long lines; bat (like most tools) emits full-length lines and leaves
+# clipping to the terminal — so bat's own --wrap=never has no effect in the notty
+# preview pipe. We clip here so long lines match vim/neovim `nowrap` instead of
+# wrapping the pane. awk (not python) keeps the per-cursor-move preview snappy.
+clip_cols() {
+    awk -v w="$w" '{
+        n=0; out=""; i=1; L=length($0)
+        while (i<=L) {
+            if (substr($0,i,1)=="\033" && substr($0,i+1,1)=="[") {
+                # consume an SGR escape (ESC [ ... m) without counting width
+                j=i+2
+                while (j<=L && index("0123456789;",substr($0,j,1))>0) j++
+                out=out substr($0,i,j-i+1); i=j+1
+            } else { if (n>=w) break; out=out substr($0,i,1); i++; n++ }
+        }
+        print out "\033[0m"
+    }'
+}
+
 bat_view() {
     # --style=numbers,changes: line numbers + bat's git gutter (+ added,
     # ~ modified) — a quick cue for UNCOMMITTED edits (working tree vs HEAD; NOT
@@ -37,8 +58,9 @@ bat_view() {
     # non-git files, so no wasted column). On the claude-owned /srv/devshare repos
     # it relies on the same safe.directory whitelist as git (libgit2 reads it); if
     # libgit2 can't read the repo it just omits the gutter — never errors.
+    # Piped through clip_cols so long lines are truncated (not wrapped) in the pane.
     "$BAT" --color=always --style=numbers,changes --paging=never --wrap=never \
-           --theme=hestia --terminal-width="$w" --line-range=":$h" -- "$f"
+           --theme=hestia --terminal-width="$w" --line-range=":$h" -- "$f" | clip_cols
 }
 
 if [ -d "$f" ]; then

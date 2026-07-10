@@ -53,3 +53,10 @@ ring-caps-lock-color=d78700
 caps-lock-key-hl-color=d78700
 caps-lock-bs-hl-color=d11800
 text-caps-lock-color=1a1a1a
+
+# keyboard-layout indicator (the "language" field): match the lock background so
+# the box blends in — swaylock's default is a separate translucent-dark fill,
+# which read as a different background against color= above.
+layout-bg-color=f5f5f5
+layout-border-color=f5f5f5
+layout-text-color=1a1a1a

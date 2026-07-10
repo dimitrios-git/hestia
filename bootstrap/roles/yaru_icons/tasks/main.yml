@@ -29,12 +29,16 @@
         checksum: "sha256:{{ yaru_icons_sha256 }}"
         mode: "0644"
 
+    # NO `creates:` guard. It would key on Yaru-hestia/index.theme, which PERSISTS
+    # across releases — so on a version bump (e.g. v2 red -> v3 violet) unarchive
+    # would SKIP and the new icons never land, even though the marker gate let the
+    # block in. Idempotency is the per-release marker (this whole block is gated on
+    # it); within the block we always extract so an upgrade actually overwrites.
     - name: Extract the theme into ~/.local/share/icons
       ansible.builtin.unarchive:
         src: "{{ yaru_icons_dl }}"
         remote_src: true
         dest: "{{ yaru_icons_dir }}"
-        creates: "{{ yaru_icons_dir }}/{{ yaru_icons_theme }}/index.theme"
 
     # Best-effort: the theme works without a cache (GTK reads index.theme), but the
     # cache speeds lookups. Skip cleanly if gtk-update-icon-cache isn't installed.

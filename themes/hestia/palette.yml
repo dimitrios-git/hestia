@@ -31,7 +31,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.9.0"
+version: "0.9.1"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -60,24 +60,34 @@ roles:
   link:        "#ff5f87"   # accent-coloured TEXT (wildcharm bright_red, color09) — AA on the dark surfaces
   white:       "#ffffff"   # max-contrast text
 
-# The 16-colour ANSI palette (wildcharm). Terminal apps map their colour slots to
-# these (kitty defines the canonical set; cmus/cava/vifm track it). Index in [].
+# The 16-colour ANSI palette. Terminal apps map their colour slots to these
+# (kitty defines the canonical set; cmus/cava/vifm/dircolors track it). Index in
+# []. SINCE 0.9.1 the chromatic slots a Memphis brand hue exists for are
+# re-hued to it — the terminal counterpart of the 0.9.0 syntax re-anchor, closing
+# the ANSI/syntax coherence gap (ls/cava/TUIs now read the brand too). Re-hued:
+# green (2/10), magenta (5/13), cyan->teal (6/14), bright_red->coral (9); the
+# LITERAL brand values land in the vivid slots (magenta #f725a0, teal #0cb2c0,
+# coral #ff4f38). KEPT wildcharm as functional anchors: blue (4/12) + yellow
+# (3/11) — Memphis has neither, and the terminal needs the warm/cool split.
+# INVARIANT: color1 == accent #d7005f (cava/cmus/prompt track it). Greys + black
+# + white unchanged. Method mirrors syntax: keep the brand hue, tune lightness
+# for legibility (base ~4.7 / bright ~6.8 on the dark ground). See roadmap 0.9.1.
 ansi:
   black:          "#1a1a1a"   # [0]
-  red:            "#d7005f"   # [1]  the accent (wildcharm color01)
-  green:          "#00af5f"   # [2]
-  yellow:         "#d78700"   # [3]
-  blue:           "#0087d7"   # [4]
-  magenta:        "#d787d7"   # [5]
-  cyan:           "#00afaf"   # [6]
+  red:            "#d7005f"   # [1]  the accent (INVARIANT — color01 == accent)
+  green:          "#2f9844"   # [2]  brand.green, dark-tuned (4.72:1)
+  yellow:         "#d78700"   # [3]  functional anchor (no brand yellow)
+  blue:           "#0087d7"   # [4]  functional anchor (no brand blue)
+  magenta:        "#f725a0"   # [5]  brand.magenta LITERAL (4.75:1)
+  cyan:           "#0cb2c0"   # [6]  brand.teal LITERAL (6.75:1)
   white:          "#d0d0d0"   # [7]
   bright_black:   "#767676"   # [8]
-  bright_red:     "#ff5f87"   # [9]
-  bright_green:   "#00d75f"   # [10]
-  bright_yellow:  "#ffaf00"   # [11]
-  bright_blue:    "#00afff"   # [12]
-  bright_magenta: "#ff87ff"   # [13]
-  bright_cyan:    "#00d7d7"   # [14]
+  bright_red:     "#ff4f38"   # [9]  brand.coral LITERAL (5.33:1)
+  bright_green:   "#3ab953"   # [10] brand.green, brighter (6.83:1)
+  bright_yellow:  "#ffaf00"   # [11] functional anchor
+  bright_blue:    "#00afff"   # [12] functional anchor
+  bright_magenta: "#fa74c2"   # [13] brand.magenta, brighter (6.91:1)
+  bright_cyan:    "#22cdda"   # [14] brand.teal, brighter (6.90:1)
   bright_white:   "#ffffff"   # [15]
 
 # Colours wildcharm uses beyond the ANSI 16 (xterm-256 indices) — upstream
@@ -214,32 +224,31 @@ light:
                               # role (dark needed bright_red #ff5f87)
     accent_dark:  "#9b0040"   # same as dark — urgent borders, sunken red fills
     accent_fg:    "#ffffff"   # text ON the accent fill — same as dark
-  # The light ANSI 16 — upstream wildcharm.vim's light g:terminal_ansi_colors
-  # (never invent; /usr/share/vim/vim91/colors/wildcharm.vim line 105), with ONE
-  # deviation: color1 is the ACCENT, not upstream's #af0000 — hestia's identity
-  # is `accent == ANSI color01` and it must hold in BOTH variants, or every
-  # accent-tracks-colour-1 consumer (cmus bars, prompt dirty counts) silently
-  # drifts to a plain red on light (caught live, 0.7.1; upstream's #af0000
-  # lives on as light syntax.constant). Other upstream quirks are deliberate
-  # design: color7 "white" is a mid-grey and color0 "black" is pure black on
-  # light. Note bg is NOT color0 here (unlike dark, where bg == color0) — no
-  # invisible-TUI watch item on light.
+  # The light ANSI 16 — since 0.9.1 the SAME Memphis re-anchor as dark (the
+  # chromatic slots re-hued to the brand, darkened for AA on the #f5f5f5 ground;
+  # mirror of the dark ANSI note above). Re-hued: green (2/10), magenta (5/13),
+  # cyan->teal (6/14), bright_red->coral (9) — all light-corrected. KEPT wildcharm
+  # (upstream light) as functional anchors: blue (4/12) + yellow (3/11) — Memphis
+  # has neither. INVARIANT: color1 == accent #d7005f (BOTH variants, or every
+  # accent-tracks-colour-1 consumer — cmus bars, prompt dirty counts — silently
+  # drifts to a plain red on light; caught live 0.7.1). color7 "white" mid-grey +
+  # color0 "black" pure black kept; bg is NOT color0 on light.
   ansi:
     black:          "#000000"   # [0]
-    red:            "#d7005f"   # [1]  the accent (deviation — see above)
-    green:          "#008700"   # [2]
-    yellow:         "#af5f00"   # [3]
-    blue:           "#005faf"   # [4]
-    magenta:        "#870087"   # [5]
-    cyan:           "#008787"   # [6]
+    red:            "#d7005f"   # [1]  the accent (INVARIANT — color01 == accent)
+    green:          "#237133"   # [2]  brand.green, light-tuned (5.53:1)
+    yellow:         "#af5f00"   # [3]  functional anchor (no brand yellow)
+    blue:           "#005faf"   # [4]  functional anchor (no brand blue)
+    magenta:        "#be0772"   # [5]  brand.magenta, light-tuned (5.56:1)
+    cyan:           "#076d76"   # [6]  brand.teal, light-tuned (5.57:1)
     white:          "#8a8a8a"   # [7]
     bright_black:   "#808080"   # [8]
-    bright_red:     "#d70000"   # [9]
-    bright_green:   "#5faf5f"   # [10]
-    bright_yellow:  "#d78700"   # [11]
-    bright_blue:    "#0087d7"   # [12]
-    bright_magenta: "#af00af"   # [13]
-    bright_cyan:    "#00afaf"   # [14]
+    bright_red:     "#d11800"   # [9]  brand.coral, light-tuned (5.01:1)
+    bright_green:   "#277e39"   # [10] brand.green, lighter (4.66:1)
+    bright_yellow:  "#d78700"   # [11] functional anchor
+    bright_blue:    "#0087d7"   # [12] functional anchor
+    bright_magenta: "#d40880"   # [13] brand.magenta, lighter (4.65:1)
+    bright_cyan:    "#087a84"   # [14] brand.teal, lighter (4.67:1)
     bright_white:   "#ffffff"   # [15]
   # Light UI greys beyond the 16 (upstream wildcharm.vim light UI groups,
   # admitted 0.6.0) — the light counterparts of extended.ui_grey/line_grey.

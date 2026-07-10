@@ -42,6 +42,24 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-10 (0.9.1) — terminal ANSI 16 re-anchored on Memphis too (coherence).**
+  The follow-up 0.9.0 flagged: the syntax layer went Memphis but the ANSI 16 was
+  left on wildcharm, so `ls`/cava/TUIs/prompt read the old palette while bat/
+  vim-code read the brand. Closed the gap by re-hueing the chromatic slots a
+  Memphis hue exists for — **green (2/10), magenta (5/13), cyan→teal (6/14),
+  bright_red→coral (9)** — both variants; the LITERAL brand values land in the
+  vivid dark slots (magenta `#f725a0`, teal `#0cb2c0`, coral `#ff4f38`). Same
+  method as syntax: keep the brand hue, tune lightness for legibility (base ~4.7 /
+  bright ~6.8 on dark; darkened for the light ground). **KEPT wildcharm as
+  functional anchors: blue (4/12) + yellow (3/11)** — Memphis carries no blue or
+  yellow and the terminal needs the warm/cool split (same call as syntax's
+  keyword/type). **INVARIANT: `color1` == accent `#d7005f`** both variants — every
+  accent-tracks-colour-1 consumer (cava sweep, cmus bars, prompt dirty counts)
+  depends on it. Greys/black/white untouched. Consumers re-rendered: kitty, vifm,
+  dircolors, cava, cmus, ranger, yazi (`render.py --check` clean). Shiki/VS Code/
+  bat tmTheme are syntax-only — unaffected (Shiki dist changed only its version
+  string, so **no functional stoa re-vendor**). A possible further step is
+  re-huing the non-ANSI extended greys, but the terminal now reads Memphis.
 - **2026-07-10 (0.9.0) — the syntax layer re-anchored on the tci Memphis brand ("make it ours").**
   The first deliberate break from wildcharm: the code-highlighting hues now come
   from thecodingidiot's own five brand accents (`apps/thecodingidiot/app/

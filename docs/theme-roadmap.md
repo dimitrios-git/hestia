@@ -42,6 +42,33 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-10 (0.10.0) — THE ACCENT: red → violet `#7c3aed` (phase 1 of the purple migration).**
+  The identity move: the UI accent flips from wildcharm red `#d7005f` to violet — tci's
+  default UI accent, "easier on the eye" for every button/focus/highlight than a
+  saturated pink-red. **Shade:** tci's literal `#8b5cf6` can't be the accent — as a
+  FILL with white text it's 4.23:1 (fails AA), so the accent is the deeper
+  **`#7c3aed`** (white-on 5.70:1, beating the old red's 5.18; also clears the light
+  ground as text at 5.23:1). tci's `#8b5cf6` stays the *syntax* purple (a lighter
+  violet suits code text; the fill-tuned `#7c3aed` suits the accent — same hue
+  family, differently tuned; syntax NOT re-derived — the shift would be ΔE~3, not
+  worth a re-vendor). **Two-colour semantic split introduced:** `roles.accent` =
+  violet (brand/focus/selection/primary/chrome); new **`roles.danger`/`danger_dark`**
+  = the retired red pair (`#d7005f`/`#9b0040`) for error / critical notifications /
+  destructive confirms / wrong-password. Repointed to danger in render.py: mako
+  `[urgency=high]`, swaynag warning/error banners, swaylock wrong-password inside,
+  glow dark `error_bg`, zathura `notification-error-bg`. Everything else accent →
+  violet automatically. **`accent == ANSI color01` invariant RETIRED** — color1
+  stays red (terminal git/errors); the accent is no longer an ANSI colour. Also:
+  the waybar launcher's **Debian swirl dropped** (→ neutral grid glyph U+F0570; this
+  is Ansible, distro-neutral) and the render-markdown heading wash re-tinted violet.
+  Version 0.10.0, all 36 artifacts re-rendered (`render.py --check` clean).
+  **This is phase 1 of a multi-PR migration** — remaining: GTK accent (gtk_theme),
+  KDE/Qt accent (qt_theme), **Yaru icons rebuild** (violet, pre-compensated →
+  yaru-hestia-v3), tci adopts violet (stoa globals.css), terminal accents
+  (cmus/prompt/cava → truecolor violet, "gradually"), flash-mesh **wallpapers**
+  regenerated violet, and a **CLAUDE.md / docs sweep** once the migration lands
+  (the "accent red #d7005f" mentions go stale gradually — swept at the end, not
+  churned per phase).
 - **2026-07-10 (0.9.1) — terminal ANSI 16 re-anchored on Memphis too (coherence).**
   The follow-up 0.9.0 flagged: the syntax layer went Memphis but the ANSI 16 was
   left on wildcharm, so `ls`/cava/TUIs/prompt read the old palette while bat/

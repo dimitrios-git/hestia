@@ -42,6 +42,16 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-10 — accent→violet phase 4: terminal accents (cava + cmus).** Config-only,
+  no palette bump. **cava** sweep re-anchored on violet (truecolor: deep violet →
+  accent → light violet → blue → bright blue → cyan). **cmus** is 256-colour (no
+  truecolor), so it uses the nearest cube violets — NOT ANSI color1, which stays red:
+  fills (progress/titleline/playing-track bg + white) = 56 `#5f00d7` (white-on 7.33)
+  both variants; accent TEXT (info, playing-track fg) = 141 `#af87ff` on dark / 56 on
+  light (a single cube violet can't be both a legible fill and legible text). The shell
+  **prompt's git-dirty counts stay RED** (option b — they're a danger/attention signal,
+  matching the accent/danger split; staged=green, unstaged/untracked=red). ANSI color1
+  itself stays red everywhere (git/ls/errors).
 - **2026-07-10 — accent→violet phase 2: GTK + KDE/Qt accent.** No palette bump (role
   defaults tracking `roles.accent`): `gtk_theme_accent` `#d7005f`→`#7c3aed` (adw-gtk3
   recolour; the `(version, accent)` marker triggers a rebuild) and the `qt_theme`

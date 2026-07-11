@@ -101,13 +101,13 @@ if [ -x /usr/bin/dircolors ]; then
     #   d+r  bold      -> accent red  (man section headers / commands)
     #   u+b  underline -> blue        (man args / options)
     #   Sky  search    -> black on yellow (highlighter; matches vim's search)
-    #   PWr  prompt    -> bright-white on accent (the bottom status bar — so it
-    #                     matches vifm/cmus and harmonises with the accent cursor
-    #                     that parks next to it, instead of less's default cyan)
+    #   PWc  prompt    -> bright-white on cyan (the bottom status bar — cyan is
+    #                     the theme's focus colour, so it harmonises with the
+    #                     accent cursor that parks next to it)
     #   NK   line nums -> grey (when -N is on)
     #   E+R  errors    -> bright red
-    export LESS='-R --use-color -Dd+r -Du+b -DSky -DPWr -DNK -DE+R'
-    export MANPAGER="less -R --use-color -Dd+r -Du+b -DSky -DPWr -DNK -DE+R"
+    export LESS='-R --use-color -Dd+r -Du+b -DSky -DPWc -DNK -DE+R'
+    export MANPAGER="less -R --use-color -Dd+r -Du+b -DSky -DPWc -DNK -DE+R"
 fi
 
 # ls aliases

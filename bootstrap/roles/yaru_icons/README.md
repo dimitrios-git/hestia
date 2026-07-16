@@ -80,3 +80,10 @@ PNG — `python3 -c "from PIL import Image,…"` — the front should read `#7c3
 - `render-icons` needs `-j1` or inkscape instances race on dbus and a few icons fail.
 - Yaru's dark icon flavour lightens the folder accent — we ship the **light** `Yaru-hestia`
   and use it even on the dark desktop (folders are bg-independent; symbolics recolour via GTK).
+- **`inode-directory` must alias `folder`, or KDE file managers show orange folders.**
+  Base Yaru symlinks `inode-directory.png -> folder.png` per size; the accent overlay only
+  recolours `folder.png` and ships no `inode-directory`, so it inherits base Yaru's *orange*
+  for that name. GTK managers request `folder` (violet), but dolphin/krusader draw the main
+  view from `inode-directory` — so they'd render orange on the violet desktop. The role
+  recreates the symlinks after extract (`tasks/main.yml`); a future rebuild should carry
+  them in the tarball (add the `inode-directory` symlinks to the packaged theme in step 4).

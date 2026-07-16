@@ -8,15 +8,18 @@ Deliberate minimalism, but it left a real gap: a distributable spin needs a
 wallpaper *story* — engine, content, and licensing — and lots of users simply
 want one. This is the ride that filled the gap, and it ended somewhere better
 than "pick a nice photo": the default background is now **rendered from
-hestia's own design system**, seamlessly looping, in both theme variants.
+hestia's own design system**, in both theme variants — and, after a detour
+through video and back, painted as a single static frame that costs nothing to
+keep on screen.
 
 ## The contenders
 
 None of the interesting tools is in Debian's archive, and none publishes
 prebuilt binaries — so hestia builds them once and ships them as
 sha256-pinned assets on a GitHub release (the same pattern as the Yaru icon
-theme). All three survived the trial and install together behind one toggle
-(`enable_wallpapers`); they cover different jobs:
+theme). All three were built and trialled behind one toggle
+(`enable_wallpapers`); two are kept, and one — mpvpaper — was ultimately
+removed (the epilogue). They covered different jobs:
 
 | Tool | Verdict | Why |
 |---|---|---|
@@ -96,8 +99,12 @@ lattice, so a frozen frame of it reads as the same wallpaper minus the drift —
 and the RSS graph is a flat line. The lesson for the catalog: **a verdict isn't
 final; a "closed" gate can reopen when a tool's real cost only shows up at
 runtime, over days.** mpvpaper was then removed from the install entirely —
-binary, its `libmpv2` dependency, and the now-unused video downloads — leaving
-a lighter footprint and a wallpaper that costs nothing to keep on screen.
+the binary, its `libmpv2` dependency, its slideshow wrapper — and the
+now-orphaned loop videos were purged everywhere they lived: the local
+downloads, and the `.mp4` assets on every `plain-mesh` / `flash-mesh` release
+(the render bakes them as an artefact, but nothing ships or plays them). The
+wallpaper stack is PNG-only now, a lighter footprint and a wallpaper that
+costs nothing to keep on screen.
 
 ## plain-mesh: the base flavour
 
@@ -111,10 +118,12 @@ other frame (measured: the wrap-around frame delta equals a normal
 adjacent-frame delta). The render harness (`themes/plain-mesh/`) drives the
 scene frame-by-frame with a deterministic clock in headless Chromium —
 never wall-clock capture — so renders are repeatable and any resolution is a
-viewport size. Six resolutions × two variants, encoded at x264 crf 14
-(quality over size: with thin lines, banding is the enemy), published as the
-`plain-mesh-v1` release with a static t=0 PNG beside every loop — the stills
-serve wpaperd, swaybg, and any no-video spin.
+viewport size. Six resolutions × two variants. The render produces both a
+seamless loop (x264 crf 14 — quality over size: with thin lines, banding is
+the enemy) and a static t=0 PNG; the `plain-mesh-v1` release first shipped
+both, but once wpaperd-on-stills became the engine the loop videos were
+deleted from it, so the release ships **PNG-only** now — the frame wpaperd
+paints, and the fallback for swaybg or a lean spin.
 
 At the sway end, `user/sway/wallpaper.sh` runs as `exec_always` from the
 generated theme fragment: per output it picks the exact-resolution PNG (or
@@ -173,12 +182,20 @@ computed per aspect ratio, so portrait renders get their own visible set.
   *leak*: measure RSS over days, not minutes. Here it forced the engine back to
   static stills (the epilogue). Always ship the static fallback; it may become
   the main path.
+- **wpaperd has no `fill` mode** — its README lists one, but the actual enum is
+  `stretch / center / fit / tile / fit-border-color`, and with
+  `deny_unknown_fields` an invalid value makes wpaperd reject the *whole* config
+  and paint **black** (hit live, straight after the switch). Verify enum values
+  against the source, not the README. hestia uses `fit-border-color`: an
+  exact-resolution match is 1:1, and the mesh's own ground-coloured border makes
+  any letterbox invisible.
 
 ## Where it lives
 
 - Engine (wpaperd, static mesh PNGs) + slideshow wrapper: `user/sway/wallpaper.sh`, `user/bin/awww-slideshow`
 - Render harness + tuning page: `themes/plain-mesh/`
-- Install wiring: `bootstrap/roles/wallpapers/` (assets), the `localbin`
-  entries in `bootstrap/group_vars/all.yml` (binaries), `enable_wallpapers`
-  (default on), `wallpaper_flavour` (per host)
-- Releases: `wallpapers-v1` (binaries), `plain-mesh-v1` / `flash-mesh-v1` (assets)
+- Install wiring: `bootstrap/roles/wallpapers/` (PNG assets), the `localbin`
+  entries in `bootstrap/group_vars/all.yml` (wpaperd + awww binaries),
+  `enable_wallpapers` (default on), `wallpaper_flavour` (per host)
+- Releases: `wallpapers-v1` (wpaperd/awww binaries), `plain-mesh-v1` /
+  `flash-mesh-v1` / `flash-mesh-v2` (**PNG-only** — the loop videos were removed)

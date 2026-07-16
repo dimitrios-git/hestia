@@ -167,44 +167,74 @@ still `claude`'s.
 - **Retire the stopgap.** This deploy *owns* `claude`'s `.bashrc` symlink,
   replacing the manual one (and the CLAUDE.md note updates to match).
 
-## 7. The screenshot rig (Tier B, specifics)
+## 7. The screenshot rig (Tier B) — **built** (`user/bin/hestia-shot`)
 
-- A minimal, self-contained sway config for headless use: one
-  `WLR_HEADLESS_OUTPUTS` output at the target showcase resolution, the hestia
-  theme fragment `include`d, waybar launched, no greetd/session machinery.
-- Launch under `WLR_BACKENDS=headless`; drive the app into the exact state
-  (vifm preview / `:gs` / `:gc` / `:gd`, ranger, yazi), `grim` the output.
-- This is the same discipline as the existing TUI **pty-testing** note
-  (CLAUDE.md, repo overview) — extended from "scrape a TUI" to "screenshot a
-  themed Wayland surface." Document the procedure so a showcase re-shoot is a
-  repeatable command, not a one-off.
+Implemented as **`user/bin/hestia-shot`** (deployed to `claude`'s `~/.local/bin`
+via the Tier-A subset). One command spins up a throwaway nested compositor, paints
+the theme, runs the scene, captures it, and tears the whole thing down:
+
+```
+hestia-shot desktop  out.png     # waybar + mesh wallpaper + tiled vifm (composite)
+hestia-shot vifm     out.png [p] # vifm alone (any single-app scene)
+hestia-shot ranger|yazi out.png
+hestia-shot app "cmus" out.png   # any command in a themed kitty
+```
+
+What made it work (the load-bearing details):
+- **`WLR_BACKENDS=headless` + `WLR_RENDERER=pixman`** — a virtual output, software
+  rendering, **no GPU/DRM/EGL** needed (claude has no seat; pixman sidesteps it).
+- **`dbus-run-session -- sway …`** — waybar (and portals) need a session bus;
+  without one the bar silently fails to map. The rig wraps the whole session.
+- **Wallpaper via `output … bg <png> fill`** — a pre-rendered mesh PNG, so no live
+  render. Picks `claude`'s **deployed** `~/.local/share/backgrounds/hestia` asset
+  (the Tier-B `wallpapers` role), falling back to the in-repo showcase mesh, then
+  solid ground. (Tier B also gives claude `wpaperd`/`awww` via `localbin` for parity.)
+- **Colours from the palette** — the rig `sed`s `$accent`/`$bg` out of the generated
+  `user/sway/theme-<variant>.conf` and sets `client.focused` from them, and points
+  waybar at a staged dir that resolves the `theme-<variant>.css` pair to `theme.css`
+  (the way the bootstrap symlink does). So it renders the **real** theme from the
+  clone — no hardcoded hexes.
+- **Clean teardown** — launched under `setsid` (own process group); teardown does a
+  graceful `swaymsg exit` then a group kill, so waybar/kitty (grandchildren of
+  `dbus-run-session`) never leak. Verified: `changed=0` strays after each run.
+
+Same discipline as the existing TUI **pty-testing** note (CLAUDE.md, repo overview),
+extended from "scrape a TUI" to "screenshot a themed Wayland surface." A re-shoot is
+now a one-line command, not a one-off.
 
 ## 8. Phased plan (multiple PRs)
 
 Deliberately staged so each PR is solid and verifiable on its own.
 
-1. **PR A — this design doc.** (Parks the screenshot work until the rig exists.)
-2. **PR B — Tier A deploy.** Manifest principal-scoping + the "deploy claude's
-   environment" pass (terminal + theme). Retire the `.bashrc` stopgap. *Verify:*
-   `claude`'s home comes up themed — `hestia.vifm` violet, kitty `theme.conf`,
-   cmus/ranger/nvim present — and the Tier C exclusions hold (own gitconfig, no
-   `.bash_secrets`, `ls ~dimitrios` denied).
-3. **PR C — Tier B rig.** `localbin` for `claude` (`wpaperd`/`awww`) + the desktop
-   tools + the headless-sway screenshot harness + a documented "claude shoots a
-   showcase screenshot" procedure.
+1. **PR A — this design doc.** ✅ (#240) — parked the screenshot work until the rig exists.
+2. **PR B — Tier A deploy.** ✅ (#241) — manifest `claude: true` tagging + the "deploy
+   claude's environment" pass (terminal + theme); `.bashrc` stopgap retired. Verified:
+   `claude`'s home comes up themed (violet `hestia.vifm`, kitty `theme.conf`,
+   cmus/ranger/nvim present) and the Tier C exclusions held (own gitconfig untouched,
+   no `.bash_secrets`, `ls ~dimitrios` denied).
+3. **PR C — Tier B rig.** ✅ — `user/bin/hestia-shot` (the headless-sway rig, §7) +
+   the Tier-B `localbin` (`wpaperd`/`awww`) + `wallpapers` (mesh assets) pass for
+   `claude`, gated `enable_claude_rig`. Verified live: the full desktop composite
+   (waybar + mesh wallpaper + tiled vifm) and single-app scenes render violet-themed
+   and tear down with zero strays.
 4. **PR D — re-shoot the parked screenshots** using the rig (folds the former PR4
    back in: the 10 red-era images + the `showcase/README.md` "seamlessly-looping"
-   → static fix).
+   → static fix). ← **next**
 
-## 9. Open questions / to revisit
+## 9. Open questions / resolved
 
-- **Manifest tag shape** — `principals: [...]` per entry (recommended) vs a
-  separate claude list. Confirm at PR B.
-- **How much of Tier B is worth it** — the full desktop rig, or just enough to
-  shoot TUI-in-a-terminal? Decide when PR C is scoped against the actual shot list.
-- **Branch-tracking hygiene** — since `claude`'s live env follows its working
-  branch, is any config dangerous to have "live = mid-edit" (e.g. a broken kitty
-  theme breaks claude's own terminal)? Acceptable (claude's own workspace), but
-  worth a note in `working-with-claude.md`.
-- **Persistent vs on-demand** — `claude` must **never** run a persistent graphical
-  session (headless is the security posture); the rig is throwaway-only.
+- **Manifest tag shape** — RESOLVED (PR B): a per-entry `claude: true` flag, with the
+  subset derived via `selectattr('claude','defined')` (null-safe; one manifest, no
+  second list). A `principals: [...]` list was the alternative; the boolean flag is
+  simpler for a two-principal split.
+- **How much of Tier B** — RESOLVED: the **full desktop composite** (waybar + wallpaper
+  + tiled apps), so `desktop-dark`-class images are reproducible, not just TUIs.
+- **GTK theme for claude** — DEFERRED to PR D: the `gtk_theme` role for claude (GUI
+  file-manager shots — nemo/nautilus) isn't needed for the TUI/composite rig, so it's
+  added when PR D actually re-shoots the GUI images.
+- **Branch-tracking hygiene** — since `claude`'s live env follows its working branch, a
+  broken config mid-edit is live for claude — acceptable (its own workspace); worth a
+  line in `working-with-claude.md`.
+- **Persistent vs on-demand** — the rig is **throwaway-only** (`setsid` group, killed
+  after each shot); `claude` never runs a persistent graphical session (the headless
+  security posture).

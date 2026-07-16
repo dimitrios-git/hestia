@@ -258,6 +258,10 @@ dotfile_links:
   - { src: user/gtk/gtk-4.0/settings.ini,   dest: "{{ target_home }}/.config/gtk-4.0/settings.ini" }
   - { src: user/gtk/gtk-4.0/gtk.css,        dest: "{{ target_home }}/.config/gtk-4.0/gtk.css" }
   - { src: user/bin/claude-access,          dest: "{{ target_home }}/.local/bin/claude-access" }
+  # headless-sway screenshot rig (docs/claude-env-parity-design.md Tier B) — lets the
+  # claude agent re-shoot themed showcase images with no live desktop. claude-tagged
+  # (its purpose is claude's, though harmless for dimitrios). No secrets/identity.
+  - { src: user/bin/hestia-shot,            dest: "{{ target_home }}/.local/bin/hestia-shot", claude: true }
   # Claude Code keybindings (docs/claude-user-design.md §10 — persist the agent's
   # Claude Code config as workstation-as-code). Pure UI config, no secrets: unbinds
   # `escape` in the Chat context so a vi-mode reflex (ESC to leave insert mode in the
@@ -314,6 +318,10 @@ templated_configs:
 # (gitconfig / credential scripts / keys stay claude's own, set by the claude_user
 # role) or the desktop layer (that rides the Tier-B screenshot rig, a later PR).
 enable_claude_env: true
+# Tier B — the screenshot rig's desktop tools/assets for claude (wpaperd/awww via
+# localbin + the mesh wallpaper assets), so `hestia-shot` composites use claude's
+# real deployed wallpaper. Rides enable_claude_user; set false for a lean agent.
+enable_claude_rig: true
 claude_env_user: claude                      # the agent user (claude_user role owns its identity)
 claude_env_home: /home/claude                # claude's home (docs/claude-user-design.md)
 claude_env_repo_root: /srv/devshare/hestia   # claude's OWN clone — its env tracks its workspace branch

@@ -1,9 +1,12 @@
 ---
-# Download the selected mesh-flavour wallpaper assets (no root) — both
-# variants for each resolution in wallpaper_resolutions, video + static PNG.
-# get_url with a checksum is idempotent: an existing, matching file is left
-# alone. Switching wallpaper_flavour downloads the new set alongside the old
-# (files are flavour-prefixed) and re-stamps the marker wallpaper.sh reads.
+# Download the selected mesh-flavour wallpaper assets (no root) — both variants
+# for each resolution in wallpaper_resolutions, static PNG only. get_url with a
+# checksum is idempotent: an existing, matching file is left alone. Switching
+# wallpaper_flavour downloads the new set alongside the old (files are
+# flavour-prefixed) and re-stamps the marker wallpaper.sh reads.
+# (PNG-only since 2026-07: the default engine is wpaperd on the static frame —
+# the .mp4 loops are no longer fetched after mpvpaper was dropped for its
+# memory leak. The mp4 checksums stay in defaults as the release-asset record.)
 
 - name: Ensure the backgrounds dir exists
   ansible.builtin.file:
@@ -17,7 +20,7 @@
     dest: "{{ wallpapers_dir }}/{{ wallpaper_flavour }}-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
     checksum: "sha256:{{ wallpapers_sha256[wallpaper_flavour ~ '-' ~ item.0 ~ '-' ~ item.1 ~ '.' ~ item.2] }}"
     mode: "0644"
-  loop: "{{ ['dark', 'light'] | product(wallpaper_resolutions, ['mp4', 'png']) | list }}"
+  loop: "{{ ['dark', 'light'] | product(wallpaper_resolutions, ['png']) | list }}"
   loop_control:
     label: "{{ wallpaper_flavour }}-{{ item.0 }}-{{ item.1 }}.{{ item.2 }}"
 

@@ -300,7 +300,7 @@ askyn enable_kdenlive    "Install Kdenlive? (heavy — Qt6/KF6 video editor)" "$
 askyn enable_thunderbird "Install Thunderbird? (email client, hestia-themed)" "$def_thunderbird"
 askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)" "$def_filemgrs"
 askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)" "$def_imgviewers"
-askyn enable_wallpapers  "Install the wallpaper stack? (plain-mesh default background + wpaperd/awww/mpvpaper — prebuilt, amd64)" "$def_wallpapers"
+askyn enable_wallpapers  "Install the wallpaper stack? (mesh default background + wpaperd/awww — prebuilt, amd64)" "$def_wallpapers"
 askyn enable_firefox     "Install Firefox ESR? (the desktop browser)" "$def_firefox"
 askyn enable_firefoxpwa  "Install firefoxpwa? (PWA support — vendor apt repo)" "$def_ffpwa"
 askyn enable_chrome      "Install Google Chrome? (vendor apt repo — amd64 only)" "$def_chrome"

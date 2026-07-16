@@ -20,9 +20,9 @@ theme). All three survived the trial and install together behind one toggle
 
 | Tool | Verdict | Why |
 |---|---|---|
-| [wpaperd](https://github.com/danyspin97/wpaperd) | **kept** — the stills engine | the only one with native slideshows: per-output config, `duration` over a directory, hardware-accelerated transitions, `wpaperctl` IPC |
+| [wpaperd](https://github.com/danyspin97/wpaperd) | **kept — and now the default engine** | per-output config, `duration` slideshows over a directory, hardware-accelerated transitions, `wpaperctl` IPC; low, *flat* memory — it paints the static mesh frame (see the epilogue) |
 | awww (successor of the archived [swww](https://github.com/LGFae/swww)) | **kept** — the transition play | animated wipes/grows on demand (`awww img`), GIF support; no native slideshow — hestia's `awww-slideshow` wrapper fills that |
-| [mpvpaper](https://github.com/GhostNaN/mpvpaper) | **kept — and made the default** | video wallpapers via libmpv; anything mpv plays, playlists double as slideshows — and video is what the verdict needed |
+| [mpvpaper](https://github.com/GhostNaN/mpvpaper) | **was the default; removed** | video wallpapers via libmpv; made the mesh *move* — but its looping decode leaks memory without bound (upstream mpv bug; see the epilogue), so it lost the default slot and was dropped from the install |
 | swaybg | baseline | static, no IPC, no slideshow; remains the solid-ground fallback |
 
 One candidate never made the table: **swww**, the community favourite, was
@@ -72,6 +72,33 @@ content and becomes an artifact of the design system: palette-true,
 variant-wired, licensing-clean, reproducible. That takes video. **mpvpaper
 became the default engine because the mesh became the default background.**
 
+### Epilogue: the leak that re-picked the engine
+
+A month in, the video default showed its cost — not CPU, but **memory**.
+`mpvpaper` playing the 4K loop climbed to **~14 GB RSS after three days**, still
+rising ~10 GB/day, monotonically. It isn't a hestia misconfiguration: a looping
+video in mpv leaks unboundedly on current versions — an unfixed upstream
+regression ([mpv #15099](https://github.com/mpv-player/mpv/issues/15099),
+absent in mpv 0.32, present since 0.35; surfaced through mpvpaper by
+[mpvpaper #101](https://github.com/GhostNaN/mpvpaper/issues/101)), and it bites
+harder the larger the frame — 4K is the worst case. A wallpaper is a *permanent*
+player, so the leak has forever to run; the common community answer is a cron
+that restarts the daemon, which is a smell, not a fix.
+
+So the engine went back to the runner-up. Every mesh render already ships a
+**static t=0 PNG** beside its loop (they were there for `swaybg` and no-video
+spins all along), and **wpaperd** paints stills at flat, negligible memory.
+`user/sway/wallpaper.sh` now generates a per-output wpaperd config
+(`wpaperd -d -c …`, one section per output pointing at that output's
+best-resolution mesh PNG) instead of spawning an mpvpaper per output. The
+desktop looks all but identical — the mesh is a slow, near-still breathing
+lattice, so a frozen frame of it reads as the same wallpaper minus the drift —
+and the RSS graph is a flat line. The lesson for the catalog: **a verdict isn't
+final; a "closed" gate can reopen when a tool's real cost only shows up at
+runtime, over days.** mpvpaper was then removed from the install entirely —
+binary, its `libmpv2` dependency, and the now-unused video downloads — leaving
+a lighter footprint and a wallpaper that costs nothing to keep on screen.
+
 ## plain-mesh: the base flavour
 
 ![plain-mesh, dark](img/plain-mesh-dark.png)
@@ -90,12 +117,15 @@ viewport size. Six resolutions × two variants, encoded at x264 crf 14
 serve wpaperd, swaybg, and any no-video spin.
 
 At the sway end, `user/sway/wallpaper.sh` runs as `exec_always` from the
-generated theme fragment: per output it picks the exact-resolution file (or
-the largest available — mpv scales cleanly), starts mpvpaper idempotently,
-and **retires swaybg** — re-running on every reload, which matters because
-reload *respawns* swaybg above the wallpaper layer. That's the trial's
-stacking race, solved by construction. No assets or no mpvpaper? The script
-no-ops and the solid ground stays — nothing breaks on a lean spin.
+generated theme fragment: per output it picks the exact-resolution PNG (or
+the largest available — `fit-border-color` scales cleanly, filling any
+letterbox with the mesh's own ground-coloured border), writes a per-output
+wpaperd config and starts the daemon idempotently, and **retires swaybg** — re-running
+on every reload, which matters because reload *respawns* swaybg above the
+wallpaper layer. That's the trial's stacking race, solved by construction. No
+assets or no wpaperd? The script no-ops and the solid ground stays — nothing
+breaks on a lean spin. (This paragraph describes the current static-PNG engine;
+the video path it replaced is the epilogue above.)
 
 ## flash-mesh: the first flavour — and the default
 
@@ -139,12 +169,14 @@ computed per aspect ratio, so portrait renders get their own visible set.
   `image-display-duration=inf` and let the slideshow timer advance.
 - **Per-instance shuffle is not per-output variety**: two mpv instances can
   shuffle identically; deal from one externally-shuffled deck.
-- **A wallpaper video is a permanent decoder**: measure it, use auto-pause
-  (`mpvpaper -p`), and ship a static fallback for machines that shouldn't pay.
+- **A wallpaper video is a permanent decoder** — and on current mpv a permanent
+  *leak*: measure RSS over days, not minutes. Here it forced the engine back to
+  static stills (the epilogue). Always ship the static fallback; it may become
+  the main path.
 
 ## Where it lives
 
-- Engine + slideshow wrappers: `user/sway/wallpaper.sh`, `user/bin/awww-slideshow`, `user/bin/mpvpaper-slideshow`
+- Engine (wpaperd, static mesh PNGs) + slideshow wrapper: `user/sway/wallpaper.sh`, `user/bin/awww-slideshow`
 - Render harness + tuning page: `themes/plain-mesh/`
 - Install wiring: `bootstrap/roles/wallpapers/` (assets), the `localbin`
   entries in `bootstrap/group_vars/all.yml` (binaries), `enable_wallpapers`

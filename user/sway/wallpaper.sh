@@ -1,24 +1,39 @@
 #!/bin/bash
 # wallpaper.sh <dark|light> — the default-wallpaper engine (wallpaper verdict,
-# 2026-07): per-output mesh loop videos via mpvpaper. Run from the
-# generated sway theme fragment as `exec_always` — so it re-runs on every
-# `swaymsg reload`, which is load-bearing twice over: it re-asserts the
-# wallpaper AND re-kills the swaybg that `output * bg` respawns ABOVE the
-# wallpaper layer on reload (background-layer stacking is timing-dependent;
-# caught live in the trial). No-ops cleanly when mpvpaper or the assets are
-# absent — the theme fragment's solid ground simply stays.
+# 2026-07). Engine RE-PICKED 2026-07: the original mpvpaper-played video loop
+# leaked memory without bound — a 4K loop grew to ~14 GB RSS over 3 days here —
+# which is an unfixed UPSTREAM regression in mpv's loop path (mpv #15099,
+# surfaced by mpvpaper #101), not a config bug. So the verdict's runner-up
+# wpaperd (the stills engine) now paints the STATIC t=0 mesh PNGs that ship
+# beside the loop videos: the mesh ground stays, minus the decoder-forever cost
+# and the leak. (The .mp4 loops still download but go unused.)
 #
-# Assets: ~/.local/share/backgrounds/hestia/<flavour>-<variant>-<WxH>.mp4
+# Run from the generated sway theme fragment as `exec_always` — so it re-runs
+# on every `swaymsg reload`, load-bearing twice over: it re-asserts the engine
+# (restarts wpaperd if it died; regenerates its config) AND re-kills the swaybg
+# that `output * bg` respawns ABOVE the wallpaper layer on reload
+# (background-layer stacking is timing-dependent; caught live in the trial).
+# No-ops cleanly when wpaperd or the assets are absent — the theme fragment's
+# solid ground simply stays.
+#
+# Assets: ~/.local/share/backgrounds/hestia/<flavour>-<variant>-<WxH>.png
 # (the `wallpapers` role downloads the host's wallpaper_flavour set — plain-mesh
-# or flash-mesh — and stamps `default-flavour`; static .png companions ship
-# too, for wpaperd/swaybg use). Per output: exact resolution match, else the
-# largest available (mpv scales cleanly).
+# or flash-mesh — and stamps `default-flavour`). Per output: exact resolution
+# match, else the largest available (wpaperd's `fill` mode scales cleanly).
 
 variant=${1:?usage: wallpaper.sh <dark|light>}
 DIR="$HOME/.local/share/backgrounds/hestia"
+# wpaperd reads this at startup (via -c) and hot-reloads it on change. It lives
+# on tmpfs, NOT at ~/.config/wpaperd/config.toml — that path is a symlink into
+# the repo (the standalone/manual default), and this engine must not write it.
+CONFIG="${XDG_RUNTIME_DIR:-/tmp}/hestia-wpaperd.toml"
 
-command -v mpvpaper >/dev/null 2>&1 || exit 0
+command -v wpaperd >/dev/null 2>&1 || exit 0
 [ -d "$DIR" ] || exit 0
+
+# Retire a leftover mpvpaper from the previous (video) engine, if any — so the
+# switch takes effect on a plain reload, not just a fresh login.
+pkill -u "$USER" -x mpvpaper 2>/dev/null
 
 # Which mesh flavour to play — the wallpapers role stamps its wallpaper_flavour
 # var into the marker (flash-mesh = the default since 2026-07; plain-mesh = the
@@ -37,43 +52,56 @@ for o in json.load(sys.stdin):
 ') || exit 0
 [ -n "$outputs" ] || exit 0
 
-pick_file() {  # $1 W, $2 H -> best mp4 of the flavour+variant
-    local exact="$DIR/$flavour-$variant-${1}x${2}.mp4"
-    if [ -f "$exact" ]; then echo "$exact"; return; fi
+largest_file() {  # -> largest png of the flavour+variant ("" if none)
     local best="" best_px=0 f wh w h
-    for f in "$DIR/$flavour-$variant-"*.mp4; do
+    for f in "$DIR/$flavour-$variant-"*.png; do
         [ -f "$f" ] || continue
-        wh=${f##*-}; wh=${wh%.mp4}; w=${wh%x*}; h=${wh#*x}
+        wh=${f##*-}; wh=${wh%.png}; w=${wh%x*}; h=${wh#*x}
         if [ $((w * h)) -gt "$best_px" ]; then best_px=$((w * h)); best="$f"; fi
     done
     echo "$best"
 }
 
-running=false
+pick_file() {  # $1 W, $2 H -> exact-resolution png, else the largest
+    local exact="$DIR/$flavour-$variant-${1}x${2}.png"
+    if [ -f "$exact" ]; then echo "$exact"; return; fi
+    largest_file
+}
+
+# Build a self-contained wpaperd config: one static per-output section pointing
+# at that output's best mesh PNG, plus an `[any]` catch-all (the largest PNG) so
+# a monitor hotplugged mid-session still gets papered. `fit-border-color` shows
+# the whole frame and fills any letterbox with the sampled border colour (the
+# mesh border ≈ the ground, so bars are invisible); an exact-resolution match is
+# 1:1 with no bars at all, and same-aspect fallbacks scale to a clean full fill
+# — only an aspect-mismatch fallback shows the (ground-coloured) bars. wpaperd's
+# mode enum has no "fill"/"cover" (stretch/center/fit/tile/fit-border-color
+# only) — an invalid value makes wpaperd reject the WHOLE config and paint
+# black. Explicit output sections win over `[any]`.
+tmp="$CONFIG.tmp.$$"
+: > "$tmp"
+printf '[default]\nmode = "fit-border-color"\n\n' >> "$tmp"
+biggest=$(largest_file)
+[ -n "$biggest" ] && printf '[any]\npath = "%s"\n\n' "$biggest" >> "$tmp"
+n=0
 while read -r out w h; do
     file=$(pick_file "$w" "$h")
     [ -n "$file" ] || continue
-    # already papering this output with this file? (script's own cmdline never
-    # contains "mpvpaper", so no pgrep -f self-match)
-    if pgrep -u "$USER" -f "mpvpaper .*$out $file" >/dev/null 2>&1; then
-        running=true
-        continue
-    fi
-    pkill -u "$USER" -f "mpvpaper .*$out " 2>/dev/null   # stale variant/file on this output
-    # stop-screensaver=no is load-bearing: mpv defaults to yes, which raises a
-    # Wayland idle-inhibitor on wlroots for as long as it plays. A looping video
-    # wallpaper is always playing, so that inhibitor is held FOREVER and swayidle
-    # -w honours it — the pre-lock dim / lock / DPMS-off never fire. The wallpaper
-    # isn't media you're watching, so it must not inhibit idle.
-    mpvpaper -f -p -o "no-audio loop stop-screensaver=no" "$out" "$file"
-    running=true
+    printf '[%s]\npath = "%s"\n\n' "$out" "$file" >> "$tmp"
+    n=$((n + 1))
 done <<< "$outputs"
+if [ "$n" -eq 0 ]; then rm -f "$tmp"; exit 0; fi
+mv -f "$tmp" "$CONFIG"
+
+# Start the daemon if it isn't up (fresh login, or it died); an already-running
+# wpaperd picks up the rewritten config via its own hot-reload watch.
+if ! pgrep -u "$USER" -x wpaperd >/dev/null 2>&1; then
+    wpaperd -d -c "$CONFIG"
+fi
 
 # The wallpaper owns the background layer now — retire the solid-ground swaybg
 # (it stacks above the wallpaper when respawned by a reload). Small settle so a
 # reload-respawned swaybg exists before the kill.
-if $running; then
-    sleep 1
-    pkill -u "$USER" -x swaybg 2>/dev/null
-fi
+sleep 1
+pkill -u "$USER" -x swaybg 2>/dev/null
 exit 0

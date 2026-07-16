@@ -3,9 +3,12 @@
 The default desktop background: the **ambient web lattice** from stoa's
 thecodingidiot homepage (`CurriculumMap3D.tsx`, the `WebLattice`/`hexField`
 backdrop), rendered as **seamless 120 s loop videos** (per resolution, per
-`theme_variant`) plus a **static t=0 PNG** companion for each. Played by
-**mpvpaper** via `user/sway/wallpaper.sh` (the wallpaper-evaluation verdict,
-2026-07); the static frames serve wpaperd/swaybg and any no-video spin.
+`theme_variant`) plus a **static t=0 PNG** companion for each. The **static
+frames are what the desktop actually shows** — painted by **wpaperd** via
+`user/sway/wallpaper.sh` (wallpaper verdict, 2026-07; the engine was re-picked
+from mpvpaper after its looping video leaked memory unboundedly — an unfixed
+upstream mpv bug). The loop videos still render/ship (for mpvpaper as the
+manual video-wallpaper power tool, and any future use).
 
 "plain" is the family name; flavours join alongside as `<flavour>-mesh-*`,
 each on its own release tag, selected per host by the `wallpaper_flavour`

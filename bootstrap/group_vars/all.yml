@@ -65,11 +65,14 @@ enable_image_viewers: false # install the image-viewer keeper (ristretto)
 # Package-ish toggle (no role): gates the `wallpapers` apt group below (libmpv2,
 # mpvpaper's runtime) AND the wpaperd/awww/mpvpaper localbin entries (their
 # `enabled:` key) AND the `wallpapers` role (the plain-mesh assets). Default ON
-# since the 2026-07 VERDICT: the default hestia background is the plain-mesh
-# loop (themes/plain-mesh/, stoa's tci ambient lattice as seamless per-variant
-# videos) played per-output by mpvpaper via user/sway/wallpaper.sh (exec_always
-# in the generated theme fragment — it also retires the solid-ground swaybg,
-# which reload respawns above the wallpaper layer). Set false for a lean spin:
+# since the 2026-07 VERDICT: the default hestia background is the mesh
+# (themes/plain-mesh/, stoa's tci ambient lattice) painted per-output by wpaperd
+# via user/sway/wallpaper.sh (exec_always in the generated theme fragment — it
+# also retires the solid-ground swaybg, which reload respawns above the
+# wallpaper layer). Engine re-picked 2026-07: the original mpvpaper VIDEO loop
+# leaked memory without bound (unfixed upstream mpv bug #15099 — a 4K loop hit
+# ~14 GB RSS in 3 days), so wpaperd (the verdict runner-up) now paints the
+# STATIC t=0 mesh PNGs that ship beside the loops. Set false for a lean spin:
 # the fragment's solid ground is the no-op fallback. None of the tools is in
 # Debian apt and none ships prebuilt binaries, so the claude agent builds them
 # once and publishes the sha256-verified set as a hestia release (the Yaru

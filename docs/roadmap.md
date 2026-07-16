@@ -125,7 +125,7 @@ the next chore in a queue.
 | **Notification daemon** | **mako** | `●●●○●○` | **Snap "lightweight" pick — vs dunst / swaync / fnott** |
 | Lock screen | swaylock | `●●●◐●○` | First app themed through theming.md |
 | Idle / caffeine | swayidle | `●●–◐●○` | Behaviour, not colour (theme N/A) |
-| Wallpaper | mpvpaper + mesh | `●●●●●●` | **Fully closed — evaluated + showcased** |
+| Wallpaper | wpaperd + mesh stills | `●●●●●●` | **Fully closed — evaluated + showcased** (engine re-picked from mpvpaper 2026-07, upstream mpv loop leak) |
 | Screenshot | grim / slurp | `●●–◐●○` | |
 | Screen recording | — none | | Candidate: wf-recorder |
 | Clipboard manager | — none | | Candidate: cliphist |

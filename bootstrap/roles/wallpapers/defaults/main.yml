@@ -1,7 +1,10 @@
 ---
 # Mesh wallpaper assets (themes/plain-mesh/ is the render harness; the
-# wallpaper-evaluation verdict made the mpvpaper-played mesh loop the default
-# background). Downloaded per host from a hestia release, sha256-verified;
+# wallpaper-evaluation verdict made the mesh the default background — painted by
+# wpaperd from the static per-variant PNGs since 2026-07, when the original
+# mpvpaper VIDEO loop was dropped for an unfixed upstream mpv memory leak; the
+# .mp4 loops still download but go unused). Downloaded per host from a hestia
+# release, sha256-verified;
 # get_url is self-idempotent (existing files are checksum-matched, not
 # re-downloaded). A new render = new release tag + refreshed checksums here.
 

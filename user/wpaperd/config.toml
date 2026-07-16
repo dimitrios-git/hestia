@@ -1,13 +1,20 @@
-# wpaperd — wallpaper daemon (wallpaper EVALUATION set, enable_wallpapers).
-# Symlinked to ~/.config/wpaperd/config.toml by the dotfiles role.
+# wpaperd — wallpaper daemon (enable_wallpapers). Symlinked to
+# ~/.config/wpaperd/config.toml by the dotfiles role.
 #
-# Start it by hand while trialling (`wpaperd -d`, or an `exec wpaperd -d` sway
-# line once it wins) — then `pkill -x swaybg`: the theme fragment's solid
-# ground (sway `output * bg`) shares wpaperd's background layer and the
-# stacking order is timing-dependent (live 2026-07: swaybg WON and hid the
-# wallpaper; killing swaybg is the reliable trial move, and `swaymsg reload`
-# respawns it on top — re-kill after a reload). Killing wpaperd instead needs
-# a reload to bring the solid colour back. Runtime control: `wpaperctl`
+# NOTE: this is the STANDALONE / manual default, read only when you run bare
+# `wpaperd -d` yourself (e.g. to slideshow your own Pictures). It is NOT what
+# paints the default desktop: since 2026-07 wpaperd is the hestia default
+# wallpaper engine (it replaced mpvpaper, whose looping video leaked memory —
+# see user/sway/wallpaper.sh), and that engine drives wpaperd with its OWN
+# generated runtime config (`wpaperd -d -c $XDG_RUNTIME_DIR/hestia-wpaperd.toml`,
+# one static per-output section pointing at the mesh PNG for that output). It
+# writes there, not here, precisely because this file is a repo symlink.
+#
+# Background-layer note (still true): wpaperd and the theme fragment's solid
+# ground (sway `output * bg`) share the background layer and the stacking order
+# is timing-dependent (live 2026-07: swaybg WON and hid the wallpaper) — so the
+# engine `pkill -x swaybg`s after painting, and `swaymsg reload` respawns
+# swaybg on top so the re-run re-kills it. Runtime control: `wpaperctl`
 # (next/previous/pause/resume/toggle-pause/set). wpaperd expands `~` itself,
 # so this file stays host-portable (no rendering needed).
 #

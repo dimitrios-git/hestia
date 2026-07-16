@@ -155,7 +155,13 @@ The tuning flow is the nicest part: the *same scene module* that bakes the
 videos also builds a **live browser preview** — a single self-contained HTML
 (three.js inlined) with sliders for every parameter and a copy-parameters
 button. Tune by eye, paste the JSON, and those exact values bake into the
-release. What you previewed is what loops on the desktop, by construction.
+release. What you previewed is what sits on the desktop, by construction.
+
+Because the engine paints a *still* (the epilogue), flash-mesh ships its static
+frame as a **flash-peak frame** — event 0 caught near its peak (the image
+above), so the default desktop carries one frozen violet accent star rather
+than the bare lattice. plain-mesh, the quiet alternative, keeps the calm t=0
+still.
 
 One bug earned its place in the design: the first flash implementation picked
 nodes uniformly across the lattice — which deliberately overfills the frame
@@ -197,5 +203,6 @@ computed per aspect ratio, so portrait renders get their own visible set.
 - Install wiring: `bootstrap/roles/wallpapers/` (PNG assets), the `localbin`
   entries in `bootstrap/group_vars/all.yml` (wpaperd + awww binaries),
   `enable_wallpapers` (default on), `wallpaper_flavour` (per host)
-- Releases: `wallpapers-v1` (wpaperd/awww binaries), `plain-mesh-v1` /
-  `flash-mesh-v1` / `flash-mesh-v2` (**PNG-only** — the loop videos were removed)
+- Releases: `wallpapers-v1` (wpaperd/awww binaries), `plain-mesh-v1` and
+  `flash-mesh-v3` (current default; **PNG-only** — the loop videos were removed,
+  and flash-mesh's still is now a flash-peak frame)

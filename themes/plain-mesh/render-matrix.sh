@@ -27,7 +27,13 @@ for res in $RES; do
     ffmpeg -y -framerate "$FPS" -i "$TMP/frames/f%05d.png" -c:v libx264 -crf "$CRF" \
       -preset slow -pix_fmt yuv420p -movflags +faststart \
       "$OUT/$FLAVOUR-mesh-$v-$res.mp4" 2>&1 | tail -1
-    cp "$TMP/frames/f00000.png" "$OUT/$FLAVOUR-mesh-$v-$res.png"
+    # Static PNG (the frame wpaperd actually paints — the loop mp4s are no longer
+    # shipped): plain = t=0 (the calm lattice); flash = the flash-PEAK frame so
+    # the desktop carries the accent flash. frame 53 @ 24fps ≈ t=2.21s is event 0
+    # near its peak (the approved showcase frame) — keep in sync with the flash
+    # schedule (mesh-scene.js: seed 33, event 0 t0≈1.80 + ~0.4s attack).
+    [ "$FLAVOUR" = flash ] && sf=00053 || sf=00000
+    cp "$TMP/frames/f$sf.png" "$OUT/$FLAVOUR-mesh-$v-$res.png"
   done
 done
 (cd "$OUT" && sha256sum "$FLAVOUR"-mesh-*) | sort -k2

@@ -15,12 +15,14 @@
 # downloads THAT flavour's assets and stamps it into the default-flavour
 # marker user/sway/wallpaper.sh reads. Each flavour lives on its own release
 # tag (<flavour>-v<n>) and versions INDEPENDENTLY — flash-mesh went v2 with the
-# accent red->violet flip (0.10.0), plain-mesh (no flashes, accent-independent)
-# stays v1. Bump a flavour's version here on a re-render.
+# accent red->violet flip (0.10.0), then v3 when the shipped STATIC PNG became a
+# flash-PEAK frame (frame 53 ≈ t=2.21s) instead of the calm t=0, so the wpaperd
+# desktop carries the accent flash; plain-mesh (no flashes, accent-independent,
+# static frame stays t=0) stays v1. Bump a flavour's version here on a re-render.
 wallpaper_flavour: flash-mesh
 
 wallpaper_flavour_versions:
-  flash-mesh: v2
+  flash-mesh: v3
   plain-mesh: v1
 
 wallpapers_base_url: "https://github.com/dimitrios-git/hestia/releases/download/{{ wallpaper_flavour }}-{{ wallpaper_flavour_versions[wallpaper_flavour] }}"
@@ -35,18 +37,18 @@ wallpaper_resolutions: [1920x1080, 1920x1200, 2560x1440, 2560x1600, 3840x2160, 1
 # sha256 per release asset, ALL flavours in one dict (filled by each render
 # publish; regenerate with `sha256sum <flavour>-mesh-*` in the render outdir)
 wallpapers_sha256:
-  flash-mesh-dark-1200x1920.png: "f8c81ed58b5d1847ff00e0725d131104f74940585cdd2e759308a9889f9d9363"
-  flash-mesh-dark-1920x1080.png: "8bc76b6a02be5a7c7842ae87655602802e9770ca09afd600852013f1ce2e64f5"
-  flash-mesh-dark-1920x1200.png: "3fd517c3eb9cf35e7fe03a645b818b9d3c9e2e01f8863dfe351c92f369ab14d7"
-  flash-mesh-dark-2560x1440.png: "9ff63e5dc14969c610631722fd5599b0c2bbbce1febe45076a5a879e955413e0"
-  flash-mesh-dark-2560x1600.png: "57031b7431da887fa39a4f91c009914b0746ea4c046776780b39d3072fe3e733"
-  flash-mesh-dark-3840x2160.png: "e4ea7e5cfb1638d09b7ffce20cb51240989d9fb67f3684c76792491d288bb583"
-  flash-mesh-light-1200x1920.png: "002e6fb0b4207968168d63a38492e37ad7486faf21d81cbd46620a973e4d4c5b"
-  flash-mesh-light-1920x1080.png: "d8e670f3be30ddeddb01be558d425cb4d5d2176c090d5a39479995059715c54e"
-  flash-mesh-light-1920x1200.png: "13cf775247a9f4d9d7e17cf6a2a82f54fe2ab5385b4044510994e59a05da387a"
-  flash-mesh-light-2560x1440.png: "96b3cd1d299c0d1639b90983a70c60d2deec816ef9bc98c6b625d8392ad81072"
-  flash-mesh-light-2560x1600.png: "000e544736aeb33cbd867480f86fbbd7e9a4254bb517068f6b7beb0262509c27"
-  flash-mesh-light-3840x2160.png: "c4cc195d847cfebdbe3411e81bf4765d35ec37caf79fd8f0f0c540720970423b"
+  flash-mesh-dark-1200x1920.png: "f1b754c77fed6c03a6201a2e8ceffeadb6dd6002157263860c066f89c3a74989"
+  flash-mesh-dark-1920x1080.png: "95c13ed6df4689ed67b3f510cfebe031b5caab16233e2848f4da6523f2a7ea45"
+  flash-mesh-dark-1920x1200.png: "a9c3ca4a58a712381c144dba7bb9f2882bd5df860b81d46aea3d5720102556f3"
+  flash-mesh-dark-2560x1440.png: "42e2f8819407ab7e23c347cfe8a4a1d49eb8ca30437d60a05f980aff592fc336"
+  flash-mesh-dark-2560x1600.png: "93a82e301f8aa0c1edd2764fe5f9d30080d5a4b7399c9b156ab487b3d6f2f03e"
+  flash-mesh-dark-3840x2160.png: "70626137c602f472c80d9994b96aafac0cfdc11557a77dcd3a4794dd4f4c293f"
+  flash-mesh-light-1200x1920.png: "5b73cc8f8b685a5a4ca1add068dd46d069dec266b288a6d41490673de95d9afb"
+  flash-mesh-light-1920x1080.png: "b740044b9d6a35e443549f38d138ed0b8885fcbde651456bfc0ab16139d14fb1"
+  flash-mesh-light-1920x1200.png: "95b2958337ee00fc909649b27c2239bcda75b456b3c5aaa8cfecee36e4fdd88a"
+  flash-mesh-light-2560x1440.png: "8f7d898dcdcae90853059b64003cefdd63bd265bf792bf4b0cb7e30206b029f7"
+  flash-mesh-light-2560x1600.png: "ab9d60566558b1d97664b493c7e776281df7fab6f869e4b1a53c5da5dfef3994"
+  flash-mesh-light-3840x2160.png: "d13da6d8ca0a3a23ecd0119bc03158a74f96420a5374585290ca910a7150210a"
   plain-mesh-dark-1200x1920.png: "40932a6d488f9c927b5781c8179d33c4a22915565bc2732bac73cfa50810493e"
   plain-mesh-dark-1920x1080.png: "cee9fe958d74a628f459d88d496038db8f189548349362e0e9f59828f8339f6c"
   plain-mesh-dark-1920x1200.png: "9ece9d7f4abeb8dfff07dfad81205a2b434180952f303120e524bf487f227e28"

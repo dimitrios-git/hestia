@@ -150,7 +150,7 @@ the next chore in a queue.
 
 | Category | Default | Gates | Note |
 |---|---|:---:|---|
-| File manager (TUI + GUI) | vifm + nemo | `●◐●●●◐` | vifm (TUI primary) + nemo (GUI default) both hardened & themed (nemo confirmed dark with the `#d7005f` accent). **nautilus is now a 2nd production-ready keeper and a live default-contender** — pending decision, accent-blocked to blue until Debian 14 (see the [app log](#path-to-ultimate--the-app-logs)). Showcase verdict still open (the nemo-vs-nautilus default). thunar/dolphin/rest untested |
+| File manager (TUI + GUI) | vifm + nemo | `●◐●●●◐` | vifm (TUI primary) + nemo (GUI default) both hardened & themed (nemo confirmed dark with the `#7c3aed` accent). **nautilus is now a 2nd production-ready keeper and a live default-contender** — pending decision, accent-blocked to blue until Debian 14 (see the [app log](#path-to-ultimate--the-app-logs)). Showcase verdict still open (the nemo-vs-nautilus default). thunar/dolphin/rest untested |
 | Image viewer | imv + ristretto | `●●●●●◐` | Evaluated; showcase chapter pending |
 | **Media / video player** | **mpv** | `●●◐○◐○` | **Snap pick — never researched** |
 | Music player | cmus + cava | `●●●○●◐` | Deep config; showcase pending |
@@ -228,7 +228,7 @@ gate it would close.
 
 Hardened + themed (2026-07): session wiring in `user/sway/nemo-setup.sh` (default
 terminal → kitty, default folder handler, the cinnamon-desktop-editor launcher
-action disabled), and confirmed **dark with the exact `#d7005f` accent** live (GTK3
+action disabled), and confirmed **dark with the exact `#7c3aed` accent** live (GTK3
 via the recoloured adw-gtk3, once the GTK_THEME/portal color-scheme saga closed). The
 benign `gtk theme is not known to have nemo support` startup warning is cosmetic
 (nemo's hardcoded theme list) — won't-fix. One item remains:
@@ -245,7 +245,7 @@ nemo — better-looking + more minimal, but nemo has the easier functionality. N
 the decision partly resolves itself at Debian 14.
 
 - **The accent constraint (the deciding wrinkle)** — nautilus is libadwaita 1.7, so
-  it's stuck on the **default blue accent**; it can't take hestia's `#d7005f` until
+  it's stuck on the **default blue accent**; it can't take hestia's `#7c3aed` until
   libadwaita ≥1.8 / Debian 14 (the staged `gtk-4.0/gtk.css` is inert until then). So
   today nautilus is dark-but-off-brand while nemo is fully on the hestia identity —
   the concrete reason nemo stays default for now. Revisit at Debian 14, when the
@@ -266,5 +266,5 @@ Config is a 12-line stub. Image preview is wired (kitty), the rest is not.
 ### yazi *(alternative — kept for comparison, file managers)*
 
 - **Theming shallow** — a theme file exists but was never tested in detail against
-  the wildcharm identity. *(gate 3)*
+  the hestia identity. *(gate 3)*
 - **No detailed config** — keymap/openers/preview left at defaults. *(gate 2)*

@@ -484,7 +484,7 @@ greys?) are **milestone-3 decisions** — record them in the decision log when m
 | vim / nvim | `user/vim/colors/hestia.vim` (**GENERATED** from palette.yml by render.py, self-contained since 2026-07; was a wildcharm wrapper) | hestia | ✅ palette-driven; Claude-style diff fills (0.8.0); treesitter `@*`/LSP/diagnostics linked for nvim↔vim parity (phase A). Remaining: plugin groups; phase-B richer treesitter detail |
 | bat (+ vifm preview) | `user/bat/themes/hestia-{dark,light}.tmTheme` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.4.0; light pair since 0.7.0 |
 | glow | `user/glow/hestia-{dark,light}.json` (GENERATED pair, M7 PR2) | hestia | ✅ realigned M4, generated since 0.7.0 |
-| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/hestia/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: 0.6.0 changed three light syntax values (the `#f5f5f5`-gate deviations; the light `editor.background` stays `#ffffff` via `code_surface`) — copy the regenerated pair over |
+| Shiki (web code blocks) | hestia-dark/-light theme JSON pair | **stoa** — vendors the GENERATED `themes/hestia/dist/shiki/*.json` (copied into `apps/thecodingidiot/lib/themes/`, thin `hestia.ts` wrapper), wired in `lib/mdx-options.ts`; `--code-surface` matches the pair in that app's `globals.css` | 🟡 **stoa re-vendor pending**: the dark syntax has since shifted — **0.9.0 re-anchored the whole syntax layer on the tci Memphis brand** (string=green, function=magenta, constant=coral, escape=purple, preproc=teal) and 0.8.1 lifted the escape/special purple to `#af87ff`; 0.6.0's three light-gate deviations are also still pending. Copy the regenerated `themes/hestia/dist/shiki/*.json` pair over. (0.9.1 ANSI + 0.10.0/0.10.1 accent/red didn't re-derive syntax — no Shiki change from those.) |
 | VS Code | `user/vscode/hestia/` extension (GENERATED themes) | hestia | ✅ dark + light full chrome (M7 PR2); verified live on 1.127 (dark, 2026-07-03) — light chrome pending the M7 live pass |
 | VS Code | same JSON + UI-chrome colours | hestia (publish later) | ⬜ M5 |
 
@@ -629,6 +629,44 @@ the platform mapping, never in an artifact.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.10.1** (2026-07-10) — **unify the hestia red on a TRUE red `#d70000`.** The
+  retired accent red `#d7005f` (rose/cerise) read pink in the power-off confirm;
+  retuned to `#d70000` everywhere it means "red" — `roles.danger`/`danger_dark`
+  (`#9b0000`), ANSI `color1` (both variants), `syntax.error`, and the hardcoded
+  terminal reds (git status, buildkit; prompt/man `-D` follow color1). One red now,
+  matching light's existing `#d70000`. Violet accent unaffected; light `bright_red`
+  stays the Memphis coral `#d11800`.
+- **0.10.0** (2026-07-10) — **THE ACCENT: red → violet `#7c3aed` (phase 1 of the
+  purple migration).** The UI accent flips from wildcharm red `#d7005f` to violet
+  (tci's default UI accent), shade-tuned to `#7c3aed` for AA (white-on 5.70). Introduced
+  the two-colour semantic split: `roles.accent` = violet (brand/focus/selection/chrome);
+  new `roles.danger`/`danger_dark` = the retired red pair (`#d7005f`/`#9b0040`) for
+  error / critical / destructive-confirm / wrong-password. **`accent == ANSI color01`
+  invariant RETIRED** — color1 stays red. Also dropped the waybar Debian swirl (→ neutral
+  grid glyph). All 36 artifacts re-rendered. Phase 1 of a multi-PR migration (GTK/KDE/Yaru/
+  tci/terminal accents + violet wallpapers + this docs sweep followed).
+- **0.9.1** (2026-07-10) — **terminal ANSI 16 re-anchored on Memphis too.** Closed the
+  0.9.0 gap where syntax went Memphis but ANSI stayed wildcharm (so `ls`/cava/TUIs read
+  the old palette). Re-hued green (2/10), magenta (5/13), cyan→teal (6/14), bright_red→coral
+  (9) in both variants; kept blue (4/12) + yellow (3/11) as wildcharm functional anchors
+  (Memphis has no blue/yellow). `color1 == accent` invariant kept (still `#d7005f` here).
+  Consumers re-rendered (kitty/vifm/dircolors/cava/cmus/ranger/yazi); Shiki/bat/VS Code
+  syntax-only, unaffected.
+- **0.9.0** (2026-07-10) — **the syntax layer re-anchored on the tci Memphis brand.**
+  First deliberate break from wildcharm: code-highlighting hues now come from
+  thecodingidiot's five brand accents (new `brand:` block) — string=green, function=magenta,
+  constant=coral, escape/special=purple, preproc=teal; keyword-blue + type-yellow stay
+  hestia functional anchors. A shade re-tune, not a re-architecture (the brand hues already
+  sat at the same wheel positions), lightness corrected per ground for AA.
+- **0.8.1** (2026-07-10) — **dark Special/escape purple lifted `#af5fff`→`#af87ff`
+  (xterm 141).** First post-wildcharm tuning of a syntax hue: the escape/regex purple
+  cleared the code ground but dipped below AA on the raised greys (`#262626`/`#303030`) —
+  moved one cube step up for AA on every surface.
+- **0.8.0** (2026-07-09) — **vimdiff FILLS in the palette, Claude-style.** New `diff:`
+  section (dark + light): the `DiffAdd/DiffChange/DiffText/DiffDelete` *backgrounds* as
+  low-saturation tinted rows that keep the code's syntax highlighting on top (replaces
+  wildcharm's fg-tinting). add=green, delete=maroon, change=blue, text=brighter blue.
+  Consumed by hestia.vim only; distinct from `syntax.diff_*` (git-diff TEXT in bat/Shiki).
 - **0.7.1** (2026-07-03) — light `ansi.red` → the accent (identity fix, cmus
   caught it live); `.dircolors` generated as a variant pair from the shared
   vifm file-type table (backlog item closed).

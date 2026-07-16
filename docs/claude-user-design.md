@@ -5,6 +5,11 @@
 > verification.** For the **day-to-day workflow** (entering claude's context,
 > sharing a project), see `working-with-claude.md`. This document is written to
 > seed a LinkedIn article once the setup is confirmed in daily use.
+>
+> **See also:** [`claude-env-parity-design.md`](claude-env-parity-design.md) —
+> deploying claude's *terminal environment* (tools + configs + theme) from the same
+> Ansible sources as dimitrios's, so the two principals see the same thing. It builds
+> on the trust boundary defined here (identity/secrets/privilege stay claude's own).
 
 ## 1. Motivation — why not just run the agent as me?
 

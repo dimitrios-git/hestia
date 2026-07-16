@@ -146,10 +146,12 @@ After that the daemon comes up as `gnome-keyring-daemon --daemonize --login`
    **loopback sign of /dev/null** with the keyring passphrase warms the *normal*
    cache and signs cleanly (and validates the passphrase).
 
-**Tracked pieces:** `user/gnupg/credential-unlock.sh` (Sway-`exec` login hook),
-`user/gnupg/keyring-ssh-askpass.sh`, `user/gnupg/gpg-agent.conf`
-(`allow-loopback-pinentry` + long TTL), `user/sway/config` exec line. Passphrases
-stored once via `secret-tool store … autounlock ssh/gpg …`.
+**Tracked pieces:** `user/gnupg/credential-unlock.sh.j2` (Sway-`exec` login hook) +
+`user/gnupg/keyring-ssh-askpass.sh.j2` — both **rendered** by the dotfiles role into
+`~/.config/sway/scripts/` (they carry identity values, so `.j2` templates, not plain
+symlinks); `user/gnupg/gpg-agent.conf` (`allow-loopback-pinentry` + long TTL),
+`user/sway/config` exec line. Passphrases stored once via
+`secret-tool store … autounlock ssh/gpg …`.
 
 **Cache TTL = ~session-length (`34560000`).** With auto-unlock the boundary is the
 **unlocked login session + screen lock**, not the GPG TTL — GPG now matches

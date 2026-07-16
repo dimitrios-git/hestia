@@ -225,7 +225,8 @@ tree. Git multi-user hygiene: `core.sharedRepository=group`, `safe.directory` fo
 both users. *Verified:* claude can rw + `git` the repo, but `ls /home/dimitrios` →
 Permission denied.
 
-**Phase 4 — identity.** `bootstrap/setup-claude-identity.sh` (idempotent): own
+**Phase 4 — identity.** The `claude_user` Ansible role (`tasks/identity.yml`,
+idempotent; originally a standalone `setup-claude-identity.sh`, since folded in): own
 ed25519 SSH key `id_claude`, own **passwordless** ed25519 GPG key
 `4AA9DD310356AD0E`, git config signing as itself. A GitHub **bot account**
 `dimitrios-claude` (separate email) holds the SSH (auth) + GPG keys and is a repo
@@ -251,15 +252,21 @@ dimitrios into claude's context (`sudo -iu claude`, starting in `/srv/devshare`)
   *before* regenerating, or `--quick-generate-key` makes a new one alongside.
 
 ### Residual / follow-ups
-- Fold every Phase 1–5 step into the **Ansible bootstrap** (`bootstrap/` started).
+- ~~Fold every Phase 1–5 step into the **Ansible bootstrap** (`bootstrap/` started).~~
+  **DONE** — the `claude_user` + `credentials` roles (with `samba` etc.) reproduce
+  Phases 1–5; `setup.sh`/`site.yml` orchestrate the full flow.
 - claude's GPG key is passwordless (accepted: blast radius = the bot identity,
   key in claude's 700 home). claude can edit code dimitrios later runs (in-boundary
   supply-chain) — mitigated by review.
 - `machinectl`/proper session is a possible upgrade if claude ever needs its own
   `XDG_RUNTIME_DIR`/dbus (e.g. for GUI app-testing — deliberately out of scope).
-- **TODO — have a dedicated conversation about Claude Code *configuration* and
-  persist it as workstation-as-code.** claude's `~/.claude/settings.json` was
-  hand-edited on the box (a `permissions` block: `defaultMode: acceptEdits` + an
+- **~~TODO~~ MOSTLY DONE — Claude Code *configuration* persisted as
+  workstation-as-code.** The manifest now templates `user/claude/settings.json.j2`
+  (seed-once, `force: false`, so a rebuild reproduces claude's permission allow/deny
+  policy without clobbering later local edits) and symlinks `user/claude/keybindings.json`
+  into `~/.claude/`. Still machine-local by design: tokens/auth. Original note —
+  claude's `~/.claude/settings.json` was hand-edited on the box (a `permissions` block:
+  `defaultMode: acceptEdits` + an
   allow-list so reads/edits/git/gh/pnpm/etc. stop prompting inside its own repos,
   with a deny-list keeping `gh pr merge`, any push to `main`, `sudo`, and secrets
   gated — preserving the PR-review trust boundary). That edit lives only on the

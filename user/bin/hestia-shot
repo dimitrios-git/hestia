@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# hestia-shot — headless-sway screenshot rig (docs/claude-env-parity-design.md, Tier B).
+#
+# Reproduce a themed hestia desktop/TUI screenshot with NO live graphical session —
+# built for the `claude` agent (headless) to re-shoot showcase images faithfully.
+# It spins up a throwaway nested sway on the wlroots *headless* backend (software
+# pixman renderer — no GPU/DRM needed), paints the hestia theme + mesh wallpaper,
+# launches the scene, captures it with grim, and tears the whole thing down.
+#
+# Reads its configs from the repo clone it lives in (claude's workspace = the branch
+# under review), so a shot reflects whatever you're working on. Self-contained: it
+# stages a temp waybar dir (resolving the theme-<variant> pair to the plain `theme`
+# name the way the bootstrap symlink does), so nothing needs deploying first.
+#
+# Usage:
+#   hestia-shot <scene> [output.png] [path]
+# Scenes:
+#   desktop            waybar + mesh wallpaper + tiled vifm (the full composite)
+#   vifm [path]        vifm alone (default path: the repo)
+#   ranger | yazi      that file manager alone
+#   app "<command>"    any command in a themed kitty (e.g. app "cmus")
+# Env overrides: HESTIA_REPO, HESTIA_VARIANT (dark|light), HESTIA_RES (WxH).
+set -euo pipefail
+
+REPO="${HESTIA_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)}"
+# When run from the deployed symlink (~/.local/bin/hestia-shot -> repo/user/bin),
+# readlink resolves into the clone, so REPO is the clone root. Fall back to the
+# known shared clone if that ever fails.
+[ -d "$REPO/user" ] || REPO=/srv/devshare/hestia
+VARIANT="${HESTIA_VARIANT:-dark}"
+RES="${HESTIA_RES:-1920x1080}"
+SCENE="${1:-desktop}"
+OUT="${2:-$PWD/hestia-shot.png}"
+: "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
+export XDG_RUNTIME_DIR
+
+U="$REPO/user"
+WANT_BAR=0
+case "$SCENE" in
+  desktop) APP="kitty --class term -e vifm $U"; WANT_BAR=1 ;;
+  vifm)    APP="kitty --class term -e vifm ${3:-$REPO}" ;;
+  ranger)  APP="kitty --class term -e ranger ${3:-$REPO}" ;;
+  yazi)    APP="kitty --class term -e yazi ${3:-$REPO}" ;;
+  app)     APP="kitty --class term -e ${2:?scene 'app' needs a command}"; OUT="${3:-$PWD/hestia-shot.png}" ;;
+  *) echo "hestia-shot: unknown scene '$SCENE'" >&2; exit 2 ;;
+esac
+
+# --- pick a wallpaper: claude's deployed mesh, else the showcase mesh, else solid --
+BG=""
+for c in \
+  "$HOME/.local/share/backgrounds/hestia/flash-mesh-$VARIANT-${RES/x/x}.png" \
+  "$(ls -S "$HOME"/.local/share/backgrounds/hestia/*-"$VARIANT"-*.png 2>/dev/null | head -1)" \
+  "$REPO/showcase/img/flash-mesh-$VARIANT.png" \
+  "$REPO/showcase/img/plain-mesh-$VARIANT.png"; do
+  [ -n "$c" ] && [ -f "$c" ] && { BG="$c"; break; }
+done
+
+# --- accent + ground from the generated sway theme fragment (tracks the palette) ---
+THEME="$U/sway/theme-$VARIANT.conf"
+ACCENT=$(sed -n 's/^set \$accent  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
+ACCENT_FG=$(sed -n 's/^set \$accent_fg  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
+GROUND=$(sed -n 's/^set \$bg  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
+DIM=$(sed -n 's/^set \$dim  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
+: "${ACCENT:=#7c3aed}"; : "${ACCENT_FG:=#ffffff}"; : "${GROUND:=#1a1a1a}"; : "${DIM:=#8c8c8c}"
+
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/hestia-shot.XXXXXX")
+cleanup() {
+  # Graceful first (closes waybar + the app cleanly), then hammer the whole
+  # process group — waybar/kitty are grandchildren of dbus-run-session, so a
+  # plain kill of the launcher misses them (setsid below makes us the group).
+  [ -n "${SWAYSOCK:-}" ] && swaymsg exit >/dev/null 2>&1 || true
+  if [ -n "${SWAYPID:-}" ]; then
+    sleep 0.2
+    kill -- "-$SWAYPID" 2>/dev/null || kill "$SWAYPID" 2>/dev/null || true
+  fi
+  rm -rf "$WORK"
+}
+trap cleanup EXIT
+
+# --- stage a waybar dir resolving the theme-<variant>.css pair to `theme.css` ------
+if [ "$WANT_BAR" = 1 ]; then
+  mkdir -p "$WORK/wb/scripts"
+  cp "$U/waybar/config" "$U/waybar/style.css" "$WORK/wb/"
+  cp "$U/waybar/theme-$VARIANT.css" "$WORK/wb/theme.css"
+  cp "$U"/waybar/scripts/*.sh "$WORK/wb/scripts/" 2>/dev/null || true
+fi
+
+# --- the throwaway rig sway config ------------------------------------------------
+CFG="$WORK/rig-sway.conf"
+{
+  echo "output HEADLESS-1 resolution $RES position 0,0"
+  if [ -n "$BG" ]; then echo "output HEADLESS-1 bg $BG fill"
+  else echo "output HEADLESS-1 bg $GROUND solid_color"; fi
+  cat <<EOF
+default_border pixel 2
+gaps inner 8
+gaps outer 8
+gaps top 8
+# hestia window colours (border/indicator from the palette accent)
+client.focused          $ACCENT $ACCENT $ACCENT_FG $ACCENT $ACCENT
+client.focused_inactive $GROUND $GROUND $DIM $GROUND $GROUND
+client.unfocused        $GROUND $GROUND $DIM $GROUND $GROUND
+EOF
+  [ "$WANT_BAR" = 1 ] && echo "exec waybar -c $WORK/wb/config -s $WORK/wb/style.css"
+  echo "exec sleep 0.3 && $APP"
+} > "$CFG"
+
+# --- launch the throwaway compositor (dbus session so waybar/portals init) --------
+export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_HEADLESS_OUTPUTS=1
+# setsid → own process group, so cleanup can kill the whole tree (sway + its
+# dbus-session children waybar/kitty) with one group kill.
+setsid dbus-run-session -- sway -c "$CFG" >"$WORK/sway.log" 2>&1 &
+SWAYPID=$!
+
+SOCK=""
+for _ in $(seq 1 50); do
+  SOCK=$(ls -t "$XDG_RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -1)
+  [ -n "$SOCK" ] && SWAYSOCK="$SOCK" swaymsg -t get_version >/dev/null 2>&1 && break
+  sleep 0.1
+done
+[ -n "$SOCK" ] || { echo "hestia-shot: sway did not start" >&2; tail -5 "$WORK/sway.log" >&2; exit 1; }
+export SWAYSOCK="$SOCK"
+
+# wait for the scene window to map, then settle for the render
+for _ in $(seq 1 60); do
+  swaymsg -t get_tree 2>/dev/null | grep -q '"app_id": "term"' && break
+  sleep 0.1
+done
+sleep 1.2
+
+WD=$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | grep -v '\.lock$' | head -1 | xargs -n1 basename)
+mkdir -p "$(dirname "$OUT")"
+WAYLAND_DISPLAY="$WD" grim "$OUT"
+echo "hestia-shot: wrote $OUT ($SCENE, $VARIANT, $RES)"

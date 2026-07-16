@@ -94,6 +94,29 @@
       tags: [claude, claude_env]
       when: (enable_claude_user | default(true) | bool) and (enable_claude_env | default(true) | bool)
 
+# Third pass: claude's SCREENSHOT-RIG desktop tools/assets (Tier B) — into claude's own
+# home so `hestia-shot` (user/bin/hestia-shot) composites use the real deployed mesh
+# wallpaper and claude has the wallpaper tools (parity). docs/claude-env-parity-design.md.
+# Same become rule as the Tier-A pass. The rig SCRIPT itself is self-contained (rides
+# Tier A); this pass just makes its wallpaper faithful and gives claude wpaperd/awww.
+- name: Deploy claude's screenshot-rig desktop tools (parity, Tier B)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: "{{ lookup('env', 'USER') != claude_env_user }}"
+  become_user: "{{ claude_env_user }}"
+  vars:
+    target_home: "{{ claude_env_home }}"
+    repo_root: "{{ claude_env_repo_root }}"
+    theme_variant: "{{ claude_env_theme_variant }}"
+  roles:
+    - role: localbin    # wpaperd/awww (+ the rest) into claude's ~/.local/bin
+      tags: [claude, claude_rig]
+      when: (enable_claude_user | default(true) | bool) and (enable_claude_rig | default(true) | bool)
+    - role: wallpapers  # mesh assets into claude's ~/.local/share/backgrounds — the real rig wallpaper
+      tags: [claude, claude_rig]
+      when: (enable_claude_user | default(true) | bool) and (enable_claude_rig | default(true) | bool) and (enable_wallpapers | default(true) | bool)
+
 # Site-local customisations — the personalization seam (docs/personalizing.md).
 # Runs LAST, after the base system is in place. `bootstrap/local.yml` is an untracked
 # (gitignored) Ansible TASKS file the user drops in to install their own software /

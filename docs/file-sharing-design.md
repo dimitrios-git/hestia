@@ -1,8 +1,10 @@
 # Design: thetower ↔ Windows file sharing (Samba over Tailscale + ACLs)
 
-> **Status:** Draft design — replaces the pre-distro-hop SFTP share, not yet
-> implemented. Like `claude-user-design.md`, written thoroughly enough to feed
-> both the Debian bootstrap effort and the planned LinkedIn write-up.
+> **Status:** Implemented — deployed 2026-06-19 (§3.4), working end to end: the
+> `samba` role renders `/etc/samba/smb.conf` and provisions the `/srv/smbshare`
+> share. Replaces the pre-distro-hop SFTP share. Like `claude-user-design.md`,
+> written thoroughly enough to feed both the Debian bootstrap effort and the
+> planned LinkedIn write-up.
 
 ## 1. Context & current state
 

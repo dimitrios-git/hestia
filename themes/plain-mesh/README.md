@@ -7,8 +7,9 @@ backdrop), rendered as **seamless 120 s loop videos** (per resolution, per
 frames are what the desktop actually shows** — painted by **wpaperd** via
 `user/sway/wallpaper.sh` (wallpaper verdict, 2026-07; the engine was re-picked
 from mpvpaper after its looping video leaked memory unboundedly — an unfixed
-upstream mpv bug). The loop videos still render/ship (for mpvpaper as the
-manual video-wallpaper power tool, and any future use).
+upstream mpv bug, and mpvpaper was then dropped from the install). The bake
+still produces the loop videos, but they're no longer shipped or fetched — the
+static frame is the product; the loops are kept only as a render artefact.
 
 "plain" is the family name; flavours join alongside as `<flavour>-mesh-*`,
 each on its own release tag, selected per host by the `wallpaper_flavour`

@@ -25,10 +25,10 @@ wallpaper_flavour_versions:
 wallpapers_base_url: "https://github.com/dimitrios-git/hestia/releases/download/{{ wallpaper_flavour }}-{{ wallpaper_flavour_versions[wallpaper_flavour] }}"
 wallpapers_dir: "{{ target_home }}/.local/share/backgrounds/hestia"
 
-# Which resolutions to fetch — BOTH variants each, loop video + static PNG
-# (the PNG serves wpaperd/swaybg and any no-video spin). Trim per host in
-# host_vars; user/sway/wallpaper.sh falls back to the largest installed file
-# when an output's exact resolution is missing (mpv scales cleanly).
+# Which resolutions to fetch — BOTH variants each, static PNG only (the frame
+# wpaperd paints; the .mp4 loops are no longer fetched, see tasks/main.yml).
+# Trim per host in host_vars; user/sway/wallpaper.sh falls back to the largest
+# installed file when an output's exact resolution is missing (wpaperd scales).
 wallpaper_resolutions: [1920x1080, 1920x1200, 2560x1440, 2560x1600, 3840x2160, 1200x1920]
 
 # sha256 per release asset, ALL flavours in one dict (filled by each render

@@ -70,13 +70,17 @@ pick_file() {  # $1 W, $2 H -> exact-resolution png, else the largest
 
 # Build a self-contained wpaperd config: one static per-output section pointing
 # at that output's best mesh PNG, plus an `[any]` catch-all (the largest PNG) so
-# a monitor hotplugged mid-session still gets papered. `fill` scales
-# edge-to-edge with no borders (an exact-resolution match is 1:1; only the
-# largest-available fallback actually scales — the mesh overfills, so a mild
-# crop never bares an edge). Explicit output sections win over `[any]`.
+# a monitor hotplugged mid-session still gets papered. `fit-border-color` shows
+# the whole frame and fills any letterbox with the sampled border colour (the
+# mesh border ≈ the ground, so bars are invisible); an exact-resolution match is
+# 1:1 with no bars at all, and same-aspect fallbacks scale to a clean full fill
+# — only an aspect-mismatch fallback shows the (ground-coloured) bars. wpaperd's
+# mode enum has no "fill"/"cover" (stretch/center/fit/tile/fit-border-color
+# only) — an invalid value makes wpaperd reject the WHOLE config and paint
+# black. Explicit output sections win over `[any]`.
 tmp="$CONFIG.tmp.$$"
 : > "$tmp"
-printf '[default]\nmode = "fill"\n\n' >> "$tmp"
+printf '[default]\nmode = "fit-border-color"\n\n' >> "$tmp"
 biggest=$(largest_file)
 [ -n "$biggest" ] && printf '[any]\npath = "%s"\n\n' "$biggest" >> "$tmp"
 n=0

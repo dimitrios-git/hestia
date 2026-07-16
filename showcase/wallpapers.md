@@ -22,7 +22,7 @@ theme). All three survived the trial and install together behind one toggle
 |---|---|---|
 | [wpaperd](https://github.com/danyspin97/wpaperd) | **kept — and now the default engine** | per-output config, `duration` slideshows over a directory, hardware-accelerated transitions, `wpaperctl` IPC; low, *flat* memory — it paints the static mesh frame (see the epilogue) |
 | awww (successor of the archived [swww](https://github.com/LGFae/swww)) | **kept** — the transition play | animated wipes/grows on demand (`awww img`), GIF support; no native slideshow — hestia's `awww-slideshow` wrapper fills that |
-| [mpvpaper](https://github.com/GhostNaN/mpvpaper) | **was the default; dropped as engine** (still installed) | video wallpapers via libmpv; made the mesh *move* — but its looping decode leaks memory without bound (upstream mpv bug; see the epilogue), so it lost the default slot |
+| [mpvpaper](https://github.com/GhostNaN/mpvpaper) | **was the default; removed** | video wallpapers via libmpv; made the mesh *move* — but its looping decode leaks memory without bound (upstream mpv bug; see the epilogue), so it lost the default slot and was dropped from the install |
 | swaybg | baseline | static, no IPC, no slideshow; remains the solid-ground fallback |
 
 One candidate never made the table: **swww**, the community favourite, was
@@ -95,8 +95,9 @@ desktop looks all but identical — the mesh is a slow, near-still breathing
 lattice, so a frozen frame of it reads as the same wallpaper minus the drift —
 and the RSS graph is a flat line. The lesson for the catalog: **a verdict isn't
 final; a "closed" gate can reopen when a tool's real cost only shows up at
-runtime, over days.** mpvpaper stays installed (the power tool for deliberate
-video wallpapers), just not as the always-on default.
+runtime, over days.** mpvpaper was then removed from the install entirely —
+binary, its `libmpv2` dependency, and the now-unused video downloads — leaving
+a lighter footprint and a wallpaper that costs nothing to keep on screen.
 
 ## plain-mesh: the base flavour
 
@@ -117,8 +118,9 @@ serve wpaperd, swaybg, and any no-video spin.
 
 At the sway end, `user/sway/wallpaper.sh` runs as `exec_always` from the
 generated theme fragment: per output it picks the exact-resolution PNG (or
-the largest available — `fill` scales cleanly), writes a per-output wpaperd
-config and starts the daemon idempotently, and **retires swaybg** — re-running
+the largest available — `fit-border-color` scales cleanly, filling any
+letterbox with the mesh's own ground-coloured border), writes a per-output
+wpaperd config and starts the daemon idempotently, and **retires swaybg** — re-running
 on every reload, which matters because reload *respawns* swaybg above the
 wallpaper layer. That's the trial's stacking race, solved by construction. No
 assets or no wpaperd? The script no-ops and the solid ground stays — nothing
@@ -174,7 +176,7 @@ computed per aspect ratio, so portrait renders get their own visible set.
 
 ## Where it lives
 
-- Engine (wpaperd, static mesh PNGs) + slideshow wrappers: `user/sway/wallpaper.sh`, `user/bin/awww-slideshow`, `user/bin/mpvpaper-slideshow`
+- Engine (wpaperd, static mesh PNGs) + slideshow wrapper: `user/sway/wallpaper.sh`, `user/bin/awww-slideshow`
 - Render harness + tuning page: `themes/plain-mesh/`
 - Install wiring: `bootstrap/roles/wallpapers/` (assets), the `localbin`
   entries in `bootstrap/group_vars/all.yml` (binaries), `enable_wallpapers`

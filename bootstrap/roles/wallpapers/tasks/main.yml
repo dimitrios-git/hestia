@@ -5,8 +5,9 @@
 # wallpaper_flavour downloads the new set alongside the old (files are
 # flavour-prefixed) and re-stamps the marker wallpaper.sh reads.
 # (PNG-only since 2026-07: the default engine is wpaperd on the static frame —
-# the .mp4 loops are no longer fetched after mpvpaper was dropped for its
-# memory leak. The mp4 checksums stay in defaults as the release-asset record.)
+# the .mp4 loops are no longer fetched after mpvpaper was dropped for its memory
+# leak, and were removed from the release assets, so defaults carries PNG
+# checksums only.)
 
 - name: Ensure the backgrounds dir exists
   ansible.builtin.file:

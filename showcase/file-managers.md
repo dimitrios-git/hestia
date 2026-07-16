@@ -79,7 +79,7 @@ improved the winner instead of replacing it.
 
 **The GUI half had a different job**: pick the everyday graphical manager
 for the spin. **nemo** won the nod (pending the final `xdg-mime` wiring) —
-GTK3, so hestia's recoloured theme and `#d7005f` Yaru-hestia folders apply
+GTK3, so hestia's recoloured theme and `#7c3aed` Yaru-hestia folders apply
 on launch, with thunar as the lighter alternative.
 
 ![nemo — hestia-dark chrome, Yaru-hestia accent folders](img/fm-nemo.png)
@@ -106,7 +106,7 @@ accent against user CSS — so its chrome keeps the stock blue until Debian 14
 ships libadwaita ≥ 1.8, where hestia's already-staged `gtk-4.0/gtk.css`
 accent activates by itself. Meanwhile the Yaru-hestia folders still land —
 icons are just files, immune to the lock. The screenshot is the honest
-state: dark, accent-locked chrome, hestia-red folders.
+state: dark, accent-locked chrome, hestia-violet folders.
 
 ![nautilus — libadwaita: dark yes, accent locked; the icons punch through](img/fm-nautilus.png)
 

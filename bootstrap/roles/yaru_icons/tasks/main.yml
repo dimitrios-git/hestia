@@ -40,6 +40,22 @@
         remote_src: true
         dest: "{{ yaru_icons_dir }}"
 
+    # Carry inode-directory -> folder in the accent overlay. Base Yaru symlinks
+    # inode-directory.png -> folder.png in every size, but Yaru-hestia only
+    # recolours folder.png and ships no inode-directory — so it inherits base
+    # Yaru's ORANGE folder for that name. GTK file managers ask for "folder"
+    # (recoloured, violet), but KDE ones (dolphin/krusader) draw the main view
+    # from "inode-directory", so without this they show orange folders on the
+    # violet desktop. `ln -sf` is idempotent and harmless if a future tarball
+    # already carries the link.
+    - name: Carry inode-directory -> folder so KDE file managers get the accent
+      ansible.builtin.shell:
+        cmd: >-
+          for d in "{{ yaru_icons_dir }}/{{ yaru_icons_theme }}"/*/places; do
+            [ -f "$d/folder.png" ] && ln -sf folder.png "$d/inode-directory.png" || true;
+          done
+      changed_when: true
+
     # Best-effort: the theme works without a cache (GTK reads index.theme), but the
     # cache speeds lookups. Skip cleanly if gtk-update-icon-cache isn't installed.
     - name: Refresh the icon caches

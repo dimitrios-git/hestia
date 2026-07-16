@@ -144,7 +144,7 @@ Flavours extend the family as `<flavour>-mesh`: same lattice, new behaviour,
 own release tag, selected per host by one variable (`wallpaper_flavour`; the
 quiet plain-mesh remains the no-flash alternative). The first is
 **flash-mesh** — promoted to hestia's default within a day of shipping:
-every few seconds a node ignites in the accent (`#d7005f`),
+every few seconds a node ignites in the accent (violet `#7c3aed`),
 fast attack, smooth decay, the pulse bleeding one hop down its web edges at
 reduced strength. Deterministic and loop-periodic like everything else — a
 seeded schedule of events evaluated on wrapped time deltas.

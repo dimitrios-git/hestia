@@ -21,7 +21,7 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-  loop: "{{ (dotfile_links + templated_configs) | map(attribute='dest') | map('dirname') | unique | list }}"
+  loop: "{{ (dotfiles_links + dotfiles_templated) | map(attribute='dest') | map('dirname') | unique | list }}"
   loop_control:
     label: "{{ item }}"
 
@@ -49,7 +49,7 @@
     - name: Stat every config destination
       ansible.builtin.stat:
         path: "{{ item.dest }}"
-      loop: "{{ dotfile_links + templated_configs }}"
+      loop: "{{ dotfiles_links + dotfiles_templated }}"
       loop_control:
         label: "{{ item.dest }}"
       register: _all_dests
@@ -90,7 +90,7 @@
     dest: "{{ item.dest }}"
     state: link
     force: true            # replace a pre-existing plain file/wrong link
-  loop: "{{ dotfile_links }}"
+  loop: "{{ dotfiles_links }}"
   loop_control:
     label: "{{ item.src }} -> {{ item.dest }}"
 
@@ -106,7 +106,7 @@
     dest: "{{ item.dest }}"
     force: "{{ item.force | default(true) | bool }}"
     mode: "{{ item.mode | default('0644') }}"   # scripts that get executed need 0755
-  loop: "{{ templated_configs }}"
+  loop: "{{ dotfiles_templated }}"
   loop_control:
     label: "{{ item.src }} -> {{ item.dest }}"
 

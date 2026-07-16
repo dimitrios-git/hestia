@@ -70,6 +70,30 @@
       tags: [nvidia]
       when: enable_nvidia | default(false) | bool
 
+# Second pass: deploy claude's TERMINAL ENVIRONMENT (parity) — the same tools/configs
+# dimitrios uses, into the `claude` agent user's own home, from claude's own clone
+# (docs/claude-env-parity-design.md). Reuses the `dotfiles` role with the manifest
+# sliced to the `claude: true` subset (terminal + theme + Claude Code config) — never
+# identity/secrets (those stay claude's own, via the claude_user role) or the desktop
+# layer. `become` only when the runner ISN'T already claude: claude has no sudo, so
+# when claude runs this itself it deploys directly; dimitrios's run sudo's into claude.
+- name: Deploy claude's terminal environment (parity)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: "{{ lookup('env', 'USER') != claude_env_user }}"
+  become_user: "{{ claude_env_user }}"
+  vars:
+    target_home: "{{ claude_env_home }}"
+    repo_root: "{{ claude_env_repo_root }}"
+    theme_variant: "{{ claude_env_theme_variant }}"
+    dotfiles_links: "{{ claude_dotfile_links }}"
+    dotfiles_templated: "{{ claude_templated_configs }}"
+  roles:
+    - role: dotfiles
+      tags: [claude, claude_env]
+      when: (enable_claude_user | default(true) | bool) and (enable_claude_env | default(true) | bool)
+
 # Site-local customisations — the personalization seam (docs/personalizing.md).
 # Runs LAST, after the base system is in place. `bootstrap/local.yml` is an untracked
 # (gitignored) Ansible TASKS file the user drops in to install their own software /

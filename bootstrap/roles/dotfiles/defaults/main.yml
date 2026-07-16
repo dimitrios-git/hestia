@@ -1,0 +1,9 @@
+---
+# Which manifest slices this role deploys. Default = the FULL manifest from
+# group_vars/all.yml (the human's home). The claude-environment-parity play
+# (docs/claude-env-parity-design.md) reuses this same role with these overridden
+# to the claude subset (manifest entries tagged `claude: true`), deployed as the
+# `claude` user into its own home. Keeping the indirection here means dimitrios's
+# normal run is unchanged (it just uses the defaults).
+dotfiles_links: "{{ dotfile_links }}"
+dotfiles_templated: "{{ templated_configs }}"

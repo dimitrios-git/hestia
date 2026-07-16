@@ -144,21 +144,21 @@ ssh_key_file: "id_ed25519"  # private key in ~/.ssh that the login hook loads
 # Mirrors CLAUDE.md's "Active symlinks" table; CLAUDE.md should be regenerated
 # from this list, not hand-maintained (kills doc-vs-reality drift).
 dotfile_links:
-  - { src: user/vim/.vimrc,                 dest: "{{ target_home }}/.vimrc" }
+  - { src: user/vim/.vimrc,                 dest: "{{ target_home }}/.vimrc", claude: true }
   # hestia editor colorscheme (palette-driven, near-black bg). In ~/.vim/colors so both
   # Vim and Neovim find it (nvim prepends ~/.vim to its runtimepath).
-  - { src: user/vim/colors/hestia.vim,      dest: "{{ target_home }}/.vim/colors/hestia.vim" }
+  - { src: user/vim/colors/hestia.vim,      dest: "{{ target_home }}/.vim/colors/hestia.vim", claude: true }
   # theme-variant selector sourced by .vimrc before `colo hestia` (M7): the src is
   # picked by `theme_variant`, the dest name is variant-neutral.
-  - { src: "user/vim/hestia-background-{{ theme_variant }}.vim", dest: "{{ target_home }}/.vim/hestia-background.vim" }
-  - { src: user/bash/.bashrc,               dest: "{{ target_home }}/.bashrc" }
+  - { src: "user/vim/hestia-background-{{ theme_variant }}.vim", dest: "{{ target_home }}/.vim/hestia-background.vim", claude: true }
+  - { src: user/bash/.bashrc,               dest: "{{ target_home }}/.bashrc", claude: true }
   # GENERATED pair (render.py — same file-type table as vifm's colorscheme, so
   # `ls` and vifm agree by construction). src picked by `theme_variant` (M7).
-  - { src: "user/bash/.dircolors-{{ theme_variant }}", dest: "{{ target_home }}/.dircolors" }
-  - { src: user/git/.gitignore_global,      dest: "{{ target_home }}/.gitignore_global" }
+  - { src: "user/bash/.dircolors-{{ theme_variant }}", dest: "{{ target_home }}/.dircolors", claude: true }
+  - { src: user/git/.gitignore_global,      dest: "{{ target_home }}/.gitignore_global", claude: true }
   - { src: user/gnupg/gpg-agent.conf,       dest: "{{ target_home }}/.gnupg/gpg-agent.conf" }
-  - { src: user/nvim/init.vim,              dest: "{{ target_home }}/.config/nvim/init.vim" }
-  - { src: user/nvim/lua/trees.lua,         dest: "{{ target_home }}/.config/nvim/lua/trees.lua" }
+  - { src: user/nvim/init.vim,              dest: "{{ target_home }}/.config/nvim/init.vim", claude: true }
+  - { src: user/nvim/lua/trees.lua,         dest: "{{ target_home }}/.config/nvim/lua/trees.lua", claude: true }
   - { src: user/sway/config,                dest: "{{ target_home }}/.config/sway/config" }
   # GENERATED theme fragment (render.py) — colour $vars, desktop bg, the gsettings
   # appearance execs; `include`d by the sway config. src picked by `theme_variant` (M7).
@@ -201,12 +201,12 @@ dotfile_links:
   # GENERATED whole-file variant pair (render.py; swaynag has no include) — src
   # picked by `theme_variant` (M7).
   - { src: "user/swaynag/config-{{ theme_variant }}", dest: "{{ target_home }}/.config/swaynag/config" }
-  - { src: user/cava/config,                dest: "{{ target_home }}/.config/cava/config" }
-  - { src: user/kitty/kitty.conf,           dest: "{{ target_home }}/.config/kitty/kitty.conf" }
+  - { src: user/cava/config,                dest: "{{ target_home }}/.config/cava/config", claude: true }
+  - { src: user/kitty/kitty.conf,           dest: "{{ target_home }}/.config/kitty/kitty.conf", claude: true }
   # GENERATED terminal colours (render.py) — `include`d by kitty.conf. src picked by
   # `theme_variant` (M7).
-  - { src: "user/kitty/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/kitty/theme.conf" }
-  - { src: user/kitty/music.session,        dest: "{{ target_home }}/.config/kitty/music.session" }
+  - { src: "user/kitty/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/kitty/theme.conf", claude: true }
+  - { src: user/kitty/music.session,        dest: "{{ target_home }}/.config/kitty/music.session", claude: true }
   - { src: user/imv/config,                 dest: "{{ target_home }}/.config/imv/config" }
   # imv↔vifm integration (vifm `i` opens imv tiled, live cursor sync, q returns):
   # the dedicated imv config + its on-quit/sync return script. Exec bit from src.
@@ -216,34 +216,34 @@ dotfile_links:
   # GENERATED colours + recolor block (render.py) — `include theme` in zathurarc.
   # src picked by `theme_variant` (M7).
   - { src: "user/zathura/theme-{{ theme_variant }}", dest: "{{ target_home }}/.config/zathura/theme" }
-  - { src: user/vifm/vifmrc,                dest: "{{ target_home }}/.config/vifm/vifmrc" }
+  - { src: user/vifm/vifmrc,                dest: "{{ target_home }}/.config/vifm/vifmrc", claude: true }
   # GENERATED colorscheme pair (render.py) — dest keeps the `hestia` name so
   # vifmrc's `colorscheme hestia` needs no variant logic; src picked by
   # `theme_variant` (M7).
-  - { src: "user/vifm/colors/hestia-{{ theme_variant }}.vifm", dest: "{{ target_home }}/.config/vifm/colors/hestia.vifm" }
+  - { src: "user/vifm/colors/hestia-{{ theme_variant }}.vifm", dest: "{{ target_home }}/.config/vifm/colors/hestia.vifm", claude: true }
   # vifm quick-view dispatcher (catch-all fileviewer) — syntax-highlighted code
   # preview via bat; executable bit comes from the source file.
-  - { src: user/vifm/scripts/preview.sh,    dest: "{{ target_home }}/.config/vifm/scripts/preview.sh" }
+  - { src: user/vifm/scripts/preview.sh,    dest: "{{ target_home }}/.config/vifm/scripts/preview.sh", claude: true }
   # vifm `i` image-browse launcher (opens imv tiled, jumps the open imv on re-press)
   - { src: user/vifm/scripts/imv-browse.sh, dest: "{{ target_home }}/.config/vifm/scripts/imv-browse.sh" }
   # vifm :gc/:gs helper — lists branch-vs-main changed files (+ ancestor dirs)
-  - { src: user/vifm/scripts/git-changed.sh, dest: "{{ target_home }}/.config/vifm/scripts/git-changed.sh" }
+  - { src: user/vifm/scripts/git-changed.sh, dest: "{{ target_home }}/.config/vifm/scripts/git-changed.sh", claude: true }
   # bat — config + the hestia syntax theme. The theme is compiled into bat's
   # cache by the dotfiles role (`bat cache --build`) after this link is made.
-  - { src: user/bat/config,                 dest: "{{ target_home }}/.config/bat/config" }
+  - { src: user/bat/config,                 dest: "{{ target_home }}/.config/bat/config", claude: true }
   # GENERATED tmTheme pair (render.py) — dest keeps the `hestia` name (bat
   # selects themes by file stem; config --theme untouched); src picked by
   # `theme_variant` (M7). Cache rebuilt by this role's `bat cache --build`.
-  - { src: "user/bat/themes/hestia-{{ theme_variant }}.tmTheme", dest: "{{ target_home }}/.config/bat/themes/hestia.tmTheme" }
+  - { src: "user/bat/themes/hestia-{{ theme_variant }}.tmTheme", dest: "{{ target_home }}/.config/bat/themes/hestia.tmTheme", claude: true }
   # GENERATED glamour style pair (render.py) — dest keeps the name glow.yml points
   # at; src picked by `theme_variant` (M7).
-  - { src: "user/glow/hestia-{{ theme_variant }}.json", dest: "{{ target_home }}/.config/glow/hestia.json" }
+  - { src: "user/glow/hestia-{{ theme_variant }}.json", dest: "{{ target_home }}/.config/glow/hestia.json", claude: true }
   # file-manager evaluation themes (enable_file_managers gates the APPS; the
   # config symlinks below are unconditional — harmless without the app, and a
   # manual install picks them straight up, same ruling as every other config)
-  - { src: "user/yazi/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/yazi/theme.toml" }
-  - { src: user/ranger/rc.conf,             dest: "{{ target_home }}/.config/ranger/rc.conf" }
-  - { src: "user/ranger/colorschemes/hestia-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/hestia.py" }
+  - { src: "user/yazi/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/yazi/theme.toml", claude: true }
+  - { src: user/ranger/rc.conf,             dest: "{{ target_home }}/.config/ranger/rc.conf", claude: true }
+  - { src: "user/ranger/colorschemes/hestia-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/hestia.py", claude: true }
   # wallpaper stack (enable_wallpapers gates the BINARIES via localbin; these
   # config/helper symlinks are unconditional — same ruling as yazi/ranger).
   # The default engine is wpaperd on static mesh PNGs (user/sway/wallpaper.sh);
@@ -265,7 +265,7 @@ dotfile_links:
   # whichever home runs the bootstrap; it only has an effect where Claude Code runs
   # (the `claude` user). settings.json is app-writable, so it is RENDERED (a real
   # file, not this symlink) — see templated_configs below.
-  - { src: user/claude/keybindings.json,    dest: "{{ target_home }}/.claude/keybindings.json" }
+  - { src: user/claude/keybindings.json,    dest: "{{ target_home }}/.claude/keybindings.json", claude: true }
 
 # --- Rendered (templated) user configs ----------------------------------------
 # Path-generalisation (docs/repo-structure-design.md §5): configs that hardcode an
@@ -278,8 +278,8 @@ dotfile_links:
 # when the dest is absent, never overwrite a user's own file on re-run.
 templated_configs:
   - { src: user/git/.gitconfig.j2,          dest: "{{ target_home }}/.gitconfig" }
-  - { src: user/glow/glow.yml.j2,           dest: "{{ target_home }}/.config/glow/glow.yml" }
-  - { src: user/cmus/rc.j2,                 dest: "{{ target_home }}/.config/cmus/rc" }
+  - { src: user/glow/glow.yml.j2,           dest: "{{ target_home }}/.config/glow/glow.yml", claude: true }
+  - { src: user/cmus/rc.j2,                 dest: "{{ target_home }}/.config/cmus/rc", claude: true }
   # gtk-3.0 settings: the theme name + prefer-dark flag follow `theme_variant` (M7)
   - { src: user/gtk/gtk-3.0/settings.ini.j2, dest: "{{ target_home }}/.config/gtk-3.0/settings.ini" }
   # credential scripts: carry identity values (ssh_key_file/keygrip/signingkey) and
@@ -297,7 +297,7 @@ templated_configs:
   # edit the .j2; existing installs keep whatever they have. The kernel boundary
   # (claude unprivileged, not in sudo) plus this deny-list (no sudo, no push to main,
   # no `gh pr merge`, no `.env` reads) are the two halves of the trust model.
-  - { src: user/claude/settings.json.j2,    dest: "{{ target_home }}/.claude/settings.json", force: false }
+  - { src: user/claude/settings.json.j2,    dest: "{{ target_home }}/.claude/settings.json", force: false, claude: true }
   # ristretto: COPIES, not symlinks — xfconfd rewrites the channel xml atomically
   # (rename) on any property change (window geometry on every exit) and ristretto
   # re-saves accels.scm on quit, either of which would destroy a symlink. hestia
@@ -305,6 +305,23 @@ templated_configs:
   # at the NEXT login (a live xfconfd holds the channel in memory).
   - { src: user/ristretto/ristretto.xml.j2, dest: "{{ target_home }}/.config/xfce4/xfconf/xfce-perchannel-xml/ristretto.xml" }
   - { src: user/ristretto/accels.scm,       dest: "{{ target_home }}/.config/ristretto/accels.scm" }
+
+# --- claude environment parity (docs/claude-env-parity-design.md) --------------
+# Deploy the SAME terminal + theme configs to the `claude` agent user's own home,
+# from claude's own clone, so the two principals see the same environment. Reuses
+# the `dotfiles` role (site.yml runs it a second time as claude with these slices).
+# Only the subset tagged `claude: true` above is deployed — NEVER identity/secrets
+# (gitconfig / credential scripts / keys stay claude's own, set by the claude_user
+# role) or the desktop layer (that rides the Tier-B screenshot rig, a later PR).
+enable_claude_env: true
+claude_env_user: claude                      # the agent user (claude_user role owns its identity)
+claude_env_home: /home/claude                # claude's home (docs/claude-user-design.md)
+claude_env_repo_root: /srv/devshare/hestia   # claude's OWN clone — its env tracks its workspace branch
+claude_env_theme_variant: dark               # claude runs the dark variant
+# The claude subset, derived from the one manifest — `selectattr('claude','defined')`
+# is null-safe on entries without the key, so there's no second list to drift.
+claude_dotfile_links: "{{ dotfile_links | selectattr('claude', 'defined') | list }}"
+claude_templated_configs: "{{ templated_configs | selectattr('claude', 'defined') | list }}"
 
 # --- Host-tunable defaults (override per host in bootstrap/host_vars/<host>.yml) -
 # Sensible defaults so a fresh checkout renders without host_vars; real machines

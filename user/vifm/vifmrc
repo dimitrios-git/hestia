@@ -34,6 +34,12 @@ set scrolloff=4
 " — together those make ncurses negotiate SGR mouse so both click and wheel work.
 " (Terminal text selection then needs Shift-drag, the usual TUI-with-mouse
 " trade-off, as in vim.)
+"
+" NOTE on wheel behaviour: vifm hardwires the wheel to <c-e>/<c-y> — it scrolls
+" the VIEW, not the cursor, and CANNOT be remapped (mouse events aren't valid in
+" :map, vifm 0.14). So the wheel only visibly does something when the listing
+" OVERFLOWS the pane; in a directory that already fits on screen there's nothing
+" to scroll and the wheel is a no-op (by design — just click to select there).
 set mouse=a
 
 " Export THIS instance's server name for the imv-browse/return scripts: their

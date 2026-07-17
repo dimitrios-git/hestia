@@ -22,14 +22,24 @@ set nohlsearch
 set incsearch
 set scrolloff=4
 
-" Mouse: let vifm handle wheel events itself so one tick scrolls ONE line.
-" Without this vifm doesn't grab the mouse ('mouse' defaults to ""), so the
-" terminal (kitty) synthesises fake arrow-keys per wheel tick — and kitty's
-" wheel_scroll_multiplier default is 5.0, i.e. 5 files/tick. With mouse on,
-" vifm binds <ScrollWheelDown>=<c-e> / <ScrollWheelUp>=<c-y> (scroll the view
-" by a single line), giving the wanted 1-file/tick — and scoped to vifm, so
-" kitty's scrollback speed elsewhere is untouched. (Terminal text selection
-" now needs Shift-drag, the usual TUI-with-mouse trade-off, as in vim.)
+" Mouse: vifm handles clicks AND the wheel itself — a click moves the cursor,
+" and one wheel notch scrolls ONE line (<ScrollWheelDown>=<c-e> /
+" <ScrollWheelUp>=<c-y>), instead of kitty's default 5-arrow-keys-per-notch.
+" This REQUIRES the SGR mouse protocol (mode 1006): kitty's stock xterm-kitty
+" terminfo only advertises LEGACY mouse, whose wheel events vifm ignores — so
+" bare 'mouse=a' gives clicks but a DEAD wheel. The dotfiles role installs a
+" ~/.terminfo xterm-kitty override that adds the SGR caps (terminfo.yml +
+" user/kitty/xterm-kitty-sgr-mouse.terminfo) AND sets 'terminfo_type none' in
+" kitty.conf so kitty stops shadowing ~/.terminfo with its own bundled terminfo
+" — together those make ncurses negotiate SGR mouse so both click and wheel work.
+" (Terminal text selection then needs Shift-drag, the usual TUI-with-mouse
+" trade-off, as in vim.)
+"
+" NOTE on wheel behaviour: vifm hardwires the wheel to <c-e>/<c-y> — it scrolls
+" the VIEW, not the cursor, and CANNOT be remapped (mouse events aren't valid in
+" :map, vifm 0.14). So the wheel only visibly does something when the listing
+" OVERFLOWS the pane; in a directory that already fits on screen there's nothing
+" to scroll and the wheel is a no-op (by design — just click to select there).
 set mouse=a
 
 " Export THIS instance's server name for the imv-browse/return scripts: their

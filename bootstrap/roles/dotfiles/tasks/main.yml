@@ -147,3 +147,9 @@
 # (self-skips when no profile exists yet).
 - name: Deploy Thunderbird theming into existing profiles
   ansible.builtin.import_tasks: thunderbird.yml
+
+# Compile the SGR-mouse xterm-kitty terminfo override into ~/.terminfo, so vifm's
+# `set mouse=a` gets a working scroll wheel (kitty's stock terminfo only speaks
+# legacy mouse, whose wheel vifm ignores). Self-skips without kitty/ncurses.
+- name: Install the SGR-mouse kitty terminfo override
+  ansible.builtin.import_tasks: terminfo.yml

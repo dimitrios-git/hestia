@@ -293,11 +293,14 @@ lua << EOF
       heading = { sign = false },
       code = { sign = false, width = 'block' },
     })
-    -- Theme headings to the hestia accent violet (#7c3aed); the heading wash
-    -- follows the variant (dark extended.heading_bg, light its counterpart)
-    local heading_bg = vim.o.background == 'light' and '#e9ddff' or '#150a24'
+    -- Theme headings to hestia's cyan (bright_cyan: dark #22cdda / light #087a84,
+    -- both AA) rather than the violet accent — matches glow's markdown headings, and
+    -- keeps a full-screen render from being wall-to-wall purple. The wash is the
+    -- cyan-tinted counterpart of the old violet heading_bg, per variant.
+    local heading_fg = vim.o.background == 'light' and '#087a84' or '#22cdda'
+    local heading_bg = vim.o.background == 'light' and '#ddf2f4' or '#0a2124'
     for i = 1, 6 do
-      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i, { fg = '#7c3aed', bold = true })
+      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i, { fg = heading_fg, bold = true })
       vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i .. 'Bg', { bg = heading_bg })
     end
   end

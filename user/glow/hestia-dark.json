@@ -17,39 +17,39 @@
   },
   "heading": {
     "block_suffix": "\n",
-    "color": "#7c3aed",
+    "color": "#22cdda",
     "bold": true
   },
   "h1": {
     "prefix": " ",
     "suffix": " ",
     "color": "#ffffff",
-    "background_color": "#7c3aed",
+    "background_color": "#22cdda",
     "bold": true
   },
   "h2": {
     "prefix": "## ",
-    "color": "#7c3aed",
+    "color": "#22cdda",
     "bold": true
   },
   "h3": {
     "prefix": "### ",
-    "color": "#9e77f7",
+    "color": "#22cdda",
     "bold": true
   },
   "h4": {
     "prefix": "#### ",
-    "color": "#9e77f7",
+    "color": "#22cdda",
     "bold": true
   },
   "h5": {
     "prefix": "##### ",
-    "color": "#9e77f7",
+    "color": "#22cdda",
     "bold": true
   },
   "h6": {
     "prefix": "###### ",
-    "color": "#9e77f7"
+    "color": "#22cdda"
   },
   "text": {},
   "strikethrough": {

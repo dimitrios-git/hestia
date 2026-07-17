@@ -961,6 +961,11 @@ def render_glow(variant: str) -> str:
     c = VARIANTS[variant]
     r = vroles(variant)
     acc, accfg, link, dim = r["accent"], r["accent_fg"], c["link"], r["dim"]
+    # Markdown HEADINGS go cyan (bright_cyan: dark #22cdda / light #087a84, both AA)
+    # instead of the violet accent — a full-screen glow render with violet headings is
+    # too much purple. Code/links stay `link` (violet). So the `glow -p` open and the
+    # vifm notty preview both read cyan for headings. (acc kept for non-heading uses.)
+    head = vansi(variant)["bright_cyan"]
     chroma = {}
     for key, role, style in GLOW_CHROMA:
         entry = {}
@@ -978,13 +983,13 @@ def render_glow(variant: str) -> str:
         "block_quote": {"color": dim, "indent": 1, "indent_token": "│ "},
         "paragraph": {},
         "list": {"level_indent": 2},
-        "heading": {"block_suffix": "\n", "color": acc, "bold": True},
-        "h1": {"prefix": " ", "suffix": " ", "color": accfg, "background_color": acc, "bold": True},
-        "h2": {"prefix": "## ", "color": acc, "bold": True},
-        "h3": {"prefix": "### ", "color": link, "bold": True},
-        "h4": {"prefix": "#### ", "color": link, "bold": True},
-        "h5": {"prefix": "##### ", "color": link, "bold": True},
-        "h6": {"prefix": "###### ", "color": link},
+        "heading": {"block_suffix": "\n", "color": head, "bold": True},
+        "h1": {"prefix": " ", "suffix": " ", "color": accfg, "background_color": head, "bold": True},
+        "h2": {"prefix": "## ", "color": head, "bold": True},
+        "h3": {"prefix": "### ", "color": head, "bold": True},
+        "h4": {"prefix": "#### ", "color": head, "bold": True},
+        "h5": {"prefix": "##### ", "color": head, "bold": True},
+        "h6": {"prefix": "###### ", "color": head},
         "text": {},
         "strikethrough": {"crossed_out": True},
         "emph": {"italic": True},

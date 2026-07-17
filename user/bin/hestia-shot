@@ -36,9 +36,14 @@ export XDG_RUNTIME_DIR
 
 U="$REPO/user"
 WANT_BAR=0
+# vifm scenes launch with a fixed server name so a post-map hook can drive them
+# (e.g. `vifm --server-name "$VIFM_SHOT_SERVER" --remote -c :gs` to reach a state
+# before the capture). Export it for HESTIA_HOOK.
+export VIFM_SHOT_SERVER=hestiashot
+VIFM="vifm --server-name $VIFM_SHOT_SERVER"
 case "$SCENE" in
-  desktop) APP="kitty --class term -e vifm $U"; WANT_BAR=1 ;;
-  vifm)    APP="kitty --class term -e vifm ${3:-$REPO}" ;;
+  desktop) APP="kitty --class term -e $VIFM $U"; WANT_BAR=1 ;;
+  vifm)    APP="kitty --class term -e $VIFM ${3:-$REPO}" ;;
   ranger)  APP="kitty --class term -e ranger ${3:-$REPO}" ;;
   yazi)    APP="kitty --class term -e yazi ${3:-$REPO}" ;;
   app)     APP="kitty --class term -e ${2:?scene 'app' needs a command}"; OUT="${3:-$PWD/hestia-shot.png}" ;;
@@ -65,12 +70,14 @@ DIM=$(sed -n 's/^set \$dim  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/hestia-shot.XXXXXX")
 cleanup() {
-  # Graceful first (closes waybar + the app cleanly), then hammer the whole
-  # process group — waybar/kitty are grandchildren of dbus-run-session, so a
-  # plain kill of the launcher misses them (setsid below makes us the group).
+  # Graceful first (`swaymsg exit` closes waybar + the app), then let
+  # dbus-run-session exit on its own so it REAPS its dbus-daemon — a straight
+  # group kill orphans that daemon (they pile up and wedge later chromium runs).
+  # Only group-kill (waybar/kitty are grandchildren of dbus-run-session, missed
+  # by a plain launcher kill) if it hasn't exited within ~2s.
   [ -n "${SWAYSOCK:-}" ] && swaymsg exit >/dev/null 2>&1 || true
   if [ -n "${SWAYPID:-}" ]; then
-    sleep 0.2
+    for _ in $(seq 1 20); do kill -0 "$SWAYPID" 2>/dev/null || break; sleep 0.1; done
     kill -- "-$SWAYPID" 2>/dev/null || kill "$SWAYPID" 2>/dev/null || true
   fi
   rm -rf "$WORK"
@@ -126,7 +133,11 @@ for _ in $(seq 1 60); do
   swaymsg -t get_tree 2>/dev/null | grep -q '"app_id": "term"' && break
   sleep 0.1
 done
-sleep 1.2
+sleep 1
+# optional post-map hook — drive the scene into a specific state before the shot
+# (e.g. send vifm `--remote` commands via $VIFM_SHOT_SERVER). Runs in this shell.
+if [ -n "${HESTIA_HOOK:-}" ]; then eval "$HESTIA_HOOK"; sleep 1; fi
+sleep 0.5
 
 WD=$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | grep -v '\.lock$' | head -1 | xargs -n1 basename)
 mkdir -p "$(dirname "$OUT")"

@@ -23,17 +23,17 @@ canvas {{ display:block; }}
 #panel {{
   position:fixed; top:16px; right:16px; z-index:10;
   background:rgba(26,26,26,.92); color:#e0e0e0;
-  font:13px monospace; padding:14px 16px; border:2px solid #d7005f;
+  font:13px monospace; padding:14px 16px; border:2px solid #7c3aed;
   display:flex; flex-direction:column; gap:8px; min-width:260px;
 }}
 #panel .row {{ display:flex; align-items:center; gap:8px; }}
 #panel .row span {{ flex:0 0 96px; }}
 #panel .row em {{ flex:0 0 36px; font-style:normal; color:#8c8c8c; text-align:right; }}
-#panel input[type=range] {{ flex:1; accent-color:#d7005f; }}
+#panel input[type=range] {{ flex:1; accent-color:#7c3aed; }}
 #panel select {{ background:#111; color:#e0e0e0; border:1px solid #3a3a3a; }}
 #clock {{ color:#8c8c8c; }}
 #params {{
-  background:#d7005f; color:#fff; border:none; padding:7px 10px;
+  background:#7c3aed; color:#fff; border:none; padding:7px 10px;
   font:bold 13px monospace; cursor:pointer;
 }}
 </style>

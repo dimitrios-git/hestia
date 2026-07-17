@@ -69,6 +69,9 @@ VARIANTS = {
         **PALETTE["syntax"],
         "text": ROLES["text"],
         "link": ROLES["link"],
+        # exposed for the markdown scope map (scopes.yml): bat's rendered-markdown
+        # headings mirror glow — H2–H6 = bright_cyan (H1 uses the AA-safe `link` violet).
+        "bright_cyan": ANSI["bright_cyan"],
         "error_fg": "#ffffff",
         "error_bg": ROLES["danger_dark"],   # 0.10.0: danger red (light already uses syntax.error red)
         # surfaces the plain-text roles must clear AA against. Since 0.5.0 the
@@ -84,6 +87,7 @@ VARIANTS = {
         **LIGHT["syntax"],
         "text": LIGHT["roles"]["text"],
         "link": LIGHT["roles"]["accent"],
+        "bright_cyan": LIGHT["ansi"]["bright_cyan"],
         "error_fg": "#ffffff",
         "error_bg": LIGHT["syntax"]["error"],
         # the light gate runs against the #f5f5f5 DESKTOP ground (M7) — stricter

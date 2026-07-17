@@ -42,6 +42,21 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-17 — bat/TextMate markdown SOURCE mirrors glow (H1 violet, H2–H6 cyan,
+  `code`/links violet); vifm's glow-in-pane preview dropped.** The vifm `.md` preview
+  was a glow *render* piped into the pane, but forced notty it's 16-colour only and its
+  width/wrap offset never sat right (a `-w %pw-3` tune didn't fix it live) — so the render
+  looked worse than clean source. Dropped the glow fileviewer; `.md` now falls to the
+  catch-all **bat** (syntax-highlighted source + line numbers), and the shared TextMate
+  scope map (`scopes.yml`, so **bat + Shiki + VS Code** all follow) colours markdown to
+  match glow: `markup.heading` → **`bright_cyan`** (H2–H6 cyan), a new more-specific
+  `markup.heading.1` → **`link`** violet (**NOT** `accent` `#7c3aed`, which is a *fill*
+  colour and fails AA as text on the ground — **3.05:1**; the AA-safe violet TEXT role is
+  `link` `#9e77f7` **5.33:1**; glow's H1 can use true accent only because it's a
+  white-on-accent *banner*), and `markup.raw` → `link` violet (was `preproc` teal) to
+  match glow's inline `code`. render.py exposes `bright_cyan` to the tmTheme variant maps.
+  `render.py --check` clean at v0.10.1. NB: the Shiki/VS Code pairs regenerated here still
+  need re-vendoring into stoa (tracked with the other pending Shiki re-vendor).
 - **2026-07-17 — markdown heading HIERARCHY: H1 title violet, H2–H6 cyan (+ less status
   bar).** Follow-up to the same-day cyan change. An all-cyan set left the H1 as a
   white-on-cyan banner — only **1.94:1**, unreadable. With the sections already cyan,

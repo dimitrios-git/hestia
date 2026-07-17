@@ -106,7 +106,11 @@ if [ -x /usr/bin/dircolors ]; then
     #                     accent cursor that parks next to it)
     #   NK   line nums -> grey (when -N is on)
     #   E+R  errors    -> bright red
-    export LESS='-R --use-color -Dd+r -Du+b -DSky -DPWc -DNK -DE+R'
+    # Plus -R (emit the colour) and -S (chop long lines — scroll sideways instead of
+    # wrapping; matches weather.sh's `less -RS` + kitty's scrollback pager, and makes
+    # vifm's tar/zip listing views not wrap). -S is on LESS only, NOT MANPAGER, so man
+    # pages still wrap.
+    export LESS='-R -S --use-color -Dd+r -Du+b -DSky -DPWc -DNK -DE+R'
     export MANPAGER="less -R --use-color -Dd+r -Du+b -DSky -DPWc -DNK -DE+R"
 fi
 

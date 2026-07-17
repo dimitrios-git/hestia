@@ -29,9 +29,11 @@ set scrolloff=4
 " terminfo only advertises LEGACY mouse, whose wheel events vifm ignores — so
 " bare 'mouse=a' gives clicks but a DEAD wheel. The dotfiles role installs a
 " ~/.terminfo xterm-kitty override that adds the SGR caps (terminfo.yml +
-" user/kitty/xterm-kitty-sgr-mouse.terminfo), which makes ncurses negotiate SGR
-" mouse so both click and wheel work. (Terminal text selection then needs
-" Shift-drag, the usual TUI-with-mouse trade-off, as in vim.)
+" user/kitty/xterm-kitty-sgr-mouse.terminfo) AND sets 'terminfo_type none' in
+" kitty.conf so kitty stops shadowing ~/.terminfo with its own bundled terminfo
+" — together those make ncurses negotiate SGR mouse so both click and wheel work.
+" (Terminal text selection then needs Shift-drag, the usual TUI-with-mouse
+" trade-off, as in vim.)
 set mouse=a
 
 " Export THIS instance's server name for the imv-browse/return scripts: their

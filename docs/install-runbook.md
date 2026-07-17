@@ -179,6 +179,11 @@ Not Ansible-managed (vendor, per-user, interactive, or deliberately heavy/option
   `sudo tailscale up` (interactive SSO / an auth-key). Skip the role with
   `enable_tailscale=false` (the Samba share then renders LAN-only).
 - **Claude Code** for your own user (native installer) if not already present.
+- **MEGAsync sync setup** — the **`mega` role** (`enable_mega`, §1) installs the
+  package from MEGA's apt repo; signing into your MEGA account and choosing what
+  syncs stays in-app on first launch: start **MEGAsync**, sign in, add a synced
+  folder pointed at your storage (e.g. `mkdir -p /mnt/cloud-data/files/MEGA`
+  first, then select it). Off by default; skip with `enable_mega=false`.
 - Enable services: `sudo systemctl enable --now bluetooth power-profiles-daemon`.
 
 ## Validation

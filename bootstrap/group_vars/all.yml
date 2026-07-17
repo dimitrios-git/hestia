@@ -115,6 +115,12 @@ enable_chrome: false        # install Google Chrome from Google's vendor repo (c
 # pin; TLS-trust, installed only when absent). JForex4 joins the role when it
 # lands. Default OFF — proprietary + niche; turn on per host.
 enable_trading: false       # install trading apps (TradingView Desktop; JForex4 later)
+# MEGA Desktop (the `mega` role): MEGAsync from MEGA's own signed apt repo — NOT
+# in Debian apt (proprietary cloud-sync client). amd64/arm64; the role self-skips
+# other arches. Installs the package only; signing in + choosing synced folders
+# (e.g. → /mnt/cloud-data/files/MEGA) is in-app on first run and stays manual.
+# Default OFF — a per-host choice. Add `nemo-megasync` etc. via `mega_packages`.
+enable_mega: false          # install MEGA Desktop from MEGA's vendor repo (mega role)
 # Theming testbench (the `testbench` role, no root): generates a disposable demo
 # folder of per-language code samples + dircolors/ls file-type fixtures so theme
 # changes can be eyeballed across editors + file managers from one place. Default

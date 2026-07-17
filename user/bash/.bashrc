@@ -101,17 +101,19 @@ if [ -x /usr/bin/dircolors ]; then
     #   d+r  bold      -> accent red  (man section headers / commands)
     #   u+b  underline -> blue        (man args / options)
     #   Sky  search    -> black on yellow (highlighter; matches vim's search)
-    #   PWc  prompt    -> bright-white on cyan (the bottom status bar — cyan is
-    #                     the theme's focus colour, so it harmonises with the
-    #                     accent cursor that parks next to it)
+    #   P231.99 prompt -> white on the accent VIOLET (256-cube 99 = #875fff, the
+    #                     nearest-cube accent, same index vifm uses in cterm) — the
+    #                     bottom status bar (the ':' prompt + '(END)'). glow -p pipes
+    #                     to less, so this matches glow's violet H1 title banner.
+    #                     (256-cube because the violet accent is not an ANSI colour.)
     #   NK   line nums -> grey (when -N is on)
     #   E+R  errors    -> bright red
     # Plus -R (emit the colour) and -S (chop long lines — scroll sideways instead of
     # wrapping; matches weather.sh's `less -RS` + kitty's scrollback pager, and makes
     # vifm's tar/zip listing views not wrap). -S is on LESS only, NOT MANPAGER, so man
     # pages still wrap.
-    export LESS='-R -S --use-color -Dd+r -Du+b -DSky -DPWc -DNK -DE+R'
-    export MANPAGER="less -R --use-color -Dd+r -Du+b -DSky -DPWc -DNK -DE+R"
+    export LESS='-R -S --use-color -Dd+r -Du+b -DSky -DP231.99 -DNK -DE+R'
+    export MANPAGER="less -R --use-color -Dd+r -Du+b -DSky -DP231.99 -DNK -DE+R"
 fi
 
 # ls aliases

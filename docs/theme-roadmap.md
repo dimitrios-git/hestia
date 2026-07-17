@@ -42,6 +42,17 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-17 — markdown heading HIERARCHY: H1 title violet, H2–H6 cyan (+ less status
+  bar).** Follow-up to the same-day cyan change. An all-cyan set left the H1 as a
+  white-on-cyan banner — only **1.94:1**, unreadable. With the sections already cyan,
+  the H1 title can go back to the violet **`accent`** banner (white-on-accent **5.70:1**)
+  without flooding the screen — one violet title over cyan sections reads as hierarchy.
+  glow (render.py h1 `background_color` → `acc`; regenerated the pair) + render-markdown.nvim
+  (`.vimrc`: H1 accent, H2–H6 cyan) both follow it. Also: `glow -p` pipes to **less**, so
+  less's status bar (`:` prompt + `(END)`) went from the focus **cyan** to the accent
+  **violet** to match the H1 — 256-cube `99` (≈`#7c3aed`; violet isn't an ANSI colour, and
+  less `-D` takes 256-cube numbers), `LESS`/`MANPAGER` `-DPWc`→`-DP231.99` in `.bashrc`
+  (global: every `less`, incl. man). `render.py --check` clean at v0.10.1.
 - **2026-07-17 — glow + render-markdown.nvim markdown HEADINGS → cyan.** Config/render
   tweak, no palette version bump. Rendered-markdown headings were the violet accent
   (glow H1 banner/H2 = `accent`, H3–H6 = `link`; nvim `RenderMarkdownH*` = `#7c3aed`),

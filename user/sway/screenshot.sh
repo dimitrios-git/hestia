@@ -41,7 +41,13 @@ esac
 mkdir -p "$dir"
 
 # Region select; exit cleanly if slurp is cancelled (Esc/right-click).
-geom=$(slurp) || exit 0
+# Explicit colours: slurp's DEFAULT background is a semi-transparent *white*
+# wash (#FFFFFF40), which brightens/blows out the whole screen and hides the
+# white Breeze cursor. Instead dim the non-selected area with the hestia ground
+# (#1a1a1a at ~80%) and leave the selection itself transparent (#00000000) so
+# the region you're grabbing shows at full brightness — the conventional
+# "spotlight the selection" look — with an accent-violet border.
+geom=$(slurp -b '#1a1a1acc' -c '#7c3aedff' -s '#00000000' -w 2) || exit 0
 out="$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
 grim -g "$geom" "$out"
 

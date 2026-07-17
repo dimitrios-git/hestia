@@ -191,6 +191,7 @@ the next chore in a queue.
 | Bluetooth | bluetuith + bluez | `●●◐○●○` | |
 | VPN / mesh | tailscale | `●●–◐●○` | |
 | File sharing | samba | `●●–◐●○` | Design doc recorded |
+| Cloud storage / sync | megasync *(opt-in)* | `●●–○●○` | MEGA Desktop from MEGA's vendor apt repo (`enable_mega`, default off; `mega` role). A sway `for_window [class="MEGAsync"] floating disable` rule works around its off-screen-window bug; sign-in + sync-folder are in-app. Never researched vs Nextcloud / Syncthing / rclone |
 | System monitor | htop | `●●◐○●○` | vs btop |
 | Power management | power-profiles-daemon | `●●–○●○` | |
 | Backup | — none | | Candidate: restic / borg |

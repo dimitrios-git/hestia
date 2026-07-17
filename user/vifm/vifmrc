@@ -128,7 +128,18 @@ filetype {*.7z}
 fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}
          \ mediainfo %f
 
-" Markdown — rendered preview (requires glow). Two pipe/notty gotchas:
+" Markdown — rendered preview (requires glow). Three pipe/notty gotchas:
+"   * The `sh -c '… </dev/null' _ %pw %f` wrapper is LOAD-BEARING (two bugs in one):
+"     (1) glow reads stdin even when handed a file arg, and vifm runs the previewer
+"     with an open (no-EOF) stdin, so glow BLOCKS FOREVER — the preview produces
+"     nothing and vifm silently falls back to the catch-all bat viewer (why the .md
+"     preview showed raw source + line numbers, not a glow render). `</dev/null`
+"     gives an immediate EOF so glow uses the file. (2) vifm does NOT run fileviewer
+"     commands through a shell, so an inline `</dev/null` is passed to glow as a
+"     literal ARGUMENT (→ error → same bat fallback); wrapping in explicit `sh -c`
+"     makes a real shell apply the redirect. `%pw`/`%f` are passed as $1/$2 (safe
+"     quoting) — NOT inside the single quotes, where vifm wouldn't expand them.
+"     (The full-screen open path runs in a real TTY, so its stdin is fine.)
 "   * CLICOLOR_FORCE=1 forces colour. When piped (the preview pane is notty),
 "     glow drops colour AND emits malformed empty-param SGR (ESC[;;1m) for the
 "     bold-only bits, which vifm's ANSI parser can't read — it leaks them as
@@ -139,7 +150,7 @@ fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}
 "     hestia hex — the full-screen open (real TTY) still gets truecolor.
 "   * -s passes the hestia style so the 16-colour mapping stays on-theme.
 fileviewer {*.md,*.markdown}
-         \ CLICOLOR_FORCE=1 glow -s ~/.config/glow/hestia.json -w %pw %f
+         \ sh -c 'CLICOLOR_FORCE=1 glow -s "$HOME/.config/glow/hestia.json" -w "$1" "$2" </dev/null' _ %pw %f
 
 " PDF — requires poppler-utils
 fileviewer {*.pdf}

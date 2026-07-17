@@ -58,6 +58,13 @@ Launching + signing in + choosing what syncs is **in-app on first run**, like
 The account, sync pairs, and bandwidth settings all live in MEGAsync's own
 config under `~/.local/share/data/Mega Limited/` — not tracked here.
 
+**sway note:** MEGAsync is an XWayland Qt app whose frameless setup/tray windows
+reposition themselves off-screen on sway (they "vanish" on a button click). The
+sway config carries a `for_window [class="MEGAsync"] floating disable` rule that
+tiles them so sway ignores the bad geometry and they stay on screen (some
+cosmetic flicker remains during the one-time setup). After setup MEGAsync runs
+from the waybar tray; manage sync via right-click tray → **Settings**.
+
 ## Updates
 
 apt-managed — `megasync` updates with `apt upgrade` (a re-run of this role

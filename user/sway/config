@@ -15,6 +15,21 @@ for_window [app_id="floatterm"] floating enable, resize set 800 600
 for_window [app_id="floatterm-weather"] resize set 1180 720
 for_window [app_id="floatterm-gpu"] resize set 1100 700
 
+# MEGAsync (the `mega` role — XWayland, class "MEGAsync"): force its windows
+# TILED. Its setup wizard / infoDialog are frameless Qt windows that reposition
+# themselves relative to a system-tray anchor on each step; on sway that geometry
+# lands OFF-SCREEN, so the window "vanishes" the moment you click a button (it's
+# still in the tree, just moved out of view). Floating = sway honours those bad
+# coordinates; tiled = sway pins the window into the layout and IGNORES the app's
+# position requests, so it can't wander off-screen and stays usable through login
+# + sync setup. Some residual FLICKER remains (the app keeps re-requesting the
+# off-screen move; sway overrides each frame) — cosmetic, and setup is one-time
+# (afterwards MEGAsync lives in the waybar tray, syncing in the background).
+# (Trade-off: the left-click tray popup also tiles rather than floating by the
+# tray — unusual but visible; manage sync via right-click tray → Settings, a
+# normal window.) Class match (XWayland), not app_id.
+for_window [class="MEGAsync"] floating disable
+
 # Home row direction keys, like vim
 set $left h
 set $down j

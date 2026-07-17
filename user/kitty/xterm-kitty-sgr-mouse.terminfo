@@ -1,0 +1,23 @@
+# hestia: xterm-kitty terminfo override adding SGR (1006) mouse support.
+#
+# kitty's stock `xterm-kitty` entry advertises only the LEGACY X11 mouse
+# protocol (kmous=\E[M, no XM capability), so ncurses apps negotiate mode-1000
+# mouse — whose wheel events (buttons 4/5) vifm silently ignores. The upshot:
+# with `set mouse=a`, vifm gets clicks but a DEAD scroll wheel (and grabbing the
+# mouse also disables kitty's own arrow-key scroll fallback). kitty itself fully
+# speaks SGR mouse (mode 1006); only its terminfo omits the capability.
+#
+# This layers the SGR mouse caps onto kitty's entry via `use=xterm-kitty`, so
+# ncurses negotiates SGR mouse (\E[?1006;1000h) and vifm then handles BOTH click
+# and wheel — one wheel notch scrolls one line (<ScrollWheelDown>=<c-e>). The
+# caps are lifted verbatim from xterm-256color. Compiled to ~/.terminfo (which
+# outranks the system db) by the dotfiles role's terminfo.yml — no root.
+#
+# Idempotent to recompile: `use=xterm-kitty` resolves against the system entry
+# on first build and the override thereafter (both carry the full cap set), so
+# `tic` never errors on a circular reference.
+xterm-kitty|kitty terminal (hestia SGR-mouse override),
+	kmous=\E[<,
+	XM=\E[?1006;1000%?%p1%{1}%=%th%el%;,
+	xm=\E[<%i%p3%d;%p1%d;%p2%d;%?%p4%tM%em%;,
+	use=xterm-kitty,

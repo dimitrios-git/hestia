@@ -1,0 +1,29 @@
+---
+# SGR-mouse terminfo override for kitty (docs: the Kitty section of CLAUDE.md).
+# kitty's stock `xterm-kitty` terminfo advertises only the LEGACY X11 mouse
+# protocol, so ncurses apps negotiate mode-1000 mouse — whose wheel events vifm
+# ignores. With `set mouse=a`, vifm then gets clicks but a DEAD wheel. kitty
+# fully supports SGR mouse (mode 1006); only its terminfo omits the capability.
+# Compile a user override into ~/.terminfo that adds the SGR caps, so ncurses
+# negotiates SGR mouse and vifm handles BOTH click and wheel (1 line/notch).
+# No root — ~/.terminfo outranks the system db. Runs as the invoking user.
+#
+# Self-skips cleanly when the ncurses tools or kitty's base terminfo are absent
+# (a spin without kitty): `tic`/`infocmp` gate the build. changed_when:false —
+# recompiling the same source is idempotent in effect (like the bat cache).
+
+- name: Are the terminfo tools + kitty's base entry present?
+  ansible.builtin.shell: >
+    command -v tic >/dev/null 2>&1 &&
+    infocmp xterm-kitty >/dev/null 2>&1 &&
+    echo ok || true
+  register: _kitty_terminfo_ok
+  changed_when: false
+
+- name: Compile the SGR-mouse xterm-kitty override into ~/.terminfo
+  ansible.builtin.command:
+    cmd: >
+      tic -x -o {{ target_home }}/.terminfo
+      {{ repo_root }}/user/kitty/xterm-kitty-sgr-mouse.terminfo
+  when: _kitty_terminfo_ok.stdout == 'ok'
+  changed_when: false

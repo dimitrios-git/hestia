@@ -42,6 +42,16 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-07-17 — glow + render-markdown.nvim markdown HEADINGS → cyan.** Config/render
+  tweak, no palette version bump. Rendered-markdown headings were the violet accent
+  (glow H1 banner/H2 = `accent`, H3–H6 = `link`; nvim `RenderMarkdownH*` = `#7c3aed`),
+  so a full-screen `glow -p` / in-buffer render was wall-to-wall purple. Repointed
+  headings to **`bright_cyan`** (dark `#22cdda` 6.90:1 / light `#087a84` 4.67:1, both
+  AA) — glow via render.py (`head = vansi(variant)["bright_cyan"]`, regenerated the glow
+  pair), nvim via `.vimrc` (fg + a cyan-tinted heading wash). Inline `code`/links stay
+  `link` violet (headings-only, dimitrios's call). Unifies glow's truecolor `-p` open
+  with its notty preview (glow's 16-colour H1 is a `bright_cyan` banner) and with nvim.
+  `render.py --check` clean at v0.10.1.
 - **2026-07-10 (0.10.1) — unify the hestia red on a TRUE red `#d70000`.** The retired
   accent red `#d7005f` (a rose/cerise, hue 333°) read pink/magenta in the power-off
   confirm; retuned to `#d70000` (hue 0°, white-on 5.40) everywhere it means "red" —

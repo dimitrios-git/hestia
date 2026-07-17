@@ -221,11 +221,21 @@
     </dict>
 
     <dict>
-      <key>name</key><string>Heading (vim Title)</string>
+      <key>name</key><string>Heading H2–H6 (cyan, matches glow sections)</string>
       <key>scope</key><string>markup.heading, markup.heading entity.name</string>
       <key>settings</key>
       <dict>
-        <key>foreground</key><string>#1a1a1a</string>
+        <key>foreground</key><string>#087a84</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Heading H1 (violet, matches glow title)</string>
+      <key>scope</key><string>markup.heading.1, markup.heading.1 entity.name, markup.heading.1.markdown</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#7c3aed</string>
         <key>fontStyle</key><string>bold</string>
       </dict>
     </dict>
@@ -264,7 +274,7 @@
       <key>scope</key><string>markup.raw, markup.inline.raw</string>
       <key>settings</key>
       <dict>
-        <key>foreground</key><string>#08717a</string>
+        <key>foreground</key><string>#7c3aed</string>
       </dict>
     </dict>
 

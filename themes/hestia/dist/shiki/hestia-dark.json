@@ -243,13 +243,25 @@
       }
     },
     {
-      "name": "Heading (vim Title)",
+      "name": "Heading H2–H6 (cyan, matches glow sections)",
       "scope": [
         "markup.heading",
         "markup.heading entity.name"
       ],
       "settings": {
-        "foreground": "#e0e0e0",
+        "foreground": "#22cdda",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Heading H1 (violet, matches glow title)",
+      "scope": [
+        "markup.heading.1",
+        "markup.heading.1 entity.name",
+        "markup.heading.1.markdown"
+      ],
+      "settings": {
+        "foreground": "#9e77f7",
         "fontStyle": "bold"
       }
     },
@@ -291,7 +303,7 @@
         "markup.inline.raw"
       ],
       "settings": {
-        "foreground": "#0cb2c0"
+        "foreground": "#9e77f7"
       }
     },
     {

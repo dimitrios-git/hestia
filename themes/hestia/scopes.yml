@@ -164,10 +164,22 @@ rules:
     role: type
     scopes: [entity.other.attribute-name]
 
-  - name: Heading (vim Title)
-    role: text
+  # Rendered-markdown headings mirror glow (docs/theme-roadmap 2026-07-17): H2–H6
+  # cyan, H1 the violet accent. So a .md preview (bat, syntax-highlighted source)
+  # reads the same as the glow open — even though bat colours the `#` source, not
+  # a render. markup.heading.1 is more specific, so it wins for H1 over the general.
+  - name: Heading H2–H6 (cyan, matches glow sections)
+    role: bright_cyan
     font_style: bold
     scopes: [markup.heading, markup.heading entity.name]
+
+  # H1 uses `link` (#9e77f7), the AA-safe violet TEXT role — NOT `accent` (#7c3aed),
+  # which is a FILL colour and fails AA as text on the ground (3.05:1). glow can use
+  # the true accent because its H1 is a white-on-accent banner; bat colours text.
+  - name: Heading H1 (violet, matches glow title)
+    role: link
+    font_style: bold
+    scopes: [markup.heading.1, markup.heading.1 entity.name, markup.heading.1.markdown]
 
   - name: Bold
     role: text
@@ -185,7 +197,7 @@ rules:
     scopes: [markup.underline.link, markup.link, string.other.link]
 
   - name: Raw / code span
-    role: preproc
+    role: link      # violet — matches glow's inline `code` (was preproc teal)
     scopes: [markup.raw, markup.inline.raw]
 
   - name: Diff inserted

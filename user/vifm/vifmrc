@@ -128,7 +128,14 @@ filetype {*.7z}
 fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}
          \ mediainfo %f
 
-" Markdown — rendered preview (requires glow). Three pipe/notty gotchas:
+" Markdown — rendered preview (requires glow). Four pipe/notty gotchas:
+"   * Width is `%pw - 3`, NOT %pw: glow pads every line to the full -w width AND
+"     adds a 2-col left margin (document.margin=2 in the style), so a line is
+"     2+W chars. At W=%pw the line is 2 cols too wide → it wraps in the pane, and
+"     each wrap shows as a blank line → the whole preview looks DOUBLE-SPACED. -3
+"     (2 for the margin + 1 to dodge the terminal's auto-wrap-at-last-column)
+"     keeps every line inside the pane, so it renders tight like the full-screen
+"     open. (If document.margin ever changes in render.py, retune this.)
 "   * The `sh -c '… </dev/null' _ %pw %f` wrapper is LOAD-BEARING (two bugs in one):
 "     (1) glow reads stdin even when handed a file arg, and vifm runs the previewer
 "     with an open (no-EOF) stdin, so glow BLOCKS FOREVER — the preview produces
@@ -150,7 +157,7 @@ fileviewer {*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.tiff,*.webp,*.avif,*.svg,*.ico}
 "     hestia hex — the full-screen open (real TTY) still gets truecolor.
 "   * -s passes the hestia style so the 16-colour mapping stays on-theme.
 fileviewer {*.md,*.markdown}
-         \ sh -c 'CLICOLOR_FORCE=1 glow -s "$HOME/.config/glow/hestia.json" -w "$1" "$2" </dev/null' _ %pw %f
+         \ sh -c 'CLICOLOR_FORCE=1 glow -s "$HOME/.config/glow/hestia.json" -w "$(($1 - 3))" "$2" </dev/null' _ %pw %f
 
 " PDF — requires poppler-utils
 fileviewer {*.pdf}

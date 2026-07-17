@@ -54,6 +54,9 @@
     - role: trading    # trading apps — TradingView Desktop from the vendor's rolling .deb (root); JForex4 later
       tags: [system, trading]
       when: enable_trading | default(false) | bool
+    - role: mega       # MEGA Desktop (MEGAsync) from MEGA's vendor apt repo (root); amd64/arm64, self-skips elsewhere; sign-in + sync config stay manual
+      tags: [system, mega]
+      when: enable_mega | default(false) | bool
     - role: samba      # layer-(a) system config: Samba share to /etc (root)
       tags: [system, samba]
       when: enable_samba | default(true) | bool

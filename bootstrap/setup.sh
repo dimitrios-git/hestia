@@ -127,6 +127,7 @@ enable_firefox: $enable_firefox
 enable_firefoxpwa: $enable_firefoxpwa
 enable_chrome: $enable_chrome
 enable_trading: $enable_trading
+enable_mega: $enable_mega
 enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
 enable_razer: $enable_razer
@@ -252,6 +253,7 @@ def_firefox=$(cur enable_firefox); def_firefox=${def_firefox:-true}
 def_ffpwa=$(cur enable_firefoxpwa); def_ffpwa=${def_ffpwa:-true}
 def_chrome=$(cur enable_chrome); def_chrome=${def_chrome:-false}
 def_trading=$(cur enable_trading); def_trading=${def_trading:-false}
+def_mega=$(cur enable_mega); def_mega=${def_mega:-false}
 def_yaruicons=$(cur enable_yaru_icons); def_yaruicons=${def_yaruicons:-false}
 # NVIDIA: detect a card via lspci (pciutils), else the PCI vendor id 0x10de in sysfs.
 det_nvidia=false
@@ -305,6 +307,7 @@ askyn enable_firefox     "Install Firefox ESR? (the desktop browser)" "$def_fire
 askyn enable_firefoxpwa  "Install firefoxpwa? (PWA support — vendor apt repo)" "$def_ffpwa"
 askyn enable_chrome      "Install Google Chrome? (vendor apt repo — amd64 only)" "$def_chrome"
 askyn enable_trading     "Install trading apps? (TradingView Desktop — vendor .deb)" "$def_trading"
+askyn enable_mega        "Install MEGA Desktop? (MEGAsync cloud sync — vendor apt repo)" "$def_mega"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
 askyn enable_razer       "Install Razer peripheral support? (openrazer + polychromatic; needs reboot)" "$def_razer"
@@ -347,6 +350,7 @@ cat <<EOF
     enable_firefoxpwa  = $enable_firefoxpwa
     enable_chrome      = $enable_chrome
     enable_trading     = $enable_trading
+    enable_mega        = $enable_mega
     enable_nvidia      = $enable_nvidia
     enable_razer       = $enable_razer
     cmus_music_dir     = $cmus_music_dir

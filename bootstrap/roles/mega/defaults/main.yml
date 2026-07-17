@@ -1,0 +1,17 @@
+---
+# Packages to install from the MEGA apt repo. Default: just the desktop sync app
+# (`megasync`). The repo also ships file-manager integrations and a CLI — add
+# whichever matches your setup by overriding this list in host_vars.
+#
+# hestia's default GUI file manager is nemo, so `nemo-megasync` (right-click MEGA
+# menu + sync-status emblems in nemo) is the natural addition when file managers
+# are installed. Also available: nautilus-megasync, thunar-megasync,
+# dolphin-megasync, and megacmd (the terminal client). Example host_vars:
+#
+#   mega_packages: [megasync, nemo-megasync]
+#
+# (A file-manager integration Depends on that file manager being installed — e.g.
+# nemo-megasync needs nemo, which rides enable_file_managers — so keep the extra
+# only if the matching FM is present, or apt will refuse the whole transaction.)
+mega_packages:
+  - megasync

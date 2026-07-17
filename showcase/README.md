@@ -18,7 +18,7 @@ unchanged.
 
 | Chapter | The one-liner |
 |---|---|
-| [Wallpapers](wallpapers.md) | Three engines trialled, none survived as "just a wallpaper tool" — the verdict became a generated, seamlessly-looping mesh rendered from hestia's own design system |
+| [Wallpapers](wallpapers.md) | Three engines trialled, none survived as "just a wallpaper tool" — the verdict became a generated mesh rendered from hestia's own design system, painted as a static frame (the looping video leaked memory, so the still won) |
 | [File managers](file-managers.md) | Seven contenders against vifm — the incumbent won on speed, stole the losers' best ideas, and the trial's failures fixed Qt theming for everything |
 
 **Deep dives** — single-tool pages behind a chapter, for the load-bearing

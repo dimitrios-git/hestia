@@ -17,6 +17,28 @@
 	excludesfile = ~/.gitignore_global
 	autocrlf = input
 	editor = vim
+[merge]
+	# 3-way conflict resolution in Neovim. `git mergetool` opens each conflicted
+	# file as three vertical windows — LOCAL (ours) | MERGED (the working file =
+	# the RESULT you edit) | REMOTE (theirs). Resolve by pulling hunks into the
+	# middle buffer (nvim :diffget, or `do`/`dp`), then `:wqa`. Needs neovim
+	# (the `neovim` apt package, which the manifest installs). editor stays vim;
+	# only the merge tool is nvim, for its 3-way diff view.
+	tool = nvimdiff
+	# zdiff3 (git 2.35+) keeps the common-ancestor lines inside the conflict
+	# markers (|||||||). The LOCAL,MERGED,REMOTE layout below shows no separate
+	# BASE window, so this is where you still see what each side changed FROM.
+	conflictstyle = zdiff3
+[mergetool "nvimdiff"]
+	# git's built-in nvimdiff default is a 4-pane (LOCAL,BASE,REMOTE)/MERGED.
+	# Override to the 3-pane local | result | remote the "nvimdiff2" preset uses,
+	# spelled out so it's self-documenting (see `git help mergetool`).
+	layout = LOCAL,MERGED,REMOTE
+[mergetool]
+	# Launch straight into nvim per conflicted file — no "Hit return to start" prompt.
+	prompt = false
+	# Don't leave <file>.orig backups behind after a successful resolve.
+	keepBackup = false
 {% if enable_claude_user | default(false) %}
 # The shared collaboration tree ({{ claude_shared_tree | default('/srv/devshare') }}) is
 # owned by the `claude` agent user, so git trips "dubious ownership" (CVE-2022-24765

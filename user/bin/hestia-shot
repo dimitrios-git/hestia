@@ -41,12 +41,27 @@ WANT_BAR=0
 # before the capture). Export it for HESTIA_HOOK.
 export VIFM_SHOT_SERVER=hestiashot
 VIFM="vifm --server-name $VIFM_SHOT_SERVER"
+# WAIT_MATCH = the app_id (prefix) to wait for before capturing; SETTLE = extra
+# seconds for the app to paint (browsers/WebGL need longer than a TUI).
+WAIT_MATCH=term; SETTLE=1
 case "$SCENE" in
   desktop) APP="kitty --class term -e $VIFM $U"; WANT_BAR=1 ;;
   vifm)    APP="kitty --class term -e $VIFM ${3:-$REPO}" ;;
   ranger)  APP="kitty --class term -e ranger ${3:-$REPO}" ;;
   yazi)    APP="kitty --class term -e yazi ${3:-$REPO}" ;;
   app)     APP="kitty --class term -e ${2:?scene 'app' needs a command}"; OUT="${3:-$PWD/hestia-shot.png}" ;;
+  # A URL/file rendered by chromium *inside* the nested sway, captured with grim —
+  # NOT chromium's own --screenshot/headless (that path is broken in claude's env;
+  # this renders to a real Wayland window instead). WebGL works via the NVIDIA EGL
+  # stack (falls back to swiftshader). Used to re-shoot the flash-mesh tuning page.
+  url)     URL="${2:?scene 'url' needs a URL or file path}"; OUT="${3:-$PWD/hestia-shot.png}"
+           case "$URL" in *://*) ;; *) URL="file://$(readlink -f "$URL")" ;; esac
+           CHROME_PROFILE=$(mktemp -d)
+           APP="env __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json chromium --ozone-platform=wayland --app=$URL --user-data-dir=$CHROME_PROFILE --no-first-run --no-default-browser-check --disable-background-networking --disable-features=Translate,PushMessaging --enable-unsafe-swiftshader --use-gl=angle"
+           # sway-side fullscreen (fills the output, no gaps/border) — NOT chromium's
+           # own --start-fullscreen, which pops an "exit full screen" banner.
+           EXTRA_CFG='for_window [app_id="^chrome-.*"] fullscreen enable'
+           WAIT_MATCH=chrome; SETTLE=4 ;;
   *) echo "hestia-shot: unknown scene '$SCENE'" >&2; exit 2 ;;
 esac
 
@@ -80,7 +95,7 @@ cleanup() {
     for _ in $(seq 1 20); do kill -0 "$SWAYPID" 2>/dev/null || break; sleep 0.1; done
     kill -- "-$SWAYPID" 2>/dev/null || kill "$SWAYPID" 2>/dev/null || true
   fi
-  rm -rf "$WORK"
+  rm -rf "$WORK" "${CHROME_PROFILE:-}"
 }
 trap cleanup EXIT
 
@@ -108,6 +123,7 @@ client.focused          $ACCENT $ACCENT $ACCENT_FG $ACCENT $ACCENT
 client.focused_inactive $GROUND $GROUND $DIM $GROUND $GROUND
 client.unfocused        $GROUND $GROUND $DIM $GROUND $GROUND
 EOF
+  [ -n "${EXTRA_CFG:-}" ] && echo "$EXTRA_CFG"
   [ "$WANT_BAR" = 1 ] && echo "exec waybar -c $WORK/wb/config -s $WORK/wb/style.css"
   echo "exec sleep 0.3 && $APP"
 } > "$CFG"
@@ -129,11 +145,11 @@ done
 export SWAYSOCK="$SOCK"
 
 # wait for the scene window to map, then settle for the render
-for _ in $(seq 1 60); do
-  swaymsg -t get_tree 2>/dev/null | grep -q '"app_id": "term"' && break
+for _ in $(seq 1 80); do
+  swaymsg -t get_tree 2>/dev/null | grep -q "\"app_id\": \"$WAIT_MATCH" && break
   sleep 0.1
 done
-sleep 1
+sleep "$SETTLE"
 # optional post-map hook — drive the scene into a specific state before the shot
 # (e.g. send vifm `--remote` commands via $VIFM_SHOT_SERVER). Runs in this shell.
 if [ -n "${HESTIA_HOOK:-}" ]; then eval "$HESTIA_HOOK"; sleep 1; fi

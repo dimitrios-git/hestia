@@ -178,7 +178,20 @@ hestia-shot desktop  out.png     # waybar + mesh wallpaper + tiled vifm (composi
 hestia-shot vifm     out.png [p] # vifm alone (any single-app scene)
 hestia-shot ranger|yazi out.png
 hestia-shot app "cmus" out.png   # any command in a themed kitty
+hestia-shot url  <url|file> out.png   # a web page (chromium in-sway; re-shot flash-preview)
 ```
+
+- **Driven scenes:** a `HESTIA_HOOK` env command runs after the window maps and
+  before capture (the vifm scene launches with a fixed `--server-name`, so the hook
+  can `vifm --remote -c :gs` etc. to reach a state). This is how `vifm-preview`/`-gc`/
+  `-gs`/`-gd` were re-shot against a throwaway git demo repo.
+- **The `url` scene** renders a page with **chromium as a Wayland client inside the
+  nested sway**, captured by grim — **not** chromium's own `--headless --screenshot`,
+  which is **broken in claude's env** (the paint/CDP path hangs; even the wallpaper
+  `render.js` puppeteer path times out on `page.goto`, while plain `--dump-dom`
+  works). WebGL renders via the NVIDIA EGL stack (swiftshader fallback); sway-side
+  `fullscreen` fills the output with no gaps/border and no chromium "exit fullscreen"
+  banner. This is how the flash-mesh tuning-page shot is produced.
 
 What made it work (the load-bearing details):
 - **`WLR_BACKENDS=headless` + `WLR_RENDERER=pixman`** — a virtual output, software

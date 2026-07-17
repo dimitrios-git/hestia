@@ -22,6 +22,16 @@ set nohlsearch
 set incsearch
 set scrolloff=4
 
+" Mouse: let vifm handle wheel events itself so one tick scrolls ONE line.
+" Without this vifm doesn't grab the mouse ('mouse' defaults to ""), so the
+" terminal (kitty) synthesises fake arrow-keys per wheel tick — and kitty's
+" wheel_scroll_multiplier default is 5.0, i.e. 5 files/tick. With mouse on,
+" vifm binds <ScrollWheelDown>=<c-e> / <ScrollWheelUp>=<c-y> (scroll the view
+" by a single line), giving the wanted 1-file/tick — and scoped to vifm, so
+" kitty's scrollback speed elsewhere is untouched. (Terminal text selection
+" now needs Shift-drag, the usual TUI-with-mouse trade-off, as in vim.)
+set mouse=a
+
 " Export THIS instance's server name for the imv-browse/return scripts: their
 " `vifm --remote` calls must drive the panes of the vifm that launched imv —
 " a bare --remote reaches the FIRST server (name "vifm"), so with several

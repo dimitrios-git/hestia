@@ -293,15 +293,19 @@ lua << EOF
       heading = { sign = false },
       code = { sign = false, width = 'block' },
     })
-    -- Theme headings to hestia's cyan (bright_cyan: dark #22cdda / light #087a84,
-    -- both AA) rather than the violet accent — matches glow's markdown headings, and
-    -- keeps a full-screen render from being wall-to-wall purple. The wash is the
-    -- cyan-tinted counterpart of the old violet heading_bg, per variant.
-    local heading_fg = vim.o.background == 'light' and '#087a84' or '#22cdda'
-    local heading_bg = vim.o.background == 'light' and '#ddf2f4' or '#0a2124'
+    -- Heading hierarchy, matching glow: H1 TITLE = violet accent (#7c3aed, readable
+    -- at 5.70:1); H2–H6 SECTIONS = cyan (bright_cyan: dark #22cdda / light #087a84,
+    -- both AA). One violet title over cyan sections reads as hierarchy without a
+    -- full-screen purple wash. Washes are the per-hue tint, per variant.
+    local acc     = '#7c3aed'
+    local acc_bg  = vim.o.background == 'light' and '#e9ddff' or '#150a24'
+    local cyan_fg = vim.o.background == 'light' and '#087a84' or '#22cdda'
+    local cyan_bg = vim.o.background == 'light' and '#ddf2f4' or '#0a2124'
     for i = 1, 6 do
-      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i, { fg = heading_fg, bold = true })
-      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i .. 'Bg', { bg = heading_bg })
+      local fg = (i == 1) and acc or cyan_fg
+      local bg = (i == 1) and acc_bg or cyan_bg
+      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i, { fg = fg, bold = true })
+      vim.api.nvim_set_hl(0, 'RenderMarkdownH' .. i .. 'Bg', { bg = bg })
     end
   end
 EOF

@@ -46,9 +46,19 @@ out="$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
 grim -g "$geom" "$out"
 
 # Copy the saved path (no trailing newline) to the clipboard so it can be pasted
-# straight away — e.g. into Claude Code for a shared shot. Non-fatal under set -e
-# so a clipboard hiccup never loses the (already-saved) screenshot or its notice.
-printf '%s' "$out" | wl-copy || true
+# straight away — e.g. into Claude Code for a shared shot. Kept non-fatal so a
+# clipboard hiccup never loses the (already-saved) screenshot or its notice — but
+# the notification now reports the REAL result. The old `wl-copy || true` swallowed
+# failures yet the notice still claimed "copied", so a broken clipboard looked
+# fine. `if …` checks wl-copy's exit WITHOUT capturing its output — a `$(…)` capture
+# can hang, because wl-copy forks a daemon that keeps the fd open to serve the
+# selection. (wl-copy itself is fine; a stuck earlier daemon is the usual culprit —
+# hence the pkill hint.)
+if printf '%s' "$out" | wl-copy 2>/dev/null; then
+    clip="path copied to clipboard"
+else
+    clip="⚠ clipboard copy FAILED — path is above. Try: pkill wl-copy, then re-shoot"
+fi
 
 notify-send "Screenshot saved" "$out
-path copied to clipboard"
+$clip"

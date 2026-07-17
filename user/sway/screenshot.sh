@@ -46,9 +46,25 @@ out="$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
 grim -g "$geom" "$out"
 
 # Copy the saved path (no trailing newline) to the clipboard so it can be pasted
-# straight away — e.g. into Claude Code for a shared shot. Non-fatal under set -e
-# so a clipboard hiccup never loses the (already-saved) screenshot or its notice.
-printf '%s' "$out" | wl-copy || true
+# straight away — e.g. into Claude Code for a shared shot. Kept non-fatal so a
+# clipboard hiccup never loses the (already-saved) screenshot or its notice — but
+# the notification now reports the REAL result. The old `wl-copy || true` swallowed
+# failures yet the notice still claimed "copied", so a broken clipboard looked fine.
+#
+# `timeout 2` is LOAD-BEARING, not just belt-and-braces: on a wedged session wl-copy
+# doesn't fail-fast, it HANGS (a stuck earlier wl-copy daemon holding the wlr-data-
+# control selection — seen live as `wl-copy` never returning, exit 124 under an
+# explicit timeout). A bare `if printf | wl-copy` would then block this whole script
+# forever, so the screenshot binding would appear to do nothing. `timeout` bounds it:
+# a hang trips the 2s cap → non-zero → the failure branch (same as a clean failure).
+# The check DOESN'T capture wl-copy's stdout — a `$(…)` capture hangs by design, since
+# wl-copy forks a daemon that keeps the fd open to serve the selection (that fork is
+# normal; the foreground process still exits promptly on a healthy session).
+if printf '%s' "$out" | timeout 2 wl-copy 2>/dev/null; then
+    clip="path copied to clipboard"
+else
+    clip="⚠ clipboard copy FAILED/timed out — path is above. Try: pkill wl-copy, then re-shoot"
+fi
 
 notify-send "Screenshot saved" "$out
-path copied to clipboard"
+$clip"

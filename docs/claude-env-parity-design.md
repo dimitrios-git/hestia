@@ -178,6 +178,8 @@ hestia-shot desktop  out.png     # waybar + mesh wallpaper + tiled vifm (composi
 hestia-shot vifm     out.png [p] # vifm alone (any single-app scene)
 hestia-shot ranger|yazi out.png
 hestia-shot app "cmus" out.png   # any command in a themed kitty
+hestia-shot vim "+15 sample.py" out.png   # plain vim on the repo colorscheme, borderless
+                                          # (fullscreened kitty — the hestia.vim screenshot scene)
 hestia-shot url  <url|file> out.png   # a web page (chromium in-sway; re-shot flash-preview)
 ```
 

@@ -19,6 +19,14 @@
 #   vifm [path]        vifm alone (default path: the repo)
 #   ranger | yazi      that file manager alone
 #   app "<command>"    any command in a themed kitty (e.g. app "cmus")
+#   vim "<vim args>"   plain vim with the repo's hestia colorscheme, BORDERLESS —
+#                      the kitty window is fullscreened in the nested sway, so the
+#                      shot is exactly the terminal surface (no sway border, no
+#                      wallpaper gaps). This is the hestia.vim screenshot scene.
+#                      e.g.  vim "+15 sample.py"  or  vim "-d old.py new.py"
+#                      Relative paths resolve against your cwd (vim inherits it,
+#                      so the statusline shows the bare filename). Default res
+#                      840x540 — override with HESTIA_RES (vimdiff wants ~1280x620).
 # Env overrides: HESTIA_REPO, HESTIA_VARIANT (dark|light), HESTIA_RES (WxH).
 set -euo pipefail
 
@@ -44,12 +52,51 @@ VIFM="vifm --server-name $VIFM_SHOT_SERVER"
 # WAIT_MATCH = the app_id (prefix) to wait for before capturing; SETTLE = extra
 # seconds for the app to paint (browsers/WebGL need longer than a TUI).
 WAIT_MATCH=term; SETTLE=1
+
+# The workdir exists before the scene case so scenes can stage files into it
+# (the vim scene writes its rig vimrc here).
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/hestia-shot.XXXXXX")
+cleanup() {
+  # Graceful first (`swaymsg exit` closes waybar + the app), then let
+  # dbus-run-session exit on its own so it REAPS its dbus-daemon — a straight
+  # group kill orphans that daemon (they pile up and wedge later chromium runs).
+  # Only group-kill (waybar/kitty are grandchildren of dbus-run-session, missed
+  # by a plain launcher kill) if it hasn't exited within ~2s.
+  [ -n "${SWAYSOCK:-}" ] && swaymsg exit >/dev/null 2>&1 || true
+  if [ -n "${SWAYPID:-}" ]; then
+    for _ in $(seq 1 20); do kill -0 "$SWAYPID" 2>/dev/null || break; sleep 0.1; done
+    kill -- "-$SWAYPID" 2>/dev/null || kill "$SWAYPID" 2>/dev/null || true
+  fi
+  rm -rf "$WORK" "${CHROME_PROFILE:-}"
+}
+trap cleanup EXIT
+
 case "$SCENE" in
   desktop) APP="kitty --class term -e $VIFM $U"; WANT_BAR=1 ;;
   vifm)    APP="kitty --class term -e $VIFM ${3:-$REPO}" ;;
   ranger)  APP="kitty --class term -e ranger ${3:-$REPO}" ;;
   yazi)    APP="kitty --class term -e yazi ${3:-$REPO}" ;;
   app)     APP="kitty --class term -e ${2:?scene 'app' needs a command}"; OUT="${3:-$PWD/hestia-shot.png}" ;;
+  # Plain vim on the repo's colorscheme, fullscreened so the capture is exactly
+  # the terminal surface — the scene hestia.vim's screenshots are shot with. The
+  # rig vimrc mirrors those shots: no plugins, line numbers, cursorline, and the
+  # startup file-info message cleared so the cmdline is empty.
+  vim)     VIMARGS="${2:?scene 'vim' needs vim args (e.g. \"+15 sample.py\")}"; OUT="${3:-$PWD/hestia-shot.png}"
+           RES="${HESTIA_RES:-840x540}"
+           cat > "$WORK/rig.vim" <<EOF
+set nocompatible
+set runtimepath+=$U/vim
+set termguicolors
+set number
+set cursorline
+set laststatus=2
+syntax on
+set background=$VARIANT
+colorscheme hestia
+autocmd VimEnter * redraw | echo ''
+EOF
+           APP="kitty --class term -d $PWD -e vim -u $WORK/rig.vim $VIMARGS"
+           EXTRA_CFG='for_window [app_id="^term$"] fullscreen enable' ;;
   # A URL/file rendered by chromium *inside* the nested sway, captured with grim —
   # NOT chromium's own --screenshot/headless (that path is broken in claude's env;
   # this renders to a real Wayland window instead). WebGL works via the NVIDIA EGL
@@ -82,22 +129,6 @@ ACCENT_FG=$(sed -n 's/^set \$accent_fg  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" 
 GROUND=$(sed -n 's/^set \$bg  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
 DIM=$(sed -n 's/^set \$dim  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
 : "${ACCENT:=#7c3aed}"; : "${ACCENT_FG:=#ffffff}"; : "${GROUND:=#1a1a1a}"; : "${DIM:=#8c8c8c}"
-
-WORK=$(mktemp -d "${TMPDIR:-/tmp}/hestia-shot.XXXXXX")
-cleanup() {
-  # Graceful first (`swaymsg exit` closes waybar + the app), then let
-  # dbus-run-session exit on its own so it REAPS its dbus-daemon — a straight
-  # group kill orphans that daemon (they pile up and wedge later chromium runs).
-  # Only group-kill (waybar/kitty are grandchildren of dbus-run-session, missed
-  # by a plain launcher kill) if it hasn't exited within ~2s.
-  [ -n "${SWAYSOCK:-}" ] && swaymsg exit >/dev/null 2>&1 || true
-  if [ -n "${SWAYPID:-}" ]; then
-    for _ in $(seq 1 20); do kill -0 "$SWAYPID" 2>/dev/null || break; sleep 0.1; done
-    kill -- "-$SWAYPID" 2>/dev/null || kill "$SWAYPID" 2>/dev/null || true
-  fi
-  rm -rf "$WORK" "${CHROME_PROFILE:-}"
-}
-trap cleanup EXIT
 
 # --- stage a waybar dir resolving the theme-<variant>.css pair to `theme.css` ------
 if [ "$WANT_BAR" = 1 ]; then

@@ -3,7 +3,9 @@
 " wildcharm scheme (Maxim Kim); hestia owns it now — the palette was derived
 " from wildcharm, so the look is unchanged save hestia's documented deviations
 " (comment/purple/diff-delete on the dark syntax roles; the AA-tuned light
-" values). Vim and Neovim render identically. Edit palette.yml + re-render.
+" values). Vim and Neovim share one colour table (nvim's treesitter/LSP
+" captures link to the groups Vim uses; tokenisation still differs, so
+" boundaries can vary — e.g. markdown, TODO). Edit palette.yml + re-render.
 
 hi clear
 if has('nvim')

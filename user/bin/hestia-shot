@@ -107,6 +107,18 @@ if [ "$WANT_BAR" = 1 ]; then
   cp "$U"/waybar/scripts/*.sh "$WORK/wb/scripts/" 2>/dev/null || true
 fi
 
+# --- stage a kitty dir resolving the theme-<variant>.conf pair to `theme.conf` ----
+# The scenes launch bare `kitty`, which reads the DEPLOYED ~/.config/kitty — the
+# deployed variant, not $VARIANT, and not the branch under review (a light shot
+# rendered vim light inside a dark kitty). Stage the repo pair like waybar above
+# and point kitty at it (relative `include theme.conf` resolves in this dir).
+case "$APP" in kitty\ *)
+  mkdir -p "$WORK/kitty"
+  cp "$U/kitty/kitty.conf" "$WORK/kitty/"
+  cp "$U/kitty/theme-$VARIANT.conf" "$WORK/kitty/theme.conf"
+  APP="kitty --config $WORK/kitty/kitty.conf ${APP#kitty }"
+;; esac
+
 # --- the throwaway rig sway config ------------------------------------------------
 CFG="$WORK/rig-sway.conf"
 {
@@ -137,7 +149,10 @@ SWAYPID=$!
 
 SOCK=""
 for _ in $(seq 1 50); do
-  SOCK=$(ls -t "$XDG_RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -1)
+  # `|| true` guards the whole pipeline: under set -euo pipefail an unmatched
+  # glob makes ls fail and the failing assignment would kill the script on the
+  # FIRST poll — masked until now by stale sockets from earlier sessions.
+  SOCK=$(ls -t "$XDG_RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -1 || true)
   [ -n "$SOCK" ] && SWAYSOCK="$SOCK" swaymsg -t get_version >/dev/null 2>&1 && break
   sleep 0.1
 done

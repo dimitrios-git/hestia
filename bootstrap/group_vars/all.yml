@@ -476,7 +476,7 @@ apt_packages:
   fonts:     [fonts-noto-color-emoji]
   # acl is base, not in `sharing`: used by samba AND claude_user (shared-tree ACLs)
   # AND the claude-access tool, so it must survive `enable_samba=false`.
-  misc:      [curl, dbus-bin, fontconfig, acl, udisks2, jq, iperf3, pigz]   # udisks2: waybar usb widget mount/unmount (udisksctl); jq: JSON CLI (sway IPC, scripting); iperf3: network throughput diagnostic (samba speed) — its server daemon is left disabled, see the packages role; pigz: parallel gzip (faster tar/archive compression)
+  misc:      [curl, dbus-bin, fontconfig, acl, udisks2, jq, iperf3, pigz, pv]   # udisks2: waybar usb widget mount/unmount (udisksctl); jq: JSON CLI (sway IPC, scripting); iperf3: network throughput diagnostic (samba speed) — its server daemon is left disabled, see the packages role; pigz: parallel gzip (faster tar/archive compression); pv: pipe viewer, progress bar for data piped through a shell pipeline
   # --- feature-gated groups (installed only when their toggle is on, see below) ---
   sharing:      [samba]                        # enable_samba
   credentials:  [gnome-keyring, libsecret-tools]  # enable_credentials

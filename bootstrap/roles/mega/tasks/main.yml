@@ -61,6 +61,30 @@
         mode: "0644"
       become: true
 
+    # The megasync .deb's own postinst self-registers a SECOND apt source entry
+    # for this same repo URL (its own keyring, e.g. /etc/apt/keyrings/meganz-
+    # archive-keyring.gpg) so plain `apt upgrade` picks up new MEGAsync builds.
+    # That collides with our managed megasync.list on the next run — apt refuses
+    # two entries for one URL with different Signed-By ("Conflicting values set
+    # for option Signed-By"), and `apt update` fails outright. Sweep for and
+    # drop any OTHER file referencing the MEGA repo before every update_cache,
+    # keeping megasync.list (ours) as the single source of truth.
+    - name: Find vendor-added duplicate MEGA apt source files
+      ansible.builtin.shell: >-
+        find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*.list' -o -name '*.sources' \)
+        -exec grep -l 'mega\.nz/linux/repo' {} \; 2>/dev/null
+        | grep -vxF /etc/apt/sources.list.d/megasync.list || true
+      register: _mega_dup_sources
+      changed_when: false
+      become: true
+
+    - name: Remove vendor-added duplicate MEGA apt source files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ _mega_dup_sources.stdout_lines }}"
+      become: true
+
     - name: Install MEGA packages (refresh the cache so the new repo is seen)
       ansible.builtin.apt:
         name: "{{ mega_packages }}"

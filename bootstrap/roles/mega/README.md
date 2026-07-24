@@ -16,7 +16,13 @@ Same vendor-repo shape as the `chrome` / `firefoxpwa` / `tailscale` roles (root,
    repo for the running Debian release (`…/repo/Debian_<VERSION_ID>/ ./` — the
    trailing `./` is the flat-repo marker; the version is auto-detected from
    `/etc/os-release`, so the path tracks the machine).
-3. `apt install` the packages in `mega_packages` (default: `megasync`).
+3. Sweeps `/etc/apt/sources.list.d/` for any *other* file referencing the MEGA
+   repo and removes it — `megasync`'s own postinst self-registers a duplicate
+   entry (its own keyring path) after install, which otherwise collides with
+   ours on the next run (`apt update` fails: "Conflicting values set for
+   option Signed-By"). Keeps `megasync.list` (ours) as the single source of
+   truth.
+4. `apt install` the packages in `mega_packages` (default: `megasync`).
 
 **Architecture:** the repo publishes **amd64 and arm64**; the role runs on both
 and self-skips other arches (i386/armhf have no vendor build).

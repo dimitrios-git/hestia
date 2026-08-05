@@ -110,6 +110,16 @@ window#waybar {
     color: @muted;
 }
 
+/* Guaranteed width for the {short} layout code (en/de/gr/bg) — on a narrow
+   output, GTK squeezes this module below its natural size once all the
+   right-side modules don't fit, and waybar's sway/language ellipsizes down
+   to a bare "…" (upstream, not theme-specific: Alexays/Waybar#952). Reserve
+   enough room that it never has to shrink; sway/window's title (which
+   already truncates gracefully) absorbs the squeeze instead. */
+#language {
+    min-width: 70px;
+}
+
 #clock {
     font-weight: bold;
 }

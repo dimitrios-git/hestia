@@ -178,7 +178,7 @@ the next chore in a queue.
 | Email | thunderbird | `●●●○●○` | Deep theming; opt-in `email` group |
 | Office | libreoffice | `●◐–○●○` | Opt-in, heavy |
 | Calculator | qalc | `●●–◐●○` | Corrected from gnome-calculator |
-| Gaming | steam *(opt-in)* | `●●–○◐○` | `steam-installer` from Debian's own contrib repo, not a vendor repo (`enable_steam`, default off; `steam` role) — enables `i386` + `contrib`; first-run client update + sign-in stay in-app. Added to test Wayland/Sway compatibility; never researched (no real alternative) or themed (Steam skins itself) |
+| Gaming | steam *(opt-in)* | `●●–○◐○` | `steam-installer` from Debian's own contrib repo, not a vendor repo (`enable_steam`, default off; `steam` role) — enables `i386` + `contrib`; first-run client update + sign-in stay in-app. Forced through XWayland (launcher overrides) after its native-Wayland backend crashed sway on NVIDIA; a residual storefront/library flicker is an unfixed upstream NVIDIA+Wayland+CEF bug, worked around via Steam's own GPU-accel-in-webviews setting — see CLAUDE.md. Added to test Wayland/Sway compatibility; never researched (no real alternative) or themed (Steam skins itself) |
 | Password manager | gnome-keyring | `●●–○◐○` | Secrets only; no KeePassXC-class tool |
 | Calendar / contacts / notes / PKM | — none | | Big gap for a "complete" desktop |
 

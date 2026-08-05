@@ -187,8 +187,13 @@ Not Ansible-managed (vendor, per-user, interactive, or deliberately heavy/option
 - **Steam first launch** — the **`steam` role** (`enable_steam`, §1) installs
   `steam-installer` from Debian's own contrib repo (enabling `i386` + `contrib`
   first); it's a thin bootstrap wrapper, so launch **Steam** once from the
-  desktop to fetch the current Valve client and sign in. Off by default; skip
-  with `enable_steam=false`.
+  desktop to fetch the current Valve client and sign in. The role also forces
+  Steam through XWayland (a `~/.local/bin/steam` wrapper + a desktop-file
+  override) to work around a native-Wayland crash on NVIDIA/wlroots — see
+  CLAUDE.md's steam gotcha section. If the storefront/library UI still
+  flickers after that, disable "Enable GPU accelerated rendering in web
+  views" in Steam's own Settings > Interface (a known, currently unfixed
+  upstream NVIDIA+Wayland bug). Off by default; skip with `enable_steam=false`.
 - Enable services: `sudo systemctl enable --now bluetooth power-profiles-daemon`.
 
 ## Validation

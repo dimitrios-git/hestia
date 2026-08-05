@@ -111,8 +111,52 @@
            + (['glx-alternative-nvidia'] if 'glx-alternative-nvidia' in ansible_facts.packages else []) }}
       when: not _steam_i386_libgl.stat.exists
 
+    - name: Ensure ~/.local/bin and ~/.local/share/applications exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ target_home }}/.local/bin"
+        - "{{ target_home }}/.local/share/applications"
+
+    - name: Force Steam through XWayland (terminal launches)
+      # Steam's native-Wayland client backend is unstable on wlroots — on this host
+      # it corrupted XWayland override-redirect surfaces (menus/cursor) and CRASHED
+      # sway outright resizing a tiled window alongside it (see CLAUDE.md's steam
+      # gotcha section). Forcing XWayland (XDG_SESSION_TYPE=x11, scoped to just this
+      # process) sidesteps Steam's own backend entirely rather than fighting it — the
+      # compositor-wide WLR_RENDERER=vulkan mitigation tried first made XWayland
+      # surfaces WORSE and was reverted (system/sway-session/start-sway.j2). No
+      # `become` — this writes into the invoking user's own home, not root's.
+      ansible.builtin.copy:
+        src: steam-x11-wrapper.sh
+        dest: "{{ target_home }}/.local/bin/steam"
+        mode: "0755"
+
+    - name: Force Steam through XWayland (desktop-launcher / wofi launches)
+      # Same fix as the wrapper above, for launches via a .desktop entry (wofi drun,
+      # any app grid) rather than a terminal — those exec the Exec= path directly,
+      # not through $PATH, so the wrapper script alone doesn't cover them. A
+      # user-level override at this exact XDG path takes precedence over
+      # steam-installer's system one (/usr/share/applications/steam.desktop).
+      # CAVEAT: if the real Valve client ever re-registers its OWN desktop entry at
+      # this same user-level path (some Steam builds do, via `xdg-desktop-menu
+      # install`), it will silently overwrite this file and undo the override — the
+      # terminal wrapper above is unaffected either way; re-run `--tags steam` to
+      # reassert this one if wofi launches start misbehaving again.
+      ansible.builtin.copy:
+        src: steam-x11.desktop
+        dest: "{{ target_home }}/.local/share/applications/steam.desktop"
+        mode: "0644"
+
     - name: First launch downloads + updates the real Steam client (manual)
       ansible.builtin.debug:
         msg: >-
           steam-installer is a bootstrap wrapper — launch `steam` once from a
           real desktop session to fetch the current Valve client and sign in.
+          Steam is forced through XWayland (see the role's launcher-override
+          tasks above); if the storefront/library UI still flickers, disable
+          "Enable GPU accelerated rendering in web views" in Steam's own
+          Settings > Interface — a known NVIDIA+Wayland CEF bug, not fixable
+          from the compositor side (no permanent upstream fix as of 2026-08).

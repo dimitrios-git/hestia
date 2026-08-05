@@ -15,11 +15,15 @@ nvidia_packages:
 # sync, which NVIDIA handles poorly: Chromium/Electron apps (Chrome, Edge, VSCode) flash
 # and repaint only the damaged region under the cursor.
 #
-# DEFAULT OFF, because as of 2026-07 trixie-backports is ALSO on 550 (550.163.01-4~bpo13+1,
-# a backports rebuild of the same version) — so flipping this on today just reinstalls the
-# same driver with no explicit-sync gain. The live fix for the flicker is instead
-# WLR_RENDERER=vulkan in start-sway (the NVIDIA block) — the wlroots Vulkan renderer syncs
-# through NVIDIA's Vulkan timeline semaphores, no driver change. Flip this true once
-# backports actually ships >= 555 (re-check the backports nvidia-driver version first);
-# it needs a REBOOT to load. The plumbing below is kept + fixed so the flip Just Works then.
+# DEFAULT OFF. As of 2026-08 trixie-backports is STILL on 550 (550.163.01-4~bpo13+1, a
+# backports rebuild of the same version) — flipping this on today just reinstalls the
+# same driver with no explicit-sync gain. WLR_RENDERER=vulkan in start-sway was tried as
+# an interim flicker fix (wlroots' Vulkan renderer syncs through NVIDIA's Vulkan timeline
+# semaphores) but was REVERTED (2026-08): it corrupts XWayland override-redirect surfaces
+# (menus/dropdowns) and crashed sway outright resizing a tiled Steam window — worse than
+# the flicker it fixed. So there is currently NO live compositor-side fix for the
+# Chromium/Electron flicker short of a real driver upgrade; it's a known cosmetic issue
+# until backports actually ships >= 555 (re-check the backports nvidia-driver version
+# first, then flip this true — it needs a REBOOT to load). The plumbing below is kept +
+# fixed so the flip Just Works then.
 nvidia_backports: false

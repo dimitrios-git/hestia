@@ -1,0 +1,9 @@
+---
+# Overridable in host_vars if your mirror differs.
+steam_mirror_uri: "http://deb.debian.org/debian"
+# steam-installer is Debian's own package (contrib/games) — a small wrapper that
+# bootstraps the real Valve client on first run. It is NOT a vendor repo like
+# chrome/mega/trading; it only needs `contrib` enabled + the i386 architecture
+# (for the 32-bit runtime libs it pulls in via steam-libs-i386).
+steam_packages:
+  - steam-installer

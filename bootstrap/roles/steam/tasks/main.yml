@@ -1,0 +1,69 @@
+---
+# Install Steam from Debian's OWN apt archive (steam-installer, contrib/games) —
+# unlike chrome/mega/trading this is not a vendor repo, just two prerequisites
+# Debian doesn't enable by default: the `contrib` component and the `i386`
+# foreign architecture (Steam's runtime is still largely 32-bit; steam-installer
+# depends on the virtual `steam-libs-i386`, only resolvable once i386 is added).
+# Root (become) throughout. OPT-IN: gated by `enable_steam` (default false) —
+# it's a heavy, single-purpose (gaming) install.
+#
+# steam-installer itself is a thin wrapper: first run downloads the real Steam
+# client from Valve and self-updates — that first-run + login stays manual/GUI,
+# same as MEGAsync's sign-in.
+#
+# Steam is amd64-only (proprietary x86 client) — the role self-skips elsewhere,
+# like chrome/trading.
+
+- name: Detect the dpkg architecture
+  ansible.builtin.command: dpkg --print-architecture
+  register: _steam_arch
+  changed_when: false
+
+- name: "steam: no vendor build for this arch -> skip"
+  ansible.builtin.debug:
+    msg: "Steam ships amd64 only — skipping on {{ _steam_arch.stdout }}."
+  when: _steam_arch.stdout != 'amd64'
+
+- name: Install Steam
+  when: _steam_arch.stdout == 'amd64'
+  block:
+    - name: Check current dpkg foreign architectures
+      ansible.builtin.command: dpkg --print-foreign-architectures
+      register: _steam_foreign_arches
+      changed_when: false
+
+    - name: Enable the i386 architecture (Steam's 32-bit runtime libs)
+      ansible.builtin.command: dpkg --add-architecture i386
+      become: true
+      when: "'i386' not in _steam_foreign_arches.stdout_lines"
+
+    - name: Detect the Debian release codename
+      ansible.builtin.shell: . /etc/os-release && printf '%s' "$VERSION_CODENAME"
+      register: _steam_codename
+      changed_when: false
+
+    - name: Enable contrib (steam-installer lives in contrib/games)
+      # A dedicated .sources file rather than editing the distro's own
+      # sources.list — same shape as the nvidia role's contrib/non-free enable.
+      ansible.builtin.deb822_repository:
+        name: hestia-steam
+        types: [deb]
+        uris: "{{ steam_mirror_uri }}"
+        suites: "{{ _steam_codename.stdout }}"
+        components: [contrib]
+        signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
+        state: present
+      become: true
+
+    - name: Install Steam (refresh the cache so i386 + contrib are seen)
+      ansible.builtin.apt:
+        name: "{{ steam_packages }}"
+        state: present
+        update_cache: true
+      become: true
+
+    - name: First launch downloads + updates the real Steam client (manual)
+      ansible.builtin.debug:
+        msg: >-
+          steam-installer is a bootstrap wrapper — launch `steam` once from a
+          real desktop session to fetch the current Valve client and sign in.

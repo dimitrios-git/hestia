@@ -184,6 +184,11 @@ Not Ansible-managed (vendor, per-user, interactive, or deliberately heavy/option
   syncs stays in-app on first launch: start **MEGAsync**, sign in, add a synced
   folder pointed at your storage (e.g. `mkdir -p /mnt/cloud-data/files/MEGA`
   first, then select it). Off by default; skip with `enable_mega=false`.
+- **Steam first launch** — the **`steam` role** (`enable_steam`, §1) installs
+  `steam-installer` from Debian's own contrib repo (enabling `i386` + `contrib`
+  first); it's a thin bootstrap wrapper, so launch **Steam** once from the
+  desktop to fetch the current Valve client and sign in. Off by default; skip
+  with `enable_steam=false`.
 - Enable services: `sudo systemctl enable --now bluetooth power-profiles-daemon`.
 
 ## Validation

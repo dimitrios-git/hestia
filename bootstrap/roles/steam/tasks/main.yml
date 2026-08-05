@@ -62,6 +62,55 @@
         update_cache: true
       become: true
 
+    - name: Gather installed package facts (NVIDIA GLX-alternative detection below)
+      ansible.builtin.package_facts:
+
+    - name: Also fetch NVIDIA's 32-bit GL libraries (only a Recommends of nvidia-driver-libs, so cross-arch)
+      # Debian's proprietary driver ships real 32-bit GL too (unlike Ubuntu's,
+      # this isn't a stub) — nvidia-driver-libs Recommends nvidia-driver-libs:i386
+      # for exactly this. But that Recommends is only resolvable once i386 is a
+      # known dpkg architecture, which it wasn't when the nvidia role first ran —
+      # so on a host with an existing NVIDIA install it never got pulled. Install
+      # it explicitly now that i386 is enabled (reusing the cache the Steam
+      # install above just refreshed), so 32-bit apps get the same
+      # NVIDIA-accelerated GL as the 64-bit side instead of a Mesa/llvmpipe
+      # software fallback.
+      ansible.builtin.apt:
+        name: nvidia-driver-libs:i386
+        state: present
+      become: true
+      when: "'glx-alternative-nvidia' in ansible_facts.packages"
+
+    - name: Is the 32-bit GLX alternative already registered?
+      ansible.builtin.stat:
+        path: /usr/lib/i386-linux-gnu/libGL.so.1
+      register: _steam_i386_libgl
+
+    - name: Re-register the GLX alternative for i386 (glx-alternative-mesa/-nvidia missed it)
+      # glx-alternative-mesa and glx-alternative-nvidia are Multi-Arch:foreign
+      # singletons (ONE amd64 copy serves every arch) whose postinst scans
+      # `dpkg --print-foreign-architectures` and registers an update-alternatives
+      # --slave link per arch it finds a library file for — but only for
+      # architectures that existed AT THAT CONFIGURE TIME. i386 didn't exist yet
+      # (added above, this same run), so neither package created an i386 slave;
+      # the currently-ACTIVE alternative (glx-alternative-nvidia, if an NVIDIA
+      # host) still has no i386 entry at all, so /usr/lib/i386-linux-gnu/libGL.so.1
+      # stays diverted-away-with-nothing-to-replace-it — Steam's "missing 32-bit
+      # libGL.so.1" warning. Forcing both packages to reconfigure re-runs that
+      # scan now that i386 libs exist, filling in the slave (mesa always; nvidia
+      # too, and it takes the active/highest-priority slot back, when installed —
+      # matching the already-selected 64-bit provider). dpkg-reconfigure re-runs
+      # postinst `configure` directly, no debconf template needed, no network.
+      ansible.builtin.command:
+        cmd: "dpkg-reconfigure {{ item }}"
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      become: true
+      loop: >-
+        {{ ['glx-alternative-mesa']
+           + (['glx-alternative-nvidia'] if 'glx-alternative-nvidia' in ansible_facts.packages else []) }}
+      when: not _steam_i386_libgl.stat.exists
+
     - name: First launch downloads + updates the real Steam client (manual)
       ansible.builtin.debug:
         msg: >-

@@ -115,9 +115,11 @@ window#waybar {
    right-side modules don't fit, and waybar's sway/language ellipsizes down
    to a bare "…" (upstream, not theme-specific: Alexays/Waybar#952). Reserve
    enough room that it never has to shrink; sway/window's title (which
-   already truncates gracefully) absorbs the squeeze instead. */
+   already truncates gracefully) absorbs the squeeze instead. 52px is
+   live-verified on the narrow screen that triggered this (down from an
+   unverified 70px estimate — PR #268). */
 #language {
-    min-width: 70px;
+    min-width: 52px;
 }
 
 #clock {

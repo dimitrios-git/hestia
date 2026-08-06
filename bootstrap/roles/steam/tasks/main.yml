@@ -125,10 +125,14 @@
       # it corrupted XWayland override-redirect surfaces (menus/cursor) and CRASHED
       # sway outright resizing a tiled window alongside it (see CLAUDE.md's steam
       # gotcha section). Forcing XWayland (XDG_SESSION_TYPE=x11, scoped to just this
-      # process) sidesteps Steam's own backend entirely rather than fighting it — the
-      # compositor-wide WLR_RENDERER=vulkan mitigation tried first made XWayland
-      # surfaces WORSE and was reverted (system/sway-session/start-sway.j2). No
-      # `become` — this writes into the invoking user's own home, not root's.
+      # process) sidesteps Steam's own backend entirely rather than fighting it — an
+      # earlier compositor-wide WLR_RENDERER=vulkan attempt made XWayland surfaces
+      # WORSE before this fix existed and was reverted; it's since been RE-ENABLED
+      # (system/sway-session/start-sway.j2, 2026-08, for a video-compare flicker
+      # fix) and re-tested against Steam under THIS XWayland-forcing fix — if Steam
+      # regresses again, that start-sway.j2 line gets re-commented, independent of
+      # this wrapper. No `become` — this writes into the invoking user's own home,
+      # not root's.
       ansible.builtin.copy:
         src: steam-x11-wrapper.sh
         dest: "{{ target_home }}/.local/bin/steam"

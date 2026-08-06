@@ -62,25 +62,26 @@ if [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; then
     export __GLX_VENDOR_LIBRARY_NAME=nvidia
     export WLR_NO_HARDWARE_CURSORS=1
     # Explicit-sync fix for Chromium/Electron flicker + damage-only ("squares under
-    # the cursor") repaints on NVIDIA — TRIED, then REVERTED (2026-08). The base
-    # trixie driver (550) lacks EGL_ANDROID_native_fence_sync, so wlroots' default
-    # GLES2 renderer falls back to implicit sync, which NVIDIA handles poorly for
-    # Chromium/Electron apps (Edge, VSCode, Steam's CEF-based UI). WLR_RENDERER=vulkan
-    # sidesteps that via NVIDIA's Vulkan timeline semaphores — but wlroots' Vulkan
-    # renderer has its own, worse bugs on XWayland: override-redirect surfaces
-    # (menus/dropdowns) rendered corrupted and the software cursor tore, badly enough
-    # on Steam (a CEF/XWayland-heavy app) to CRASH sway outright resizing a tiled
-    # window next to it. That's a strictly worse failure mode than the flicker it was
-    # fixing, so it's reverted to the wlroots default (GLES2 + implicit sync) below.
-    # The Chromium/Electron flicker is back as a known cosmetic issue until the driver
-    # ships real explicit sync (>= 555 — still not in trixie-backports as of 2026-08,
-    # see the nvidia role's nvidia_backports). Steam specifically also gets its own
-    # mitigation (forced XWayland via a launcher override — see the `steam` role /
-    # CLAUDE.md's steam gotcha section), since its native-Wayland client backend was
-    # the actual crash trigger, independent of which renderer the compositor runs.
-    # Re-enable only as a deliberate, tested trade: uncomment, then re-login (no
-    # reboot needed) — and re-check for the XWayland corruption before trusting it.
-    #export WLR_RENDERER=vulkan
+    # the cursor") repaints on NVIDIA — TRIED, REVERTED (2026-08), RE-ENABLED
+    # (2026-08). The base trixie driver (550) lacks EGL_ANDROID_native_fence_sync,
+    # so wlroots' default GLES2 renderer falls back to implicit sync, which NVIDIA
+    # handles poorly for ANY GL-accelerated Wayland client, not just Chromium/
+    # Electron — confirmed again via video-compare (SDL2's
+    # SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC path hits the identical
+    # flicker; forcing it through XWayland via SDL_VIDEODRIVER=x11 made it WORSE,
+    # since XWayland just adds another compositing hop through the same broken
+    # implicit-sync path rather than avoiding it — same lesson as Steam below).
+    # WLR_RENDERER=vulkan sidesteps the gap via NVIDIA's Vulkan timeline
+    # semaphores. First attempt: it made Steam's XWayland corruption worse (before
+    # Steam had its own XWayland-forcing fix) and was reverted. Since then Steam
+    # gained that fix (forced XWayland via a launcher override — see the `steam`
+    # role / CLAUDE.md's steam gotcha section) for a DIFFERENT bug (its native-
+    # Wayland client backend crashing sway), so the vulkan-vs-Steam interaction is
+    # being re-tested under that fix rather than assumed still broken. If Steam
+    # regresses again (menu/cursor corruption, a crash resizing next to it),
+    # re-comment this line and re-login — that's a strictly worse failure mode
+    # than the flicker it fixes, and previously the deciding factor.
+    export WLR_RENDERER=vulkan
     # Escape hatches if a release misbehaves on NVIDIA (uncomment as needed):
     #export SWAY_IGNORE_NVIDIA=1
     #export XWAYLAND_NO_GLAMOR=1

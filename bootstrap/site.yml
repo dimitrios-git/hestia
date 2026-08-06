@@ -34,6 +34,9 @@
       when: enable_yaru_icons | bool
     - role: vscode_theme # package + install the hestia VS Code theme (.vsix; no root) — self-skips when the `code` binary is absent (VS Code itself is not in the apt manifest)
       tags: [vscode_theme]
+    - role: video_compare # build + install video-compare (FFmpeg+SDL2 side-by-side video diff tool) into ~/.local/bin — opt-in, no apt package or Linux release binary upstream
+      tags: [video_compare]
+      when: enable_video_compare | default(false) | bool
     - role: testbench  # generate the theming testbench folder (code samples + dircolors/ls fixtures) — no root, opt-in
       tags: [testbench]
       when: enable_testbench | default(false) | bool

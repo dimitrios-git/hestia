@@ -10,16 +10,41 @@
 # role instead copies the built binary into ~/.local/bin — no root, same as
 # localbin — so `become` is only needed for the apt build-deps (the
 # `video_compare` package_group_features group in `packages`), not here.
+#
+# The REAL built binary lands at ~/.local/bin/video-compare-bin, shadowed by a
+# thin wrapper at ~/.local/bin/video-compare (video-compare-wrapper.sh) that
+# forces SDL_RENDER_DRIVER=software — video-compare's default GPU-accelerated
+# SDL2 renderer hits an NVIDIA-550 Wayland texture-streaming flicker at the
+# seam between the two video panes, live-confirmed NOT fixed by the
+# compositor-wide WLR_RENDERER=vulkan mitigation (a different sync domain —
+# see the wrapper script's own comment). Same shadowing shape as the `steam`
+# role's XWayland wrapper, just self-contained here since we build the real
+# binary ourselves rather than wrapping a separately-installed package.
+#
 # Idempotent via a per-version marker: bumping video_compare_version (upstream
-# has no numeric releases, only date tags) triggers a rebuild.
+# has no numeric releases, only date tags) triggers a rebuild. The build/marker
+# guard ALSO checks for video-compare-bin directly, so a pre-existing install
+# from before the wrapper existed (binary installed straight as `video-compare`)
+# self-heals into the new layout on the next run without needing a version bump.
+
+- name: Ensure ~/.local/bin exists
+  ansible.builtin.file:
+    path: "{{ target_home }}/.local/bin"
+    state: directory
+    mode: "0755"
 
 - name: Is the pinned video-compare version already installed?
   ansible.builtin.stat:
     path: "{{ target_home }}/.local/state/hestia/video-compare/{{ video_compare_version }}"
   register: _vc_marker
 
+- name: Is video-compare-bin already installed?
+  ansible.builtin.stat:
+    path: "{{ target_home }}/.local/bin/video-compare-bin"
+  register: _vc_bin
+
 - name: Build + install video-compare {{ video_compare_version }}
-  when: not _vc_marker.stat.exists
+  when: not (_vc_marker.stat.exists and _vc_bin.stat.exists)
   block:
     - name: "video-compare: temp build dir"
       ansible.builtin.tempfile:
@@ -40,16 +65,10 @@
         chdir: "{{ _vc_tmp.path }}"
       changed_when: true
 
-    - name: Ensure ~/.local/bin exists
-      ansible.builtin.file:
-        path: "{{ target_home }}/.local/bin"
-        state: directory
-        mode: "0755"
-
-    - name: "video-compare: install the binary into ~/.local/bin (no root)"
+    - name: "video-compare: install the real binary into ~/.local/bin (no root)"
       ansible.builtin.copy:
         src: "{{ _vc_tmp.path }}/video-compare"
-        dest: "{{ target_home }}/.local/bin/video-compare"
+        dest: "{{ target_home }}/.local/bin/video-compare-bin"
         mode: "0755"
         remote_src: true
 
@@ -70,3 +89,9 @@
         path: "{{ _vc_tmp.path | default('') }}"
         state: absent
       when: _vc_tmp.path is defined
+
+- name: "video-compare: deploy the SDL_RENDER_DRIVER=software wrapper (shadows video-compare-bin)"
+  ansible.builtin.copy:
+    src: video-compare-wrapper.sh
+    dest: "{{ target_home }}/.local/bin/video-compare"
+    mode: "0755"

@@ -37,6 +37,11 @@ enable_libreoffice: false   # install libreoffice + its GTK3 plugin (vifm opens 
 # KDE Frameworks 6 + Qt6 multimedia libs) and host-specific; turn on per host. It's
 # also the reference Qt6/KF6 app for the Qt theming track (docs/theming.md row 69).
 enable_kdenlive: false      # install kdenlive (Qt6/KF6 video editor; Qt-theming test target)
+# Gates the `video_compare` role + its apt build-deps group. Default OFF —
+# niche tool, and unlike the other opt-in apps above there's no apt package
+# and no Linux release binary upstream (GitHub releases are Windows-only), so
+# it's build-from-source pinned to a tag; see bootstrap/roles/video_compare/.
+enable_video_compare: false # build + install video-compare (FFmpeg+SDL2 side-by-side video diff tool) into ~/.local/bin
 # Package-only toggle (no role): gates the `email` apt group below via
 # package_group_features. Default OFF — an email client is a per-host choice. The
 # hestia theming (user/thunderbird/, deployed by the dotfiles role into whatever
@@ -491,6 +496,7 @@ apt_packages:
   credentials:  [gnome-keyring, libsecret-tools]  # enable_credentials
   office:       [libreoffice, libreoffice-gtk3]  # enable_libreoffice (heavy, default off; -gtk3 = the GTK VCL plugin — without it LO renders via the grey 90s `gen` backend on XWayland, ignoring the hestia GTK theme entirely)
   video:        [kdenlive]                       # enable_kdenlive (heavy KF6/Qt6, default off; Qt-theming test target)
+  video_compare: [libavformat-dev, libavcodec-dev, libavfilter-dev, libavutil-dev, libswscale-dev, libswresample-dev, libsdl2-dev, libsdl2-ttf-dev]  # enable_video_compare — build-only deps for the video_compare role (build-essential/git are already core); the built binary itself lands in ~/.local/bin, not apt
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
   image_viewers: [ristretto]                     # enable_image_viewers (default off; the evaluation keeper)
@@ -513,6 +519,7 @@ package_group_features:
   credentials: "{{ enable_credentials | bool }}"
   office:      "{{ enable_libreoffice | bool }}"
   video:       "{{ enable_kdenlive | bool }}"
+  video_compare: "{{ enable_video_compare | bool }}"
   email:       "{{ enable_thunderbird | bool }}"
   file_managers: "{{ enable_file_managers | bool }}"
   qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"

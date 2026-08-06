@@ -1,0 +1,7 @@
+---
+# video-compare (github.com/pixop/video-compare): side-by-side video comparison
+# tool (FFmpeg decode + SDL2 render). No apt package, and upstream's GitHub
+# releases ship Windows-only zips — no Linux binary — so this is pinned to a
+# source tag (upstream tags by date, not semver; verified 2026-08).
+video_compare_version: "20260708"
+video_compare_repo: "https://github.com/pixop/video-compare.git"

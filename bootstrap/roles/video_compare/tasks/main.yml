@@ -1,0 +1,72 @@
+---
+# Build + install video-compare (enable_video_compare) — a side-by-side video
+# comparison tool. No apt package exists, and upstream's GitHub releases ship
+# Windows-only zips (no Linux binary), so Debian's only install path is
+# build-from-source, pinned to a tag (README, verified 2026-08):
+#   apt install build-essential libavformat-dev libavcodec-dev libavfilter-dev \
+#     libavutil-dev libswscale-dev libswresample-dev libsdl2-dev libsdl2-ttf-dev
+#   make
+# Its own `make install` writes to /usr/local/bin (root) via `install -s`; this
+# role instead copies the built binary into ~/.local/bin — no root, same as
+# localbin — so `become` is only needed for the apt build-deps (the
+# `video_compare` package_group_features group in `packages`), not here.
+# Idempotent via a per-version marker: bumping video_compare_version (upstream
+# has no numeric releases, only date tags) triggers a rebuild.
+
+- name: Is the pinned video-compare version already installed?
+  ansible.builtin.stat:
+    path: "{{ target_home }}/.local/state/hestia/video-compare/{{ video_compare_version }}"
+  register: _vc_marker
+
+- name: Build + install video-compare {{ video_compare_version }}
+  when: not _vc_marker.stat.exists
+  block:
+    - name: "video-compare: temp build dir"
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: hestia-video-compare
+      register: _vc_tmp
+
+    - name: "video-compare: clone tag {{ video_compare_version }}"
+      ansible.builtin.git:
+        repo: "{{ video_compare_repo }}"
+        dest: "{{ _vc_tmp.path }}"
+        version: "{{ video_compare_version }}"
+        depth: 1
+
+    - name: "video-compare: build (make)"
+      ansible.builtin.command: make
+      args:
+        chdir: "{{ _vc_tmp.path }}"
+      changed_when: true
+
+    - name: Ensure ~/.local/bin exists
+      ansible.builtin.file:
+        path: "{{ target_home }}/.local/bin"
+        state: directory
+        mode: "0755"
+
+    - name: "video-compare: install the binary into ~/.local/bin (no root)"
+      ansible.builtin.copy:
+        src: "{{ _vc_tmp.path }}/video-compare"
+        dest: "{{ target_home }}/.local/bin/video-compare"
+        mode: "0755"
+        remote_src: true
+
+    - name: Ensure the video-compare state dir exists (for the marker)
+      ansible.builtin.file:
+        path: "{{ target_home }}/.local/state/hestia/video-compare"
+        state: directory
+        mode: "0755"
+
+    - name: Record the version marker
+      ansible.builtin.file:
+        path: "{{ target_home }}/.local/state/hestia/video-compare/{{ video_compare_version }}"
+        state: touch
+        mode: "0644"
+  always:
+    - name: "video-compare: remove the temp build dir"
+      ansible.builtin.file:
+        path: "{{ _vc_tmp.path | default('') }}"
+        state: absent
+      when: _vc_tmp.path is defined

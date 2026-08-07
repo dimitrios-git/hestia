@@ -30,9 +30,16 @@ highlight SuggestBox cterm=none         ctermfg=239     ctermbg=253     guifg=#4
 highlight ErrorMsg   cterm=bold         ctermfg=160     ctermbg=default guifg=#d11800 guibg=default
 highlight LineNr     cterm=none         ctermfg=249     ctermbg=default guifg=#b2b2b2 guibg=default
 
-" cursor / selection — a quiet grey bar; the accent stays on the status line
+" cursor — a quiet grey bar (fires on every move, so it stays muted);
+" selection — the accent FILL (palette.yml's own stated purpose for it),
+" matching TopLineSel/TabLineSel/StatusLine/WildMenu's accent-fill language.
+" Deliberately NOT bright_magenta (the old choice): that's ALSO Socket's and
+" every image extension's colour, so a selected .jpg read identically to any
+" other .jpg, just bold — functionally invisible. Accent fill has no such
+" collision (no filetype pattern uses it) and only fires on deliberate,
+" occasional selection, unlike the cursor, so it doesn't oversaturate the view.
 highlight CurrLine   cterm=bold         ctermfg=231     ctermbg=59      guifg=#ffffff guibg=#5f5f5f
-highlight Selected   cterm=bold         ctermfg=162     ctermbg=default guifg=#d40880 guibg=default
+highlight Selected   cterm=bold         ctermfg=231     ctermbg=99      guifg=#ffffff guibg=#7c3aed
 
 " file types
 highlight Directory  cterm=bold         ctermfg=25      ctermbg=default guifg=#005faf guibg=default

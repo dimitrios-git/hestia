@@ -7,6 +7,11 @@ colorscheme hestia
 set vicmd=vim
 set trash
 set trashdir=~/.local/share/Trash/files
+" 'confirm' defaults to delete,permdelete. Since 'trash' is on, d/dd already
+" only cuts to trash (non-destructive, undoable via p) — drop just the
+" per-cut confirmation prompt; keep permdelete's prompt for D/:delete!,
+" the actually-irreversible one.
+set confirm-=delete
 set history=100
 set followlinks
 set sortnumbers

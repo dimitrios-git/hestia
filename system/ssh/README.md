@@ -46,9 +46,13 @@ ssh_require_totp: false      # not yet — enrol first, see below
 
 ```sh
 cd bootstrap
-ansible-playbook site.yml --tags ssh --check --ask-become-pass   # preview
-ansible-playbook site.yml --tags ssh --ask-become-pass           # apply
+ansible-playbook site.yml --tags packages,ssh --check --ask-become-pass   # preview
+ansible-playbook site.yml --tags packages,ssh --ask-become-pass           # apply
 ```
+
+`packages` is included because `openssh-server` and `libpam-google-authenticator`
+come from the manifest's `ssh_server` apt group, not from the role. On a machine
+where they are already installed, `--tags ssh` alone is enough.
 
 Verify from another machine **before closing your current session**:
 

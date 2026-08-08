@@ -8,11 +8,9 @@
 # genuine anomaly is visible, and slowing anything that gets past the front door.
 # The security comes from key-only auth; this makes the evidence readable.
 
-- name: Install fail2ban
-  ansible.builtin.apt:
-    name: fail2ban
-    state: present
-  become: true
+# The fail2ban package comes from the MANIFEST's `fail2ban` apt group, gated on
+# enable_fail2ban (same shape as `sharing: [samba]`), so it installs in the single
+# apt pass with everything else rather than the role shelling out to apt.
 
 - name: Deploy the local jail policy
   ansible.builtin.template:

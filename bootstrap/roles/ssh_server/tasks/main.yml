@@ -14,12 +14,11 @@
 # TOTP secret (`google-authenticator` is interactive and its secret + scratch codes
 # must never touch the repo) and forwarding the port at the router.
 
-- name: Install the OpenSSH server
-  ansible.builtin.apt:
-    name: openssh-server
-    state: present
-  become: true
-
+# The apt packages (openssh-server + libpam-google-authenticator) come from the
+# MANIFEST's `ssh_server` group, gated on enable_ssh_server — same shape as
+# `sharing: [samba]` for the samba role — so everything installs in one apt pass
+# rather than each role shelling out to apt on its own.
+#
 # ---------------------------------------------------------------------------
 # 1. The key must exist BEFORE passwords are disabled. This is the interlock.
 # ---------------------------------------------------------------------------
@@ -64,16 +63,6 @@
 # ---------------------------------------------------------------------------
 # 2. TOTP. Only wired up when explicitly requested AND already enrolled.
 # ---------------------------------------------------------------------------
-# Installed whenever the role runs, NOT gated on ssh_require_totp — otherwise it is
-# a chicken-and-egg: enrolling needs the `google-authenticator` binary, but the
-# toggle that installs it cannot be turned on until enrolment has already happened.
-# The package is inert until PAM is actually pointed at it below.
-- name: Install the TOTP PAM module and enrolment tool
-  ansible.builtin.apt:
-    name: libpam-google-authenticator
-    state: present
-  become: true
-
 - name: Check whether the deploy user has enrolled a TOTP secret
   ansible.builtin.stat:
     path: "{{ target_home }}/.google_authenticator"

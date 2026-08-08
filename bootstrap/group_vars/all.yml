@@ -532,6 +532,8 @@ apt_packages:
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
   firefox:      [firefox-esr]                    # enable_firefox (the desktop browser — see the toggle comment)
   docker:       [docker.io, docker-cli, docker-compose, containerd]  # enable_docker — Debian's OWN packages, not Docker Inc's vendor repo (no extra keyring/sources entry; tracks stable with the rest of the system). `docker-compose` here is the Compose v2 CLI PLUGIN (`docker compose`), not the retired python v1 script
+  ssh_server:   [openssh-server, libpam-google-authenticator]  # enable_ssh_server — libpam-google-authenticator ships BOTH the PAM module and the `google-authenticator` enrolment CLI. It rides enable_ssh_server, NOT ssh_require_totp: enrolling needs the binary, but that toggle can't be turned on until enrolment has already happened. The package is inert until PAM is pointed at it (ssh_server role)
+  fail2ban:     [fail2ban]                       # enable_fail2ban
 
 # Maps a feature-gated apt group -> its toggle. The `packages` role skips a group
 # whose toggle is false, so a disabled feature doesn't drag in its packages.
@@ -551,6 +553,8 @@ package_group_features:
   claude:      "{{ enable_claude_user | bool }}"
   firefox:     "{{ enable_firefox | bool }}"
   docker:      "{{ enable_docker | bool }}"
+  ssh_server:  "{{ enable_ssh_server | bool }}"
+  fail2ban:    "{{ enable_fail2ban | bool }}"
 
 # --- Container layer: Docker Compose stacks (the `docker_services` role) ---------
 # Stacks are rendered from system/docker/<name>/ to /opt/<name>/ — layer-(a) system

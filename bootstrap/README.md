@@ -129,8 +129,8 @@ installer (`../docs/repo-structure-design.md` §6):
 | `enable_docker` | `docker` + `docker_services` | `docker: [docker.io, docker-cli, docker-compose, containerd]` | Docker Engine + Compose v2 from **Debian's own** apt (**default off** — server-shaped). Adds you to the `docker` group (**root-equivalent**; needs a re-login; the `claude` user is deliberately excluded) and deploys the enabled stacks. See `../system/docker/README.md` |
 | `enable_plex` / `enable_stash` / `enable_immich` | `docker_services` | — | per-stack, ride `enable_docker` (**default off**). Compose files templated to `/opt/<app>/`; secrets from gitignored host_vars |
 | `enable_duckdns` | `duckdns` | — | DuckDNS updater config (`0600`) + cron entry, no root (**default off**). Supplies the hostname Let's Encrypt needs — it will not certify a bare IP |
-| `enable_ssh_server` | `ssh_server` | — | keys-only sshd via an `/etc/ssh/sshd_config.d` drop-in, no root login, optional TOTP (**default off** — it **disables password login**; the role refuses to run without an authorised key and rolls back on `sshd -t` failure). See `../system/ssh/README.md` |
-| `enable_fail2ban` | `fail2ban` | — | `jail.local` for sshd + `recidive` (**default off**). Log-noise reduction, not the security boundary |
+| `enable_ssh_server` | `ssh_server` | `ssh_server: [openssh-server, libpam-google-authenticator]` | keys-only sshd via an `/etc/ssh/sshd_config.d` drop-in, no root login, optional TOTP (**default off** — it **disables password login**; the role refuses to run without an authorised key and rolls back on `sshd -t` failure). The TOTP package rides this toggle, **not** `ssh_require_totp` — enrolling needs the `google-authenticator` binary, which would otherwise not exist yet. See `../system/ssh/README.md` |
+| `enable_fail2ban` | `fail2ban` | `fail2ban: [fail2ban]` | `jail.local` for sshd + `recidive` (**default off**). Log-noise reduction, not the security boundary |
 
 Disabling a feature also **skips its apt packages** (via `package_group_features`
 in the manifest) — so `enable_samba=false` installs no `samba`. (`acl` stays in the

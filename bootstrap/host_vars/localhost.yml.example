@@ -54,6 +54,73 @@ git_signingkey: ""           # GPG key id; blank → commit signing off
 gpg_keygrip: ""              # keygrip of that key (gpg --list-secret-keys --with-keygrip)
 ssh_key_file: "id_ed25519"   # private key in ~/.ssh loaded by the login hook
 
+# --- Container layer (Docker Compose stacks under /opt) -------------------------
+# Off by default — this is server-shaped, not desktop-shaped. enable_docker installs
+# Docker Engine from DEBIAN's apt and adds you to the `docker` group, which is
+# effectively root-equivalent (a member can bind-mount / into a container). The
+# `claude` agent user is deliberately left out of that group.
+enable_docker: false
+enable_plex: false
+enable_stash: false
+enable_immich: false
+
+# Storage roots for the stacks. Bulk media on the big pooled/slow volume; databases
+# and app state on real SSD. Postgres in particular MUST NOT sit on a mergerfs pool
+# or a network share.
+docker_media_root: "/mnt/cold-data/files"
+docker_config_root: "/mnt/warm-data/files/Config"
+docker_timezone: "Europe/Berlin"
+
+# THESE ARE SECRETS. This file is gitignored — that is the only thing keeping them
+# out of the public repo. Never move them into group_vars/all.yml.
+#
+# Immich's Postgres password. Required when enable_immich; the playbook asserts it
+# is non-empty rather than deploying a broken stack. Generate one with:
+#   tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32
+immich_db_password: ""
+#
+# A plex.tv claim token is valid for FOUR MINUTES. Leave empty for normal re-deploys;
+# set it only for the run that claims a fresh install, then clear it again.
+plex_claim: ""
+
+# Public hostname for Immich's Caddy TLS front end. EMPTY (the default) = no Caddy,
+# no public exposure, Immich stays LAN-only on port 2283 — the safe setting. Setting
+# it means forwarding ports 80 AND 443 at the router; 80 is not optional, it carries
+# the Let's Encrypt HTTP-01 challenge and the http->https redirect.
+immich_domain: ""            # e.g. "yourname.duckdns.org"
+
+# Photo tree Immich indexes IN PLACE and READ-ONLY (mounted :ro — Immich can never
+# modify or delete these files). Empty = managed uploads only, no external library.
+# If immich_upload_location ends up NESTED inside this path, the External Library in
+# the UI must exclude it (**/Immich/**) or Immich re-indexes its own thumbnails.
+immich_external_library: "/mnt/cold-data/files/Pictures"
+
+# --- DuckDNS dynamic DNS --------------------------------------------------------
+# Supplies the hostname that makes TLS possible at all: Let's Encrypt will not issue
+# a certificate for a bare IP, so even a static-IP host needs a name. Off by default.
+enable_duckdns: false
+duckdns_domains: ""          # subdomain WITHOUT the .duckdns.org suffix
+duckdns_token: ""            # SECRET — from duckdns.org; regenerate there if leaked
+
+# --- Remote access: sshd hardening + fail2ban -----------------------------------
+# Off by default, and for a reason: enabling ssh_server DISABLES PASSWORD LOGIN.
+# The role refuses to run unless an authorised key is already in place, and rolls
+# its own config back if `sshd -t` fails — but read system/ssh/README.md first.
+enable_ssh_server: false
+enable_fail2ban: false
+
+# Require a TOTP code IN ADDITION to the key. Enrol FIRST (`google-authenticator`,
+# scan the QR into Bitwarden, save the scratch codes) — the role refuses to enable
+# this until ~/.google_authenticator exists, because sshd would otherwise demand a
+# code you cannot produce. See system/ssh/README.md.
+ssh_require_totp: false
+
+# Networks exempt from the TOTP prompt (key alone is enough). Defaults to your LAN
+# subnet + Tailscale's CGNAT range; the second factor is there for the internet.
+# ssh_trusted_networks:
+#   - "192.168.1.0/24"
+#   - "100.64.0.0/10"
+
 # Tip: you can wholesale-override any manifest list here too (e.g. your own
 # `nerd_fonts:` / `localbin_binaries:` / `apt_packages:`). For installing extra
 # software / running your own tasks, use bootstrap/local.yml — see

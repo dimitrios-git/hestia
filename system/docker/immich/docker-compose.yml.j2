@@ -1,0 +1,139 @@
+{{ ansible_managed | comment }}
+# Rendered by the `docker_services` role from system/docker/immich/ -> /opt/immich/.
+# Do not edit in place: the next bootstrap run overwrites it. Edit the template.
+#
+# Upstream reference: https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+# Docs: https://docs.immich.app/install/docker-compose
+#
+# Deviations from upstream, all deliberate:
+#   - depends_on uses `condition: service_healthy` (upstream's bare list lets the
+#     server crash-loop against a Postgres still running initdb on a cold boot).
+#   - GPU reservations inlined instead of `extends:` a second hwaccel file, so one
+#     rendered file is the whole stack.
+#   - a Caddy service fronts it for TLS when immich_domain is set.
+#
+# Creating the admin account is MANUAL (there is no self-registration with password
+# login, and no API for first-user creation worth scripting).
+
+name: immich
+
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    restart: unless-stopped
+{% if enable_nvidia | default(false) | bool %}
+    # NVENC hardware transcoding. Still needs turning on in the Immich UI:
+    # Administration -> Settings -> Video Transcoding -> Hardware Acceleration.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+                - compute
+                - video
+{% endif %}
+    env_file:
+      - .env
+    ports:
+      # Bound to the LAN for direct/local access. When a domain is configured, Caddy
+      # is what faces the internet -- forward 80/443 at the router, never this port.
+      - "{{ immich_port }}:2283"
+    volumes:
+      - ${UPLOAD_LOCATION}:/data
+{% if immich_external_library | length > 0 %}
+      # Pre-existing photo tree, indexed IN PLACE and READ-ONLY: Immich can never
+      # modify or delete these files. Add it in the UI as an External Library with
+      # import path /mnt/media/pictures. If UPLOAD_LOCATION is nested inside this
+      # path, the library MUST carry an exclusion pattern for it -- otherwise Immich
+      # indexes its own generated thumbnails as new assets on every scan.
+      - {{ immich_external_library }}:/mnt/media/pictures:ro
+{% endif %}
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    healthcheck:
+      disable: false
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+{% if enable_nvidia | default(false) | bool %}
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}-cuda
+{% else %}
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+{% endif %}
+    restart: unless-stopped
+{% if enable_nvidia | default(false) | bool %}
+    # CUDA inference for face recognition and smart search.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+{% endif %}
+    env_file:
+      - .env
+    volumes:
+      - model-cache:/cache
+    healthcheck:
+      disable: false
+
+  redis:
+    container_name: immich_redis
+    image: docker.io/valkey/valkey:9@sha256:8e8d64b405ce18f41b8e5ee20aa4687a8ed0022d1298f2ce31cdcf3a76e09411
+    restart: unless-stopped
+    healthcheck:
+      test: redis-cli ping || exit 1
+
+  database:
+    container_name: immich_postgres
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
+    shm_size: 128mb
+    healthcheck:
+      disable: false
+{% if immich_domain | length > 0 %}
+
+  # TLS terminator. Automatic Let's Encrypt certs via the HTTP-01 challenge, so the
+  # router must forward 80 AND 443 here -- 80 is not optional (it is both the
+  # challenge path and the http->https redirect).
+  caddy:
+    container_name: immich_caddy
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - {{ docker_services_root }}/immich/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certs + ACME account keys MUST persist, or every restart re-requests a
+      # certificate and runs into Let's Encrypt rate limits.
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - immich-server
+{% endif %}
+
+volumes:
+  model-cache:
+{% if immich_domain | length > 0 %}
+  caddy-data:
+  caddy-config:
+{% endif %}

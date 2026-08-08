@@ -66,6 +66,21 @@
     - role: samba      # layer-(a) system config: Samba share to /etc (root)
       tags: [system, samba]
       when: enable_samba | default(true) | bool
+    - role: docker     # Docker Engine + Compose v2 from Debian's own apt (root); group membership needs a re-login
+      tags: [system, docker]
+      when: enable_docker | default(false) | bool
+    - role: docker_services  # compose stacks (plex/stash/immich+caddy) templated to /opt/<app> (root); app-level setup stays manual
+      tags: [system, docker, docker_services]
+      when: enable_docker | default(false) | bool
+    - role: duckdns    # DuckDNS updater config + cron (no root); supplies the hostname TLS needs
+      tags: [duckdns]
+      when: enable_duckdns | default(false) | bool
+    - role: ssh_server # harden sshd to keys-only (+ optional TOTP) via an /etc/ssh/sshd_config.d drop-in (root); refuses to run without an authorised key
+      tags: [system, ssh, ssh_server]
+      when: enable_ssh_server | default(false) | bool
+    - role: fail2ban   # jail policy to /etc/fail2ban/jail.local (root); noise reduction, not the security boundary
+      tags: [system, ssh, fail2ban]
+      when: enable_fail2ban | default(false) | bool
     - role: claude_user  # dedicated agent user + shared trees + repo ACLs
       tags: [claude, claude_user]
       when: enable_claude_user | default(true) | bool

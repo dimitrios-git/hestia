@@ -1,0 +1,166 @@
+---
+# Harden the OpenSSH server for internet exposure: keys only, no root, and
+# (optionally) a TOTP second factor for connections from outside the trusted
+# networks. Layer-(a) system config — a rendered drop-in at
+# /etc/ssh/sshd_config.d/, never an edit to Debian's own sshd_config.
+#
+# THE LOCKOUT PROBLEM dominates this role's design. Turning off password auth
+# before a usable key is installed makes the host unreachable over SSH, and doing
+# it remotely makes it unrecoverable without physical access. So every destructive
+# step is gated behind an assert that its prerequisite is already true, and sshd is
+# only restarted after the full config passes `sshd -t`.
+#
+# Deliberately NOT here (manual, like smbpasswd and `tailscale up`): enrolling the
+# TOTP secret (`google-authenticator` is interactive and its secret + scratch codes
+# must never touch the repo) and forwarding the port at the router.
+
+- name: Install the OpenSSH server
+  ansible.builtin.apt:
+    name: openssh-server
+    state: present
+  become: true
+
+# ---------------------------------------------------------------------------
+# 1. The key must exist BEFORE passwords are disabled. This is the interlock.
+# ---------------------------------------------------------------------------
+- name: Read the deploy user's public key
+  ansible.builtin.slurp:
+    src: "{{ target_home }}/.ssh/{{ ssh_key_file }}.pub"
+  register: _ssh_pubkey
+  failed_when: false
+
+- name: Fail early if there is no public key to authorise
+  ansible.builtin.assert:
+    that:
+      - _ssh_pubkey.content is defined
+    fail_msg: >-
+      No public key at {{ target_home }}/.ssh/{{ ssh_key_file }}.pub — refusing to
+      harden sshd, because disabling password auth without an authorised key locks
+      you out. Generate one (`ssh-keygen -t ed25519`) or fix ssh_key_file in
+      host_vars, then re-run.
+    quiet: true
+
+- name: Authorise the deploy user's own key for login
+  ansible.posix.authorized_key:
+    user: "{{ docker_admin_user }}"
+    key: "{{ _ssh_pubkey.content | b64decode }}"
+    state: present
+    exclusive: false
+
+- name: Re-read authorized_keys to confirm a key really landed
+  ansible.builtin.slurp:
+    src: "{{ target_home }}/.ssh/authorized_keys"
+  register: _authkeys
+
+- name: Fail if authorized_keys is still empty (would lock you out)
+  ansible.builtin.assert:
+    that:
+      - (_authkeys.content | b64decode | trim | length) > 0
+    fail_msg: >-
+      {{ target_home }}/.ssh/authorized_keys is empty after the authorised-key
+      step. Refusing to disable password authentication.
+    quiet: true
+
+# ---------------------------------------------------------------------------
+# 2. TOTP. Only wired up when explicitly requested AND already enrolled.
+# ---------------------------------------------------------------------------
+# Installed whenever the role runs, NOT gated on ssh_require_totp — otherwise it is
+# a chicken-and-egg: enrolling needs the `google-authenticator` binary, but the
+# toggle that installs it cannot be turned on until enrolment has already happened.
+# The package is inert until PAM is actually pointed at it below.
+- name: Install the TOTP PAM module and enrolment tool
+  ansible.builtin.apt:
+    name: libpam-google-authenticator
+    state: present
+  become: true
+
+- name: Check whether the deploy user has enrolled a TOTP secret
+  ansible.builtin.stat:
+    path: "{{ target_home }}/.google_authenticator"
+  register: _totp_enrolled
+  when: ssh_require_totp | bool
+
+# Without this, `AuthenticationMethods publickey,keyboard-interactive` would demand
+# a code the user has no way to produce — locking out every non-trusted network.
+- name: Fail if TOTP is required but not enrolled
+  ansible.builtin.assert:
+    that:
+      - _totp_enrolled.stat.exists
+    fail_msg: >-
+      ssh_require_totp is true but {{ target_home }}/.google_authenticator does not
+      exist. Run `google-authenticator` as {{ docker_admin_user }} first (see
+      system/ssh/README.md) — enrolling is interactive and its secret must not be
+      stored in the repo. Until then, sshd would demand a code you cannot produce.
+    quiet: true
+  when: ssh_require_totp | bool
+
+# Debian's /etc/pam.d/sshd pulls in common-auth, which prompts for the UNIX
+# PASSWORD. Left enabled, the keyboard-interactive stage would ask for the account
+# password instead of (or as well as) the TOTP code — defeating "keys only". These
+# two edits make that stage TOTP-and-nothing-else.
+- name: Disable the Unix-password PAM stack for sshd (TOTP replaces it)
+  ansible.builtin.replace:
+    path: /etc/pam.d/sshd
+    regexp: '^@include common-auth$'
+    replace: '# @include common-auth   # hestia: TOTP-only keyboard-interactive (ssh_server role)'
+  become: true
+  when: ssh_require_totp | bool
+  notify: Restart sshd
+
+- name: Require the TOTP module in the sshd PAM stack
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sshd
+    line: 'auth required pam_google_authenticator.so'
+    insertafter: '^# @include common-auth'
+    state: present
+  become: true
+  when: ssh_require_totp | bool
+  notify: Restart sshd
+
+# ---------------------------------------------------------------------------
+# 3. The config itself. `validate` means a syntax error never reaches disk.
+# ---------------------------------------------------------------------------
+# Deploy-then-verify-then-roll-back-on-failure.
+#
+# `validate:` on the template can't be used here: it runs `sshd -t` against the
+# drop-in ALONE, which has no HostKey directives, so sshd exits "no hostkeys
+# available" and the task fails every single run. Only the MERGED config (stock
+# file + this drop-in) is meaningful, and that can only be tested once the file is
+# in place. So: write it, test the merged result, and if the test fails REMOVE the
+# file again — leaving sshd exactly as it was rather than one restart away from
+# being unreachable.
+- name: Deploy and verify the hardened sshd drop-in
+  become: true
+  block:
+    - name: Render the hardened sshd drop-in
+      ansible.builtin.template:
+        src: "{{ repo_root }}/system/ssh/sshd_config.d/10-hestia.conf.j2"
+        dest: /etc/ssh/sshd_config.d/10-hestia.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart sshd
+
+    - name: Validate the complete merged sshd config
+      ansible.builtin.command: /usr/sbin/sshd -t
+      changed_when: false
+
+  rescue:
+    - name: Roll back the drop-in so sshd stays startable
+      ansible.builtin.file:
+        path: /etc/ssh/sshd_config.d/10-hestia.conf
+        state: absent
+
+    - name: Report the rollback
+      ansible.builtin.fail:
+        msg: >-
+          The rendered sshd drop-in did not pass `sshd -t`, so it has been removed
+          and sshd is untouched (still running its previous config). Fix
+          system/ssh/sshd_config.d/10-hestia.conf.j2 and re-run.
+
+- name: Enable + start sshd
+  ansible.builtin.systemd:
+    name: ssh
+    enabled: true
+    state: started
+  become: true

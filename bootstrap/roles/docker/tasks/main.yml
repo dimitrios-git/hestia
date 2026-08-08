@@ -1,0 +1,38 @@
+---
+# Docker Engine + Compose v2, from DEBIAN'S OWN apt repo — not Docker Inc's vendor
+# repo. Debian ships docker.io/docker-cli/docker-compose/containerd in main, so this
+# needs no extra keyring or sources.list entry (unlike tailscale/mega/chrome), and it
+# tracks the stable release with the rest of the system. The trade-off is a slightly
+# older Engine than upstream; nothing in the stacks we deploy needs a newer one.
+#
+# The apt packages themselves live in the manifest (`apt_packages.docker`, gated by
+# enable_docker via package_group_features) so they install with everything else in
+# one resolver pass. This role does the parts apt does NOT do: group membership and
+# the daemon. Deploying the actual stacks is the `docker_services` role.
+
+- name: Ensure the docker group exists (the packages create it; be explicit for re-runs)
+  ansible.builtin.group:
+    name: docker
+    state: present
+  become: true
+
+# Docker's socket is root:docker 0660, so an unprivileged `docker ps` needs this.
+# NOTE this is effectively root-equivalent: a member of `docker` can bind-mount /
+# into a container. That is the standard single-admin desktop trade-off and matches
+# how this host already ran before the bootstrap covered it — but it is the reason
+# the `claude` agent user is deliberately NOT added (claude has no sudo either; the
+# container layer stays dimitrios's).
+- name: Add the deploy user to the docker group (root-equivalent — see the comment)
+  ansible.builtin.user:
+    name: "{{ docker_admin_user }}"
+    groups: docker
+    append: true
+  become: true
+  notify: Docker group needs re-login
+
+- name: Enable + start dockerd
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+  become: true

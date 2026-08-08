@@ -1,0 +1,71 @@
+---
+# Per-stack deploy, included once per enabled `docker_services` entry (loop_var: stack).
+
+- name: "{{ stack.name }}: create the stack dir under {{ docker_services_root }}"
+  ansible.builtin.file:
+    path: "{{ docker_services_root }}/{{ stack.name }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+# Bind-mount sources must EXIST before the stack starts, or docker creates them
+# root-owned and the containers (running as the deploy user's uid) cannot write.
+#
+# Existing dirs are then left strictly alone — create-if-absent, never re-assert
+# owner or mode. That is not laziness, it is required: a container may legitimately
+# own its own bind mount. Immich's Postgres dir ends up uid 999 (the container's
+# `postgres` user) at mode 0700, and Postgres REFUSES TO START if the mode is any
+# wider ("data directory has invalid permissions ... should be u=rwx (0700)").
+# Re-asserting a uniform owner/mode here would break the database on every run.
+- name: "{{ stack.name }}: check which host data dirs already exist"
+  ansible.builtin.stat:
+    path: "{{ data_dir }}"
+  loop: "{{ stack.data_dirs | default([]) }}"
+  loop_control:
+    loop_var: data_dir
+    label: "{{ data_dir }}"
+  register: _data_dirs
+
+- name: "{{ stack.name }}: create the missing host data dirs"
+  ansible.builtin.file:
+    path: "{{ item.data_dir }}"
+    state: directory
+    owner: "{{ docker_admin_user }}"
+    group: "{{ docker_admin_user }}"
+    mode: "{{ docker_data_dir_mode }}"
+  become: true
+  loop: "{{ _data_dirs.results }}"
+  loop_control:
+    label: "{{ item.data_dir }}"
+  when: not item.stat.exists
+
+- name: "{{ stack.name }}: render the stack files"
+  ansible.builtin.template:
+    src: "{{ repo_root }}/system/docker/{{ stack.name }}/{{ file.src }}"
+    dest: "{{ docker_services_root }}/{{ stack.name }}/{{ file.dest }}"
+    owner: root
+    group: root
+    # 0600 for anything carrying a credential (the manifest sets it); 0644 otherwise.
+    mode: "{{ file.mode | default('0644') }}"
+  become: true
+  loop: "{{ stack.files }}"
+  loop_control:
+    loop_var: file
+    label: "{{ file.dest }}"
+  when: file.when | default(true) | bool
+  register: _stack_files
+
+# `docker compose up -d` is declarative and safe to re-run: it only creates or
+# recreates containers whose config actually changed. Compose reports what it did on
+# stderr, which is how we keep a no-op run at changed=0 instead of always-changed.
+- name: "{{ stack.name }}: converge the stack (docker compose up -d)"
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ docker_services_root }}/{{ stack.name }}"
+  become: true
+  register: _compose_up
+  changed_when: >-
+    _compose_up.stderr is search('(Created|Recreated|Started|Stopped|Removed)')
+  when: docker_services_converge | bool

@@ -1,0 +1,6 @@
+{{ ansible_managed | comment }}
+# Rendered by the `duckdns` role -> ~/.config/duckdns/config (mode 0600).
+# CARRIES A SECRET (the DuckDNS token, from gitignored host_vars).
+# Sourced by ~/.local/bin/duckdns-update. Do not edit in place.
+DUCKDNS_DOMAINS={{ duckdns_domains }}
+DUCKDNS_TOKEN={{ duckdns_token }}

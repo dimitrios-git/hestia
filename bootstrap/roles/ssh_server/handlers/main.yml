@@ -8,3 +8,6 @@
     name: ssh
     state: reloaded
   become: true
+  # Under --check nothing was actually written, so there is no new config to load;
+  # and on a machine without openssh-server yet the unit doesn't exist at all.
+  when: not ansible_check_mode

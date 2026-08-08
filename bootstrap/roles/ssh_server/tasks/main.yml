@@ -46,10 +46,17 @@
     state: present
     exclusive: false
 
+# The verification below is skipped under --check for a reason that is easy to get
+# wrong: in check mode the authorized_key task above reports "would change" but
+# writes NOTHING, so authorized_keys is still empty here. Asserting on it would
+# fail every single dry run — the guard cannot distinguish "check mode didn't
+# write" from "the write failed". The assert that matters for safety is the one
+# ABOVE (a public key must exist to authorise), and that one runs in both modes.
 - name: Re-read authorized_keys to confirm a key really landed
   ansible.builtin.slurp:
     src: "{{ target_home }}/.ssh/authorized_keys"
   register: _authkeys
+  when: not ansible_check_mode
 
 - name: Fail if authorized_keys is still empty (would lock you out)
   ansible.builtin.assert:
@@ -59,6 +66,14 @@
       {{ target_home }}/.ssh/authorized_keys is empty after the authorised-key
       step. Refusing to disable password authentication.
     quiet: true
+  when: not ansible_check_mode
+
+- name: Note that the lockout check is deferred in check mode
+  ansible.builtin.debug:
+    msg: >-
+      DRY RUN: authorized_keys was not actually written, so the "is a key really
+      installed" verification is skipped. It runs for real on the apply.
+  when: ansible_check_mode
 
 # ---------------------------------------------------------------------------
 # 2. TOTP. Only wired up when explicitly requested AND already enrolled.
@@ -140,12 +155,16 @@
         path: /etc/ssh/sshd_config.d/10-hestia.conf
         state: absent
 
+    # Any failure in the block lands here, not just a bad config — a sudo timeout
+    # or an unwritable path reaches this too. Say what is actually known rather
+    # than blaming the template, so a transient failure isn't misdiagnosed.
     - name: Report the rollback
       ansible.builtin.fail:
         msg: >-
-          The rendered sshd drop-in did not pass `sshd -t`, so it has been removed
-          and sshd is untouched (still running its previous config). Fix
-          system/ssh/sshd_config.d/10-hestia.conf.j2 and re-run.
+          Deploying the sshd drop-in failed (either rendering it, or the merged
+          config failing `sshd -t`). It has been removed and sshd is UNTOUCHED,
+          still running its previous config — you are not locked out. See the
+          failing task above for the actual cause.
 
 - name: Enable + start sshd
   ansible.builtin.systemd:

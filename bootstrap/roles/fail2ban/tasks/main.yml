@@ -29,9 +29,14 @@
   become: true
   changed_when: false
 
+# Skipped under --check: the apt install is itself simulated in check mode, so the
+# unit does not exist yet and systemd fails with "Could not find the requested
+# service" — an artefact of the dry run, not a real problem. On a real run apt has
+# already installed it by the time this executes.
 - name: Enable + start fail2ban
   ansible.builtin.systemd:
     name: fail2ban
     enabled: true
     state: started
   become: true
+  when: not ansible_check_mode

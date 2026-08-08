@@ -166,9 +166,13 @@
           still running its previous config — you are not locked out. See the
           failing task above for the actual cause.
 
+# Skipped under --check for the same reason as the fail2ban role's equivalent: on a
+# machine where openssh-server isn't installed yet, the simulated apt install means
+# the unit doesn't exist and systemd errors out. Dry-run artefact, not a fault.
 - name: Enable + start sshd
   ansible.builtin.systemd:
     name: ssh
     enabled: true
     state: started
   become: true
+  when: not ansible_check_mode

@@ -30,9 +30,13 @@
   become: true
   notify: Docker group needs re-login
 
+# Skipped under --check: on a machine without docker.io yet, the simulated apt
+# install leaves no `docker` unit for systemd to find, and the task errors on a dry
+# run that is otherwise fine. Real runs install it first.
 - name: Enable + start dockerd
   ansible.builtin.systemd:
     name: docker
     enabled: true
     state: started
   become: true
+  when: not ansible_check_mode

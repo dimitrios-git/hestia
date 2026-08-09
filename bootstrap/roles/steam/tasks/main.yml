@@ -42,6 +42,22 @@
       register: _steam_codename
       changed_when: false
 
+    # Skip the file entirely when the distro's own sources.list already enables
+    # contrib (common — the Debian installer offers it). Adding it anyway makes apt
+    # warn "Target Packages ... is configured multiple times" on every invocation.
+    # Same detection as the nvidia role: apt-get indextargets is the authoritative
+    # view, filtered to exclude our own file.
+    - name: Find whether contrib is already enabled without hestia's own file
+      ansible.builtin.shell:
+        cmd: >-
+          apt-get indextargets --no-release-info --format '$(RELEASE) $(COMPONENT) $(SOURCESENTRY)'
+          | grep -v '/hestia-steam\.sources:'
+          | awk -v r='{{ _steam_codename.stdout }}' '$1 == r { print $2 }'
+          | sort -u
+      register: _steam_have_components
+      changed_when: false
+      failed_when: false
+
     - name: Enable contrib (steam-installer lives in contrib/games)
       # A dedicated .sources file rather than editing the distro's own
       # sources.list — same shape as the nvidia role's contrib/non-free enable.
@@ -54,6 +70,14 @@
         signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
         state: present
       become: true
+      when: "'contrib' not in (_steam_have_components.stdout_lines | default([]))"
+
+    - name: Drop our redundant sources file when contrib is already enabled
+      ansible.builtin.deb822_repository:
+        name: hestia-steam
+        state: absent
+      become: true
+      when: "'contrib' in (_steam_have_components.stdout_lines | default([]))"
 
     - name: Install Steam (refresh the cache so i386 + contrib are seen)
       ansible.builtin.apt:

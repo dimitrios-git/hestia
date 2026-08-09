@@ -13,6 +13,36 @@
   register: _deb_codename
   changed_when: false
 
+# A Debian install that already enables contrib/non-free in its own sources.list —
+# common, since the installer offers it — makes our .sources file a pure duplicate,
+# and apt then warns "Target Packages ... is configured multiple times" on EVERY apt
+# invocation, for each component × architecture × translation. Noisy enough to bury
+# real warnings.
+#
+# `apt-get indextargets` is the authoritative view of what apt actually has
+# configured. Filtering out our OWN file tells us whether the components would still
+# be available without it. (apt de-duplicates and attributes the surviving target to
+# the first source that declares it, so a component enabled in both places shows up
+# against sources.list, not ours.)
+- name: Find which components are already enabled without hestia's own file
+  ansible.builtin.shell:
+    cmd: >-
+      apt-get indextargets --no-release-info --format '$(RELEASE) $(COMPONENT) $(SOURCESENTRY)'
+      | grep -v '/hestia-nvidia\.sources:'
+      | awk -v r='{{ _deb_codename.stdout }}' '$1 == r { print $2 }'
+      | sort -u
+  register: _nvidia_have_components
+  changed_when: false
+  failed_when: false
+
+- name: Decide whether our own sources file is needed at all
+  ansible.builtin.set_fact:
+    # Needed when a required component is missing, OR when backports is on (that
+    # suite is genuinely additional and never in a stock sources.list).
+    _nvidia_sources_needed: >-
+      {{ (nvidia_backports | bool)
+         or ((nvidia_components | difference(_nvidia_have_components.stdout_lines | default([]))) | length > 0) }}
+
 - name: Enable contrib + non-free + non-free-firmware for the driver
   # When nvidia_backports is on, the same .sources file also enables <codename>-backports
   # so a >= 555 driver (explicit sync — see defaults/main.yml) is installable from there.
@@ -24,6 +54,24 @@
     components: "{{ nvidia_components }}"
     signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
     state: present
+  become: true
+  when: _nvidia_sources_needed | bool
+
+- name: Drop our redundant sources file when the base already enables the components
+  ansible.builtin.deb822_repository:
+    name: hestia-nvidia
+    state: absent
+  become: true
+  when: not (_nvidia_sources_needed | bool)
+
+# One-off cleanup: an earlier run on this host left a misnamed `estia-nvidia.sources`
+# with identical content. deb822_repository only ever manages the file matching the
+# `name:` it is given, so a differently-named leftover is invisible to it and warns
+# forever. Harmless to run where it was never created.
+- name: Remove the legacy misnamed estia-nvidia.sources leftover
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/estia-nvidia.sources
+    state: absent
   become: true
 
 - name: Fetch the backports index before pinning to it

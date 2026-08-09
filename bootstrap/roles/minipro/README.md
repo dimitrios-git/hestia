@@ -88,6 +88,25 @@ install is root-bound anyway — the udev rules live in `/etc`.
 Nothing in this role can verify a working burn; it installs the toolchain, not a
 device.
 
+## Verification status
+
+**Build path verified on hephaestus, 2026-08-09** (no hardware attached):
+
+```
+minipro --version   -> 0.7.4, commit 3808aecb, 2025-08-02
+                       chip DBs loaded: TL866A/CS 14162, TL866II+ 29235,
+                       T48 29200, T56 31926, Logic 283
+/etc/udev/rules.d/  -> 60-minipro.rules, 61-minipro-plugdev.rules,
+                       61-minipro-uaccess.rules   (all three)
+/var/lib/hestia/minipro/0.7.4  -> marker written, so re-runs are changed=0
+```
+
+`No programmer found.` on `--version` is expected with nothing on the USB bus.
+
+**Still unverified, needs a TL866II Plus in hand:** that the udev rules actually
+grant non-root access to a real device, and that a burn to an AT28C256 succeeds.
+Also unverified: anything about WSL (see the chapter note below).
+
 ## Note for the thecodingidiot chapter
 
 `f03b-the-2600-hardware/01-setup.mdx` currently says:

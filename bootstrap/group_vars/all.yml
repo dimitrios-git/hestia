@@ -140,6 +140,11 @@ enable_steam: false         # install Steam (steam-installer, Debian contrib rep
 # changes can be eyeballed across editors + file managers from one place. Default
 # OFF — a maintainer/theming aid, not part of a normal install.
 enable_testbench: false     # generate the theming testbench folder (testbench role)
+# Game-development libraries. PACKAGE-ONLY (no role of its own — it just gates the
+# `gamedev` apt group), like enable_libreoffice. Default OFF: these are -dev headers
+# nothing else in hestia links against, so a normal desktop install has no use for
+# them. Toolchain basics (build-essential, git) are already core.
+enable_gamedev: false       # SDL2 game-development headers (apt group only, no role)
 # Container layer (the `docker` + `docker_services` roles). Default OFF — this is
 # server-shaped, not desktop-shaped, and a workstation spin has no use for it.
 # enable_docker installs the Engine and puts the deploy user in the `docker` group
@@ -521,6 +526,7 @@ apt_packages:
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
   image_viewers: [ristretto]                     # enable_image_viewers (default off; the evaluation keeper)
+  gamedev:      [libsdl2-image-dev]              # enable_gamedev (default off) — SDL2 game-dev headers. Just this one entry is enough to start: apt pulls libsdl2-dev, libjpeg-dev, libpng-dev and libtiff-dev in as its dependencies. Add siblings here as the project needs them (libsdl2-mixer-dev for audio, libsdl2-ttf-dev for text — the latter is also in the video_compare group, which is fine: the manifest is flattened and apt de-duplicates)
   wallpapers: []                                 # enable_wallpapers — no apt deps since mpvpaper (libmpv2) was dropped 2026-07; wpaperd/awww ride localbin, awww's liblz4-1 is Debian base
 
   # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)
@@ -548,6 +554,7 @@ package_group_features:
   file_managers: "{{ enable_file_managers | bool }}"
   qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
   image_viewers: "{{ enable_image_viewers | bool }}"
+  gamedev:     "{{ enable_gamedev | bool }}"
   wallpapers:  "{{ enable_wallpapers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"

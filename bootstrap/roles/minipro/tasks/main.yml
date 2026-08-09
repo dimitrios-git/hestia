@@ -1,0 +1,133 @@
+---
+# Build + install minipro (enable_minipro) — the CLI for the TL866II Plus and
+# friends, needed by thecodingidiot's f03b-the-2600-hardware chapter.
+#
+# WHY A ROLE AND NOT A MANIFEST ENTRY: there is no `minipro` package to install.
+# Verified 2026-08-09 against packages.debian.org and packages.ubuntu.com — no
+# match in ANY Debian suite (bookworm/trixie/sid/experimental) or ANY Ubuntu
+# release, in any component. `sudo apt install minipro` fails on every supported
+# target, WSL included. Build-from-source is the only path, same as video_compare.
+#
+# Build deps come from the manifest's `minipro` apt group (gated on
+# enable_minipro): pkg-config, libusb-1.0-0-dev, zlib1g-dev. build-essential and
+# git are already core.
+#
+# Idempotent via a per-version marker, like video_compare: bump minipro_version
+# to rebuild. The guard also stats the binary itself, so a marker left behind by a
+# removed install self-heals.
+#
+# HARDWARE STAYS MANUAL: plugging in the programmer, and the re-login that makes
+# the plugdev membership take effect. Nothing here can verify a device that isn't
+# attached — the role installs the toolchain, not a working burn.
+
+- name: Is the pinned minipro version already installed?
+  ansible.builtin.stat:
+    path: "/var/lib/hestia/minipro/{{ minipro_version }}"
+  register: _mp_marker
+
+- name: Is the minipro binary present?
+  ansible.builtin.stat:
+    path: "{{ minipro_prefix }}/bin/minipro"
+  register: _mp_bin
+
+- name: Build + install minipro {{ minipro_version }}
+  when: not (_mp_marker.stat.exists and _mp_bin.stat.exists)
+  block:
+    - name: "minipro: temp build dir"
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: hestia-minipro
+      register: _mp_tmp
+
+    - name: "minipro: clone tag {{ minipro_version }}"
+      ansible.builtin.git:
+        repo: "{{ minipro_repo }}"
+        dest: "{{ _mp_tmp.path }}"
+        version: "{{ minipro_version }}"
+        depth: 1
+
+    - name: "minipro: build (make)"
+      ansible.builtin.command: make
+      args:
+        chdir: "{{ _mp_tmp.path }}"
+      changed_when: true
+
+    # Upstream's own install target. Writes the binary, the man pages and (unless
+    # suppressed) the udev rules. PREFIX is passed explicitly so the marker below
+    # and the stat above agree with where it actually landed.
+    - name: "minipro: make install (PREFIX={{ minipro_prefix }})"
+      ansible.builtin.command: "make install PREFIX={{ minipro_prefix }}"
+      args:
+        chdir: "{{ _mp_tmp.path }}"
+      become: true
+      changed_when: true
+
+    # Without these the programmer node is root-only, and every minipro call needs
+    # sudo — which the chapter's later pages do not tell readers to do.
+    - name: "minipro: locate the shipped udev rules"
+      ansible.builtin.find:
+        paths: "{{ _mp_tmp.path }}/udev"
+        patterns: "*.rules"
+      register: _mp_udev_rules
+      when: minipro_install_udev_rules | bool
+
+    - name: "minipro: install the udev rules for non-root programmer access"
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/etc/udev/rules.d/{{ item | basename }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+      loop: "{{ _mp_udev_rules.files | default([]) | map(attribute='path') | list }}"
+      loop_control:
+        label: "{{ item | basename }}"
+      when: minipro_install_udev_rules | bool
+      notify: Reload udev rules
+
+    # `state: touch` does not create parents — the marker dir has to exist first.
+    - name: "minipro: ensure the marker dir exists"
+      ansible.builtin.file:
+        path: /var/lib/hestia/minipro
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      become: true
+
+    - name: "minipro: record the installed version"
+      ansible.builtin.file:
+        path: "/var/lib/hestia/minipro/{{ minipro_version }}"
+        state: touch
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+  always:
+    - name: "minipro: clean up the build dir"
+      ansible.builtin.file:
+        path: "{{ _mp_tmp.path }}"
+        state: absent
+      when: _mp_tmp.path is defined
+
+# Group membership only applies to NEW login sessions, so this cannot be verified
+# in the same run — say so rather than leaving the user to discover it when the
+# programmer appears to be unreadable.
+- name: Add the user to {{ minipro_user_group }} for programmer access
+  ansible.builtin.user:
+    name: "{{ target_user }}"
+    groups: "{{ minipro_user_group }}"
+    append: true
+  become: true
+  when: minipro_install_udev_rules | bool
+  register: _mp_group
+
+- name: The plugdev membership needs a re-login
+  ansible.builtin.debug:
+    msg: >-
+      {{ target_user }} was added to {{ minipro_user_group }}. Log out and
+      back in before using the programmer without sudo, and plug the device in
+      AFTER the udev rules were installed (or run `sudo udevadm trigger`).
+  when: _mp_group is changed

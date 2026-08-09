@@ -1,0 +1,22 @@
+---
+# minipro (gitlab.com/DavidGriffith/minipro): the open-source CLI for the
+# TL866xx / T48 / T56 family of EEPROM programmers. Used by thecodingidiot's
+# f03b-the-2600-hardware chapter to burn assembled binaries onto an AT28C256.
+#
+# NOT PACKAGED ANYWHERE. Verified 2026-08-09 against packages.debian.org and
+# packages.ubuntu.com: no `minipro` package exists in ANY Debian suite
+# (bookworm/trixie/sid/experimental) or ANY Ubuntu release, in any component.
+# Build-from-source is the only install path on both — the same situation as the
+# video_compare role, and the reason this is a role rather than a manifest entry.
+minipro_version: "0.7.4"          # upstream tag, released 2025-08-02
+minipro_repo: "https://gitlab.com/DavidGriffith/minipro.git"
+
+# `make install` target prefix. /usr/local (upstream's default) rather than
+# ~/.local like video_compare: this install is root-bound anyway because the udev
+# rules that give non-root access to the programmer live in /etc/udev/rules.d.
+minipro_prefix: /usr/local
+
+# Reading/writing the programmer over USB without root needs BOTH the udev rules
+# and membership of the group they grant to.
+minipro_install_udev_rules: true
+minipro_user_group: plugdev

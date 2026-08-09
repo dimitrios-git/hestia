@@ -7,6 +7,9 @@
 # path-generalisation the spin needs.
 repo_root: "{{ (playbook_dir + '/..') | realpath }}"
 target_home: "{{ lookup('env', 'HOME') }}"
+# The human this bootstrap is deploying for. Mirrors target_home; roles that need
+# a username (group membership, file ownership) use this rather than inventing one.
+target_user: "{{ lookup('env', 'USER') }}"
 
 # --- Feature toggles (the configurable-installer surface, §6) ------------------
 # Each gates an OPTIONAL role in site.yml via `when:`. `packages` + `dotfiles` are
@@ -148,6 +151,11 @@ enable_testbench: false     # generate the theming testbench folder (testbench r
 # with: grep -rE 'apt(-get)? install' over that tree. Toolchain basics
 # (build-essential, git) are already core, so they are not repeated here.
 enable_tci: false           # thecodingidiot chapter prerequisites (apt group only, no role)
+# minipro — the EEPROM-programmer CLI f03b-the-2600-hardware needs. Separate from
+# enable_tci because it is HARDWARE-specific (useless without a TL866xx/T48/T56 on
+# the USB bus) and, unlike everything in the tci group, has no apt package at all:
+# it builds from source, so it needs a role. Default OFF.
+enable_minipro: false       # build + install minipro from source (minipro role)
 # Container layer (the `docker` + `docker_services` roles). Default OFF — this is
 # server-shaped, not desktop-shaped, and a workstation spin has no use for it.
 # enable_docker installs the Engine and puts the deploy user in the `docker` group
@@ -537,6 +545,7 @@ apt_packages:
   # (f03b-the-2600-hardware) — it is NOT in Debian at all, so it cannot be an apt
   # entry; it needs a source build, and the chapter's `sudo apt install minipro`
   # instruction fails on Debian.
+  minipro:      [pkg-config, libusb-1.0-0-dev, zlib1g-dev]  # enable_minipro — BUILD deps only for the minipro role (build-essential + git are already core); minipro itself is not in Debian or Ubuntu and is compiled from source
   tci:          [libsdl2-image-dev, libsdl2-ttf-dev, gdb, valgrind, alsa-utils, nethack-console]  # enable_tci (default off) — g01b-graphical: SDL2 image/ttf headers; f05-building-c: gdb + valgrind; g01c-acoustic: alsa-utils; f01-the-terminal: nethack-console
   wallpapers: []                                 # enable_wallpapers — no apt deps since mpvpaper (libmpv2) was dropped 2026-07; wpaperd/awww ride localbin, awww's liblz4-1 is Debian base
 
@@ -566,6 +575,7 @@ package_group_features:
   qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
   image_viewers: "{{ enable_image_viewers | bool }}"
   tci:         "{{ enable_tci | bool }}"
+  minipro:     "{{ enable_minipro | bool }}"
   wallpapers:  "{{ enable_wallpapers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"
@@ -597,7 +607,7 @@ docker_data_dir_mode: "0775"
 # The human who owns the container data and is put in the `docker` group. The
 # `claude` agent user is deliberately excluded — docker group membership is
 # root-equivalent and claude has no sudo by design.
-docker_admin_user: "{{ lookup('env', 'USER') }}"
+docker_admin_user: "{{ target_user }}"
 docker_admin_uid: "{{ lookup('pipe', 'id -u') }}"
 docker_admin_gid: "{{ lookup('pipe', 'id -g') }}"
 

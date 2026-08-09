@@ -18,6 +18,10 @@
   ansible.builtin.command: dpkg --print-architecture
   register: _steam_arch
   changed_when: false
+  # Read-only detection: force it to run under --check too. A skipped shell task
+  # registers stdout='' , which would make the decision below read 'nothing is
+  # enabled' and invert the dry run's verdict versus the real apply.
+  check_mode: false
 
 - name: "steam: no vendor build for this arch -> skip"
   ansible.builtin.debug:
@@ -31,6 +35,10 @@
       ansible.builtin.command: dpkg --print-foreign-architectures
       register: _steam_foreign_arches
       changed_when: false
+      # Read-only detection: force it to run under --check too. A skipped shell task
+      # registers stdout='' , which would make the decision below read 'nothing is
+      # enabled' and invert the dry run's verdict versus the real apply.
+      check_mode: false
 
     - name: Enable the i386 architecture (Steam's 32-bit runtime libs)
       ansible.builtin.command: dpkg --add-architecture i386
@@ -41,6 +49,10 @@
       ansible.builtin.shell: . /etc/os-release && printf '%s' "$VERSION_CODENAME"
       register: _steam_codename
       changed_when: false
+      # Read-only detection: force it to run under --check too. A skipped shell task
+      # registers stdout='' , which would make the decision below read 'nothing is
+      # enabled' and invert the dry run's verdict versus the real apply.
+      check_mode: false
 
     # Skip the file entirely when the distro's own sources.list already enables
     # contrib (common — the Debian installer offers it). Adding it anyway makes apt
@@ -56,6 +68,10 @@
           | sort -u
       register: _steam_have_components
       changed_when: false
+      # Read-only detection: force it to run under --check too. A skipped shell task
+      # registers stdout='' , which would make the decision below read 'nothing is
+      # enabled' and invert the dry run's verdict versus the real apply.
+      check_mode: false
       failed_when: false
 
     - name: Enable contrib (steam-installer lives in contrib/games)

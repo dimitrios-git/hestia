@@ -1,0 +1,18 @@
+---
+# Both fire from one `notify: Reload udev rules` via `listen`. New rules only
+# apply to devices that enumerate AFTER they are loaded, so a programmer already
+# plugged in stays root-only until this runs (or it is re-plugged). Upstream's
+# README uses exactly this pair.
+- name: Reload the udev rule set
+  ansible.builtin.command: udevadm control --reload-rules
+  become: true
+  changed_when: true
+  when: not ansible_check_mode
+  listen: Reload udev rules
+
+- name: Retrigger udev so an already-attached device picks the rules up
+  ansible.builtin.command: udevadm trigger
+  become: true
+  changed_when: true
+  when: not ansible_check_mode
+  listen: Reload udev rules

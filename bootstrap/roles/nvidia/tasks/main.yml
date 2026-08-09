@@ -12,6 +12,10 @@
   ansible.builtin.shell: . /etc/os-release && printf '%s' "$VERSION_CODENAME"
   register: _deb_codename
   changed_when: false
+  # Read-only detection: force it to run under --check too. A skipped shell task
+  # registers stdout='' , which would make the decision below read 'nothing is
+  # enabled' and invert the dry run's verdict versus the real apply.
+  check_mode: false
 
 # A Debian install that already enables contrib/non-free in its own sources.list —
 # common, since the installer offers it — makes our .sources file a pure duplicate,
@@ -33,6 +37,10 @@
       | sort -u
   register: _nvidia_have_components
   changed_when: false
+  # Read-only detection: force it to run under --check too. A skipped shell task
+  # registers stdout='' , which would make the decision below read 'nothing is
+  # enabled' and invert the dry run's verdict versus the real apply.
+  check_mode: false
   failed_when: false
 
 - name: Decide whether our own sources file is needed at all

@@ -43,6 +43,36 @@ same situation as the `video_compare` role and the reason this is a role.
 Idempotent via a per-version marker at `/var/lib/hestia/minipro/<version>`; bump
 `minipro_version` to rebuild.
 
+### The udev trap (verified against 0.7.4, 2026-08-09)
+
+`make install` *appears* to handle udev rules itself, but on Debian it silently
+does not. The Makefile guards that step with `if [ -n "$(UDEV_DIR)" ]`, and
+
+```make
+UDEV_DIR = $(shell pkg-config --variable=udevdir udev)
+```
+
+needs **`udev.pc`** — which on trixie ships in **`systemd-dev`**, *not* in
+`libudev-dev`. Nothing pulls `systemd-dev` in, so `pkg-config` returns empty, the
+entire udev block is skipped, and the programmer stays root-only with **no error
+message**. The failure looks like broken hardware or a bad build.
+
+So the role installs the rules explicitly, to `/etc/udev/rules.d/` — the
+admin-precedence location, and what upstream's README tells users to do anyway.
+That step is load-bearing; don't "simplify" it away as duplicating `make install`.
+
+All **three** rules are installed, because they are complementary, not
+alternatives:
+
+| Rule | Does |
+|---|---|
+| `60-minipro.rules` | tags matching USB devices with `ENV{ID_MINIPRO}="1"` |
+| `61-minipro-plugdev.rules` | `MODE="660" GROUP="plugdev"` on anything so tagged |
+| `61-minipro-uaccess.rules` | `TAG+="uaccess"` — logind grants the active seat's user |
+
+`60` alone grants no access at all; either `61` supplies it. Installing just the
+first leaves the device unreadable.
+
 `/usr/local` rather than `~/.local` (where `video_compare` lands) because this
 install is root-bound anyway — the udev rules live in `/etc`.
 
@@ -82,10 +112,16 @@ sudo udevadm trigger
 sudo usermod -a -G plugdev $USER   # takes effect after the next login
 ```
 
-Two things worth saying in the prose, because they are the usual failure modes:
-the **plugdev re-login**, and that **udev rules only bind devices plugged in
-afterwards**. A reader who plugs the TL866 in first and skips the re-login gets
-permission errors that look like a broken build.
+Note the `cp udev/*.rules` line is **not optional and not redundant** with
+`sudo make install`, for the reason in *The udev trap* above — on Debian the
+Makefile's own udev step silently no-ops. A reader who trusts `make install`
+alone ends up with a root-only device.
+
+Three things worth saying in the prose, because they are the usual failure modes:
+the **plugdev re-login**; that **udev rules only bind devices plugged in
+afterwards** (or after `udevadm trigger`); and that the rules must be copied
+**explicitly**. A reader who plugs the TL866 in first and skips the re-login gets
+permission errors that look like broken hardware.
 
 WSL caveat worth checking before publishing: WSL2 has no native USB passthrough —
 reaching a USB programmer needs [usbipd-win](https://github.com/dorssel/usbipd-win)

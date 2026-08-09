@@ -52,9 +52,19 @@
         chdir: "{{ _mp_tmp.path }}"
       changed_when: true
 
-    # Upstream's own install target. Writes the binary, the man pages and (unless
-    # suppressed) the udev rules. PREFIX is passed explicitly so the marker below
-    # and the stat above agree with where it actually landed.
+    # Upstream's install target: binary, man page, chip databases. PREFIX is passed
+    # explicitly so the marker and the stat above agree with where things landed
+    # (it happens to match upstream's own default of /usr/local).
+    #
+    # Its udev step is a NO-OP ON DEBIAN, which is the trap here. The Makefile
+    # guards it with `if [ -n "$(UDEV_DIR)" ]`, and UDEV_DIR comes from
+    # `pkg-config --variable=udevdir udev` — which needs `udev.pc`. On trixie that
+    # file lives in `systemd-dev`, NOT in libudev-dev, and nothing pulls it in. So
+    # pkg-config returns empty, the whole udev block is skipped silently, and the
+    # programmer stays root-only with no error to explain it. The explicit copy
+    # below is therefore load-bearing, not belt-and-braces — and it targets
+    # /etc/udev/rules.d, which is both the admin-precedence location and what
+    # upstream's own README tells users to do.
     - name: "minipro: make install (PREFIX={{ minipro_prefix }})"
       ansible.builtin.command: "make install PREFIX={{ minipro_prefix }}"
       args:
@@ -62,8 +72,13 @@
       become: true
       changed_when: true
 
-    # Without these the programmer node is root-only, and every minipro call needs
-    # sudo — which the chapter's later pages do not tell readers to do.
+    # All THREE rules are installed, and they are complementary rather than
+    # alternatives (verified against 0.7.4's udev/ and its own install target):
+    #   60-minipro.rules          tags matching USB devices with ID_MINIPRO=1
+    #   61-minipro-plugdev.rules  MODE=660 GROUP=plugdev on anything so tagged
+    #   61-minipro-uaccess.rules  TAG+="uaccess" — logind grants the seat's user
+    # 60 alone grants no access; either 61 supplies it. Installing only the "obvious"
+    # one leaves the device unreadable.
     - name: "minipro: locate the shipped udev rules"
       ansible.builtin.find:
         paths: "{{ _mp_tmp.path }}/udev"

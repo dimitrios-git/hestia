@@ -164,6 +164,34 @@ secret-tool store --label='gpg signing' autounlock gpg keygrip <gpg_keygrip>
 SSH + warms GPG. Verify: `ssh-add -l` shows your key and a `git commit -S` signs
 with no prompt.
 
+## 7b. Container layer (Plex / Stash / Immich) — `[ansible]` + `[manual]` + `[relogin]`
+
+Opt-in and **off by default** — server-shaped, skip it on a workstation. Full
+runbook, including the Immich specifics: **`system/docker/README.md`**.
+
+```sh
+ansible-playbook site.yml --tags docker --check --ask-become-pass  # preview
+ansible-playbook site.yml --tags docker --ask-become-pass          # apply
+ansible-playbook site.yml --tags duckdns                           # DNS updater (no root)
+```
+
+Set the toggles and secrets in `host_vars/localhost.yml` first (setup.sh asks for
+them): `enable_docker` + `enable_plex`/`enable_stash`/`enable_immich`, and
+`immich_db_password` (**required** — the play asserts it). The file is gitignored;
+that is what keeps the credentials out of this public repo.
+
+`[relogin]` — the role adds you to the `docker` group, which only takes effect in a
+new login session (`newgrp docker` to test sooner). Note the group is effectively
+**root-equivalent**; the `claude` agent user is deliberately not in it.
+
+`[manual]` afterwards: claim Plex (`plex.tv/claim` → `plex_claim` for one run);
+create the Immich admin account; enable **NVENC** in *Immich → Administration →
+Settings → Video Transcoding*; add the **External Library** with the container-side
+import path `/mnt/media/pictures` (plus the `**/Immich/**` exclusion if the upload
+location is nested inside it). If `immich_domain` is set, forward ports **80 and
+443** at the router — 80 is not optional, it carries the ACME challenge and the
+http→https redirect — and do **not** forward 2283.
+
 ## 8. Remaining manual / external bits — `[manual]`
 
 Not Ansible-managed (vendor, per-user, interactive, or deliberately heavy/optional):

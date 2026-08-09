@@ -1,0 +1,40 @@
+---
+# DuckDNS dynamic DNS. Runs as the HUMAN (no root): the config and log live under
+# $HOME and the cron entry is a user crontab, so nothing here touches /etc.
+#
+# With a static IPv4 this is cheap insurance rather than a necessity — but the
+# hostname it provides is load-bearing for TLS regardless, because Let's Encrypt
+# will not issue a certificate for a bare IP address. That is why the immich stack's
+# Caddy front end depends on this being set up first.
+#
+# The updater SCRIPT ships via the dotfiles manifest (user/bin/duckdns-update ->
+# ~/.local/bin/); this role only supplies the secret-bearing config and the schedule.
+
+- name: Create the DuckDNS config dir
+  ansible.builtin.file:
+    path: "{{ target_home }}/.config/duckdns"
+    state: directory
+    mode: "0700"
+
+# 0600: the token lets anyone repoint the subdomain at a host of their choosing.
+- name: Render the DuckDNS config (holds the token — mode 0600)
+  ansible.builtin.template:
+    src: config.j2
+    dest: "{{ target_home }}/.config/duckdns/config"
+    mode: "0600"
+
+- name: Create the DuckDNS state dir (append-only update log)
+  ansible.builtin.file:
+    path: "{{ target_home }}/.local/state/duckdns"
+    state: directory
+    mode: "0755"
+
+# A user crontab, not a systemd --user timer: user timers need `loginctl
+# enable-linger` to fire on a machine nobody is logged into, and this must keep
+# running whether or not the desktop session is up.
+- name: Schedule the DuckDNS updater (every {{ duckdns_interval_minutes }} minutes)
+  ansible.builtin.cron:
+    name: duckdns-update
+    minute: "*/{{ duckdns_interval_minutes }}"
+    job: "{{ target_home }}/.local/bin/duckdns-update >/dev/null 2>&1"
+    state: "{{ 'present' if (enable_duckdns | bool) else 'absent' }}"

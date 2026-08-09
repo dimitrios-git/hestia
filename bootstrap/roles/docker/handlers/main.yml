@@ -1,0 +1,10 @@
+---
+# Group membership only takes effect in NEW login sessions. Ansible's own subsequent
+# tasks run in the session that started the play, so `docker_services` uses `become`
+# rather than relying on the group — but the human's shell still needs a re-login
+# before a bare `docker ps` works. Say so instead of failing mysteriously later.
+- name: Docker group needs re-login
+  ansible.builtin.debug:
+    msg: >-
+      {{ docker_admin_user }} was added to the `docker` group. Log out and back in
+      (or run `newgrp docker`) before using docker without sudo.

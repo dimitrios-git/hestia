@@ -1,0 +1,40 @@
+---
+# Deploy the Docker Compose stacks that make this host a media/photo server, from
+# templates in `system/docker/<name>/` to `/opt/<name>/` — a layer-(a) system config
+# (root-owned, copied/templated, NOT symlinked), same shape as the samba role.
+#
+# /opt is where this host has always kept its container apps (alongside the vendor
+# installs that put themselves there: google, megasync, microsoft, TradingView), so
+# the bootstrap adopts that convention rather than relocating anything.
+#
+# The manifest is `docker_services` (group_vars/all.yml) — one entry per stack, each
+# listing its templates and the host data dirs it needs. Adding a service is a
+# manifest entry + a template dir; no new role code.
+#
+# SECRETS: the rendered files carry real credentials (Immich's DB_PASSWORD, Plex's
+# claim token). Those come from GITIGNORED host_vars and are rendered at deploy time
+# — the repo is public, so a literal secret must never land in a template. Files
+# holding one are rendered 0600 (see `mode` in the manifest).
+#
+# App-level setup stays MANUAL and is never stored here, exactly like the samba
+# role's smbpasswd and tailscale's `tailscale up`: claiming the Plex server, creating
+# the Immich admin account, and pointing the Immich mobile app at the domain.
+
+- name: Assert the required per-stack secrets are set (fail early, not at runtime)
+  ansible.builtin.assert:
+    that:
+      - not (enable_immich | default(false) | bool) or (immich_db_password | length > 0)
+      - not (enable_duckdns | default(false) | bool) or (duckdns_token | length > 0)
+    fail_msg: >-
+      A secret required by an enabled stack is empty. Set immich_db_password (and
+      duckdns_token if DuckDNS is on) in bootstrap/host_vars/localhost.yml — that
+      file is gitignored. See system/docker/README.md.
+    quiet: true
+
+- name: Deploy each enabled stack
+  ansible.builtin.include_tasks: stack.yml
+  loop: "{{ docker_services }}"
+  loop_control:
+    loop_var: stack
+    label: "{{ stack.name }}"
+  when: stack.enabled | bool

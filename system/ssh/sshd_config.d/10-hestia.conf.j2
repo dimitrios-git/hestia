@@ -1,0 +1,54 @@
+{{ ansible_managed | comment }}
+# Rendered by the `ssh_server` role -> /etc/ssh/sshd_config.d/10-hestia.conf.
+# Do not edit in place: the next bootstrap run overwrites it. Edit the template.
+#
+# WHY A DROP-IN, AND WHY THE `10-` PREFIX: Debian's stock sshd_config puts
+# `Include /etc/ssh/sshd_config.d/*.conf` on its FIRST line, and sshd takes the
+# FIRST value it sees for most keywords. So everything here wins over the stock
+# file below it, without patching a distro-managed config.
+
+# --- Authentication ------------------------------------------------------------
+# Keys only. Nothing here should ever prompt for a Unix password.
+PasswordAuthentication no
+PermitRootLogin no
+PubkeyAuthentication yes
+PermitEmptyPasswords no
+
+{% if ssh_require_totp | bool %}
+# Two-factor: a valid KEY *and* a TOTP code. `keyboard-interactive` is the stage
+# that runs PAM, where pam_google_authenticator asks for the 6-digit code — the
+# `ssh_server` role edits /etc/pam.d/sshd so that stage runs ONLY the TOTP module
+# and never falls through to the Unix password.
+KbdInteractiveAuthentication yes
+AuthenticationMethods publickey,keyboard-interactive
+{% else %}
+KbdInteractiveAuthentication no
+AuthenticationMethods publickey
+{% endif %}
+
+# Only these accounts may log in at all. The `claude` agent user is deliberately
+# absent: it has no remote-login need, no sudo, and no business being reachable.
+AllowUsers {{ ssh_allow_users | join(' ') }}
+
+# --- Hardening -----------------------------------------------------------------
+MaxAuthTries 3
+LoginGraceTime 30
+MaxSessions 10
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding yes
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+{% if ssh_require_totp | bool %}
+# --- Trusted networks: key-only, no second factor -------------------------------
+# The TOTP prompt is here to defend the INTERNET-facing surface. Requiring it on
+# the LAN and the tailnet too would put a 6-digit code in front of every scp,
+# rsync and git-over-ssh from inside the house, for no threat-model gain — an
+# attacker on either network has already cleared a bigger hurdle than sshd.
+#
+# NOTE this matches on the CLIENT's source address, which survives the router's
+# NAT for inbound connections, so a real internet client never matches these.
+Match Address {{ ssh_trusted_networks | join(',') }}
+    AuthenticationMethods publickey
+{% endif %}

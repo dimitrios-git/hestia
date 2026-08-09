@@ -1,0 +1,13 @@
+---
+# `reloaded`, not `restarted`: a reload re-reads the config and applies it to NEW
+# connections while leaving established sessions untouched. That matters when the
+# playbook is being run over SSH — a restart would kill the very session applying
+# the change, and if the new config were broken you'd have no way back in.
+- name: Restart sshd
+  ansible.builtin.systemd:
+    name: ssh
+    state: reloaded
+  become: true
+  # Under --check nothing was actually written, so there is no new config to load;
+  # and on a machine without openssh-server yet the unit doesn't exist at all.
+  when: not ansible_check_mode

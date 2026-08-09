@@ -1,0 +1,40 @@
+#!/bin/bash
+# DuckDNS dynamic-DNS updater. Keeps the subdomain pointed at this host's public IP.
+#
+# Deployed by the `duckdns` role: this script is symlinked to ~/.local/bin/ (the
+# dotfiles manifest), its config is RENDERED to ~/.config/duckdns/config (mode 600,
+# token from gitignored host_vars), and a cron entry runs it every 5 minutes.
+#
+# Split from its config on purpose: DuckDNS's own one-liner embeds the token in the
+# script, which would make this file unshippable in a public repo. Here the secret
+# lives in one 0600 file and the logic is public.
+#
+#   config: ~/.config/duckdns/config   (DUCKDNS_DOMAINS, DUCKDNS_TOKEN)
+#   log:    ~/.local/state/duckdns/duck.log
+set -euo pipefail
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/duckdns/config"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/duckdns"
+LOG="$STATE_DIR/duck.log"
+
+if [ ! -r "$CONFIG" ]; then
+	echo "duckdns: cannot read $CONFIG" >&2
+	exit 1
+fi
+# shellcheck source=/dev/null
+. "$CONFIG"
+
+mkdir -p "$STATE_DIR"
+
+# Empty ip= lets DuckDNS use the source address of this request.
+response=$(curl -fsS --max-time 30 \
+	"https://www.duckdns.org/update?domains=${DUCKDNS_DOMAINS}&token=${DUCKDNS_TOKEN}&ip=") || {
+	echo "$(date -Is) REQUEST_FAILED" >>"$LOG"
+	exit 1
+}
+
+echo "$(date -Is) $response" >>"$LOG"
+
+# DuckDNS answers "OK" or "KO"; make a bad token a non-zero exit, not a silent no-op
+# (upstream's script exits 0 either way, so a rotated token fails invisibly).
+[ "$response" = "OK" ]

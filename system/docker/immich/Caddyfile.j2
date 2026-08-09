@@ -1,0 +1,22 @@
+{{ ansible_managed | comment }}
+# Rendered by the `docker_services` role -> /opt/immich/Caddyfile.
+# Do not edit in place: the next bootstrap run overwrites it. Edit the template.
+#
+# Caddy obtains and renews a Let's Encrypt certificate automatically (HTTP-01), and
+# redirects http:// to https:// on its own -- neither needs configuring. Renewal
+# happens ~30 days before expiry and needs port 80 to STAY open.
+
+{{ immich_domain }} {
+	reverse_proxy immich-server:2283
+
+	# Immich streams large originals and accepts large uploads; no body limit.
+	request_body {
+		max_size 0
+	}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000;"
+	}
+}

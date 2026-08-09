@@ -140,6 +140,28 @@ enable_steam: false         # install Steam (steam-installer, Debian contrib rep
 # changes can be eyeballed across editors + file managers from one place. Default
 # OFF — a maintainer/theming aid, not part of a normal install.
 enable_testbench: false     # generate the theming testbench folder (testbench role)
+# Game-development libraries. PACKAGE-ONLY (no role of its own — it just gates the
+# `gamedev` apt group), like enable_libreoffice. Default OFF: these are -dev headers
+# nothing else in hestia links against, so a normal desktop install has no use for
+# them. Toolchain basics (build-essential, git) are already core.
+enable_gamedev: false       # SDL2 game-development headers (apt group only, no role)
+# Container layer (the `docker` + `docker_services` roles). Default OFF — this is
+# server-shaped, not desktop-shaped, and a workstation spin has no use for it.
+# enable_docker installs the Engine and puts the deploy user in the `docker` group
+# (root-equivalent, see the role); the per-stack toggles below need it on.
+enable_docker: false        # Docker Engine + Compose v2 from Debian apt (docker role)
+enable_plex: false          # Plex Media Server container   -> /opt/plex
+enable_stash: false         # Stash container               -> /opt/stash
+enable_immich: false        # Immich photo server + Caddy   -> /opt/immich
+# DuckDNS dynamic DNS (the `duckdns` role, no root). Also the source of the HOSTNAME
+# that makes TLS possible at all — Let's Encrypt will not certify a bare IP — so the
+# immich stack's Caddy front end depends on this when it is internet-facing.
+enable_duckdns: false       # DuckDNS updater script + cron entry (duckdns role)
+# Remote access. Default OFF — enabling `ssh_server` DISABLES PASSWORD LOGIN, so it
+# must not fire unasked on a host whose only credential is a password. The role
+# refuses to run unless an authorised key is already in place (see the role).
+enable_ssh_server: false    # harden sshd: keys only, no root, optional TOTP (ssh_server role)
+enable_fail2ban: false      # fail2ban jails for sshd + repeat offenders (fail2ban role)
 
 # --- Theme variant (M7, docs/theme-roadmap.md) ----------------------------------
 # dark|light — selects which GENERATED theme fragments the dotfiles role links
@@ -282,6 +304,10 @@ dotfile_links:
   # claude agent re-shoot themed showcase images with no live desktop. claude-tagged
   # (its purpose is claude's, though harmless for dimitrios). No secrets/identity.
   - { src: user/bin/hestia-shot,            dest: "{{ target_home }}/.local/bin/hestia-shot", claude: true }
+  # DuckDNS dynamic-DNS updater, driven by the cron entry the `duckdns` role installs.
+  # The SCRIPT is public (it reads its token from a 0600 config the role renders);
+  # NOT claude-tagged — the container/DNS layer is dimitrios's.
+  - { src: user/bin/duckdns-update,         dest: "{{ target_home }}/.local/bin/duckdns-update" }
   # Claude Code keybindings (docs/claude-user-design.md §10 — persist the agent's
   # Claude Code config as workstation-as-code). Pure UI config, no secrets: unbinds
   # `escape` in the Chat context so a vi-mode reflex (ESC to leave insert mode in the
@@ -500,6 +526,7 @@ apt_packages:
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
   image_viewers: [ristretto]                     # enable_image_viewers (default off; the evaluation keeper)
+  gamedev:      [libsdl2-image-dev]              # enable_gamedev (default off) — SDL2 game-dev headers. Just this one entry is enough to start: apt pulls libsdl2-dev, libjpeg-dev, libpng-dev and libtiff-dev in as its dependencies. Add siblings here as the project needs them (libsdl2-mixer-dev for audio, libsdl2-ttf-dev for text — the latter is also in the video_compare group, which is fine: the manifest is flattened and apt de-duplicates)
   wallpapers: []                                 # enable_wallpapers — no apt deps since mpvpaper (libmpv2) was dropped 2026-07; wpaperd/awww ride localbin, awww's liblz4-1 is Debian base
 
   # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)
@@ -510,6 +537,9 @@ apt_packages:
   browser:      [chromium]                       # enable_headless_browser (headless dev/testing; also satisfies Playwright/Puppeteer runtime libs)
   claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
   firefox:      [firefox-esr]                    # enable_firefox (the desktop browser — see the toggle comment)
+  docker:       [docker.io, docker-cli, docker-compose, containerd]  # enable_docker — Debian's OWN packages, not Docker Inc's vendor repo (no extra keyring/sources entry; tracks stable with the rest of the system). `docker-compose` here is the Compose v2 CLI PLUGIN (`docker compose`), not the retired python v1 script
+  ssh_server:   [openssh-server, libpam-google-authenticator]  # enable_ssh_server — libpam-google-authenticator ships BOTH the PAM module and the `google-authenticator` enrolment CLI. It rides enable_ssh_server, NOT ssh_require_totp: enrolling needs the binary, but that toggle can't be turned on until enrolment has already happened. The package is inert until PAM is pointed at it (ssh_server role)
+  fail2ban:     [fail2ban]                       # enable_fail2ban
 
 # Maps a feature-gated apt group -> its toggle. The `packages` role skips a group
 # whose toggle is false, so a disabled feature doesn't drag in its packages.
@@ -524,7 +554,139 @@ package_group_features:
   file_managers: "{{ enable_file_managers | bool }}"
   qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
   image_viewers: "{{ enable_image_viewers | bool }}"
+  gamedev:     "{{ enable_gamedev | bool }}"
   wallpapers:  "{{ enable_wallpapers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"
   firefox:     "{{ enable_firefox | bool }}"
+  docker:      "{{ enable_docker | bool }}"
+  ssh_server:  "{{ enable_ssh_server | bool }}"
+  fail2ban:    "{{ enable_fail2ban | bool }}"
+
+# --- Container layer: Docker Compose stacks (the `docker_services` role) ---------
+# Stacks are rendered from system/docker/<name>/ to /opt/<name>/ — layer-(a) system
+# config (root-owned, templated, NOT symlinked), the same shape as the samba role.
+# /opt is where this host has always kept container apps, so the bootstrap adopts
+# that rather than relocating anything.
+#
+# Adding a service = one entry here + a template dir. No role code changes.
+#
+# SECRETS (immich_db_password, plex_claim, duckdns_token) live in GITIGNORED
+# host_vars and are rendered at deploy time — this repo is public, so a literal
+# secret must never appear in a template. Files carrying one are rendered 0600.
+
+docker_services_root: /opt          # where stacks are deployed
+docker_services_converge: true      # run `docker compose up -d` after templating; false = deploy files only
+docker_timezone: Europe/Berlin      # containers get this as TZ (host_vars)
+# Mode for host data dirs the role CREATES (existing ones are never touched — see
+# the role). 0775 matches this host's umask-002 convention on the media/config
+# trees; the dirs are group-writable so the human and the containers share them.
+docker_data_dir_mode: "0775"
+
+# The human who owns the container data and is put in the `docker` group. The
+# `claude` agent user is deliberately excluded — docker group membership is
+# root-equivalent and claude has no sudo by design.
+docker_admin_user: "{{ lookup('env', 'USER') }}"
+docker_admin_uid: "{{ lookup('pipe', 'id -u') }}"
+docker_admin_gid: "{{ lookup('pipe', 'id -g') }}"
+
+# Storage roots. Bulk media on the big (slow, pooled) volume; databases, caches and
+# app state on the SSD. Both are host-shaped — override in host_vars.
+docker_media_root: /mnt/cold-data/files
+docker_config_root: /mnt/warm-data/files/Config
+
+# --- per-stack settings ---
+plex_port: 32400
+plex_config_dir: "{{ docker_config_root }}/Plex/config"
+plex_transcode_dir: "{{ docker_config_root }}/Plex/transcode"
+plex_media_dir: "{{ docker_media_root }}/Videos/Plex"
+# A plex.tv claim token is valid for FOUR MINUTES, so it is useless in version
+# control. Leave empty; set it in host_vars only for the run that claims a fresh
+# install, then clear it. Empty = the env var is omitted entirely.
+plex_claim: ""
+
+stash_port: 9999
+stash_config_dir: "{{ docker_config_root }}/Stash"
+stash_media_dir: "{{ docker_media_root }}/Videos/Stash"
+
+immich_port: 2283
+immich_version: release             # pin to e.g. "v3.1.0" for reproducible restarts
+immich_upload_location: "{{ docker_media_root }}/Pictures/Immich"
+# Postgres MUST be on real local SSD — not the mergerfs pool, not a network share.
+immich_db_data_location: "{{ docker_config_root }}/Immich/postgres"
+# Pre-existing photo tree to index in place, READ-ONLY (mounted :ro, so Immich can
+# never modify or delete it). Empty = no external library, managed uploads only.
+immich_external_library: "{{ docker_media_root }}/Pictures"
+# Public hostname for the Caddy TLS front end. EMPTY = no Caddy service at all and
+# Immich is LAN-only on immich_port — which is the safe default. Setting it means
+# forwarding 80 AND 443 at the router.
+immich_domain: ""
+immich_db_password: ""              # REQUIRED when enable_immich — host_vars, gitignored
+
+# DuckDNS (the `duckdns` role). Domain WITHOUT the .duckdns.org suffix.
+duckdns_domains: ""
+duckdns_token: ""                   # REQUIRED when enable_duckdns — host_vars, gitignored
+duckdns_interval_minutes: 5
+
+# --- Remote access: sshd hardening + fail2ban -----------------------------------
+# Accounts allowed to log in AT ALL (sshd `AllowUsers`). The `claude` agent user is
+# deliberately absent — no remote-login need, no sudo, no reason to be reachable.
+ssh_allow_users: ["{{ docker_admin_user }}"]
+
+# Require a TOTP code IN ADDITION to the key. The role refuses to enable this until
+# `~/.google_authenticator` exists, because sshd would otherwise demand a code that
+# cannot be produced — locking out every non-trusted network.
+ssh_require_totp: false
+
+# Networks exempt from the TOTP prompt (key alone suffices). The second factor
+# exists to defend the INTERNET-facing surface; requiring it from the LAN and the
+# tailnet would put a 6-digit code in front of every scp/rsync/git-over-ssh at home
+# for no threat-model gain. 100.64.0.0/10 is Tailscale's CGNAT range.
+ssh_trusted_networks:
+  - "{{ samba_lan_subnet }}"     # reuses the already-answered LAN subnet
+  - "100.64.0.0/10"
+
+# fail2ban policy. These stop scanner noise; they are not what makes sshd safe —
+# key-only auth is. Times accept fail2ban's suffixes (m/h/d/w).
+fail2ban_bantime: "1h"
+fail2ban_findtime: "10m"
+fail2ban_maxretry: 5
+fail2ban_ssh_maxretry: 3
+fail2ban_recidive_bantime: "1w"
+# Never ban these. Locking yourself out of your own host from the LAN is the most
+# common fail2ban self-inflicted wound.
+fail2ban_ignoreips:
+  - "{{ samba_lan_subnet }}"
+  - "100.64.0.0/10"
+
+docker_services:
+  - name: plex
+    enabled: "{{ enable_plex | default(false) | bool }}"
+    files:
+      - { src: docker-compose.yml.j2, dest: docker-compose.yml }
+    data_dirs:
+      - "{{ plex_config_dir }}"
+      - "{{ plex_transcode_dir }}"
+
+  - name: stash
+    enabled: "{{ enable_stash | default(false) | bool }}"
+    files:
+      - { src: docker-compose.yml.j2, dest: docker-compose.yml }
+    data_dirs:
+      - "{{ stash_config_dir }}/config"
+      - "{{ stash_config_dir }}/metadata"
+      - "{{ stash_config_dir }}/cache"
+      - "{{ stash_config_dir }}/blobs"
+      - "{{ stash_config_dir }}/generated"
+
+  - name: immich
+    enabled: "{{ enable_immich | default(false) | bool }}"
+    files:
+      - { src: docker-compose.yml.j2, dest: docker-compose.yml }
+      - { src: env.j2, dest: .env, mode: "0600" }   # carries DB_PASSWORD
+      # Only meaningful with a domain — the compose file omits the Caddy service
+      # entirely without one, so rendering it would leave a broken stray file.
+      - { src: Caddyfile.j2, dest: Caddyfile, when: "{{ immich_domain | length > 0 }}" }
+    data_dirs:
+      - "{{ immich_upload_location }}"
+      - "{{ immich_db_data_location }}"

@@ -1,0 +1,10 @@
+---
+# `not ansible_check_mode` for the same reason as the role's enable task: under
+# --check the apt install is simulated, so there is no fail2ban unit to restart and
+# systemd errors out — on a dry run that has otherwise succeeded.
+- name: Restart fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: restarted
+  become: true
+  when: not ansible_check_mode

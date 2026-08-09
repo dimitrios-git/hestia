@@ -1,0 +1,37 @@
+{{ ansible_managed | comment }}
+# Rendered by the `fail2ban` role -> /etc/fail2ban/jail.local.
+# Do not edit in place: the next bootstrap run overwrites it. Edit the template.
+#
+# jail.local (not jail.conf) is the correct place for local policy: fail2ban reads
+# jail.conf first and lets jail.local override it, so a package upgrade replacing
+# jail.conf never clobbers this.
+
+[DEFAULT]
+# Never ban ourselves. Without this a fat-fingered login from the LAN, or a script
+# looping over the tailnet, can lock the admin out of their own host.
+ignoreip = 127.0.0.1/8 ::1 {{ fail2ban_ignoreips | join(' ') }}
+
+bantime  = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}
+maxretry = {{ fail2ban_maxretry }}
+
+# Debian 12+ logs sshd to the journal, not /var/log/auth.log — with the default
+# `auto` backend fail2ban can pick the wrong source and silently never match.
+backend = systemd
+
+[sshd]
+enabled = true
+# The port here is what fail2ban reads from the LOG, i.e. the port sshd itself
+# listens on -- not the external port the router forwards from.
+port    = ssh
+mode    = aggressive
+maxretry = {{ fail2ban_ssh_maxretry }}
+
+# Re-offenders: anyone who earns a ban in several DIFFERENT jails, or repeatedly in
+# the same one, gets a much longer sentence. This is what actually deters a patient
+# scanner that paces itself under the per-jail findtime.
+[recidive]
+enabled  = true
+bantime  = {{ fail2ban_recidive_bantime }}
+findtime = 86400
+maxretry = 3

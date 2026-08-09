@@ -1,0 +1,41 @@
+{{ ansible_managed | comment }}
+# Rendered by the `docker_services` role from system/docker/stash/ -> /opt/stash/.
+# Do not edit in place: the next bootstrap run overwrites it. Edit the template.
+#
+# Stash's own credentials (it can set a username/password in the UI) are stored in
+# its config dir, not here — that dir lives on the config root and is not in the repo.
+
+services:
+  stash:
+    image: stashapp/stash:latest
+    container_name: stash
+    restart: unless-stopped
+
+    ports:
+      - "{{ stash_port }}:{{ stash_port }}"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "2m"
+
+    environment:
+      - STASH_STASH=/data/
+      - STASH_GENERATED=/generated/
+      - STASH_METADATA=/metadata/
+      - STASH_CACHE=/cache/
+      - STASH_PORT={{ stash_port }}
+
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      # configs, scrapers, plugins
+      - {{ stash_config_dir }}/config:/root/.stash
+      # the collection itself
+      - {{ stash_media_dir }}:/data
+      - {{ stash_config_dir }}/metadata:/metadata
+      - {{ stash_config_dir }}/cache:/cache
+      # binary blobs (scene covers, images)
+      - {{ stash_config_dir }}/blobs:/blobs
+      # generated content (screenshots, previews, transcodes, sprites)
+      - {{ stash_config_dir }}/generated:/generated

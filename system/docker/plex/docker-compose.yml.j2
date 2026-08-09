@@ -1,0 +1,45 @@
+{{ ansible_managed | comment }}
+# Rendered by the `docker_services` role from system/docker/plex/ -> /opt/plex/.
+# Do not edit in place: the next bootstrap run overwrites it. Edit the template.
+#
+# Claiming the server is MANUAL and one-shot: a claim token (plex.tv/claim) is valid
+# for 4 MINUTES, so it cannot live in the repo usefully. Leave plex_claim empty in
+# host_vars for a normal re-deploy; set it only for the run that claims a fresh
+# install, then clear it again.
+
+services:
+  plex:
+    container_name: plex
+    image: plexinc/pms-docker:latest
+    restart: unless-stopped
+
+    environment:
+      - PLEX_UID={{ docker_admin_uid }}
+      - PLEX_GID={{ docker_admin_gid }}
+      - TZ={{ docker_timezone }}
+{% if plex_claim | length > 0 %}
+      - PLEX_CLAIM={{ plex_claim }}
+{% endif %}
+{% if enable_nvidia | default(false) | bool %}
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+
+    runtime: nvidia
+{% endif %}
+
+    ports:
+      - "{{ plex_port }}:32400"
+
+    volumes:
+      - {{ plex_config_dir }}:/config
+      - {{ plex_transcode_dir }}:/transcode
+      - {{ plex_media_dir }}:/data
+
+    devices:
+      - /dev/dri:/dev/dri
+
+    networks:
+      - default
+
+networks:
+  default:

@@ -1,0 +1,42 @@
+---
+# fail2ban: watch the logs, ban the source addresses that keep failing. Layer-(a)
+# system config — /etc/fail2ban/jail.local rendered from system/fail2ban/.
+#
+# What this is and isn't: fail2ban does NOT make a weak credential safe. Against a
+# key-only sshd it stops almost nothing that could have succeeded anyway — its real
+# value is cutting the log noise from automated scanners down to the point where a
+# genuine anomaly is visible, and slowing anything that gets past the front door.
+# The security comes from key-only auth; this makes the evidence readable.
+
+# The fail2ban package comes from the MANIFEST's `fail2ban` apt group, gated on
+# enable_fail2ban (same shape as `sharing: [samba]`), so it installs in the single
+# apt pass with everything else rather than the role shelling out to apt.
+
+- name: Deploy the local jail policy
+  ansible.builtin.template:
+    src: "{{ repo_root }}/system/fail2ban/jail.local.j2"
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart fail2ban
+
+# A bad regex or an unreadable log path makes fail2ban exit on start, leaving the
+# host unprotected AND the failure easy to miss. Check before handing it the config.
+- name: Validate the jail configuration
+  ansible.builtin.command: fail2ban-client --test
+  become: true
+  changed_when: false
+
+# Skipped under --check: the apt install is itself simulated in check mode, so the
+# unit does not exist yet and systemd fails with "Could not find the requested
+# service" — an artefact of the dry run, not a real problem. On a real run apt has
+# already installed it by the time this executes.
+- name: Enable + start fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started
+  become: true
+  when: not ansible_check_mode

@@ -89,19 +89,23 @@ if [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; then
     #export SWAY_IGNORE_NVIDIA=1
     # XWAYLAND_NO_GLAMOR=1 forces XWayland to composite X11 client buffers via
     # software instead of its GPU-accelerated `glamor` path. UNCOMMENTED
-    # 2026-08-10, PENDING LIVE CONFIRMATION: after forcing Chrome/Edge/Chromium
-    # through XWayland (above) to fix their hover flicker, a NEW artifact showed
-    # up — a diagonal tear splitting the window into two triangles (top-right to
-    # bottom-left) — that survives --disable-gpu/--disable-gpu-compositing too,
-    # pointing at XWayland's OWN compositing of the client's buffer rather than
-    # anything the client itself renders with. This is the parallel fix at the
-    # XWayland layer (same "stop using the broken GPU path" pattern as
-    # WLR_RENDERER=vulkan's intent above, video-compare's software wrapper, and
-    # Steam's webview toggle) — but unlike those, THIS ONE IS NOT YET LIVE-TESTED.
-    # If it doesn't clear the diagonal tear, re-comment it before merging further
-    # work on top — don't leave an unproven global XWayland-wide change in place.
-    # This is XWayland-wide, not per-app: it also affects Steam's client UI
-    # (already forced through XWayland by its own role).
+    # 2026-08-10, LIVE-CONFIRMED: after forcing Chrome/Edge/Chromium through
+    # XWayland (above) to fix their hover flicker, a NEW artifact showed up — a
+    # diagonal tear splitting the window into two triangles (top-right to
+    # bottom-left) — pointing at XWayland's OWN compositing of the client's
+    # buffer rather than anything the client itself renders with. This line
+    # fixed it (confirmed live). This is XWayland-wide, not per-app: it also
+    # affects Steam's client UI (already forced through XWayland by its own
+    # role) — no regression reported there.
+    #
+    # NOT YET ISOLATED: a THIRD, different flicker showed up once the diagonal
+    # tear was gone, fixed instead by adding --disable-gpu-compositing to the
+    # browsers' own wrapper scripts (see the `chrome`/`edge`/`chromium_x11`
+    # roles). Whether --disable-gpu-compositing alone would also have covered
+    # the diagonal tear — making this line redundant — hasn't been tested. Kept
+    # since it demonstrably fixed what it was introduced for; revisit if someone
+    # gets a spare cycle to test dropping it with --disable-gpu-compositing
+    # still in place.
     export XWAYLAND_NO_GLAMOR=1
     sway_args+=(--unsupported-gpu)
 fi

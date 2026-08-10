@@ -2,7 +2,7 @@
 Version=1.0
 Name=Microsoft Edge
 Comment=Access the Internet
-Exec=env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin microsoft-edge --ozone-platform=x11 %U
+Exec=env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin microsoft-edge --ozone-platform=x11 --disable-gpu-compositing %U
 Icon=microsoft-edge
 Terminal=false
 Type=Application

@@ -124,6 +124,7 @@ claude_sign_commits: $claude_sign_commits
 enable_credentials: $enable_credentials
 enable_libreoffice: $enable_libreoffice
 enable_kdenlive: $enable_kdenlive
+enable_golang: $enable_golang
 enable_thunderbird: $enable_thunderbird
 enable_file_managers: $enable_file_managers
 enable_image_viewers: $enable_image_viewers
@@ -263,6 +264,7 @@ def_claudesign=$(cur claude_sign_commits); def_claudesign=${def_claudesign:-true
 def_creds=$(cur enable_credentials);  def_creds=${def_creds:-true}
 def_office=$(cur enable_libreoffice); def_office=${def_office:-false}
 def_kdenlive=$(cur enable_kdenlive); def_kdenlive=${def_kdenlive:-false}
+def_golang=$(cur enable_golang); def_golang=${def_golang:-false}
 def_thunderbird=$(cur enable_thunderbird); def_thunderbird=${def_thunderbird:-false}
 def_filemgrs=$(cur enable_file_managers); def_filemgrs=${def_filemgrs:-false}
 def_imgviewers=$(cur enable_image_viewers); def_imgviewers=${def_imgviewers:-false}
@@ -333,6 +335,7 @@ fi
 askyn enable_credentials "Enable login auto-unlock of SSH + GPG?"    "$def_creds"
 askyn enable_libreoffice "Install LibreOffice? (heavy — vifm opens office docs)" "$def_office"
 askyn enable_kdenlive    "Install Kdenlive? (heavy — Qt6/KF6 video editor)" "$def_kdenlive"
+askyn enable_golang      "Install Go? (golang-go — language toolchain)" "$def_golang"
 askyn enable_thunderbird "Install Thunderbird? (email client, hestia-themed)" "$def_thunderbird"
 askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)" "$def_filemgrs"
 askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)" "$def_imgviewers"
@@ -411,6 +414,7 @@ cat <<EOF
     enable_credentials = $enable_credentials
     enable_libreoffice = $enable_libreoffice
     enable_kdenlive    = $enable_kdenlive
+    enable_golang      = $enable_golang
     enable_thunderbird = $enable_thunderbird
     enable_file_managers = $enable_file_managers
     enable_image_viewers = $enable_image_viewers

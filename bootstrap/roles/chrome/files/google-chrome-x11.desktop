@@ -2,7 +2,7 @@
 Version=1.0
 Name=Google Chrome
 Comment=Access the Internet
-Exec=env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin google-chrome-stable --ozone-platform=x11 --disable-gpu-compositing %U
+Exec=env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin google-chrome-stable --ozone-platform=x11 %U
 Icon=google-chrome
 Terminal=false
 Type=Application

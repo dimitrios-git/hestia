@@ -88,25 +88,19 @@ if [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; then
     # Escape hatches if a release misbehaves on NVIDIA (uncomment as needed):
     #export SWAY_IGNORE_NVIDIA=1
     # XWAYLAND_NO_GLAMOR=1 forces XWayland to composite X11 client buffers via
-    # software instead of its GPU-accelerated `glamor` path. UNCOMMENTED
-    # 2026-08-10, LIVE-CONFIRMED: after forcing Chrome/Edge/Chromium through
-    # XWayland (above) to fix their hover flicker, a NEW artifact showed up — a
-    # diagonal tear splitting the window into two triangles (top-right to
-    # bottom-left) — pointing at XWayland's OWN compositing of the client's
-    # buffer rather than anything the client itself renders with. This line
-    # fixed it (confirmed live). This is XWayland-wide, not per-app: it also
-    # affects Steam's client UI (already forced through XWayland by its own
-    # role) — no regression reported there.
-    #
-    # NOT YET ISOLATED: a THIRD, different flicker showed up once the diagonal
-    # tear was gone, fixed instead by adding --disable-gpu-compositing to the
-    # browsers' own wrapper scripts (see the `chrome`/`edge`/`chromium_x11`
-    # roles). Whether --disable-gpu-compositing alone would also have covered
-    # the diagonal tear — making this line redundant — hasn't been tested. Kept
-    # since it demonstrably fixed what it was introduced for; revisit if someone
-    # gets a spare cycle to test dropping it with --disable-gpu-compositing
-    # still in place.
-    export XWAYLAND_NO_GLAMOR=1
+    # software instead of its GPU-accelerated `glamor` path. TRIED 2026-08-10
+    # after forcing Chrome/Edge/Chromium through XWayland (above) surfaced a
+    # diagonal-tear artifact there (window split into two triangles) — appeared
+    # to fix it in an initial spot-check, but a FULL RE-LOGIN retest (fresh
+    # XWayland spawn, so the var was genuinely live) showed the same family of
+    # occasional flickering persisting regardless. FALSE POSITIVE — reverted to
+    # a commented-out escape hatch, same as --disable-gpu-compositing in the
+    # browsers' own wrapper scripts (also tried, also a false positive, also
+    # reverted — see the `chrome`/`edge`/`chromium_x11` roles). Only
+    # --ozone-platform=x11 is a confirmed fix in this whole investigation; the
+    # residual occasional flicker on XWayland is an ACCEPTED, unfixed
+    # limitation — see CLAUDE.md's Chromium-family XWayland gotcha.
+    #export XWAYLAND_NO_GLAMOR=1
     sway_args+=(--unsupported-gpu)
 fi
 

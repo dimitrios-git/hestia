@@ -91,11 +91,11 @@ smart_gaps off
 
 # Bulgarian uses the traditional phonetic variant (W -> в); the comma
 # positions in xkb_variant align variants to their layouts in xkb_layout.
-# caps:super maps Caps Lock to Super; Alt+Shift cycles layouts.
+# Alt+Shift cycles layouts. Caps Lock is stock (no remap).
 input type:keyboard {
     xkb_layout "us,de,gr,bg"
     xkb_variant ",,,phonetic"
-    xkb_options caps:super,grp:alt_shift_toggle
+    xkb_options grp:alt_shift_toggle
 }
 
 ### Key bindings

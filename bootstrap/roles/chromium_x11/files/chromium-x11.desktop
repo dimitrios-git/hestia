@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Chromium Web Browser
+Comment=Access the Internet
+Exec=env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin chromium --ozone-platform=x11 %U
+Icon=chromium
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;
+StartupWMClass=chromium

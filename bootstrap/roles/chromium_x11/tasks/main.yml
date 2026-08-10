@@ -1,0 +1,38 @@
+---
+# Force chromium through XWayland — see CLAUDE.md's Chromium-family XWayland
+# gotcha (root-caused 2026-08-10): the native-Wayland Ozone backend has a
+# hover/repaint flicker bug on this NVIDIA/wlroots setup that --disable-gpu
+# doesn't touch (it's a Wayland-integration bug, not a GPU-rendering one).
+# --ozone-platform=x11 sidesteps it — live-confirmed against Edge, same
+# Chromium engine underneath. No `become` — writes only into the invoking
+# user's own home.
+#
+# A dedicated role rather than folding into `chrome`/`edge`: chromium has no
+# role of its own (it's a plain apt package in the `browser` group, gated by
+# `enable_headless_browser`), so this rides that same toggle for gating.
+
+- name: Ensure ~/.local/bin and ~/.local/share/applications exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ target_home }}/.local/bin"
+    - "{{ target_home }}/.local/share/applications"
+
+- name: Force chromium through XWayland (terminal launches)
+  ansible.builtin.copy:
+    src: chromium-x11-wrapper.sh
+    dest: "{{ target_home }}/.local/bin/chromium"
+    mode: "0755"
+
+- name: Force chromium through XWayland (desktop-launcher / wofi launches)
+  # A user-level override at this exact XDG path takes precedence over Debian's
+  # system one (/usr/share/applications/chromium.desktop). CAVEAT (same as the
+  # `steam` role): a future chromium package version could re-register its own
+  # entry there and silently overwrite this file — re-run `--tags chromium_x11`
+  # to reassert it.
+  ansible.builtin.copy:
+    src: chromium-x11.desktop
+    dest: "{{ target_home }}/.local/share/applications/chromium.desktop"
+    mode: "0644"

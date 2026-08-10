@@ -134,6 +134,7 @@ enable_wallpapers: $enable_wallpapers
 enable_firefox: $enable_firefox
 enable_firefoxpwa: $enable_firefoxpwa
 enable_chrome: $enable_chrome
+enable_edge: $enable_edge
 enable_trading: $enable_trading
 enable_mega: $enable_mega
 enable_steam: $enable_steam
@@ -274,6 +275,7 @@ def_wallpapers=$(cur enable_wallpapers); def_wallpapers=${def_wallpapers:-true}
 def_firefox=$(cur enable_firefox); def_firefox=${def_firefox:-true}
 def_ffpwa=$(cur enable_firefoxpwa); def_ffpwa=${def_ffpwa:-true}
 def_chrome=$(cur enable_chrome); def_chrome=${def_chrome:-false}
+def_edge=$(cur enable_edge); def_edge=${def_edge:-false}
 def_trading=$(cur enable_trading); def_trading=${def_trading:-false}
 def_mega=$(cur enable_mega); def_mega=${def_mega:-false}
 def_steam=$(cur enable_steam); def_steam=${def_steam:-false}
@@ -345,6 +347,7 @@ askyn enable_wallpapers  "Install the wallpaper stack? (mesh default background 
 askyn enable_firefox     "Install Firefox ESR? (the desktop browser)" "$def_firefox"
 askyn enable_firefoxpwa  "Install firefoxpwa? (PWA support — vendor apt repo)" "$def_ffpwa"
 askyn enable_chrome      "Install Google Chrome? (vendor apt repo — amd64 only)" "$def_chrome"
+askyn enable_edge        "Install Microsoft Edge? (vendor apt repo — amd64 only)" "$def_edge"
 askyn enable_trading     "Install trading apps? (TradingView Desktop — vendor .deb)" "$def_trading"
 askyn enable_mega        "Install MEGA Desktop? (MEGAsync cloud sync — vendor apt repo)" "$def_mega"
 askyn enable_steam       "Install Steam? (steam-installer — Debian contrib repo, needs i386)" "$def_steam"
@@ -424,6 +427,7 @@ cat <<EOF
     enable_firefox     = $enable_firefox
     enable_firefoxpwa  = $enable_firefoxpwa
     enable_chrome      = $enable_chrome
+    enable_edge        = $enable_edge
     enable_trading     = $enable_trading
     enable_mega        = $enable_mega
     enable_steam       = $enable_steam

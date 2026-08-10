@@ -21,12 +21,14 @@ nvidia_packages:
 # an interim flicker fix (wlroots' Vulkan renderer syncs through NVIDIA's Vulkan timeline
 # semaphores), REVERTED (2026-08) after it corrupted XWayland override-redirect surfaces
 # (menus/dropdowns) and crashed sway outright resizing a tiled Steam window, then
-# RE-ENABLED (2026-08) to fix the same implicit-sync flicker in video-compare's SDL2
-# renderer — re-testing the Steam interaction now that Steam has its own XWayland-forcing
-# fix for the crash (see the `steam` role); re-comment it in start-sway.j2 if Steam
-# regresses again. Short of a real driver upgrade this is the only live compositor-side
-# mitigation; the base driver stays a known cosmetic-flicker liability until backports
-# actually ships >= 555 (re-check the backports nvidia-driver version first, then flip
-# this true — it needs a REBOOT to load). The plumbing below is kept + fixed so the flip
-# Just Works then.
+# RE-ENABLED (2026-08). UPDATE 2026-08-10: it has never actually been confirmed to fix
+# any of the flicker cases it was tried against (video-compare, Steam, and — the original
+# justification — Chrome/Edge/Chromium all turned out to need their own client-side
+# fixes instead; see CLAUDE.md's Chromium-family XWayland gotcha and
+# system/sway-session/start-sway.j2's comment). Left enabled but treat it as unproven,
+# not as a working mitigation. Short of a real driver upgrade there is no confirmed
+# compositor-side fix for this family of bugs; the base driver stays a known
+# cosmetic-flicker liability until backports actually ships >= 555 (re-check the
+# backports nvidia-driver version first, then flip this true — it needs a REBOOT to
+# load). The plumbing below is kept + fixed so the flip Just Works then.
 nvidia_backports: false

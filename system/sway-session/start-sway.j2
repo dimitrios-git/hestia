@@ -61,29 +61,45 @@ if [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; then
     export GBM_BACKEND=nvidia-drm
     export __GLX_VENDOR_LIBRARY_NAME=nvidia
     export WLR_NO_HARDWARE_CURSORS=1
-    # Explicit-sync fix for Chromium/Electron flicker + damage-only ("squares under
-    # the cursor") repaints on NVIDIA — TRIED, REVERTED (2026-08), RE-ENABLED
-    # (2026-08). The base trixie driver (550) lacks EGL_ANDROID_native_fence_sync,
-    # so wlroots' default GLES2 renderer falls back to implicit sync, which NVIDIA
-    # handles poorly for ANY GL-accelerated Wayland client, not just Chromium/
-    # Electron — confirmed again via video-compare (SDL2's
-    # SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC path hits the identical
-    # flicker; forcing it through XWayland via SDL_VIDEODRIVER=x11 made it WORSE,
-    # since XWayland just adds another compositing hop through the same broken
-    # implicit-sync path rather than avoiding it — same lesson as Steam below).
-    # WLR_RENDERER=vulkan sidesteps the gap via NVIDIA's Vulkan timeline
-    # semaphores. First attempt: it made Steam's XWayland corruption worse (before
-    # Steam had its own XWayland-forcing fix) and was reverted. Since then Steam
-    # gained that fix (forced XWayland via a launcher override — see the `steam`
-    # role / CLAUDE.md's steam gotcha section) for a DIFFERENT bug (its native-
-    # Wayland client backend crashing sway), so the vulkan-vs-Steam interaction is
-    # being re-tested under that fix rather than assumed still broken. If Steam
-    # regresses again (menu/cursor corruption, a crash resizing next to it),
-    # re-comment this line and re-login — that's a strictly worse failure mode
-    # than the flicker it fixes, and previously the deciding factor.
+    # Explicit-sync fix attempt for GL-Wayland flicker on NVIDIA — TRIED, REVERTED
+    # (2026-08), RE-ENABLED (2026-08). The base trixie driver (550) lacks
+    # EGL_ANDROID_native_fence_sync, so wlroots' default GLES2 renderer falls back
+    # to implicit sync, which NVIDIA handles poorly. WLR_RENDERER=vulkan was meant
+    # to sidestep that via NVIDIA's Vulkan timeline semaphores.
+    #
+    # UPDATE 2026-08-10: this has never been confirmed to actually fix anything it
+    # was tried against. video-compare's flicker persisted regardless (a SEPARATE
+    # sync domain — its own SDL2/GL context, not wlroots' compositing — fixed
+    # instead by forcing SDL_RENDER_DRIVER=software, see the `video_compare`
+    # role). Steam never needed it either (its crash/corruption was fixed by
+    # forcing XWayland, unrelated to the renderer; its residual webview flicker
+    # has no fix at all). And Chrome/Edge/Chromium — the ORIGINAL justification —
+    # were live-tested still flickering on hover with this presumably active. That
+    # flicker turned out to be a completely different bug: Chromium's
+    # native-Wayland Ozone backend itself (not GPU rendering — ruled out by
+    # --disable-gpu not helping either), fixed by forcing XWayland instead (see
+    # the `chrome`/`edge`/`chromium_x11` roles + CLAUDE.md's Chromium-family
+    # XWayland gotcha). So every case in this family has actually been fixed by
+    # getting the CLIENT off the GPU/native-Wayland path, never by this line.
+    # Left in place because removing it isn't confirmed safe either (Steam's
+    # first XWayland-corruption bug predates having a fix for it) — not because
+    # it's known to help. Re-comment if a future case regresses under it.
     export WLR_RENDERER=vulkan
     # Escape hatches if a release misbehaves on NVIDIA (uncomment as needed):
     #export SWAY_IGNORE_NVIDIA=1
+    # XWAYLAND_NO_GLAMOR=1 forces XWayland to composite X11 client buffers via
+    # software instead of its GPU-accelerated `glamor` path. TRIED 2026-08-10
+    # after forcing Chrome/Edge/Chromium through XWayland (above) surfaced a
+    # diagonal-tear artifact there (window split into two triangles) — appeared
+    # to fix it in an initial spot-check, but a FULL RE-LOGIN retest (fresh
+    # XWayland spawn, so the var was genuinely live) showed the same family of
+    # occasional flickering persisting regardless. FALSE POSITIVE — reverted to
+    # a commented-out escape hatch, same as --disable-gpu-compositing in the
+    # browsers' own wrapper scripts (also tried, also a false positive, also
+    # reverted — see the `chrome`/`edge`/`chromium_x11` roles). Only
+    # --ozone-platform=x11 is a confirmed fix in this whole investigation; the
+    # residual occasional flicker on XWayland is an ACCEPTED, unfixed
+    # limitation — see CLAUDE.md's Chromium-family XWayland gotcha.
     #export XWAYLAND_NO_GLAMOR=1
     sway_args+=(--unsupported-gpu)
 fi

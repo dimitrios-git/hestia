@@ -125,6 +125,13 @@ enable_firefoxpwa: true     # install firefoxpwa from its vendor repo (firefoxpw
 # Default OFF — an extra desktop browser on top of Firefox/chromium; turn on
 # per host if you want it.
 enable_chrome: false        # install Google Chrome from Google's vendor repo (chrome role)
+# Microsoft Edge (the `edge` role): microsoft-edge-stable from Microsoft's own
+# signed apt repo — NOT in Debian apt. amd64-only; the role self-skips on other
+# arches. Was previously installed by hand outside Ansible; brought under
+# management 2026-08-10 alongside the XWayland fix (see CLAUDE.md's
+# Chromium-family XWayland gotcha). Default OFF, same rationale as enable_chrome
+# — an extra desktop browser; turn on per host if you want it.
+enable_edge: false          # install Microsoft Edge from Microsoft's vendor repo (edge role)
 # Trading apps (the `trading` role): TradingView Desktop from the vendor's
 # rolling "latest" .deb (no apt repo and no versioned URLs exist — nothing to
 # pin; TLS-trust, installed only when absent). JForex4 joins the role when it

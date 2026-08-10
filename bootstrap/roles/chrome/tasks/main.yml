@@ -53,3 +53,35 @@
         state: present
         update_cache: true
       become: true
+
+    - name: Ensure ~/.local/bin and ~/.local/share/applications exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ target_home }}/.local/bin"
+        - "{{ target_home }}/.local/share/applications"
+
+    - name: Force Chrome through XWayland (terminal launches)
+      # See CLAUDE.md's Chromium-family XWayland gotcha + the wrapper script's own
+      # comment for the full story (hover/repaint flicker on the native-Wayland
+      # Ozone backend, live-confirmed fixed by --ozone-platform=x11). No `become`
+      # — this writes into the invoking user's own home, not root's.
+      ansible.builtin.copy:
+        src: google-chrome-x11-wrapper.sh
+        dest: "{{ target_home }}/.local/bin/google-chrome-stable"
+        mode: "0755"
+
+    - name: Force Chrome through XWayland (desktop-launcher / wofi launches)
+      # Same fix as the wrapper above, for launches via a .desktop entry rather
+      # than a terminal — those exec the Exec= path directly, not through $PATH.
+      # A user-level override at this exact XDG path takes precedence over the
+      # vendor package's system one (/usr/share/applications/google-chrome.desktop).
+      # CAVEAT (same as the `steam` role): if a future Chrome package version ever
+      # re-registers its own desktop entry at this same user-level path, it will
+      # silently overwrite this file — re-run `--tags chrome` to reassert it.
+      ansible.builtin.copy:
+        src: google-chrome-x11.desktop
+        dest: "{{ target_home }}/.local/share/applications/google-chrome.desktop"
+        mode: "0644"

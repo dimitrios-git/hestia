@@ -1,0 +1,74 @@
+---
+# OpenRGB (enable_openrgb, host-detected by setup.sh like NVIDIA/Razer — the USB
+# (vendor,product) pair 0b05:19af). Controls the "Aura USB" LED controller most ASUS
+# motherboards have carried internally since the X470 generation: onboard lighting
+# plus the 12V RGB / 5V ARGB headers, all from ONE USB HID device wired through an
+# internal header inside the case — no external cable, so it enumerates in `lsusb`
+# unconditionally, not because of anything plugged in externally. (On hephaestus it
+# shows up as "ASUS TUF GAMING X670E-PLUS" once OpenRGB is installed — confirmed
+# live, mainboard zone + 3 addressable-header zones all detected.)
+#
+# NOT in Debian trixie's stable apt (only sid as of 2026-08) — installed from
+# upstream's OWN pinned trixie .deb (see defaults/main.yml for the sha256
+# provenance). amd64-only (matches the .deb build); the role skips other arches.
+#
+# Udev rules ship IN the package (TAG+="uaccess" via systemd-logind — confirmed live
+# that NO plugdev-style group is needed, unlike the razer role) and take effect on
+# install without a reboot (the installing session controlled the board immediately).
+#
+# NOTE: Razer gear that OpenRGB also detects (Mouse Dock, mice, ...) is left alone —
+# Polychromatic (the razer role) already owns those; this role only concerns itself
+# with the motherboard's Aura controller.
+
+- name: Detect CPU architecture
+  ansible.builtin.command: uname -m
+  register: _orgb_arch
+  changed_when: false
+
+- name: "openrgb: no amd64 -> skip (vendor .deb is amd64-only)"
+  ansible.builtin.debug:
+    msg: "Skipping the openrgb role on {{ _orgb_arch.stdout }}."
+  when: _orgb_arch.stdout != 'x86_64'
+
+- name: Install OpenRGB
+  when: _orgb_arch.stdout == 'x86_64'
+  block:
+    - name: Is openrgb already installed?
+      ansible.builtin.package_facts:
+
+    - name: Download + install OpenRGB {{ openrgb_version }} (only when absent)
+      when: "'openrgb' not in ansible_facts.packages"
+      block:
+        - name: Temp download dir
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: hestia-openrgb
+          register: _orgb_tmp
+
+        - name: Download the pinned trixie .deb (sha256-verified)
+          ansible.builtin.get_url:
+            url: "{{ openrgb_deb_url }}"
+            dest: "{{ _orgb_tmp.path }}/openrgb.deb"
+            checksum: "sha256:{{ openrgb_deb_sha256 }}"
+            mode: "0644"
+
+        - name: Install the .deb (resolves Depends against the configured apt sources)
+          ansible.builtin.apt:
+            deb: "{{ _orgb_tmp.path }}/openrgb.deb"
+            update_cache: true
+          become: true
+      always:
+        - name: Remove the temp download
+          ansible.builtin.file:
+            path: "{{ _orgb_tmp.path | default('') }}"
+            state: absent
+          when: _orgb_tmp.path is defined
+
+    - name: The manual tail (printed, not automated)
+      ansible.builtin.debug:
+        msg: >-
+          OpenRGB installed. Run `openrgb` (GUI) or `openrgb --list-devices` (CLI) —
+          the Aura controller shows up as a Motherboard device with its own
+          zones/modes. No default colour/effect is applied by this role; save a
+          profile in the GUI (Settings > Save Profile) if you want one to persist,
+          and see the README for autostart options.

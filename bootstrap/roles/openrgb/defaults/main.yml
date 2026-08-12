@@ -10,3 +10,9 @@ openrgb_version: "1.0rc3"
 openrgb_commit: "6fbcf62"
 openrgb_deb_url: "https://codeberg.org/OpenRGB/OpenRGB/releases/download/release_candidate_{{ openrgb_version }}/openrgb_{{ openrgb_version }}_amd64_trixie_{{ openrgb_commit }}.deb"
 openrgb_deb_sha256: "d9c9d83c1f9d49bc9b3a614448e16662520770150e679740fab65878717010cf"
+
+# OpenRGB profile (.orp, saved via the GUI's Settings > Save Profile) to load at
+# login. Empty by default — a fresh spin has no profile yet, and the name is a
+# per-host/personal choice, not something to hardcode into the tracked default.
+# Override in host_vars, e.g. `openrgb_autostart_profile: dimitrios`.
+openrgb_autostart_profile: ""

@@ -74,22 +74,21 @@
       # A tracked XDG autostart entry, same shape as OpenRGB's own --autostart-enable
       # (verified live what that writes — a plain ~/.config/autostart/*.desktop, no
       # systemd unit involved) but reproducible from the repo instead of an
-      # imperative one-off CLI call. No --profile: this role picks no default
-      # colour/effect (see below), so it just launches minimized to tray each
-      # login — add --profile <name> to files/OpenRGB-autostart.desktop's Exec=
-      # once you've saved one (Settings > Save Profile in the GUI).
-      ansible.builtin.copy:
-        src: OpenRGB-autostart.desktop
+      # imperative one-off CLI call. Rendered (not symlinked/copied verbatim) so
+      # openrgb_autostart_profile — empty by default, host_vars-overridable once
+      # you've saved a profile via Settings > Save Profile in the GUI — can add
+      # --profile <name> to Exec= without hardcoding a personal profile name into
+      # the tracked template.
+      ansible.builtin.template:
+        src: OpenRGB-autostart.desktop.j2
         dest: "{{ target_home }}/.config/autostart/OpenRGB.desktop"
         mode: "0644"
 
     - name: The manual tail (printed, not automated)
       ansible.builtin.debug:
         msg: >-
-          OpenRGB installed and set to autostart minimized at login. Run `openrgb`
-          (GUI) or `openrgb --list-devices` (CLI) — the Aura controller shows up as
-          a Motherboard device with its own zones/modes. No default colour/effect is
-          applied by this role; save a profile in the GUI (Settings > Save Profile),
-          then add --profile <name> to the autostart entry
-          (bootstrap/roles/openrgb/files/OpenRGB-autostart.desktop) to have it
-          reapplied automatically.
+          OpenRGB installed and set to autostart minimized at login{{
+          (" (loading the '" + openrgb_autostart_profile + "' profile)") if openrgb_autostart_profile else ""
+          }}. Run `openrgb` (GUI) or `openrgb --list-devices` (CLI) — the Aura
+          controller shows up as a Motherboard device with its own zones/modes.
+          {{ "No default colour/effect is applied by this role; save a profile in the GUI (Settings > Save Profile), then set openrgb_autostart_profile in host_vars to have it reapplied automatically." if not openrgb_autostart_profile else "" }}

@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=OpenRGB
-Comment=Launch OpenRGB minimized at login (add --profile <name> to Exec= once you've saved one)
-Icon=org.openrgb.OpenRGB
-Exec=openrgb --startminimized
-Terminal=false
-X-GNOME-Autostart-enabled=true

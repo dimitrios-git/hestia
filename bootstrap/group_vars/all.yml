@@ -341,6 +341,11 @@ dotfile_links:
   # (the `claude` user). settings.json is app-writable, so it is RENDERED (a real
   # file, not this symlink) — see templated_configs below.
   - { src: user/claude/keybindings.json,    dest: "{{ target_home }}/.claude/keybindings.json", claude: true }
+  # Per-profile Firefox launchers (-P <profile> -no-remote, so each opens/raises its
+  # OWN instance instead of the -no-remote-less default reusing whatever's running).
+  # Alongside the vendor firefox-esr.desktop, which still opens the default profile.
+  - { src: user/firefox/firefox-dimitrios.desktop, dest: "{{ target_home }}/.local/share/applications/firefox-dimitrios.desktop" }
+  - { src: user/firefox/firefox-jcb.desktop, dest: "{{ target_home }}/.local/share/applications/firefox-jcb.desktop" }
 
 # --- Rendered (templated) user configs ----------------------------------------
 # Path-generalisation (docs/repo-structure-design.md §5): configs that hardcode an

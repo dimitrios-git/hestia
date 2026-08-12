@@ -110,6 +110,8 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/bin/hestia-shot` | `~/.local/bin/hestia-shot` |
 | `user/bin/duckdns-update` | `~/.local/bin/duckdns-update` |
 | `user/claude/keybindings.json` | `~/.claude/keybindings.json` |
+| `user/firefox/firefox-dimitrios.desktop` | `~/.local/share/applications/firefox-dimitrios.desktop` |
+| `user/firefox/firefox-jcb.desktop` | `~/.local/share/applications/firefox-jcb.desktop` |
 <!-- END active-symlinks -->
 
 ### Rendered (templated) configs

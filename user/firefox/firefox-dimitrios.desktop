@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Firefox (dimitrios)
+GenericName=Web Browser
+Comment=Open the dimitrios Firefox profile directly, regardless of what's already running
+Exec=firefox-esr -P dimitrios -no-remote %u
+Icon=firefox-esr
+Terminal=false
+Categories=Network;WebBrowser;

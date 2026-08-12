@@ -22,11 +22,16 @@ pair `0b05:19af` in sysfs and pre-answers the prompt, the same shape as the
    (libqt5\*, libhidapi, libmbedtls, ...) against the machine's normal apt
    sources — all satisfiable from trixie's stable repo, no extra source
    needed.
-3. That's it. The package's own postinst installs the udev rules
+3. The package's own postinst installs the udev rules
    (`/usr/lib/udev/rules.d/60-openrgb.rules`, `TAG+="uaccess"` via
    systemd-logind) — confirmed live that **no `plugdev`-style group** is
    needed (unlike the `razer` role), and access works in the same session
    with no reboot.
+4. Deploys a tracked XDG autostart entry (`files/OpenRGB-autostart.desktop` →
+   `~/.config/autostart/OpenRGB.desktop`), reasserted every run so it
+   self-heals. Same shape as what OpenRGB's own `--autostart-enable` writes
+   (verified live — a plain autostart `.desktop`, no systemd unit involved),
+   just reproducible from the repo instead of an imperative one-off CLI call.
 
 **Architecture:** amd64-only (matches the upstream `.deb` build); the role
 skips other arches.
@@ -49,13 +54,23 @@ the same device from both tools at once.
 
 ## No default effect
 
-This role installs OpenRGB and stops — it does not pick a colour, effect, or
-autostart-and-apply-a-profile for you (that's a personal/aesthetic choice, not
-a reproducibility one). To make a look persist:
+The role autostarts OpenRGB, but picks no colour, effect, or profile for you —
+that's a personal/aesthetic choice, not a reproducibility one. Out of the box
+the autostart entry is just `openrgb --startminimized` (tray-only, applies
+nothing). To make a specific look persist across logins:
 
-1. Set it up in the OpenRGB GUI, then **Settings > Save Profile**.
-2. To apply it automatically at login, add `openrgb --profile <name> --startminimized`
-   (or similar) as a sway `exec` line — not wired up by this role.
+1. Set it up in the OpenRGB GUI, then **Settings > Save Profile** (as
+   `<name>.orp`).
+2. Add `--profile <name>` to the `Exec=` line in
+   `files/OpenRGB-autostart.desktop` and re-run the role (or edit
+   `~/.config/autostart/OpenRGB.desktop` directly for a quick local test —
+   the next role run will overwrite it with whatever the repo file says).
+
+Many of OpenRGB's *modes* (static, breathing, rainbow, ...) run on the Aura
+controller's own onboard MCU once set, and keep going even without OpenRGB
+running or after a reboot — same as AURA Sync/Armoury Crate on Windows. The
+autostart entry mainly matters for reapplying `Direct` mode (per-LED colours
+pushed live by OpenRGB itself) or a profile that spans multiple devices.
 
 ## Variables
 
@@ -82,11 +97,10 @@ OpenRGB's release filenames carry a git commit hash, so there's no predictable
 2. `wget` the new `.deb`, `sha256sum` it.
 3. Update `openrgb_version` / `openrgb_commit` / `openrgb_deb_sha256` in
    `defaults/main.yml`.
-4. Re-run the role (`--tags openrgb`) — it only re-downloads because the new
-   URL differs from what's already installed... actually the "already
-   installed" check is by package NAME, not version, so bumping the pin alone
-   won't force a re-install. If you want to force an update: `sudo apt remove
-   openrgb` first, or just `dpkg -i` the new `.deb` by hand.
+4. The "already installed" check is by package NAME, not version, so bumping
+   the pin alone won't force a re-install on a re-run. To force an update:
+   `sudo apt remove openrgb` first (then re-run the role), or just `dpkg -i`
+   the new `.deb` by hand.
 
 ## Updates
 

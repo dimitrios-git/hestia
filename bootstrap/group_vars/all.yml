@@ -688,7 +688,10 @@ ssh_trusted_networks:
 fail2ban_bantime: "1h"
 fail2ban_findtime: "10m"
 fail2ban_maxretry: 5
-fail2ban_ssh_maxretry: 3
+# The sshd jail runs `mode = aggressive`, which matches multiple log lines per
+# single wrong TOTP code — so this budget goes further than the number suggests.
+# Raised from 3 (hit live 2026-08-12: ~2 mistyped codes banned a legit reconnect).
+fail2ban_ssh_maxretry: 8
 fail2ban_recidive_bantime: "1w"
 # Never ban these. Locking yourself out of your own host from the LAN is the most
 # common fail2ban self-inflicted wound.

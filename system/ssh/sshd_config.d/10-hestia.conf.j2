@@ -31,8 +31,14 @@ AuthenticationMethods publickey
 AllowUsers {{ ssh_allow_users | join(' ') }}
 
 # --- Hardening -----------------------------------------------------------------
-MaxAuthTries 3
-LoginGraceTime 30
+# MaxAuthTries/LoginGraceTime are deliberately loose, not tight: with TOTP on top
+# of a key, fail2ban's aggressive sshd jail counts BOTH the "PAM: Authentication
+# failure" and "Failed keyboard-interactive/pam" lines per wrong code, so a couple
+# of mistyped codes can burn through its retry budget fast (hit live 2026-08-12 —
+# a legit reconnect got banned after ~2 bad codes). Key-only auth is the actual
+# boundary (see fail2ban_ssh_maxretry below), so there's room to be generous here.
+MaxAuthTries 6
+LoginGraceTime 60
 MaxSessions 10
 X11Forwarding no
 AllowAgentForwarding no

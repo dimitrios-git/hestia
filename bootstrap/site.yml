@@ -96,6 +96,9 @@
     - role: razer      # Razer peripherals: openrazer (DKMS) + polychromatic from its vendor repo — opt-in, hardware-detected
       tags: [system, razer]
       when: enable_razer | default(false) | bool
+    - role: openrgb    # OpenRGB, for onboard ASUS Aura Sync USB motherboard RGB (vendor .deb) — opt-in, hardware-detected
+      tags: [system, openrgb]
+      when: enable_openrgb | default(false) | bool
     - role: minipro    # build + install minipro (EEPROM programmer CLI) from source — not packaged in Debian OR Ubuntu; opt-in, hardware-specific
       tags: [system, minipro]
       when: enable_minipro | default(false) | bool

@@ -31,6 +31,10 @@ enable_nvidia: false        # proprietary NVIDIA driver (Debian non-free)
 # (not in Debian; their old Launchpad PPA is SHA-1-signed and trixie rejects it).
 # Builds a DKMS module; the reboot/replug + plugdev re-login stay manual.
 enable_razer: false         # Razer peripherals: openrazer + polychromatic (razer role)
+# Default OFF — host-specific (needs the ASUS Aura USB motherboard controller,
+# vendor:product 0b05:19af; setup.sh detects it and asks). Vendor .deb, not Debian
+# apt (openrgb role).
+enable_openrgb: false       # OpenRGB, for onboard ASUS Aura Sync USB motherboard RGB (openrgb role)
 # Package-only toggle (no role): gates the `office` apt group below via
 # package_group_features. Default OFF — libreoffice is heavy (~hundreds of MB) and
 # only vifm's office-doc opener needs it; turn on per host if you want it.

@@ -141,6 +141,7 @@ enable_steam: $enable_steam
 enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
 enable_razer: $enable_razer
+enable_openrgb: $enable_openrgb
 enable_docker: $enable_docker
 enable_plex: $enable_plex
 enable_stash: $enable_stash
@@ -289,6 +290,18 @@ def_nvidia=$(cur enable_nvidia); def_nvidia=${def_nvidia:-$det_nvidia}
 det_razer=false
 if grep -qi '^1532$' /sys/bus/usb/devices/*/idVendor 2>/dev/null; then det_razer=true; fi
 def_razer=$(cur enable_razer); def_razer=${def_razer:-$det_razer}
+# ASUS Aura USB motherboard RGB controller: match the (vendor,product) PAIR
+# 0b05:19af in sysfs — vendor 0b05 alone is too broad (ASUS also ships Bluetooth/
+# storage/etc. under it).
+det_openrgb=false
+for _dv in /sys/bus/usb/devices/*/idVendor; do
+  _dp="$(dirname "$_dv")/idProduct"
+  if grep -qi '^0b05$' "$_dv" 2>/dev/null && [ -f "$_dp" ] && grep -qi '^19af$' "$_dp" 2>/dev/null; then
+    det_openrgb=true
+    break
+  fi
+done
+def_openrgb=$(cur enable_openrgb); def_openrgb=${def_openrgb:-$det_openrgb}
 def_theme=$(cur theme_variant); def_theme=${def_theme:-dark}
 # Container layer — all default OFF (server-shaped, not part of a workstation spin).
 def_docker=$(cur enable_docker); def_docker=${def_docker:-false}
@@ -354,6 +367,7 @@ askyn enable_steam       "Install Steam? (steam-installer — Debian contrib rep
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
 askyn enable_razer       "Install Razer peripheral support? (openrazer + polychromatic; needs reboot)" "$def_razer"
+askyn enable_openrgb     "Install OpenRGB? (control the ASUS Aura USB motherboard RGB — vendor .deb)" "$def_openrgb"
 askyn enable_docker      "Install Docker? (Engine + Compose from Debian apt; puts you in the root-equivalent 'docker' group)" "$def_docker"
 if [ "$enable_docker" = true ]; then
     askyn enable_plex    "  Deploy the Plex container? (/opt/plex)"   "$def_plex"
@@ -433,6 +447,7 @@ cat <<EOF
     enable_steam       = $enable_steam
     enable_nvidia      = $enable_nvidia
     enable_razer       = $enable_razer
+    enable_openrgb     = $enable_openrgb
     enable_docker      = $enable_docker$( [ "$enable_docker" = true ] && echo "   (plex: $enable_plex, stash: $enable_stash, immich: $enable_immich)" )
     enable_duckdns     = $enable_duckdns$( [ "$enable_duckdns" = true ] && echo "   ($duckdns_domains.duckdns.org)" )
     immich exposure    = $( [ -n "$immich_domain" ] && echo "PUBLIC via https://$immich_domain (needs 80+443 forwarded)" || echo "LAN-only" )

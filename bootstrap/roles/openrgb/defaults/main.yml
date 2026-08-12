@@ -1,0 +1,12 @@
+---
+# Pinned OpenRGB release — see README.md for the bump recipe. Debian trixie doesn't
+# carry openrgb in its stable apt (only sid, checked 2026-08), so this installs
+# upstream's own trixie .deb straight from its Codeberg release — a single pinned +
+# sha256-verified file, same shape as gtk_theme/localbin (NOT the unpinnable
+# rolling-latest shape of trading/mega: OpenRGB tags real, fixed release assets).
+# The sha256 below was computed FROM this exact downloaded asset at pin time —
+# upstream's release page publishes no checksum of its own to verify against.
+openrgb_version: "1.0rc3"
+openrgb_commit: "6fbcf62"
+openrgb_deb_url: "https://codeberg.org/OpenRGB/OpenRGB/releases/download/release_candidate_{{ openrgb_version }}/openrgb_{{ openrgb_version }}_amd64_trixie_{{ openrgb_commit }}.deb"
+openrgb_deb_sha256: "d9c9d83c1f9d49bc9b3a614448e16662520770150e679740fab65878717010cf"

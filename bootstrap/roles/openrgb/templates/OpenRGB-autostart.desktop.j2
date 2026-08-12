@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=OpenRGB
+Comment=Launch OpenRGB minimized at login{{ ", loading the '" + openrgb_autostart_profile + "' profile" if openrgb_autostart_profile else " (set openrgb_autostart_profile in host_vars once you've saved a profile)" }}
+Icon=org.openrgb.OpenRGB
+Exec=openrgb --startminimized{{ " --profile " + openrgb_autostart_profile if openrgb_autostart_profile else "" }}
+Terminal=false
+X-GNOME-Autostart-enabled=true

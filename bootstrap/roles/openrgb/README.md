@@ -22,11 +22,19 @@ pair `0b05:19af` in sysfs and pre-answers the prompt, the same shape as the
    (libqt5\*, libhidapi, libmbedtls, ...) against the machine's normal apt
    sources — all satisfiable from trixie's stable repo, no extra source
    needed.
-3. That's it. The package's own postinst installs the udev rules
+3. The package's own postinst installs the udev rules
    (`/usr/lib/udev/rules.d/60-openrgb.rules`, `TAG+="uaccess"` via
    systemd-logind) — confirmed live that **no `plugdev`-style group** is
    needed (unlike the `razer` role), and access works in the same session
    with no reboot.
+4. Deploys a tracked, **rendered** XDG autostart entry
+   (`templates/OpenRGB-autostart.desktop.j2` → `~/.config/autostart/OpenRGB.desktop`),
+   reasserted every run so it self-heals. Same shape as what OpenRGB's own
+   `--autostart-enable` writes (verified live — a plain autostart `.desktop`,
+   no systemd unit involved), just reproducible from the repo instead of an
+   imperative one-off CLI call. Rendered rather than a static copy so
+   `openrgb_autostart_profile` (empty by default) can add `--profile <name>`
+   without a personal profile name living in the tracked template.
 
 **Architecture:** amd64-only (matches the upstream `.deb` build); the role
 skips other arches.
@@ -42,20 +50,40 @@ OpenRGB to control RAM/GPU lighting.
 
 ## Razer overlap
 
-OpenRGB also detects any connected Razer gear (Mouse Dock, mice, ...) via HID
-— it's not blind to them, it just isn't asked to do anything with them here.
-**Polychromatic** (the `razer` role) already owns Razer lighting; don't drive
-the same device from both tools at once.
+OpenRGB also detects any connected Razer gear (Mouse Dock, mice, ...) via HID.
+**A saved OpenRGB profile captures the state of every device selected when you
+saved it, not just the motherboard** — confirmed live: saving a profile with
+the Aura Mainboard AND the Razer Mouse Dock's `Base` zone both set applies to
+both on load. That's not a bug, just worth knowing before you save one, since
+it means a profile can silently double as a Razer controller too.
+
+Whether that's fine depends on what you want from each tool. If you're happy
+letting OpenRGB own a given Razer zone's effect (e.g. a simple `Spectrum
+Cycle` on the Mouse Dock's `Base`, which OpenRGB does support), that's a
+legitimate choice — just don't have **both** OpenRGB and Polychromatic set an
+effect on the *same* zone at login, since whichever runs last wins and the
+race isn't deterministic. Keep Polychromatic's own autostart (if any) off
+whatever zone the OpenRGB profile now covers.
 
 ## No default effect
 
-This role installs OpenRGB and stops — it does not pick a colour, effect, or
-autostart-and-apply-a-profile for you (that's a personal/aesthetic choice, not
-a reproducibility one). To make a look persist:
+The role picks no colour, effect, or profile for you out of the tracked repo
+— that's a personal/aesthetic choice, not a reproducibility one, so
+`openrgb_autostart_profile` defaults to empty and the autostart entry is just
+`openrgb --startminimized` (tray-only, applies nothing). To make a specific
+look persist across logins:
 
-1. Set it up in the OpenRGB GUI, then **Settings > Save Profile**.
-2. To apply it automatically at login, add `openrgb --profile <name> --startminimized`
-   (or similar) as a sway `exec` line — not wired up by this role.
+1. Set it up in the OpenRGB GUI, then **Settings > Save Profile** (as
+   `<name>.orp`).
+2. Set `openrgb_autostart_profile: <name>` in your (untracked, per-host)
+   `bootstrap/host_vars/<host>.yml` and re-run the role — the rendered
+   autostart entry then loads `--profile <name>` at login.
+
+Many of OpenRGB's *modes* (static, breathing, rainbow, ...) run on the Aura
+controller's own onboard MCU once set, and keep going even without OpenRGB
+running or after a reboot — same as AURA Sync/Armoury Crate on Windows. The
+autostart entry mainly matters for reapplying `Direct` mode (per-LED colours
+pushed live by OpenRGB itself) or a profile that spans multiple devices.
 
 ## Variables
 
@@ -65,6 +93,7 @@ a reproducibility one). To make a look persist:
 | `openrgb_version` | `1.0rc3` | upstream release tag (the `release_candidate_<ver>` part of the Codeberg URL) |
 | `openrgb_commit` | `6fbcf62` | short git commit suffix in the release asset's filename |
 | `openrgb_deb_sha256` | (pinned) | sha256 of the exact `.deb`, computed at pin time (upstream publishes none) |
+| `openrgb_autostart_profile` | `""` | `.orp` profile name to load at login (`openrgb --profile <name>`); set per-host in host_vars once saved |
 
 ## Run standalone
 
@@ -82,11 +111,10 @@ OpenRGB's release filenames carry a git commit hash, so there's no predictable
 2. `wget` the new `.deb`, `sha256sum` it.
 3. Update `openrgb_version` / `openrgb_commit` / `openrgb_deb_sha256` in
    `defaults/main.yml`.
-4. Re-run the role (`--tags openrgb`) — it only re-downloads because the new
-   URL differs from what's already installed... actually the "already
-   installed" check is by package NAME, not version, so bumping the pin alone
-   won't force a re-install. If you want to force an update: `sudo apt remove
-   openrgb` first, or just `dpkg -i` the new `.deb` by hand.
+4. The "already installed" check is by package NAME, not version, so bumping
+   the pin alone won't force a re-install on a re-run. To force an update:
+   `sudo apt remove openrgb` first (then re-run the role), or just `dpkg -i`
+   the new `.deb` by hand.
 
 ## Updates
 

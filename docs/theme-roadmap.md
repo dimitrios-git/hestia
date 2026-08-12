@@ -642,6 +642,28 @@ the platform mapping, never in an artifact.
 - **WATCH — `bg == ANSI color0` (`#1a1a1a`, since 0.5.0).** If a TUI ever
   paints color0 text/panels invisibly against the ground, shift color0 (and
   vifm/dircolors consumers of it), not the ground.
+- **OPEN — Qt5 apps get NO theming at all (found 2026-08-12, via the `openrgb`
+  role/PR #284).** `start-sway`'s `QT_QPA_PLATFORMTHEME=kde` guard checks for
+  `KDEPlasmaPlatformTheme6.so` — Qt6-only; Debian trixie's `plasma-integration`
+  ships no Qt5 build, so Qt5 apps (OpenRGB confirmed; any future Qt5 app) fall
+  back to Qt's literal built-in "Windows" style — unstyled, flat grey, boxy.
+  Live-tested via 4 headless screenshots (kde vs gtk3 platform theme, each with
+  and without `QT_STYLE_OVERRIDE=breeze`): platform theme made no visible
+  difference either way (confirmed `gtk3` — already installed via
+  `qt5-gtk-platformtheme` — doesn't bridge hestia's palette into Qt5's
+  `QPalette` on this build); `QT_STYLE_OVERRIDE=breeze` (already installed via
+  `kde-style-breeze-qt5`, once `enable_file_managers`/`enable_kdenlive` pulled
+  it in) fixes the widget SHAPE but not the light background — style and
+  platform-theme are separate mechanisms, and only the shape one currently has
+  a working Qt5 path here. Also found in passing: `user/bash/.bashrc` carries a
+  pre-existing, unconditional `export QT_QPA_PLATFORMTHEME='gtk3'` that
+  silently overrides `start-sway`'s session-level `kde` for anything launched
+  from a terminal — doesn't change the outcome (tested), but is a latent
+  inconsistency between terminal- and launcher-spawned Qt apps worth cleaning
+  up whenever this gets addressed properly. A real fix needs a working Qt5
+  platform-theme bridge (e.g. `qt5ct` + a custom hestia palette — not installed
+  today) — deliberately NOT done inside the `openrgb` role/PR, since it's a
+  systemic gap affecting every Qt5 app, not an OpenRGB-specific fix.
 
 ## Verification
 

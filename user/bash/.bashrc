@@ -159,6 +159,26 @@ case ":$PATH:" in
     *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
 
+# Android SDK (enable_android_dev, android_studio role) — platform-tools (adb),
+# emulator, and cmdline-tools on PATH. Guarded on the SDK dir existing, so this
+# is a no-op on any host without it — Android Studio's own first-run Setup
+# Wizard installs the SDK there but does NOT put adb on PATH or set ANDROID_HOME
+# for the shell itself; confirmed live, `pnpm android` (expo start --android)
+# failed with `spawn adb ENOENT` without this. $HOME/Android/Sdk is the wizard's
+# own default install location — if you ever pick a different one, update this.
+if [ -d "$HOME/Android/Sdk" ]; then
+    export ANDROID_HOME="$HOME/Android/Sdk"
+    export ANDROID_SDK_ROOT="$ANDROID_HOME"   # older tooling (some Gradle plugins) still reads this name
+    for _android_bin in platform-tools emulator "cmdline-tools/latest/bin"; do
+        [ -d "$ANDROID_HOME/$_android_bin" ] || continue
+        case ":$PATH:" in
+            *":$ANDROID_HOME/$_android_bin:"*) ;;
+            *) export PATH="$PATH:$ANDROID_HOME/$_android_bin" ;;
+        esac
+    done
+    unset _android_bin
+fi
+
 # Default editor: vim (Debian's `editor` alternative defaults to nano). Covers tools
 # that honour $EDITOR/$VISUAL (git uses core.editor=vim regardless; the system-wide
 # `editor` alternative is set to vim by the bootstrap's packages role).

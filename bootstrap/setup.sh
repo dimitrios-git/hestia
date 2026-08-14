@@ -130,6 +130,7 @@ enable_file_managers: $enable_file_managers
 enable_image_viewers: $enable_image_viewers
 enable_tci: $enable_tci
 enable_minipro: $enable_minipro
+enable_android_dev: $enable_android_dev
 enable_wallpapers: $enable_wallpapers
 enable_firefox: $enable_firefox
 enable_firefoxpwa: $enable_firefoxpwa
@@ -272,6 +273,7 @@ def_filemgrs=$(cur enable_file_managers); def_filemgrs=${def_filemgrs:-false}
 def_imgviewers=$(cur enable_image_viewers); def_imgviewers=${def_imgviewers:-false}
 def_tci=$(cur enable_tci); def_tci=${def_tci:-false}
 def_minipro=$(cur enable_minipro); def_minipro=${def_minipro:-false}
+def_android=$(cur enable_android_dev); def_android=${def_android:-false}
 def_wallpapers=$(cur enable_wallpapers); def_wallpapers=${def_wallpapers:-true}
 def_firefox=$(cur enable_firefox); def_firefox=${def_firefox:-true}
 def_ffpwa=$(cur enable_firefoxpwa); def_ffpwa=${def_ffpwa:-true}
@@ -356,6 +358,7 @@ askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yaz
 askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)" "$def_imgviewers"
 askyn enable_tci         "Install thecodingidiot chapter prerequisites? (SDL2 headers, gdb, valgrind, alsa-utils, nethack)" "$def_tci"
 askyn enable_minipro     "Build minipro from source? (EEPROM programmer CLI — needs a TL866xx/T48/T56)" "$def_minipro"
+askyn enable_android_dev "Install Android dev tooling? (JDK + Android Studio + kvm group for the emulator)" "$def_android"
 askyn enable_wallpapers  "Install the wallpaper stack? (mesh default background + wpaperd/awww — prebuilt, amd64)" "$def_wallpapers"
 askyn enable_firefox     "Install Firefox ESR? (the desktop browser)" "$def_firefox"
 askyn enable_firefoxpwa  "Install firefoxpwa? (PWA support — vendor apt repo)" "$def_ffpwa"
@@ -437,6 +440,7 @@ cat <<EOF
     enable_image_viewers = $enable_image_viewers
     enable_tci         = $enable_tci
     enable_minipro     = $enable_minipro
+    enable_android_dev = $enable_android_dev
     enable_wallpapers  = $enable_wallpapers
     enable_firefox     = $enable_firefox
     enable_firefoxpwa  = $enable_firefoxpwa

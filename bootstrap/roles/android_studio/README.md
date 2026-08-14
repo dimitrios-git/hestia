@@ -9,8 +9,11 @@ it's generic Android dev tooling.
 
 ## What it does
 
-1. The apt-only pieces (`openjdk-17-jdk` — needed for Gradle/`npx expo
-   run:android`; `cpu-checker` — provides `kvm-ok`) live in the manifest
+1. The apt-only pieces (`openjdk-21-jdk` — needed for Gradle/`npx expo
+   run:android`; **21, not 17** — Debian trixie's apt doesn't carry 17 at all,
+   only 21/25, verified 2026-08-14 via `apt-cache search`; 21 is the current
+   LTS and fully supported by AGP/Gradle, 25 felt needlessly bleeding-edge;
+   `cpu-checker` — provides `kvm-ok`) live in the manifest
    (`apt_packages.android`, gated by `enable_android_dev` via
    `package_group_features`), same split as the `docker` role: the shared
    `packages` role installs them in one resolver pass, this role does the

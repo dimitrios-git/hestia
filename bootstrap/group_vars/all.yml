@@ -174,6 +174,13 @@ enable_tci: false           # thecodingidiot chapter prerequisites (apt group on
 # the USB bus) and, unlike everything in the tci group, has no apt package at all:
 # it builds from source, so it needs a role. Default OFF.
 enable_minipro: false       # build + install minipro from source (minipro role)
+# Android development (raised by the thecodingidiot Android app work). Separate
+# from enable_tci for the same reason minipro is: the JDK + cpu-checker packages
+# ride the `android` apt group, but Android Studio itself has NO apt package at
+# all (Google ships only a vendor tarball) and needs the `kvm` group added to the
+# deploy user for accelerated emulation — both need a role, not a package list.
+# Default OFF — a per-host dev-toolchain choice, same rationale as enable_golang.
+enable_android_dev: false   # JDK + cpu-checker (apt) + Android Studio (android_studio role) + kvm group
 # Container layer (the `docker` + `docker_services` roles). Default OFF — this is
 # server-shaped, not desktop-shaped, and a workstation spin has no use for it.
 # enable_docker installs the Engine and puts the deploy user in the `docker` group
@@ -570,6 +577,7 @@ apt_packages:
   # entry; it needs a source build, and the chapter's `sudo apt install minipro`
   # instruction fails on Debian.
   minipro:      [pkg-config, libusb-1.0-0-dev, zlib1g-dev]  # enable_minipro — BUILD deps only for the minipro role (build-essential + git are already core); minipro itself is not in Debian or Ubuntu and is compiled from source
+  android:      [openjdk-21-jdk, cpu-checker]     # enable_android_dev — JDK for Gradle/`npx expo run:android` (17 is NOT in Debian trixie's apt at all, only 21/25 — verified 2026-08-14 via apt-cache; 21 is the current LTS and fully supported by AGP/Gradle, 25 felt needlessly bleeding-edge), cpu-checker for `kvm-ok` (verifying emulator acceleration); Android Studio itself is a vendor tarball, installed by the android_studio role, not apt
   tci:          [libsdl2-image-dev, libsdl2-ttf-dev, gdb, valgrind, alsa-utils, nethack-console]  # enable_tci (default off) — g01b-graphical: SDL2 image/ttf headers; f05-building-c: gdb + valgrind; g01c-acoustic: alsa-utils; f01-the-terminal: nethack-console
   wallpapers: []                                 # enable_wallpapers — no apt deps since mpvpaper (libmpv2) was dropped 2026-07; wpaperd/awww ride localbin, awww's liblz4-1 is Debian base
 
@@ -601,6 +609,7 @@ package_group_features:
   image_viewers: "{{ enable_image_viewers | bool }}"
   tci:         "{{ enable_tci | bool }}"
   minipro:     "{{ enable_minipro | bool }}"
+  android:     "{{ enable_android_dev | bool }}"
   wallpapers:  "{{ enable_wallpapers | bool }}"
   browser:     "{{ enable_headless_browser | bool }}"
   claude:      "{{ enable_claude_user | bool }}"

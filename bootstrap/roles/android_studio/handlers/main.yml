@@ -1,0 +1,13 @@
+---
+# Same shape as the docker role's handler: group membership only takes effect in a
+# NEW login session, and ansible's own later tasks in this play already run under
+# `become` rather than relying on the group — but the emulator won't have KVM
+# acceleration in the CURRENT session until the human logs out and back in.
+- name: Android dev group needs re-login
+  ansible.builtin.debug:
+    msg: >-
+      {{ android_dev_user }} was added to the `kvm` group. Log out and back in
+      (or run `newgrp kvm`) before the Android Emulator can use hardware
+      acceleration — otherwise it silently falls back to (very slow) software
+      rendering, or Android Studio's own AVD Manager reports no acceleration at
+      all. Verify anytime with `kvm-ok` (from the `cpu-checker` package).

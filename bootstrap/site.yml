@@ -102,6 +102,9 @@
     - role: minipro    # build + install minipro (EEPROM programmer CLI) from source — not packaged in Debian OR Ubuntu; opt-in, hardware-specific
       tags: [system, minipro]
       when: enable_minipro | default(false) | bool
+    - role: android_studio  # Android Studio (pinned vendor tarball) + kvm group membership for the emulator — opt-in, per-host dev-toolchain choice
+      tags: [system, android_studio]
+      when: enable_android_dev | default(false) | bool
     - role: nvidia     # proprietary NVIDIA driver (non-free) — opt-in, needs reboot
       tags: [nvidia]
       when: enable_nvidia | default(false) | bool

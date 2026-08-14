@@ -1,0 +1,135 @@
+---
+# Android Studio + the `kvm` group (enable_android_dev). The JDK and cpu-checker
+# packages this needs live in the manifest (`apt_packages.android`, gated by
+# enable_android_dev via package_group_features) so they install with everything
+# else in one resolver pass — same split as the docker role: "This role does the
+# parts apt does NOT do."
+#
+# Android Studio itself has no apt package or vendor apt repo (Google ships a plain
+# tarball only), so it is a pinned, sha256-verified download extracted into
+# ~/.local/share/android-studio — no root, same shape as gtk_theme's adw-gtk3
+# install. A version bump removes the old install wholesale rather than layering
+# (no accumulation), matching the repo's usual no-bloat posture.
+
+- name: Ensure the kvm group exists (udev/the kernel module normally create it; be explicit for re-runs)
+  ansible.builtin.group:
+    name: kvm
+    state: present
+  become: true
+
+# /dev/kvm is root:kvm 0660 — without this, the Android Emulator either falls back
+# to slow unaccelerated software rendering or Android Studio's own AVD Manager
+# reports no acceleration at all. This does NOT touch whether the box's CPU/BIOS
+# actually supports virtualization (that's `kvm-ok`, from cpu-checker — a manual,
+# informational check, not something this role gates on: a host without VT-x/AMD-V
+# still benefits from Android Studio + adb for a real USB-connected device, just
+# not a fast emulator).
+- name: Add the deploy user to the kvm group (needed for accelerated emulation)
+  ansible.builtin.user:
+    name: "{{ android_dev_user }}"
+    groups: kvm
+    append: true
+  become: true
+  notify: Android dev group needs re-login
+
+- name: Install Android Studio {{ android_studio_version }}
+  vars:
+    _as_marker: "{{ target_home }}/.local/state/hestia/android-studio/{{ android_studio_version }}"
+  block:
+    - name: Is the pinned version already installed?
+      ansible.builtin.stat:
+        path: "{{ _as_marker }}"
+      register: _as_present
+
+    - name: Download + install Android Studio (only when the version marker is absent)
+      when: not _as_present.stat.exists
+      block:
+        - name: Temp download dir
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: hestia-android-studio
+          register: _as_tmp
+
+        - name: Download the pinned tarball (sha256-verified, ~1.6 GB)
+          ansible.builtin.get_url:
+            url: "{{ android_studio_url }}"
+            dest: "{{ _as_tmp.path }}/android-studio.tar.gz"
+            checksum: "sha256:{{ android_studio_sha256 }}"
+            mode: "0644"
+            timeout: 600
+
+        - name: Extract it
+          ansible.builtin.unarchive:
+            src: "{{ _as_tmp.path }}/android-studio.tar.gz"
+            dest: "{{ _as_tmp.path }}"
+            remote_src: true
+
+        - name: Remove any previous install (version bumps replace wholesale, no accumulation)
+          ansible.builtin.file:
+            path: "{{ target_home }}/.local/share/android-studio"
+            state: absent
+
+        - name: Ensure ~/.local/share exists
+          ansible.builtin.file:
+            path: "{{ target_home }}/.local/share"
+            state: directory
+            mode: "0755"
+
+        # The tarball's top-level dir is literally `android-studio/` regardless of
+        # version — no version string to strip, unlike gtk_theme's adw-gtk3/adw-gtk3-dark.
+        - name: Install it as ~/.local/share/android-studio
+          ansible.builtin.copy:
+            src: "{{ _as_tmp.path }}/android-studio/"
+            dest: "{{ target_home }}/.local/share/android-studio/"
+            remote_src: true
+            mode: preserve
+
+        - name: Ensure studio.sh is executable (tarball ships it so already, but be explicit)
+          ansible.builtin.file:
+            path: "{{ target_home }}/.local/share/android-studio/bin/studio.sh"
+            mode: "0755"
+      always:
+        - name: Remove the temp download + extraction
+          ansible.builtin.file:
+            path: "{{ _as_tmp.path | default('') }}"
+            state: absent
+          when: _as_tmp.path is defined
+
+    - name: Ensure the android-studio state dir exists (for the marker)
+      ansible.builtin.file:
+        path: "{{ _as_marker | dirname }}"
+        state: directory
+        mode: "0755"
+
+    - name: Write the version marker
+      ansible.builtin.file:
+        path: "{{ _as_marker }}"
+        state: touch
+        mode: "0644"
+      when: not _as_present.stat.exists
+
+- name: Ensure ~/.local/share/applications exists
+  ansible.builtin.file:
+    path: "{{ target_home }}/.local/share/applications"
+    state: directory
+    mode: "0755"
+
+- name: Deploy the app-menu launcher (reasserted every run, so it self-heals)
+  ansible.builtin.template:
+    src: android-studio.desktop.j2
+    dest: "{{ target_home }}/.local/share/applications/android-studio.desktop"
+    mode: "0644"
+
+- name: The manual tail (printed, not automated)
+  ansible.builtin.debug:
+    msg: >-
+      Android Studio {{ android_studio_version }} installed to
+      ~/.local/share/android-studio (launch via the app menu, or
+      ~/.local/share/android-studio/bin/studio.sh). First launch runs its own
+      setup wizard to fetch the Android SDK + an emulator system image — that
+      stays manual/interactive, same as Steam's or MEGAsync's first-run.
+      Run `kvm-ok` (cpu-checker, installed via the android apt group) to
+      confirm hardware acceleration is actually available before creating an
+      AVD. Expo-specific: HeroUI Native ships native code, so `npx expo
+      run:android` / an expo-dev-client build is needed from the start —
+      plain Expo Go will not load it.

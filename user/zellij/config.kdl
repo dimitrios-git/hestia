@@ -1,0 +1,20 @@
+// hestia zellij config — terminal-multiplexer EVALUATION candidate
+// (enable_multiplexers; see docs/roadmap.md "Multiplexer" + showcase/multiplexer.md)
+//
+// Plain functional starter config for now — NOT yet on the hestia palette
+// (docs/theming.md gate 3 is deferred to the trial's verdict PR). "catppuccin-mocha"
+// below is a placeholder: one of zellij's own BUILT-IN themes (no plugin needed,
+// unlike tmux), just so the trial isn't staring at the stock rainbow theme.
+theme "catppuccin-mocha"
+
+// Mouse click/drag to select panes and resize; wheel to scroll.
+mouse_mode true
+
+// Wayland clipboard (matches vifm/wofi/etc — see the wl-clipboard apt package).
+copy_command "wl-copy"
+
+// Native session persistence — zellij's built-in equivalent of tmux-resurrect:
+// exited sessions are cached and can be resurrected (layout, panes, cwds, and
+// the commands to re-run) via the session-manager or `zellij attach`.
+session_serialization true
+serialize_pane_viewport true

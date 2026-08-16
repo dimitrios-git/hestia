@@ -1,0 +1,16 @@
+# hestia GNU screen config — terminal-multiplexer EVALUATION candidate
+# (enable_multiplexers; see docs/roadmap.md "Multiplexer" + showcase/multiplexer.md)
+#
+# Plain functional defaults for now — NOT yet on the hestia palette
+# (docs/theming.md gate 3 is deferred to the trial's verdict PR). screen has no
+# plugin/theme ecosystem to speak of, so this stays a short, stock-shaped rc.
+
+startup_message off
+vbell off
+defutf8 on
+defscrollback 10000
+term screen-256color
+
+# Bottom status line: window list, hostname, clock.
+hardstatus alwayslastline
+hardstatus string '%{= kw}[ %H ]%{-} %-w%{= wk}%n %t%{-}%+w %=%{= kw}%Y-%m-%d %c'

@@ -27,7 +27,8 @@ pieces: [vifm](vifm.md) (the file-managers moat, itemised with live examples).
 **Coming:** image viewers
 (ristretto and the three that fell), music (cmus + cava as one window),
 notifications (mako + the Waybar bell), theming (one palette, thirty-four
-generated artifacts).
+generated artifacts), and [terminal multiplexers](multiplexer.md) (tmux vs
+zellij vs screen — evaluation open, stub chapter already tracking it).
 
 ## Chapter anatomy
 

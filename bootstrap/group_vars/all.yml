@@ -81,6 +81,16 @@ enable_file_managers: false # install the file-manager evaluation set (ranger/ya
 # covered the main surfaces but menus/icons stayed unthemed — not worth the
 # road; it also saves its theme on exit, see the 6f5051a clobber story).
 enable_image_viewers: false # install the image-viewer keeper (ristretto)
+# Package-ish toggle (no role): gates the `multiplexers` apt group below AND the
+# zellij localbin entry (its `enabled:` key). Default OFF — a terminal-multiplexer
+# EVALUATION (docs/roadmap.md's long-open "Multiplexer" gap): tmux + screen (both
+# in Debian apt) install alongside zellij (no Debian package — a pinned,
+# sha256-verified GitHub release binary, same shape as yazi). Trial candidates
+# side by side, no default picked yet; see showcase/multiplexer.md. Screen is
+# included for a firsthand comparison even though the research consensus (and
+# the roadmap's own note) favours tmux/zellij — trim the group to the keeper(s)
+# once the trial concludes.
+enable_multiplexers: false  # install the terminal-multiplexer evaluation set (tmux/screen/zellij)
 # Package-ish toggle (no role): gates the wpaperd/awww localbin entries (their
 # `enabled:` key) AND the `wallpapers` role (the mesh assets). Default ON since
 # the 2026-07 VERDICT: the default hestia background is the mesh
@@ -198,6 +208,18 @@ enable_duckdns: false       # DuckDNS updater script + cron entry (duckdns role)
 # refuses to run unless an authorised key is already in place (see the role).
 enable_ssh_server: false    # harden sshd: keys only, no root, optional TOTP (ssh_server role)
 enable_fail2ban: false      # fail2ban jails for sshd + repeat offenders (fail2ban role)
+# Package-only toggle (no role): gates the `mosh` apt group below. Mosh (mobile
+# shell) rides an existing SSH login to authenticate, then runs the session over
+# UDP with client-side local echo — it survives a laptop's sleep/wake and wifi/VPN
+# roaming far better than a raw SSH TCP session (the WSL-laptop-to-home-PC
+# workflow this was added for). It's independent of — and pairs well with —
+# whichever terminal multiplexer wins the enable_multiplexers evaluation above
+# (Mosh has no real scrollback of its own, so run tmux/zellij/screen inside it).
+# Default OFF: needs a UDP port range forwarded on the router (mosh-server picks
+# a free UDP port, default range 60000-61000; forwarding a small slice, e.g.
+# 60000-60010, is enough for personal use) — a manual, per-network step, same
+# category as the existing SSH 2222->22 forward.
+enable_mosh: false          # install mosh (roaming/sleep-resilient remote shell)
 
 # --- Theme variant (M7, docs/theme-roadmap.md) ----------------------------------
 # dark|light — selects which GENERATED theme fragments the dotfiles role links
@@ -322,6 +344,13 @@ dotfile_links:
   - { src: "user/yazi/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/yazi/theme.toml", claude: true }
   - { src: user/ranger/rc.conf,             dest: "{{ target_home }}/.config/ranger/rc.conf", claude: true }
   - { src: "user/ranger/colorschemes/hestia-{{ theme_variant }}.py", dest: "{{ target_home }}/.config/ranger/colorschemes/hestia.py", claude: true }
+  # terminal-multiplexer evaluation configs (enable_multiplexers gates the APPS;
+  # these symlinks are unconditional — same "harmless without the app" ruling as
+  # yazi/ranger above). Not yet hestia-themed (docs/theming.md gate 3) — plain
+  # functional starter configs until the trial verdict picks a winner to theme.
+  - { src: user/tmux/.tmux.conf,            dest: "{{ target_home }}/.tmux.conf", claude: true }
+  - { src: user/screen/.screenrc,           dest: "{{ target_home }}/.screenrc", claude: true }
+  - { src: user/zellij/config.kdl,          dest: "{{ target_home }}/.config/zellij/config.kdl", claude: true }
   # wallpaper stack (enable_wallpapers gates the BINARIES via localbin; these
   # config/helper symlinks are unconditional — same ruling as yazi/ranger).
   # The default engine is wpaperd on static mesh PNGs (user/sway/wallpaper.sh);
@@ -499,6 +528,22 @@ localbin_binaries:
       x86_64-unknown-linux-gnu: "1c9096f0a83b8102c194385f644cdeff93cc8269426163c9d033041ebd537bd2"
       aarch64-unknown-linux-gnu: "c38b07961e7fc4c76503fd0f4a1b4bd0b379a99835b818cd899b0315c728e1e1"
 
+  # zellij — terminal-multiplexer EVALUATION candidate (gated: `enabled` rides
+  # enable_multiplexers), alongside tmux/screen below; not in Debian apt (no
+  # official Debian package — a third-party apt repo exists but isn't Debian's
+  # own, so this follows the yazi precedent instead: a pinned, sha256-verified
+  # GitHub release binary). Unlike yazi's release, the tarball is flat (just a
+  # `zellij` binary, no arch-embedded subdirectory), so `member` is a bare name.
+  - name: zellij
+    version: "0.44.3"
+    url: "https://github.com/zellij-org/zellij/releases/download/v{ver}/zellij-{arch}.tar.gz"
+    member: zellij
+    arch_map: { x86_64: x86_64-unknown-linux-musl, aarch64: aarch64-unknown-linux-musl }
+    enabled: "{{ enable_multiplexers | bool }}"
+    checksums:
+      x86_64-unknown-linux-musl: "0f7c346788627f506c0a28296517768633cff24fc822a739f8264b640ecad751"
+      aarch64-unknown-linux-musl: "15e6534d42644d66973d136c590c49739dcfd6a1a2a0d3d917973f16c81b45fb"
+
   # Wallpaper set (gated: `enabled` rides enable_wallpapers). None of these is in
   # Debian apt and none publishes prebuilt binaries (wpaperd/awww are cargo
   # builds; swww — awww's archived predecessor — is dead upstream), so the claude
@@ -568,6 +613,8 @@ apt_packages:
   email:        [thunderbird]                    # enable_thunderbird (default off; themed via user/thunderbird/)
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
   image_viewers: [ristretto]                     # enable_image_viewers (default off; the evaluation keeper)
+  multiplexers: [tmux, screen]                   # enable_multiplexers (default off; evaluation set — zellij rides localbin on the same toggle)
+  mosh:         [mosh]                           # enable_mosh (default off; roaming/sleep-resilient remote shell, pairs with the multiplexer winner)
   # Derived from thecodingidiot's own chapter Setup pages, one entry per chapter that
   # needs something. libsdl2-image-dev pulls libsdl2-dev/libjpeg-dev/libpng-dev/
   # libtiff-dev as dependencies, so those need no entry. gcc + git + diffutils are
@@ -607,6 +654,8 @@ package_group_features:
   file_managers: "{{ enable_file_managers | bool }}"
   qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
   image_viewers: "{{ enable_image_viewers | bool }}"
+  multiplexers: "{{ enable_multiplexers | bool }}"
+  mosh:        "{{ enable_mosh | bool }}"
   tci:         "{{ enable_tci | bool }}"
   minipro:     "{{ enable_minipro | bool }}"
   android:     "{{ enable_android_dev | bool }}"

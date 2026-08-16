@@ -142,7 +142,7 @@ the next chore in a queue.
 | Terminal emulator | kitty | `●●●○●○` | Never trialled vs foot / alacritty / wezterm |
 | Shell | bash | `●●–○●○` | Inherited; zsh / fish never weighed |
 | Prompt | custom bash | `●●●○◐○` | Part of `.bashrc`; vs starship |
-| Multiplexer | — none | | Candidate: tmux / zellij |
+| Multiplexer | — none | | Evaluation open (`enable_multiplexers`): tmux vs zellij vs screen, installed side by side for trial — see [showcase/multiplexer.md](../showcase/multiplexer.md) |
 | Editor / IDE | vim + nvim | `●●●◐●○` | Deeply configured |
 | Pager | less | `●◐–○◐○` | |
 
@@ -191,6 +191,7 @@ the next chore in a queue.
 | Network | NetworkManager | `●●–○●○` | |
 | Bluetooth | bluetuith + bluez | `●●◐○●○` | |
 | VPN / mesh | tailscale | `●●–◐●○` | |
+| Remote-shell resilience | — none | | Candidate: mosh (`enable_mosh`, opt-in, apt-only) — survives a roaming/sleeping laptop's dropped connections; pairs with whichever Multiplexer wins the row above rather than replacing SSH |
 | File sharing | samba | `●●–◐●○` | Design doc recorded |
 | Cloud storage / sync | megasync *(opt-in)* | `●●–○●○` | MEGA Desktop from MEGA's vendor apt repo (`enable_mega`, default off; `mega` role). A sway `for_window [class="MEGAsync"] floating disable` rule works around its off-screen-window bug; sign-in + sync-folder are in-app. Never researched vs Nextcloud / Syncthing / rclone |
 | System monitor | htop | `●●◐○●○` | vs btop |

@@ -100,6 +100,9 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/yazi/theme-{{ theme_variant }}.toml` | `~/.config/yazi/theme.toml` |
 | `user/ranger/rc.conf` | `~/.config/ranger/rc.conf` |
 | `user/ranger/colorschemes/hestia-{{ theme_variant }}.py` | `~/.config/ranger/colorschemes/hestia.py` |
+| `user/tmux/.tmux.conf` | `~/.tmux.conf` |
+| `user/screen/.screenrc` | `~/.screenrc` |
+| `user/zellij/config.kdl` | `~/.config/zellij/config.kdl` |
 | `user/wpaperd/config.toml` | `~/.config/wpaperd/config.toml` |
 | `user/bin/awww-slideshow` | `~/.local/bin/awww-slideshow` |
 | `user/xdg-desktop-portal/sway-portals.conf` | `~/.config/xdg-desktop-portal/sway-portals.conf` |

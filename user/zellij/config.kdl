@@ -1,11 +1,16 @@
-// hestia zellij config — terminal-multiplexer EVALUATION candidate
-// (enable_multiplexers; see docs/roadmap.md "Multiplexer" + showcase/multiplexer.md)
+// hestia zellij config — terminal-multiplexer evaluation runner-up
+// (enable_multiplexers; see docs/roadmap.md "Multiplexer" + showcase/multiplexer.md
+// for the full trial — tmux won on manual control + Sway-`$mod` muscle memory,
+// but zellij's out-of-the-box pane ergonomics were genuinely nicer, so it's kept
+// installed and themed alongside tmux, same treatment ranger/yazi got after vifm
+// won the file-manager evaluation).
 //
-// Plain functional starter config for now — NOT yet on the hestia palette
-// (docs/theming.md gate 3 is deferred to the trial's verdict PR). "catppuccin-mocha"
-// below is a placeholder: one of zellij's own BUILT-IN themes (no plugin needed,
-// unlike tmux), just so the trial isn't staring at the stock rainbow theme.
-theme "catppuccin-mocha"
+// Custom hestia theme — hand-authored, see hestia-{dark,light}.kdl
+// (docs/theming.md); the bootstrap symlinks the theme_variant one to
+// ~/.config/zellij/themes/hestia.kdl, auto-loaded by zellij from that
+// directory. Variant-blind reference here, same shape as vifm's
+// `colorscheme hestia`.
+theme "hestia"
 
 // Mouse click/drag to select panes and resize; wheel to scroll.
 mouse_mode true

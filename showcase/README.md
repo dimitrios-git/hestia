@@ -20,6 +20,7 @@ unchanged.
 |---|---|
 | [Wallpapers](wallpapers.md) | Three engines trialled, none survived as "just a wallpaper tool" — the verdict became a generated mesh rendered from hestia's own design system, painted as a static frame (the looping video leaked memory, so the still won) |
 | [File managers](file-managers.md) | Seven contenders against vifm — the incumbent won on speed, stole the losers' best ideas, and the trial's failures fixed Qt theming for everything |
+| [Terminal multiplexers](multiplexer.md) | tmux vs zellij vs screen, trialled live over a real mosh connection from a work laptop — tmux won on control and Sway-`$mod` muscle memory over zellij's friendlier defaults; mosh's local echo survived a mid-session wifi drop with zero reconnects |
 
 **Deep dives** — single-tool pages behind a chapter, for the load-bearing
 pieces: [vifm](vifm.md) (the file-managers moat, itemised with live examples).
@@ -27,8 +28,7 @@ pieces: [vifm](vifm.md) (the file-managers moat, itemised with live examples).
 **Coming:** image viewers
 (ristretto and the three that fell), music (cmus + cava as one window),
 notifications (mako + the Waybar bell), theming (one palette, thirty-four
-generated artifacts), and [terminal multiplexers](multiplexer.md) (tmux vs
-zellij vs screen — evaluation open, stub chapter already tracking it).
+generated artifacts).
 
 ## Chapter anatomy
 

@@ -142,7 +142,7 @@ the next chore in a queue.
 | Terminal emulator | kitty | `●●●○●○` | Never trialled vs foot / alacritty / wezterm |
 | Shell | bash | `●●–○●○` | Inherited; zsh / fish never weighed |
 | Prompt | custom bash | `●●●○◐○` | Part of `.bashrc`; vs starship |
-| Multiplexer | — none | | Evaluation open (`enable_multiplexers`): tmux vs zellij vs screen, installed side by side for trial — see [showcase/multiplexer.md](../showcase/multiplexer.md) |
+| Multiplexer | tmux (+ zellij, themed runner-up) | `●●●●●●` | VERDICT (2026-08): tmux, live-trialled against zellij and screen over a real mosh connection from a work laptop — screen needed three actions to split-and-populate a pane where tmux/zellij needed one and was dropped entirely; zellij's one-key convenience lost to tmux's prefix-key model matching existing Sway `$mod`-key muscle memory + more manual control over splits, but stayed genuinely good enough to keep installed and themed alongside tmux (same call as ranger/yazi surviving the file-manager evaluation). Default on — see [showcase/multiplexer.md](../showcase/multiplexer.md) |
 | Editor / IDE | vim + nvim | `●●●◐●○` | Deeply configured |
 | Pager | less | `●◐–○◐○` | |
 
@@ -191,7 +191,7 @@ the next chore in a queue.
 | Network | NetworkManager | `●●–○●○` | |
 | Bluetooth | bluetuith + bluez | `●●◐○●○` | |
 | VPN / mesh | tailscale | `●●–◐●○` | |
-| Remote-shell resilience | — none | | Candidate: mosh (`enable_mosh`, opt-in, apt-only) — survives a roaming/sleeping laptop's dropped connections; pairs with whichever Multiplexer wins the row above rather than replacing SSH |
+| Remote-shell resilience | mosh | `●●–●●●` | Default on (`enable_mosh`, apt-only, no role). VERDICT (2026-08): live-confirmed surviving a real wifi drop on a work laptop mid-session — client-side local echo kept typed input, the connection just resumed with no reconnect/reattach needed, vs. a plain SSH+tmux session that would have needed both. Pairs with tmux (the Multiplexer row above) rather than replacing SSH — see [showcase/multiplexer.md](../showcase/multiplexer.md) |
 | File sharing | samba | `●●–◐●○` | Design doc recorded |
 | Cloud storage / sync | megasync *(opt-in)* | `●●–○●○` | MEGA Desktop from MEGA's vendor apt repo (`enable_mega`, default off; `mega` role). A sway `for_window [class="MEGAsync"] floating disable` rule works around its off-screen-window bug; sign-in + sync-folder are in-app. Never researched vs Nextcloud / Syncthing / rclone |
 | System monitor | htop | `●●◐○●○` | vs btop |

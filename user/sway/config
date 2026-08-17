@@ -35,7 +35,7 @@ set $left h
 set $down j
 set $up k
 set $right l
-set $term kitty
+set $term alacritty
 set $menu wmenu-run
 
 # Colors — GENERATED variant fragment (user/sway/theme-{dark,light}.conf,
@@ -106,12 +106,16 @@ input type:keyboard {
     # Launcher — TOGGLE like the waybar popups/qalc: a re-press closes the open
     # wofi instead of stacking another (wofi has no built-in single-instance).
     bindsym $mod+d exec sh -c 'pgrep -u "$USER" -x wofi >/dev/null && pkill -u "$USER" -x wofi || wofi --show drun'
-    # Music: cmus + cava visualizer side by side
-    bindsym $mod+m exec kitty --session music.session
+    # Music: cava visualizer stacked over cmus. Alacritty has no kitty-style
+    # --session/layout feature, so this is rebuilt on tmux (hestia's default
+    # multiplexer) instead — see user/alacritty/music-session.sh. Idempotent: a
+    # second $mod+m attaches the running session rather than stacking a
+    # duplicate; quitting cmus tears the whole thing down.
+    bindsym $mod+m exec alacritty -e $HOME/.config/alacritty/music-session.sh
     # Calculator: qalc (Qalculate CLI) in a floatterm — the floatterm app_id
     # triggers the `floating enable, resize set 800 600` rule above. Toggles like
     # the waybar widgets (pgrep -x): a second $mod+c closes it instead of stacking.
-    bindsym $mod+c exec pgrep -u "$USER" -x qalc >/dev/null && pkill -u "$USER" -x qalc || kitty --class floatterm -e qalc
+    bindsym $mod+c exec pgrep -u "$USER" -x qalc >/dev/null && pkill -u "$USER" -x qalc || alacritty --class floatterm -e qalc
 
     # Drag floating windows with $mod + left mouse, resize with $mod + right.
     floating_modifier $mod normal
@@ -250,7 +254,7 @@ exec sh -c '[ -x /usr/libexec/polkit-mate-authentication-agent-1 ] && exec /usr/
 exec $HOME/.config/sway/scripts/credential-unlock.sh
 
 ### Desktop app integration — default file manager (nemo)
-# Session-time nemo wiring: default terminal → kitty (its "Open in Terminal"),
+# Session-time nemo wiring: default terminal → alacritty (its "Open in Terminal"),
 # default folder handler (xdg-mime inode/directory), and disabling the
 # cinnamon-desktop-editor launcher action that logs a missing-dependency warning.
 # In a script — not an inline `exec sh -c` — because the action's GVariant value

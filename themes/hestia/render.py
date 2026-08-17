@@ -365,6 +365,327 @@ def render_kitty(variant: str) -> str:
     return "\n".join(lines)
 
 
+def render_tmux(variant: str) -> str:
+    """theme-{dark,light}.conf — tmux status bar/panes/copy-mode. Session name +
+    active window get an accent-filled chip (mirrors kitty's active-tab
+    treatment); pane borders follow the idle(border)/active(accent) split used
+    elsewhere (swaylock's ring states)."""
+    r = vroles(variant)
+    bg, surface, border = r["bg"], r["surface"], r["border"]
+    text, dim, muted = r["text"], r["dim"], r["muted"]
+    acc, accfg = r["accent"], r["accent_fg"]
+    return f"""# {PROVENANCE}
+# tmux colours — {variant} (see .tmux.conf: source-file -q theme.conf)
+#
+# Roles used: surface {surface}, border {border}, text {text}, dim {dim},
+# muted {muted}, accent {acc}, accent_fg {accfg}.
+
+# Overall bar: raised surface, primary text.
+set -g status-style "bg={surface},fg={text}"
+
+# Session name — accent-filled chip, mirrors the waybar accent modules.
+set -g status-left-length 30
+set -g status-left "#[fg={accfg},bg={acc},bold] #S #[fg={text},bg={surface},nobold]"
+
+# Date/time, muted (secondary — you rarely need the date, seconds don't matter here).
+set -g status-right-length 60
+set -g status-right "#[fg={muted},bg={surface}] %Y-%m-%d #[fg={text},bg={surface},bold] %H:%M "
+
+# Window list: active window gets the same accent fill as the session chip
+# (matches kitty's "active-tab uses the violet accent" treatment).
+setw -g window-status-format         "#[fg={muted},bg={surface}] #I:#W "
+setw -g window-status-current-format "#[fg={accfg},bg={acc},bold] #I:#W "
+
+# Pane borders: idle = border grey, active = accent (same idle/active split as
+# swaylock's ring states).
+set -g pane-border-style "fg={border}"
+set -g pane-active-border-style "fg={acc}"
+
+# Command prompt / messages (prefix + :), and copy-mode's visual selection.
+set -g message-style "fg={accfg},bg={acc},bold"
+set -g message-command-style "fg={accfg},bg={acc}"
+set -g mode-style "fg={accfg},bg={acc}"
+
+# Clock-mode (prefix + t)
+set -g clock-mode-colour "{acc}"
+"""
+
+
+def render_zellij(variant: str) -> str:
+    """hestia-{dark,light}.kdl — zellij's theme schema (0.44, RGB decimal, not
+    hex) is far more granular than tmux/kitty's flat ANSI-ish model, so each
+    UI role is mapped back to the same handful of hestia roles: accent fill on
+    the active ribbon/frame (the zellij analog of tmux's active-window chip
+    and pane-active-border), surface/surface_alt for selected rows, and the
+    ANSI green/yellow/blue/magenta/(bright)cyan spread across the emphasis_*
+    slots for variety. Bare `0` fields are zellij's single-index EightBit form
+    (not an RGB triple) — literal by design in the hand-authored original,
+    kept literal here too rather than invented a role for "unset/black"."""
+    r, a = vroles(variant), vansi(variant)
+    text, bg = rgb(r["text"]), rgb(r["bg"])
+    surface, surface_alt = rgb(r["surface"]), rgb(r["surface_alt"])
+    accent, accent_fg, danger = rgb(r["accent"]), rgb(r["accent_fg"]), rgb(r["danger"])
+    cyan = rgb(a["bright_cyan"])
+    green, yellow, blue, magenta = rgb(a["green"]), rgb(a["yellow"]), rgb(a["blue"]), rgb(a["magenta"])
+    return f"""// {PROVENANCE}
+// zellij theme — {variant} (zellij auto-loads any .kdl under
+// CONFIG_DIR/themes/; the bootstrap symlinks the theme_variant one of this
+// pair to ~/.config/zellij/themes/hestia.kdl; config.kdl selects it via the
+// variant-blind `theme "hestia"`, same shape as vifm's `colorscheme hestia`).
+// Roles: text={text}, bg={bg}, surface={surface}, surface_alt={surface_alt},
+// accent={accent} (#7c3aed), accent_fg={accent_fg}, danger={danger}, plus the
+// ANSI green/yellow/blue/magenta/bright_cyan for the emphasis_* slots.
+themes {{
+    hestia {{
+        text_unselected {{
+            base {text}
+            background {bg}
+            emphasis_0 {accent}
+            emphasis_1 {cyan}
+            emphasis_2 {green}
+            emphasis_3 {magenta}
+        }}
+        text_selected {{
+            base {text}
+            background {surface_alt}
+            emphasis_0 {accent}
+            emphasis_1 {cyan}
+            emphasis_2 {green}
+            emphasis_3 {magenta}
+        }}
+        // Active tab / mode-indicator ribbon — accent fill + white text, the
+        // same "accent-filled chip" treatment as the waybar accent modules
+        // and tmux's session/window chips.
+        ribbon_selected {{
+            base {accent_fg}
+            background {accent}
+            emphasis_0 {danger}
+            emphasis_1 {yellow}
+            emphasis_2 {magenta}
+            emphasis_3 {blue}
+        }}
+        ribbon_unselected {{
+            base {text}
+            background {surface}
+            emphasis_0 {danger}
+            emphasis_1 {yellow}
+            emphasis_2 {magenta}
+            emphasis_3 {blue}
+        }}
+        table_title {{
+            base {accent}
+            background 0
+            emphasis_0 {cyan}
+            emphasis_1 {green}
+            emphasis_2 {magenta}
+            emphasis_3 {yellow}
+        }}
+        table_cell_selected {{
+            base {text}
+            background {surface_alt}
+            emphasis_0 {accent}
+            emphasis_1 {cyan}
+            emphasis_2 {green}
+            emphasis_3 {magenta}
+        }}
+        table_cell_unselected {{
+            base {text}
+            background {bg}
+            emphasis_0 {accent}
+            emphasis_1 {cyan}
+            emphasis_2 {green}
+            emphasis_3 {magenta}
+        }}
+        list_selected {{
+            base {text}
+            background {surface_alt}
+            emphasis_0 {accent}
+            emphasis_1 {cyan}
+            emphasis_2 {green}
+            emphasis_3 {magenta}
+        }}
+        list_unselected {{
+            base {text}
+            background {bg}
+            emphasis_0 {accent}
+            emphasis_1 {cyan}
+            emphasis_2 {green}
+            emphasis_3 {magenta}
+        }}
+        // Active pane border — accent, the direct analog of tmux's
+        // pane-active-border-style and swaylock's ring idle/active split.
+        frame_selected {{
+            base {accent}
+            background 0
+            emphasis_0 {cyan}
+            emphasis_1 {green}
+            emphasis_2 {magenta}
+            emphasis_3 0
+        }}
+        // Distinct from frame_selected — used e.g. during pane move/resize —
+        // so it needs its own colour to read as "specially highlighted", not
+        // just "the active pane": ANSI yellow.
+        frame_highlight {{
+            base {yellow}
+            background 0
+            emphasis_0 {magenta}
+            emphasis_1 {yellow}
+            emphasis_2 {yellow}
+            emphasis_3 {yellow}
+        }}
+        exit_code_success {{
+            base {green}
+            background 0
+            emphasis_0 {cyan}
+            emphasis_1 {bg}
+            emphasis_2 {magenta}
+            emphasis_3 {blue}
+        }}
+        exit_code_error {{
+            base {danger}
+            background 0
+            emphasis_0 {yellow}
+            emphasis_1 0
+            emphasis_2 0
+            emphasis_3 0
+        }}
+        multiplayer_user_colors {{
+            player_1 {accent}
+            player_2 {cyan}
+            player_3 {green}
+            player_4 {yellow}
+            player_5 {magenta}
+            player_6 0
+            player_7 {danger}
+            player_8 0
+            player_9 0
+            player_10 0
+        }}
+    }}
+}}
+"""
+
+
+def render_alacritty(variant: str) -> str:
+    """theme-{dark,light}.toml — pulled in by alacritty.toml's [general] import.
+    The vi-mode surfaces map onto hestia.vim's OWN highlight groups, not a
+    generic accent treatment: selection = Visual (extended.visual — a vim-only
+    UI colour, not the accent), search.matches/search.focused_match =
+    Search/CurSearch (every-match green vs. cursor-is-here orange — vim's
+    persisted-vs-current split, distinct from zathura's active/inactive one).
+    The cursor is deliberately IDENTICAL in normal and vi mode (two earlier
+    attempts at a vi-mode-specific cursor were reverted live as illegible —
+    see showcase/terminal-emulator.md)."""
+    r, a, e = vroles(variant), vansi(variant), vext(variant)
+    c = VARIANTS[variant]  # syntax roles: c["string"] green, c["type"] orange
+    dark = variant == "dark"
+    bg, text = r["bg"], r["text"]
+    acc, accfg = r["accent"], r["accent_fg"]
+    surface = r["surface"]
+    visual = e["visual"]
+    match_bg, focus_bg = c["string"], c["type"]
+    # Text ON the vi-mode surfaces (selection/search/line-indicator fills):
+    # black on dark's bright fills, white on light's AA-darkened ones — same
+    # "fill_fg" rule render_vim() uses for its own reverse-video groups.
+    fill_fg = e["ink"] if dark else accfg
+    # Line indicator background: bright_cyan on dark, but the BASE (darker)
+    # cyan on light — light's fill_fg is white, and the base cyan gives that
+    # white text better contrast than bright_cyan would.
+    line_ind_bg = a["bright_cyan"] if dark else a["cyan"]
+    return f"""# {PROVENANCE}
+# alacritty theme — {variant} (bootstrap symlinks the theme_variant one of
+# this pair to ~/.config/alacritty/theme.toml, pulled in by alacritty.toml's
+# [general] import).
+#
+# Roles used: bg {bg}, surface {surface}, text {text}, accent {acc},
+# accent_fg {accfg}. ANSI 16 mirrors kitty/vifm/cmus (palette.yml's `ansi:`
+# table) so colour output looks the same everywhere.
+
+[colors.primary]
+background = "{bg}"
+foreground = "{text}"
+
+# Cursor: accent fill, matching kitty's cursor/selection/active-tab treatment.
+[colors.cursor]
+text = "{accfg}"
+cursor = "{acc}"
+
+# Vi-mode cursor: SAME accent as the normal cursor — two earlier attempts at a
+# vi-mode-specific cursor (an Underline shape, then an accent_dark colour)
+# were each reverted live as illegible/confusing; the mode is already obvious
+# from context, no separate cursor treatment needed.
+[colors.vi_mode_cursor]
+text = "{accfg}"
+cursor = "{acc}"
+
+# Selection: matches vim's OWN Visual group exactly (extended.visual — a
+# vim/wildcharm UI colour with no other cross-app role, promoted 0.11.0 once
+# this became a second consumer alongside render_vim()).
+[colors.selection]
+text = "{fill_fg}"
+background = "{visual}"
+
+# Search — mirrors vim's OWN two-tier search highlighting (Search/CurSearch),
+# not zathura's active/inactive split: the CURRENT match (Alacritty's
+# focused_match) gets syntax.type's orange, every OTHER match (Alacritty's
+# matches, persisting after Enter) gets syntax.string's green.
+[colors.search.matches]
+foreground = "{fill_fg}"
+background = "{match_bg}"   # syntax.string / brand.green — vim's Search
+
+[colors.search.focused_match]
+foreground = "{fill_fg}"
+background = "{focus_bg}"   # syntax.type — vim's IncSearch/CurSearch
+
+# Hints (URL/file jump-labels): the first character (what you type) gets the
+# accent; the rest stay muted on the raised surface.
+[colors.hints.start]
+foreground = "{accfg}"
+background = "{acc}"
+
+[colors.hints.end]
+foreground = "{text}"
+background = "{surface}"
+
+# Line indicator (top-right, position in scrollback during search/vi mode) —
+# bright_cyan fill on dark (base cyan on light, for contrast with its white
+# text — see fill_fg/line_ind_bg above), the same brand teal used for ANSI
+# cyan/bright_cyan everywhere else (kitty/vifm/cmus), not vim's one-off
+# Visual cyan (that one's reserved for selection, just above).
+[colors.line_indicator]
+foreground = "{fill_fg}"
+background = "{line_ind_bg}"
+
+# Footer bar (search-regex input / hyperlink preview) — raised surface,
+# primary text, the same "status bar" treatment as zathura's
+# statusbar/waybar tooltips.
+[colors.footer_bar]
+foreground = "{text}"
+background = "{surface}"
+
+# The 16-colour ANSI palette — identical to kitty/vifm/cmus.
+[colors.normal]
+black   = "{a['black']}"
+red     = "{a['red']}"
+green   = "{a['green']}"
+yellow  = "{a['yellow']}"
+blue    = "{a['blue']}"
+magenta = "{a['magenta']}"
+cyan    = "{a['cyan']}"
+white   = "{a['white']}"
+
+[colors.bright]
+black   = "{a['bright_black']}"
+red     = "{a['bright_red']}"
+green   = "{a['bright_green']}"
+yellow  = "{a['bright_yellow']}"
+blue    = "{a['bright_blue']}"
+magenta = "{a['bright_magenta']}"
+cyan    = "{a['bright_cyan']}"
+white   = "{a['bright_white']}"
+"""
+
+
 def render_sway(variant: str) -> str:
     r, a = vroles(variant), vansi(variant)
     # Focused-tile border (client.focused in user/sway/config) — cyan, not the
@@ -476,6 +797,14 @@ def xterm_index(hexval: str) -> int:
         if d < best_d:
             best, best_d = 232 + i, d
     return best
+
+
+def rgb(hexval: str) -> str:
+    """'#7c3aed' -> '124 58 237' — zellij's KDL theme schema wants RGB decimal
+    triples, not hex."""
+    h = hexval.lstrip("#")
+    r, g, b = (int(h[i : i + 2], 16) for i in (0, 2, 4))
+    return f"{r} {g} {b}"
 
 
 # ------------------------------------------- desktop chrome, the long tail (M7)
@@ -1585,8 +1914,9 @@ def _vim_rows(variant: str) -> list:
     save the documented comment/purple/diff-delete deviations; light lands on the
     palette's AA-tuned values. The vimdiff fills come from the palette `diff:`
     section (Claude-style: tinted row bg, guifg=NONE so syntax shows through).
-    Only three vim-only UI accents with no cross-app role stay literal here —
-    Visual/lCursor/MatchParen."""
+    Two vim-only UI accents with no cross-app role stay literal here —
+    lCursor/MatchParen. Visual was the third until Alacritty's theme needed
+    the same value for vi-mode selection parity (0.11.0) — now extended.visual."""
     r, a, e = vroles(variant), vansi(variant), vext(variant)
     s = PALETTE["syntax"] if variant == "dark" else LIGHT["syntax"]
     df = PALETTE["diff"] if variant == "dark" else LIGHT["diff"]
@@ -1603,7 +1933,7 @@ def _vim_rows(variant: str) -> list:
         line_hi, colcol = r["surface"], r["surface_alt"]
         cur_bg, pthumb = white, a["white"]
         eob, curnr = a["bright_black"], white
-        vis, lcur, mparen = "#5fd7ff", "#ff5fff", "#ff00af"
+        vis, lcur, mparen = e["visual"], "#ff5fff", "#ff00af"
         stl = (r["accent_fg"], r["accent"], "bold")       # white on the violet accent (matches waybar/swaynag)
         stlnc = (a["bright_black"], r["bg"], "reverse")
         split = a["bright_black"]
@@ -1617,7 +1947,7 @@ def _vim_rows(variant: str) -> list:
         line_hi, colcol = r["surface"], r["surface"]
         cur_bg, pthumb = ink, a["bright_black"]
         eob, curnr = ln, ink
-        vis, lcur, mparen = "#0087d7", "#ff00ff", "#ff00af"
+        vis, lcur, mparen = e["visual"], "#ff00ff", "#ff00af"
         stl = (r["accent_fg"], r["accent"], "bold")       # white on the violet accent (matches waybar/swaynag)
         stlnc = (ink, r["surface_alt"], N)                # inactive: light-grey bar
         split = e["ui_dark"]
@@ -1849,6 +2179,12 @@ OUTPUTS = {
     REPO / "user/ranger/colorschemes/hestia-dark.py": lambda: render_ranger("dark"),
     REPO / "user/ranger/colorschemes/hestia-light.py": lambda: render_ranger("light"),
     REPO / "user/vim/colors/hestia.vim": lambda: render_vim(),
+    REPO / "user/tmux/theme-dark.conf": lambda: render_tmux("dark"),
+    REPO / "user/tmux/theme-light.conf": lambda: render_tmux("light"),
+    REPO / "user/zellij/hestia-dark.kdl": lambda: render_zellij("dark"),
+    REPO / "user/zellij/hestia-light.kdl": lambda: render_zellij("light"),
+    REPO / "user/alacritty/theme-dark.toml": lambda: render_alacritty("dark"),
+    REPO / "user/alacritty/theme-light.toml": lambda: render_alacritty("light"),
 }
 
 

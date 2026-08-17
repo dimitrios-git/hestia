@@ -107,7 +107,9 @@ and that muscle memory was already half-built from Sway.
   stock `%`/`"`), and a TPM bootstrap for `tmux-resurrect`/`tmux-continuum`
   (session persistence across a reboot — TPM itself stays a one-time manual
   `git clone`, deliberately not Ansible-managed, same as vim-plug). Themed via
-  a hand-authored `theme-{dark,light}.conf` pair (`docs/theming.md`) —
+  a **GENERATED** `theme-{dark,light}.conf` pair (`render_tmux()`,
+  `themes/hestia/render.py` — promoted from hand-authored 2026-08, see
+  `showcase/terminal-emulator.md`) —
   session-name and active-window chips filled in the hestia accent
   (`#7c3aed`/white text, mirroring kitty's active-tab treatment), pane
   borders on the idle/active split used elsewhere (swaylock's ring states).
@@ -115,7 +117,8 @@ and that muscle memory was already half-built from Sway.
   installed via the pinned `localbin` release binary): mouse mode, Wayland
   clipboard (`wl-copy`), and its own built-in session serialization (the
   native equivalent of tmux-resurrect, no plugin needed). Themed via a
-  hand-authored `hestia-{dark,light}.kdl` theme pair, auto-loaded from
+  **GENERATED** `hestia-{dark,light}.kdl` theme pair (`render_zellij()`,
+  promoted alongside tmux), auto-loaded from
   `~/.config/zellij/themes/` and selected variant-blind with `theme "hestia"`
   — the same idle/active-border and accent-fill choices as tmux's theme,
   translated into zellij's far more granular per-UI-role schema (0.44; each

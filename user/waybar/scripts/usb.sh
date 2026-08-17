@@ -71,7 +71,7 @@ notify(out or (r.stderr or "").strip() or f"{action} {chosen['path']}")
 if action == "mount" and r.returncode == 0 and " at " in out and shutil.which("vifm"):
     mp = out.split(" at ", 1)[1].strip().rstrip(".")
     if mp:
-        subprocess.Popen(["kitty", "-e", "vifm", mp], start_new_session=True,
+        subprocess.Popen(["alacritty", "-e", "vifm", mp], start_new_session=True,
                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 PY
     exit 0

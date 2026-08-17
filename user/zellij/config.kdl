@@ -5,11 +5,11 @@
 // installed and themed alongside tmux, same treatment ranger/yazi got after vifm
 // won the file-manager evaluation).
 //
-// Custom hestia theme — hand-authored, see hestia-{dark,light}.kdl
-// (docs/theming.md); the bootstrap symlinks the theme_variant one to
-// ~/.config/zellij/themes/hestia.kdl, auto-loaded by zellij from that
-// directory. Variant-blind reference here, same shape as vifm's
-// `colorscheme hestia`.
+// Custom hestia theme — GENERATED, see hestia-{dark,light}.kdl
+// (themes/hestia/render.py from palette.yml — docs/theming.md); the bootstrap
+// symlinks the theme_variant one to ~/.config/zellij/themes/hestia.kdl,
+// auto-loaded by zellij from that directory. Variant-blind reference here,
+// same shape as vifm's `colorscheme hestia`. Edit palette.yml + re-render.
 theme "hestia"
 
 // Mouse click/drag to select panes and resize; wheel to scroll.

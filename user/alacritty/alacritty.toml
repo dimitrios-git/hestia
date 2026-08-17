@@ -1,0 +1,43 @@
+# hestia alacritty config — terminal-emulator evaluation CONTENDER
+# (enable_terminal_emulators; installed alongside the incumbent kitty for a live
+# trial — see docs/roadmap.md's "Terminal emulator" row + showcase/terminal-
+# emulator.md). The headline reason Alacritty is even in this trial: its built-in
+# vi mode (buffer navigation/search/select with vim-style keys, no external
+# pager) — see the [cursor] section below.
+
+# Font: same family/size as kitty (user/kitty/kitty.conf), so the trial compares
+# the terminals, not the font.
+[font]
+normal = { family = "Lilex Nerd Font Mono" }
+size = 11.0
+
+# Same padding + scrollback depth as kitty (window_padding_width 6,
+# scrollback_lines 10000) and tmux (history-limit 10000) — matched baselines,
+# so only the terminal's own behaviour differs across the trial.
+[window]
+padding = { x = 6, y = 6 }
+decorations = "None"   # tiling WM (sway) — no title bar, matches kitty's look
+
+[scrolling]
+history = 10000
+
+# Cursor: accent violet Block shape, IDENTICAL in vi mode (see theme.toml).
+# Two earlier attempts at a vi-mode-specific cursor were both reverted, live:
+# an Underline shape read as nearly invisible in the accent colour on the dark
+# ground, and a darker accent_dark shade just read as "a slightly different
+# purple, why?" rather than a clear signal. The mode is already obvious from
+# context (what you just pressed, the line indicator, search behaviour) — no
+# separate cursor treatment needed.
+[cursor]
+style = { shape = "Block", blinking = "Off" }
+vi_mode_style = { shape = "Block", blinking = "Off" }
+
+# vi mode itself uses Alacritty's own defaults (Ctrl+Shift+Space to toggle, `/`
+# and `?` to search, hjkl/w/b/e/etc. to navigate — see alacritty-bindings(5)) —
+# unmodified, nothing to add on top of vim-standard keys.
+
+# Colours — GENERATED theme-{dark,light}.toml pair (themes/hestia/render.py
+# from palette.yml — docs/theming.md). Bootstrap symlinks the theme_variant one
+# to ~/.config/alacritty/theme.toml. Edit palette.yml + re-render, not the pair.
+[general]
+import = ["~/.config/alacritty/theme.toml"]

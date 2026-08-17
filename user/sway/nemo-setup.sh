@@ -11,8 +11,10 @@ command -v nemo >/dev/null 2>&1 || exit 0
 
 # "Open in Terminal" launches org.cinnamon.desktop.default-applications.terminal,
 # whose schema default gnome-terminal isn't installed here — so the menu item
-# silently no-ops. Point it at kitty (exec-arg -e for the run-a-command case).
-gsettings set org.cinnamon.desktop.default-applications.terminal exec kitty
+# silently no-ops. Point it at alacritty, the default terminal since the
+# terminal-emulator evaluation (docs/roadmap.md; exec-arg -e for the
+# run-a-command case — same flag as kitty, Alacritty mirrors it).
+gsettings set org.cinnamon.desktop.default-applications.terminal exec alacritty
 gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg -e
 
 # Make nemo the default folder handler — a folder opened from any app lands here.

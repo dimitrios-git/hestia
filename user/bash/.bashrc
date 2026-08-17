@@ -278,12 +278,16 @@ fi
 # Sway sets it for itself. Load a key with: ssh-add ~/.ssh/<your key>  (e.g. id_ed25519)
 export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/openssh_agent"
 
-# kitty advertises TERM=xterm-kitty, which most servers' terminfo db lacks → garbled
-# keys (backspace inserts a space, etc.) over plain ssh. Advertise a universally-present
-# TERM for ssh so keys work AND the server's normal login MOTD still shows (unlike
-# `kitty +kitten ssh`, which bootstraps via a remote command and skips the MOTD).
+# Both hestia terminals advertise a TERM most servers' terminfo db lacks — kitty
+# TERM=xterm-kitty, Alacritty TERM=alacritty — which garbles keys (backspace
+# inserts a space, etc.) over plain ssh. Advertise a universally-present TERM for
+# ssh instead, so keys work AND the server's normal login MOTD still shows
+# (unlike `kitty +kitten ssh`, which bootstraps via a remote command and skips
+# the MOTD — kitty-only, no Alacritty equivalent).
 # Run `kitty +kitten ssh <host>` explicitly when you want full kitty integration remotely.
-[ "$TERM" = xterm-kitty ] && alias ssh='TERM=xterm-256color ssh'
+case "$TERM" in
+    xterm-kitty|alacritty) alias ssh='TERM=xterm-256color ssh' ;;
+esac
 
 # NVM
 export NVM_DIR="$HOME/.nvm"

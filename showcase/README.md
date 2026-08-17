@@ -21,6 +21,7 @@ unchanged.
 | [Wallpapers](wallpapers.md) | Three engines trialled, none survived as "just a wallpaper tool" — the verdict became a generated mesh rendered from hestia's own design system, painted as a static frame (the looping video leaked memory, so the still won) |
 | [File managers](file-managers.md) | Seven contenders against vifm — the incumbent won on speed, stole the losers' best ideas, and the trial's failures fixed Qt theming for everything |
 | [Terminal multiplexers](multiplexer.md) | tmux vs zellij vs screen, trialled live over a real mosh connection from a work laptop — tmux won on control and Sway-`$mod` muscle memory over zellij's friendlier defaults; mosh's local echo survived a mid-session wifi drop with zero reconnects |
+| [Terminal emulators](terminal-emulator.md) | Alacritty retakes the default from kitty (its own graphics-protocol requirement, from a file manager hestia no longer uses, was the only thing that ever beat it) — vi mode remapped onto vim's own highlight groups, verified live by scripting real keystrokes into it; foot and GNOME Terminal stay an honestly-unfinished tail, not a fabricated verdict |
 
 **Deep dives** — single-tool pages behind a chapter, for the load-bearing
 pieces: [vifm](vifm.md) (the file-managers moat, itemised with live examples).

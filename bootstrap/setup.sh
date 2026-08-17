@@ -128,6 +128,7 @@ enable_golang: $enable_golang
 enable_thunderbird: $enable_thunderbird
 enable_file_managers: $enable_file_managers
 enable_image_viewers: $enable_image_viewers
+enable_terminal_emulators: $enable_terminal_emulators
 enable_tci: $enable_tci
 enable_minipro: $enable_minipro
 enable_android_dev: $enable_android_dev
@@ -271,6 +272,7 @@ def_golang=$(cur enable_golang); def_golang=${def_golang:-false}
 def_thunderbird=$(cur enable_thunderbird); def_thunderbird=${def_thunderbird:-false}
 def_filemgrs=$(cur enable_file_managers); def_filemgrs=${def_filemgrs:-false}
 def_imgviewers=$(cur enable_image_viewers); def_imgviewers=${def_imgviewers:-false}
+def_termemus=$(cur enable_terminal_emulators); def_termemus=${def_termemus:-false}
 def_tci=$(cur enable_tci); def_tci=${def_tci:-false}
 def_minipro=$(cur enable_minipro); def_minipro=${def_minipro:-false}
 def_android=$(cur enable_android_dev); def_android=${def_android:-false}
@@ -356,6 +358,7 @@ askyn enable_golang      "Install Go? (golang-go — language toolchain)" "$def_
 askyn enable_thunderbird "Install Thunderbird? (email client, hestia-themed)" "$def_thunderbird"
 askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)" "$def_filemgrs"
 askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)" "$def_imgviewers"
+askyn enable_terminal_emulators "Install the still-open terminal-emulator evaluation tail? (foot/gnome-terminal — alacritty is now the default, installed unconditionally)" "$def_termemus"
 askyn enable_tci         "Install thecodingidiot chapter prerequisites? (SDL2 headers, gdb, valgrind, alsa-utils, nethack)" "$def_tci"
 askyn enable_minipro     "Build minipro from source? (EEPROM programmer CLI — needs a TL866xx/T48/T56)" "$def_minipro"
 askyn enable_android_dev "Install Android dev tooling? (JDK + Android Studio + kvm group for the emulator)" "$def_android"
@@ -438,6 +441,7 @@ cat <<EOF
     enable_thunderbird = $enable_thunderbird
     enable_file_managers = $enable_file_managers
     enable_image_viewers = $enable_image_viewers
+    enable_terminal_emulators = $enable_terminal_emulators
     enable_tci         = $enable_tci
     enable_minipro     = $enable_minipro
     enable_android_dev = $enable_android_dev

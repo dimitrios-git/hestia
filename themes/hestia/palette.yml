@@ -33,7 +33,7 @@
 
 # Palette contract version (see docs/theme-roadmap.md "Versioning") — bump minor
 # when roles/values are added, patch for a tweak; log one line in the roadmap.
-version: "0.10.1"
+version: "0.11.0"
 
 # Semantic roles — what a colour MEANS. Prefer these names when theming GUI apps
 # (sway already mirrors them as $bg/$surface/$border/$text/$dim/$accent).
@@ -143,6 +143,13 @@ extended:
   # on the accent) — pure black, xterm 16. Variant-invariant (light fills are
   # light in both variants). Admitted 0.7.0 with the vifm/cmus generation.
   ink:        "#000000"
+  # vim's own Visual (selection) highlight — xterm 81, a light sky-blue/cyan
+  # distinct from both the accent and ANSI cyan. Promoted from a vim-only
+  # literal (render.py's render_vim() used to hardcode it directly, noting "no
+  # cross-app role") to a named role 0.11.0, once Alacritty's theme needed the
+  # SAME value for vi-mode selection parity with hestia.vim's `hi Visual`
+  # group — a second consumer is exactly when a literal earns a name.
+  visual:     "#5fd7ff"
 
 # The tci "Memphis" brand palette (source of the syntax hues since 0.9.0) — the
 # five accent colours thecodingidiot has used since before hestia existed
@@ -296,6 +303,10 @@ light:
     sunken:     "#ffffff"   # light counterpart of extended.sunken — the
                             # below-ground fill flips past the ground to pure
                             # white (swaylock inside-circle, swaynag buttons)
+    visual:     "#0087d7"   # light counterpart of extended.visual (0.11.0) —
+                            # vim's light `hi Visual` group (a blue, not a
+                            # cyan, on light — it happens to equal DARK's own
+                            # ansi.blue, coincidentally, not by role reuse)
   # LIGHT syntax — the Memphis brand hues (roles.brand) lightness-corrected DOWN
   # for AA on the #f5f5f5 desktop ground (0.9.0, the "make it ours" re-anchor;
   # mirror of dark, which corrects UP). Targeted ~5.2:1 on the ground; Comment,

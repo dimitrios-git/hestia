@@ -688,6 +688,14 @@ the platform mapping, never in an artifact.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.11.0** (2026-08) — **tmux/zellij/Alacritty promoted from hand-authored to
+  GENERATED** (`render_tmux()`/`render_zellij()`/`render_alacritty()`,
+  `themes/hestia/render.py`, 42 artifacts now vs. 36), and vim's own `Visual`
+  colour (previously a `render_vim()`-only literal, documented as having "no
+  cross-app role") promoted to a named role — **`extended.visual`**
+  (`#5fd7ff` dark / `#0087d7` light) — once Alacritty's vi-mode selection
+  became a second consumer needing the identical value. See
+  `showcase/terminal-emulator.md`.
 - **0.10.1** (2026-07-10) — **unify the hestia red on a TRUE red `#d70000`.** The
   retired accent red `#d7005f` (rose/cerise) read pink in the power-off confirm;
   retuned to `#d70000` everywhere it means "red" — `roles.danger`/`danger_dark`

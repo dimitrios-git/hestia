@@ -81,6 +81,30 @@ enable_file_managers: false # install the file-manager evaluation set (ranger/ya
 # covered the main surfaces but menus/icons stayed unthemed — not worth the
 # road; it also saves its theme on exit, see the 6f5051a clobber story).
 enable_image_viewers: false # install the image-viewer keeper (ristretto)
+# Package-only toggle (no role): gates the `terminal_emulators` apt group below
+# — now just the STILL-OPEN tail of the terminal-emulator evaluation (foot,
+# GNOME Terminal), since Alacritty itself has already won its half of the trial
+# and moved to the base `terminal` group (unconditional, alongside kitty — see
+# that group's comment). VERDICT (2026-08, docs/roadmap.md's "Terminal emulator"
+# row, showcase/terminal-emulator.md): Alacritty is now the DEFAULT terminal,
+# replacing kitty everywhere sway/waybar spawn one ($mod+Return, the floatterm
+# popups, nemo's "Open in Terminal", the USB-mount vifm launcher). kitty won the
+# ORIGINAL two-horse race only because Alacritty had no image-rendering protocol
+# ranger's previews needed at the time; vifm (the file-manager evaluation's
+# winner) doesn't route images through an in-terminal protocol at all — vifm's
+# image story is imv, a separate Wayland window — so that constraint was gone,
+# and Alacritty's built-in vi mode (vim-style scrollback navigation/search/
+# select, no external pager) won the re-trial outright. kitty is KEPT, not
+# dropped (no cited technical flaw — same "only drop for cause" rule that kept
+# zellij/ranger/yazi after their evaluations): it's still needed for ranger's
+# `preview_images_method kitty` and for $mod+m's music session (kitty's
+# --session/layout feature has no Alacritty equivalent, so that ONE bind still
+# launches kitty on purpose — see user/kitty/music.session). foot and GNOME
+# Terminal were never actually put through a live trial — the headline
+# criterion (vi mode) was answered by the Alacritty-vs-kitty comparison alone,
+# so they stay here as an honestly-unfinished tail rather than a fabricated
+# verdict; pick this back up if that comparison is ever wanted.
+enable_terminal_emulators: false # install the STILL-OPEN terminal-emulator tail (foot/gnome-terminal — alacritty is now unconditional, see the `terminal` apt group)
 # Package-ish toggle (no role): gates the `multiplexers` apt group below. VERDICT
 # (2026-08, docs/roadmap.md's long-open "Multiplexer" gap, live-trialled over a
 # real mosh connection from a work laptop — see showcase/multiplexer.md): tmux.
@@ -317,6 +341,13 @@ dotfile_links:
   # `theme_variant` (M7).
   - { src: "user/kitty/theme-{{ theme_variant }}.conf", dest: "{{ target_home }}/.config/kitty/theme.conf", claude: true }
   - { src: user/kitty/music.session,        dest: "{{ target_home }}/.config/kitty/music.session", claude: true }
+  # alacritty (enable_terminal_emulators gates the APP; this symlink is
+  # unconditional — same "harmless without the app" ruling as tmux/zellij above).
+  # Terminal-emulator evaluation CONTENDER, themed per docs/theming.md — see
+  # showcase/terminal-emulator.md.
+  - { src: user/alacritty/alacritty.toml,   dest: "{{ target_home }}/.config/alacritty/alacritty.toml", claude: true }
+  - { src: "user/alacritty/theme-{{ theme_variant }}.toml", dest: "{{ target_home }}/.config/alacritty/theme.toml", claude: true }
+  - { src: user/alacritty/music-session.sh, dest: "{{ target_home }}/.config/alacritty/music-session.sh", claude: true }
   - { src: user/imv/config,                 dest: "{{ target_home }}/.config/imv/config" }
   # imv↔vifm integration (vifm `i` opens imv tiled, live cursor sync, q returns):
   # the dedicated imv config + its on-quit/sync return script. Exec bit from src.
@@ -608,7 +639,7 @@ localbin_binaries:
 apt_packages:
   wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, gammastep, playerctl, xwayland, breeze-cursor-theme, mate-polkit]   # gammastep: software gamma dim of all outputs as the pre-lock warning cue (no hardware backlight on this desktop). mate-polkit: the GTK PolicyKit auth agent — sway runs none by default, so GUI privilege prompts (nemo Open-as-Root, disk mounts, pkexec) are silently denied without it; started from the sway config
   portals:   [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk, pipewire, pipewire-pulse, wireplumber]
-  terminal:  [kitty, vifm, tree, cmus, cava, glow, imv, zathura, mpv, bat, poppler-utils, mediainfo, 7zip, unzip, pulsemixer, htop, qalc, ncdu, ffmpegthumbnailer, imagemagick]   # bat: syntax-highlighted file preview in vifm (Debian installs it as `batcat`). chafa dropped — vifm no longer renders images in-pane (mediainfo info + imv to open). tree: directory tree viewer (companion to vifm). ffmpegthumbnailer + imagemagick: vifm's imv-browse.sh poster-frame thumbnails for videos (the ▶ overlay) — videos browse alongside images in imv
+  terminal:  [alacritty, kitty, vifm, tree, cmus, cava, glow, imv, zathura, mpv, bat, poppler-utils, mediainfo, 7zip, unzip, pulsemixer, htop, qalc, ncdu, ffmpegthumbnailer, imagemagick]   # alacritty: the DEFAULT terminal (terminal-emulator evaluation verdict, 2026-08 — see showcase/terminal-emulator.md); kitty: KEPT alongside it, unconditional too — ranger's `preview_images_method kitty` and $mod+m's music session (kitty --session, no Alacritty equivalent) still need a real kitty window. bat: syntax-highlighted file preview in vifm (Debian installs it as `batcat`). chafa dropped — vifm no longer renders images in-pane (mediainfo info + imv to open). tree: directory tree viewer (companion to vifm). ffmpegthumbnailer + imagemagick: vifm's imv-browse.sh poster-frame thumbnails for videos (the ▶ overlay) — videos browse alongside images in imv
   editors:   [vim, neovim, build-essential, shellcheck, ripgrep]   # build-essential: nvim treesitter compiles parsers on first run; shellcheck: shell-script linter (neovim shell diagnostics + manual `shellcheck`); ripgrep: backs the vim content-grep keybind (coc-lists `:CocList grep` / `<leader>g`)
   vcs_gpg:   [git, gnupg, pinentry-tty]
   net_bt:    [network-manager, bluez, rfkill]   # rfkill: waybar bluetooth right-click toggle
@@ -629,6 +660,7 @@ apt_packages:
   file_managers: [ranger, thunar, nemo, nautilus, krusader, dolphin]  # enable_file_managers (default off; evaluation set — yazi/ya ride localbin on the same toggle)
   image_viewers: [ristretto]                     # enable_image_viewers (default off; the evaluation keeper)
   multiplexers: [tmux]                           # enable_multiplexers (default on; evaluation VERDICT — screen/zellij trialled and dropped, see showcase/multiplexer.md)
+  terminal_emulators: [foot, gnome-terminal]  # enable_terminal_emulators (default off; the STILL-OPEN tail of the evaluation — alacritty won its half of the trial and moved to the base `terminal` group above; see showcase/terminal-emulator.md)
   mosh:         [mosh]                           # enable_mosh (default on; roaming/sleep-resilient remote shell, pairs with tmux)
   # Derived from thecodingidiot's own chapter Setup pages, one entry per chapter that
   # needs something. libsdl2-image-dev pulls libsdl2-dev/libjpeg-dev/libpng-dev/
@@ -649,7 +681,7 @@ apt_packages:
   # useful to kdenlive too, hence the either-toggle gate below.
   qt_platform:  [plasma-integration]
   browser:      [chromium]                       # enable_headless_browser (headless dev/testing; also satisfies Playwright/Puppeteer runtime libs)
-  claude:       [gh]                            # enable_claude_user — the agent's PR workflow (claude opens PRs, the human merges)
+  claude:       [gh, wtype]                     # enable_claude_user — gh: the agent's PR workflow (claude opens PRs, the human merges). wtype: Wayland keystroke injection, so claude can drive interactive UI states (e.g. Alacritty's vi mode) for live verification/screenshots — see showcase/terminal-emulator.md
   firefox:      [firefox-esr]                    # enable_firefox (the desktop browser — see the toggle comment)
   docker:       [docker.io, docker-cli, docker-compose, containerd]  # enable_docker — Debian's OWN packages, not Docker Inc's vendor repo (no extra keyring/sources entry; tracks stable with the rest of the system). `docker-compose` here is the Compose v2 CLI PLUGIN (`docker compose`), not the retired python v1 script
   ssh_server:   [openssh-server, libpam-google-authenticator]  # enable_ssh_server — libpam-google-authenticator ships BOTH the PAM module and the `google-authenticator` enrolment CLI. It rides enable_ssh_server, NOT ssh_require_totp: enrolling needs the binary, but that toggle can't be turned on until enrolment has already happened. The package is inert until PAM is pointed at it (ssh_server role)
@@ -670,6 +702,7 @@ package_group_features:
   qt_platform: "{{ (enable_file_managers | bool) or (enable_kdenlive | bool) }}"
   image_viewers: "{{ enable_image_viewers | bool }}"
   multiplexers: "{{ enable_multiplexers | bool }}"
+  terminal_emulators: "{{ enable_terminal_emulators | bool }}"
   mosh:        "{{ enable_mosh | bool }}"
   tci:         "{{ enable_tci | bool }}"
   minipro:     "{{ enable_minipro | bool }}"

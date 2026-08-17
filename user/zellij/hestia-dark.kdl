@@ -1,0 +1,142 @@
+// hestia zellij theme — DARK variant
+//
+// Hand-authored per docs/theming.md's lightweight process (palette values
+// pulled from themes/hestia/palette.yml by hand — zellij is not yet a
+// render.py target). Zellij auto-loads any .kdl under CONFIG_DIR/themes/, so
+// the bootstrap symlinks the theme_variant one of this pair to
+// ~/.config/zellij/themes/hestia.kdl; user/zellij/config.kdl selects it via
+// the variant-blind `theme "hestia"` (same shape as vifm's `colorscheme
+// hestia`). Zellij's theme schema (0.44, RGB decimal, not hex) is much more
+// granular than tmux/kitty's — each UI role below is deliberately mapped back
+// to the same handful of hestia roles: text=224 224 224, bg=26 26 26,
+// surface=38 38 38, surface_alt=48 48 48, accent=124 58 237 (#7c3aed),
+// accent_fg=255 255 255 (white), danger=215 0 0, plus the ANSI green/yellow/
+// blue/magenta/cyan for variety in the multi-emphasis slots.
+themes {
+    hestia {
+        text_unselected {
+            base 224 224 224
+            background 26 26 26
+            emphasis_0 124 58 237
+            emphasis_1 34 205 218
+            emphasis_2 47 152 68
+            emphasis_3 247 37 160
+        }
+        text_selected {
+            base 224 224 224
+            background 48 48 48
+            emphasis_0 124 58 237
+            emphasis_1 34 205 218
+            emphasis_2 47 152 68
+            emphasis_3 247 37 160
+        }
+        // Active tab / mode-indicator ribbon — accent fill + white text, the
+        // same "accent-filled chip" treatment as the waybar accent modules
+        // and tmux's session/window chips.
+        ribbon_selected {
+            base 255 255 255
+            background 124 58 237
+            emphasis_0 215 0 0
+            emphasis_1 215 135 0
+            emphasis_2 247 37 160
+            emphasis_3 0 135 215
+        }
+        ribbon_unselected {
+            base 224 224 224
+            background 38 38 38
+            emphasis_0 215 0 0
+            emphasis_1 215 135 0
+            emphasis_2 247 37 160
+            emphasis_3 0 135 215
+        }
+        table_title {
+            base 124 58 237
+            background 0
+            emphasis_0 34 205 218
+            emphasis_1 47 152 68
+            emphasis_2 247 37 160
+            emphasis_3 215 135 0
+        }
+        table_cell_selected {
+            base 224 224 224
+            background 48 48 48
+            emphasis_0 124 58 237
+            emphasis_1 34 205 218
+            emphasis_2 47 152 68
+            emphasis_3 247 37 160
+        }
+        table_cell_unselected {
+            base 224 224 224
+            background 26 26 26
+            emphasis_0 124 58 237
+            emphasis_1 34 205 218
+            emphasis_2 47 152 68
+            emphasis_3 247 37 160
+        }
+        list_selected {
+            base 224 224 224
+            background 48 48 48
+            emphasis_0 124 58 237
+            emphasis_1 34 205 218
+            emphasis_2 47 152 68
+            emphasis_3 247 37 160
+        }
+        list_unselected {
+            base 224 224 224
+            background 26 26 26
+            emphasis_0 124 58 237
+            emphasis_1 34 205 218
+            emphasis_2 47 152 68
+            emphasis_3 247 37 160
+        }
+        // Active pane border — accent, the direct analog of tmux's
+        // pane-active-border-style and swaylock's ring idle/active split.
+        frame_selected {
+            base 124 58 237
+            background 0
+            emphasis_0 34 205 218
+            emphasis_1 47 152 68
+            emphasis_2 247 37 160
+            emphasis_3 0
+        }
+        // Distinct from frame_selected — used e.g. during pane move/resize —
+        // so it needs its own colour to read as "specially highlighted", not
+        // just "the active pane": ANSI yellow.
+        frame_highlight {
+            base 215 135 0
+            background 0
+            emphasis_0 247 37 160
+            emphasis_1 215 135 0
+            emphasis_2 215 135 0
+            emphasis_3 215 135 0
+        }
+        exit_code_success {
+            base 47 152 68
+            background 0
+            emphasis_0 34 205 218
+            emphasis_1 26 26 26
+            emphasis_2 247 37 160
+            emphasis_3 0 135 215
+        }
+        exit_code_error {
+            base 215 0 0
+            background 0
+            emphasis_0 215 135 0
+            emphasis_1 0
+            emphasis_2 0
+            emphasis_3 0
+        }
+        multiplayer_user_colors {
+            player_1 124 58 237
+            player_2 34 205 218
+            player_3 47 152 68
+            player_4 215 135 0
+            player_5 247 37 160
+            player_6 0
+            player_7 215 0 0
+            player_8 0
+            player_9 0
+            player_10 0
+        }
+    }
+}

@@ -416,6 +416,11 @@ dotfile_links:
   # HESTIA_HOOK action sequences (docs/video-capture-design.md). Same
   # claude-tagged rationale as hestia-shot itself.
   - { src: user/bin/hestia-type,            dest: "{{ target_home }}/.local/bin/hestia-type", claude: true }
+  # Declarative YAML action-script runner on top of hestia-shot+hestia-type —
+  # turns a labelled-beat script into one hestia-type call wired as
+  # HESTIA_HOOK, so a demo doesn't need a hand-assembled shell string
+  # (docs/video-capture-design.md). Same claude-tagged rationale.
+  - { src: user/bin/hestia-video,           dest: "{{ target_home }}/.local/bin/hestia-video", claude: true }
   # DuckDNS dynamic-DNS updater, driven by the cron entry the `duckdns` role installs.
   # The SCRIPT is public (it reads its token from a 0600 config the role renders);
   # NOT claude-tagged — the container/DNS layer is dimitrios's.

@@ -254,14 +254,86 @@ env-parity rig build:
      available if a mid-sequence drop resurfaces. The storyboard compiler
      (next phase) is expected to render each beat's typed actions through
      this tool rather than hand-rolled `wtype` calls.
-3. **The storyboard compiler, silent first.** YAML → derived action
-   timeline → recorded clip, no audio yet. Verifies layer 2's timeline
-   derivation without also debugging TTS at the same time.
-4. **TTS integration.** Pick the engine (§5's open question), wire in
-   per-beat rendering + `ffprobe` duration + the mux step. First real
-   narrated clip end to end.
-5. **Publish integration.** Land the `showcase/video/` convention (§7),
-   confirm against stoa's actual rendering, ship one real chapter's clip.
+3. **The storyboard compiler, silent first.** ✅ **DONE (2026-08-18), scope
+   narrowed — see §11.** `user/bin/hestia-video`: YAML (labelled beats of
+   `text`/`key`/`pause` actions) → ONE flattened `hestia-type` call wired as
+   `HESTIA_HOOK` → `hestia-shot --record`. No duration-derivation step — §11
+   explains why that's not a gap, just a consequence of skipping audio.
+   Piloted end-to-end against a real thecodingidiot chapter (stoa's
+   `tools/video-capture/scenes/f04-your-first-program.yml`): opens vim on a
+   blank file, types `hello.c` exactly matching the chapter's own code
+   block (byte-for-byte, frame-checked), saves, compiles, runs, shows
+   `Hello, world.` — 21.7s clip, verified by extracting and eyeballing
+   frames, not just a non-empty file.
+4. **TTS integration.** **PAUSED, not scoped for now — owner decision, see
+   §11.** May come back later; don't build proactively.
+5. **Publish integration.** **NOT STARTED.** Land a `showcase/video/`-style
+   convention once there's an actual player/embed story for a silent
+   capture-pipeline clip (thecodingidiot's `<Explainer>` today is
+   Manim-specific) — deliberately deferred past the pilot, not blocked on
+   anything technical.
+
+## 11. Scope pivot (2026-08-18) — sound punted, storyboard compiler simplified
+
+Owner call: don't build phases 4-5 as originally scoped. thecodingidiot has
+no audio anywhere yet (the Manim explainer pipeline is silent too, the
+curriculum's games have none either) and audio/video muxing is cheap to add
+later — so narration stays punted until owner-initiated, not built ahead of
+need. **Don't propose TTS/audio work proactively.**
+
+This isn't just "skip a phase" — it changes what phase 3 needed to be.
+§5's whole design problem (precompute TTS durations so recording and
+narration sync "by construction," instead of live A/V lockstep) evaporates
+without audio: a silent compiler has nothing to synchronize against. What's
+left is much smaller than §4's original shape implied — `hestia-video` is
+that smaller thing, not a stub of the original plan.
+
+**The actual target use case**, named explicitly by the owner: the
+curriculum explains concepts and gives code blocks, but a code block gets
+copy-pasted — it doesn't teach the "blank file → working program" skill
+(scaffolding, writing incrementally, compiling, running) that was the
+owner's own hardest part of learning to code. A silent recording of vim
+being driven like a real person typing teaches that; static text
+structurally can't. Named competitive framing: most of the owner's
+coding-school peers learned from YouTube; a pure-reading-experience
+curriculum is at a real disadvantage against that regardless of writing
+quality.
+
+**A real gotcha found piloting this, and how it actually got fixed** (owner
+feedback after seeing the first pilot render): the deployed hestia vimrc's
+`filetype plugin indent on` auto-indents on Enter/`{`/`}` for many
+filetypes — literal leading whitespace typed on top of that produces WRONG,
+accumulating indentation (confirmed live: 4-space C source came out 6, then
+10 spaces per subsequent line). The first fix (`:setlocal noai nocin nosi
+indentexpr=` typed as the first on-camera action) worked, but the owner
+correctly rejected it as the wrong LAYER to fix it at: it's a config
+workaround visible in the recording, and — the bigger issue — the whole
+recorded session was running under whichever real user's `$HOME` happened
+to invoke `hestia-video`, so the clip's shell prompt leaked that user's
+real identity (`claude`) too, plus a random `mkdtemp` path. All three are
+one root cause: nothing about this scene was isolated from the invoking
+user's real environment, the same problem `hestia-shot` already solved for
+waybar/alacritty (stages resolved theme copies into `$WORK` instead of
+trusting the deployed configs) but never extended to bash+vim.
+
+**Real fix, landed same round**: `user/video-rig/` — a versioned, nobody's-
+personal-identity `bashrc` + `vimrc-{dark,light}` pair. `hestia-video`
+stages these as a throwaway `$HOME` (`stage_rig_home()`) for just the
+recorded shell's child process (`env HOME=<staged> bash`, wrapping the
+`app` scene's command — no `hestia-shot` changes needed, its existing
+`app "<command>"` flexibility already covers this). The rig vimrc skips
+`filetype indent` entirely (loads `filetype plugin on` only) rather than
+disabling autoindent after the fact — the conflict never exists, so no
+on-camera command is needed at all. `colorscheme hestia` resolves via a
+FRESH COPY of `user/vim/colors/hestia.vim` staged into `$HOME/.vim/colors/`
+each run (not a symlink to anyone's real `~/.vim`). Owner-specified
+constraints for the profile: prompt is bare `$ ` (no username/host/path at
+all — the strictest of three options offered), vimrc keeps hestia's real
+colorscheme/line-numbers/cursorline for visual consistency with existing
+showcase content but none of the personal plugin/keymap layer. Re-piloted
+against the same f04 chapter scene end-to-end (frame-checked again): clip
+now shows only `$ vim hello.c` / `$ gcc hello.c -o hello` / `$ ./hello` /
+`Hello, world.` — no identity, no path, no config command, anywhere.
 
 ## 10. Open questions
 

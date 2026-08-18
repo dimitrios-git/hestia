@@ -240,12 +240,18 @@ env-parity rig build:
      with human-shaped per-character timing (jitter around a target WPM,
      extra beats after spaces/punctuation, a small tax on shifted characters)
      instead of a flat `-d N` delay, so a typed action in a recorded demo
-     reads like a person typing it rather than a metronome. Surfaced and
-     fixed a genuine nested-rig quirk along the way: `hestia-shot`'s headless
-     compositor silently drops the first unit sent immediately after every
-     `wtype -s` pause (confirmed live, and confirmed absent on a real
-     desktop — a rig-specific input-timing issue, not a `wtype` bug); the
-     tool compensates by sending that unit twice. The storyboard compiler
+     reads like a person typing it rather than a metronome. Surfaced a
+     genuine nested-rig input-drop quirk along the way — confirmed absent on
+     a real desktop, so it's rig-specific, not a `wtype` bug — but **two
+     rounds of live evidence on its exact shape disagree**: the tool's first
+     build needed every `-s` pause compensated (a mid-text pause dropped the
+     "-" in "-u"); generating the actual published demo (2026-08-18) showed
+     that default *creating* visible duplicate characters instead, with only
+     the sequence's very first unit ever actually dropped. Rather than treat
+     either round as settled, `hestia-type` now exposes both as
+     `--drop-compensation {opener,every-pause,none}` — `opener` (matching
+     round 2) is the default; `every-pause` (round 1's behaviour) stays
+     available if a mid-sequence drop resurfaces. The storyboard compiler
      (next phase) is expected to render each beat's typed actions through
      this tool rather than hand-rolled `wtype` calls.
 3. **The storyboard compiler, silent first.** YAML → derived action

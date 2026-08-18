@@ -25,25 +25,46 @@ Example — the vim-hello-world demo, by hand vs. via this tool:
 
 ALL actions are sent as ONE wtype invocation — never one wtype call per
 action. Caught live building the vim-hello-world demo: hestia-shot's nested
-headless rig drops the first character/key sent after EVERY `-s` pause —
-including the pause-of-zero-length before the sequence's very first unit,
-but NOT limited to it: an early version of this tool only compensated that
-opening unit and worked on a pause-free run of text, then silently lost the
-"-" in "-u" the instant per-word pauses were added mid-text (confirmed the
-pause was the trigger, not the character or its position: swap the timing
-model to zero mid-text pauses and the loss disappears). Confirmed against a
-REAL desktop too — identical calls there never drop anything — so this is a
-nested-compositor input-timing quirk, not a wtype bug in general. Every unit
-immediately following a `-s` (explicit pause: action, or this tool's own
-automatic word/punctuation pause) is sent twice to compensate; the rig eats
-the first, the second lands, and the visible result is correct with no
-stray duplicate (verified: typing "vvim" this way renders as plain "vim" on
-screen, not "vvim").
+headless rig drops a unit of input under some as-yet-not-fully-pinned-down
+condition related to resuming after a `-s` pause. Two rounds of live
+evidence on this, pointing different directions:
 
-That compensation assumes the drop actually happens (true in hestia-shot's
-rig, false on a real desktop) — use --no-drop-compensation when driving a
-real session directly, or every doubled unit will visibly show up twice
-(or, for a mode-toggle key, undo itself).
+- **Round 1** (this tool's original build): a version that only compensated
+  the sequence's opening unit worked on a pause-free run of text, then
+  silently lost the "-" in "-u" the instant per-word pauses were added
+  mid-text. Read at the time as "every `-s` pause is its own drop boundary,"
+  so the tool was built to double the unit after EVERY pause.
+- **Round 2** (generating the actual vim-hello-world demo, 2026-08-18): that
+  default did the OPPOSITE of help — real characters came out visibly
+  doubled ("vim -u rig.vim hello.txt" became "vim --u rrig.vvim
+  hhello.ttxt"). Turning compensation off entirely and re-running the exact
+  same call showed only ONE unit lost, ever: the very first one sent in the
+  whole invocation — not one after any later pause, word-boundary pauses
+  mid-text included.
+
+Those two findings contradict each other, and there's no confirmed root
+cause to arbitrate between them (compositor scheduling jitter under
+different system load is the leading guess, not a diagnosis) — so rather
+than pick one and silently drop the other's evidence, both compensation
+strategies are available:
+
+- **`--drop-compensation opener`** (the DEFAULT) — double only the very
+  first unit of the whole invocation. This is what round 2 actually needed
+  and verified end-to-end (the published vim-hello-world demo was recorded
+  this way).
+- **`--drop-compensation every-pause`** — the original, stronger behaviour:
+  double the unit after EVERY `-s` pause. Reach for this if a mid-sequence
+  drop resurfaces (round 1's failure mode) — the DEFAULT above will not
+  catch that case.
+- **`--drop-compensation none`** (same as the old `--no-drop-compensation`,
+  kept as an alias) — no doubling at all. Use when driving a REAL desktop
+  directly: identical calls there never drop anything, confirmed both
+  rounds, so any compensation there just shows up as a visible stray
+  duplicate (or, for a mode-toggle key, undoes itself).
+
+Don't mix `every-pause` compensation into a run where only the opener
+actually drops — that's exactly what produced the doubled "vim --u
+rrig.vvim hhello.ttxt" above.
 
 Options:
   --wpm N                  target words-per-minute (default 280 — a fast,
@@ -52,7 +73,8 @@ Options:
   --jitter F                relative per-character timing jitter, 0-1
                             (default 0.35)
   --seed N                  RNG seed, for a reproducible take
-  --no-drop-compensation    don't double the first unit (see above)
+  --drop-compensation MODE  opener (default) | every-pause | none (see above)
+  --no-drop-compensation    deprecated alias for --drop-compensation none
   --dry-run                 print the wtype argv instead of running it
 """
 import argparse
@@ -85,32 +107,30 @@ def parse_actions(raw):
     return actions
 
 
-def build_argv(actions, wpm, jitter, rng, compensate):
-    """Every `-s` pause is its own drop boundary, not just the start of the
-    whole invocation — caught live: a version that only doubled the very
-    first character worked for a pause-free run of text, but silently lost
-    the '-' in '-u' the moment word-boundary pauses were introduced mid-text
-    (confirmed the pause was the trigger: the hand-tuned version that had
-    zero mid-text `-s` calls never lost a character; this one, with a `-s`
-    after every space, lost exactly the character right after one). So
-    `needs_comp` is armed by ANY `-s` — an explicit pause: action or an
-    automatic word/punctuation one — and disarmed by doubling whatever
-    unit (character or key) comes next, not just the sequence's opener.
+def build_argv(actions, wpm, jitter, rng, drop_compensation):
+    """drop_compensation is one of "opener" (default), "every-pause", or
+    "none" — see the module docstring for the two contradictory live
+    findings behind why this is a choice rather than one hardcoded rule.
+    "opener" arms compensation once, before anything is sent, and consumes
+    it on the very first emitted unit. "every-pause" re-arms it after every
+    `-s`, whether an explicit pause: action or this tool's own automatic
+    word/punctuation one, so every post-pause unit gets doubled — the
+    stronger, riskier-to-overcorrect-with mode.
     """
     avg_ms = 60000 / (wpm * 5)  # ~5 chars/word, the standard WPM convention
     argv = []
-    needs_comp = compensate  # armed before anything is sent too — the original finding
+    needs_comp = drop_compensation != "none"  # armed before anything is sent too
 
     def add_pause(ms):
         nonlocal needs_comp
         argv.extend(["-s", str(int(ms))])
-        if compensate:
+        if drop_compensation == "every-pause":
             needs_comp = True
 
     def emit(unit):
         nonlocal needs_comp
         if needs_comp:
-            argv.extend(unit)  # sacrificial — the drop-after-pause eats this one
+            argv.extend(unit)  # sacrificial — the drop eats this one
             needs_comp = False
         argv.extend(unit)
 
@@ -147,14 +167,17 @@ def main():
     ap.add_argument("--wpm", type=float, default=280)
     ap.add_argument("--jitter", type=float, default=0.35)
     ap.add_argument("--seed", type=int, default=None)
-    ap.add_argument("--no-drop-compensation", action="store_true")
+    ap.add_argument("--drop-compensation", choices=("opener", "every-pause", "none"), default="opener")
+    ap.add_argument("--no-drop-compensation", action="store_true",
+                     help="deprecated alias for --drop-compensation none")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("actions", nargs="+")
     args = ap.parse_args()
 
+    drop_compensation = "none" if args.no_drop_compensation else args.drop_compensation
     rng = random.Random(args.seed)
     actions = parse_actions(args.actions)
-    argv = build_argv(actions, args.wpm, args.jitter, rng, not args.no_drop_compensation)
+    argv = build_argv(actions, args.wpm, args.jitter, rng, drop_compensation)
 
     if args.dry_run:
         print("wtype", " ".join(argv))

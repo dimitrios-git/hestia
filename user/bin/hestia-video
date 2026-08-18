@@ -51,6 +51,28 @@ Script format (YAML):
             multi
             line
             text
+        - comment: "why this line matters"  # C-only: typed as " /* ... */"
+                                              # at the current cursor, held
+                                              # long enough to read, then
+                                              # BackSpace'd away — the file
+                                              # ends up byte-identical to
+                                              # not having this action at
+                                              # all. Typing ramps faster for
+                                              # longer text (read-while-
+                                              # typed, not just during the
+                                              # hold) — see comment_pacing().
+        - comment:                           # block form: its own line(s)
+            text: |-                          # above the code it explains,
+              first line of the explanation    # deleted with dd instead of
+              second line                       # BackSpace. lines_up is how
+            lines_up: 3                          # many lines above the
+                                                   # CURRENT cursor the code
+                                                   # being explained starts —
+                                                   # read it off relativenumber
+                                                   # (on in the rig for this)
+                                                   # while writing the scene.
+            hold_ms: 3000                          # optional override of the
+                                                     # auto-computed hold
 
 Each beat's actions are concatenated across ALL beats into ONE hestia-type
 call — never one call per beat/action (hestia-type's own docstring explains
@@ -91,7 +113,17 @@ DEFAULT_LINE_PAUSE_MS = (250, 800)  # a beat to "think about the next line" —
                     # hestia-type has no concept of a line (it only ever sees
                     # one text: chunk at a time, already split at newlines by
                     # flatten_actions below), so line-level pacing is this
-                    # tool's job, not hestia-type's character-level one
+                    # tool's job, not hestia-type's
+
+# comment: pacing — a long explanation is being READ while it's typed, not
+# just during the hold after (owner, 2026-08-19), so it doesn't need the
+# same deliberate pace as code being composed. Numbers are starting points,
+# same as every other pacing constant here — tune after watching a render.
+COMMENT_WPM_MAX = 340
+COMMENT_WPM_PER_CHAR = 0.5
+COMMENT_HOLD_BASE_MS = 1200
+COMMENT_HOLD_PER_WORD_MS = 150
+COMMENT_HOLD_MAX_MS = 4000
 
 
 def resolve_repo():
@@ -165,42 +197,182 @@ def load_script(path):
     return doc
 
 
-def flatten_actions(doc, rng, line_pause_range):
-    """Beats exist only for the script author's readability — flatten to one
-    ordered action list. A text action's embedded newlines become key:Return
-    (a human without editor autoindent typing a literal Enter), not a
-    hestia-type feature — hestia-type sees plain text/key/pause strings.
-
-    Each such synthesized Return also gets a trailing pause — a real coder
-    doesn't advance to the next line at the same tempo as the characters
-    within one (owner feedback, 2026-08-18: the typing read as too uniform,
-    partly because line boundaries carried no beat at all before this). An
-    explicit key:Return the script author wrote themselves (e.g. to run a
-    shell command) is untouched — this only fires for a newline INSIDE a
-    text: value.
+def emit_text(text, flat, rng, line_pause_range):
+    """Shared by text: actions and comment:'s own typed content. Embedded
+    newlines become key:Return (a human without editor autoindent typing a
+    literal Enter), not a hestia-type feature — hestia-type sees plain
+    text/key/pause/wpm strings. Each such synthesized Return also gets a
+    trailing pause — a real coder doesn't advance to the next line at the
+    same tempo as the characters within one (owner feedback, 2026-08-18:
+    the typing read as too uniform, partly because line boundaries carried
+    no beat at all before this).
     """
+    buf = []
+    for ch in text:
+        if ch == "\n":
+            if buf:
+                flat.append(("text", "".join(buf)))
+                buf = []
+            flat.append(("key", "Return"))
+            flat.append(("pause", str(int(rng.uniform(*line_pause_range)))))
+        else:
+            buf.append(ch)
+    if buf:
+        flat.append(("text", "".join(buf)))
+
+
+def emit_command(cmd, flat):
+    """A normal-mode command/motion (e.g. "3k", "4dd") typed as individual
+    key: presses, deliberately NOT text:. text:'s typo injection assumes
+    INSERT-mode editing (wrong char -> notice -> BackSpace -> retype);
+    firing it mid-command would send an unintended vim command instead of
+    a harmless typo — a mistyped digit or motion letter changes what gets
+    deleted or where the cursor ends up, not just what's briefly on
+    screen. key: presses are never typo'd (see hestia-type's build_argv —
+    typo injection only fires inside the text: branch), so this is safe.
+    """
+    for ch in cmd:
+        flat.append(("key", ch))
+
+
+def emit_comment_line(content, leading_space, flat, rng, line_pause_range):
+    """Types one /* content */ comment line — but the CLOSING */ gets
+    typed immediately after the OPENING /*, before content, then the
+    cursor moves back in to fill content between them. Typing the whole
+    thing straight through left-to-right (the original approach) leaves
+    the comment syntactically UNCLOSED for the entire time content is
+    being typed — owner feedback (2026-08-19): Neovim's treesitter
+    highlighting genuinely misbehaves during that window ("goes mad"),
+    worse than the "just reads as plain text until closed" originally
+    assumed — see docs/video-capture-design.md's comment-feature section.
+    Opening-then-closing immediately is also literally how a real editor
+    with bracket/comment auto-pairing behaves — see user/video-rig/*'s
+    own auto-pair keymaps, added the same round for the same reason,
+    extended to ()/[]/{}"" too.
+
+    This project's C style is /* */ only, never // — confirmed against
+    every existing code block in f04-writing-c (2026-08-19): even a
+    comment standing alone above a data block is one self-contained
+    /* ... */, never a K&R-style /* \\n * ... \\n */ continuation block.
+    (/* */ is the original ISO C89/C90 comment syntax; // is a C++ import
+    C didn't standardise until C99 — this curriculum teaches traditional,
+    portable C, so it's the right default beyond just "matches existing
+    style".) leading_space: True for inline (appended after code already
+    on the line); False for block (its own line, starts at column 0, no
+    auto-indent to match either — see vimrc-*/nvimrc-*'s indent notes).
+
+    Returns the total character count typed (wrapper + content) — the
+    caller needs this to compute an exact BackSpace cleanup count for
+    inline comments.
+    """
+    wrapper = f"{' ' if leading_space else ''}/*  */"  # TWO spaces between
+    emit_text(wrapper, flat, rng, line_pause_range)     # the *s — content
+    flat.extend([("key", "Left")] * 3)                  # goes between them
+    emit_text(content, flat, rng, line_pause_range)
+    flat.extend([("key", "Right")] * 3)  # back past " */" to the true end
+    return len(wrapper) + len(content)
+
+
+def comment_pacing(text, scene_wpm):
+    """Comment typing ramps up with length: a long explanation is being
+    read WHILE it's typed, not just during the hold after (owner,
+    2026-08-19), so it doesn't need code's more deliberate pace. Hold time
+    is generous and capped, not linear — a long comment's own (still
+    slower-than-short-comment) typing time already gives a reader most of
+    what they need; the hold is the "let it sink in" beat after typing
+    stops, not the whole reading budget. typo_rate is untouched by any of
+    this — it's a fixed per-character probability, so longer text already
+    produces proportionally more typos for free.
+    """
+    chars = len(text)
+    words = max(1, len(text.split()))
+    wpm = min(COMMENT_WPM_MAX, scene_wpm + COMMENT_WPM_PER_CHAR * chars)
+    hold_ms = min(COMMENT_HOLD_MAX_MS, COMMENT_HOLD_BASE_MS + COMMENT_HOLD_PER_WORD_MS * words)
+    return wpm, hold_ms
+
+
+def emit_comment(spec, flat, rng, line_pause_range, scene_wpm):
+    """Expands one comment: action — an explanatory C comment that gets
+    typed, held long enough to read, then removed, leaving the file
+    byte-identical to what it would be without it. Two shapes, chosen by
+    whether lines_up is present:
+
+    - inline (a plain string, or a mapping with no lines_up): appended at
+      the CURRENT cursor position (e.g. right after a line just typed) as
+      " /* text */" — see emit_comment_line for why */ gets typed right
+      after /*, before the content, not at the natural end — then removed
+      with exactly as many BackSpace presses as characters were typed:
+      insertion count == deletion count by construction, so there's no
+      hand-counted BackSpace to get wrong.
+    - block (a mapping WITH lines_up): its own line(s) above the code it
+      explains. lines_up is how many lines above the CURRENT cursor the
+      top of that code sits — the same number relativenumber shows a real
+      vim/nvim user (see vimrc-*/nvimrc-*.lua — on deliberately, so a
+      scene author can read this number off a real editor while writing
+      the YAML). Moves up, opens a line, types the (possibly multi-line)
+      comment, holds, moves to the comment's own first line, deletes
+      exactly its own line count with dd, then moves back down to resume
+      where the scene left off.
+    """
+    spec = {"text": spec} if isinstance(spec, str) else dict(spec)
+    text = spec["text"]
+    is_block = "lines_up" in spec
+    lines = text.split("\n")
+    ramped_wpm, auto_hold = comment_pacing(text, scene_wpm)
+    hold_ms = spec.get("hold_ms", auto_hold)
+
+    lines_up = int(spec["lines_up"]) if is_block else 0
+    if is_block:
+        if lines_up > 0:
+            emit_command(f"{lines_up}k", flat)
+        flat.append(("key", "O"))
+
+    flat.append(("wpm", str(int(ramped_wpm))))
+    total_chars = 0
+    for i, line in enumerate(lines):
+        total_chars += emit_comment_line(line, not is_block, flat, rng, line_pause_range)
+        if i < len(lines) - 1:
+            flat.append(("key", "Return"))
+            flat.append(("pause", str(int(rng.uniform(*line_pause_range)))))
+    if is_block:
+        # Back to normal mode BEFORE the navigate-and-delete commands below
+        # — missing this sent "1k2dd2j" etc. as literal INSERT-mode text
+        # instead of motions, confirmed live (2026-08-19): the block typed
+        # fine, but the deletion commands showed up as garbage characters
+        # in the file instead of removing anything. Inline doesn't need
+        # this — its BackSpace cleanup runs WHILE still in insert mode, by
+        # design (see the else branch below).
+        flat.append(("key", "Escape"))
+    flat.append(("wpm", str(int(scene_wpm))))
+    flat.append(("pause", str(int(hold_ms))))
+
+    if is_block:
+        comment_lines = len(lines)
+        if comment_lines > 1:
+            emit_command(f"{comment_lines - 1}k", flat)
+        emit_command(f"{comment_lines}dd", flat)
+        if lines_up > 0:
+            emit_command(f"{lines_up}j", flat)
+    else:
+        flat.extend([("key", "BackSpace")] * total_chars)
+
+
+def flatten_actions(doc, rng, line_pause_range, wpm):
+    """Beats exist only for the script author's readability — flatten to
+    one ordered action list."""
     flat = []
     for beat in doc["beats"]:
         for action in beat.get("actions", []):
             if "text" in action:
-                buf = []
-                for ch in action["text"]:
-                    if ch == "\n":
-                        if buf:
-                            flat.append(("text", "".join(buf)))
-                            buf = []
-                        flat.append(("key", "Return"))
-                        flat.append(("pause", str(int(rng.uniform(*line_pause_range)))))
-                    else:
-                        buf.append(ch)
-                if buf:
-                    flat.append(("text", "".join(buf)))
+                emit_text(action["text"], flat, rng, line_pause_range)
+            elif "comment" in action:
+                emit_comment(action["comment"], flat, rng, line_pause_range, wpm)
             elif "key" in action:
                 flat.append(("key", str(action["key"])))
             elif "pause" in action:
                 flat.append(("pause", str(action["pause"])))
             else:
-                sys.exit(f"hestia-video: bad action {action!r} (want text/key/pause)")
+                sys.exit(f"hestia-video: bad action {action!r} (want text/key/pause/comment)")
     return flat
 
 
@@ -256,7 +428,7 @@ def main():
     rng = random.Random(seed)  # drives line-pause jitter — same rng a re-run
                                  # with the same seed reproduces, consistent
                                  # with hestia-type's own seeded reproducibility
-    flat = flatten_actions(doc, rng, line_pause_range)
+    flat = flatten_actions(doc, rng, line_pause_range, wpm)
     hook = build_hook(flat, wpm, jitter if jitter is not None else 0.35, seed, drop_compensation, typo_rate)
 
     scene = doc.get("scene", "app")

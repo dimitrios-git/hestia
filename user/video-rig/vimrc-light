@@ -7,6 +7,7 @@
 set nocompatible
 set termguicolors
 set number
+set relativenumber
 set cursorline
 set laststatus=2
 syntax on
@@ -23,5 +24,47 @@ colorscheme hestia
 " `:setlocal` workaround needed, and no per-scene indent guessing either.
 filetype plugin on
 set shiftwidth=4 tabstop=4 expandtab
+
+" Minimal auto-pairs, hand-rolled rather than installing a plugin (owner,
+" 2026-08-19: their real personal profile uses coc.nvim's coc-pairs, but
+" coc.nvim is a full LSP/completion framework — far too heavy for a rig
+" that's deliberately plugin-free). Replicates just the BEHAVIOUR: typing
+" an opener inserts its closer immediately with the cursor between them;
+" typing the closer when it's already the very next character moves over
+" it instead of inserting a second one, so existing scenes (which already
+" type BOTH characters of a pair explicitly) need no rewriting.
+" Deliberately NOT "smart" — no backspace-deletes-empty-pair-together —
+" BackSpace always removes exactly one character, which comment: 's
+" exact-count cleanup (hestia-video's emit_comment_line) depends on.
+"
+" /* */ comments are NOT handled here, deliberately: `a / *ptr` (division
+" then a pointer dereference) also contains the sequence "/","*" — a
+" naive auto-pair rule on that trigger risks a phantom */ in real code
+" that isn't a comment. hestia-video's comment: action handles /* */
+" immediate-closing itself (see emit_comment_line), where the tool KNOWS
+" it's typing a comment rather than guessing from two characters.
+function! s:PairOpen(open, close)
+  return a:open . a:close . "\<Left>"
+endfunction
+function! s:PairSkip(char)
+  if getline('.')[col('.') - 1] ==# a:char
+    return "\<Right>"
+  endif
+  return a:char
+endfunction
+function! s:QuotePair(q)
+  if getline('.')[col('.') - 1] ==# a:q
+    return "\<Right>"
+  endif
+  return a:q . a:q . "\<Left>"
+endfunction
+inoremap <expr> ( <SID>PairOpen('(', ')')
+inoremap <expr> [ <SID>PairOpen('[', ']')
+inoremap <expr> { <SID>PairOpen('{', '}')
+inoremap <expr> ) <SID>PairSkip(')')
+inoremap <expr> ] <SID>PairSkip(']')
+inoremap <expr> } <SID>PairSkip('}')
+inoremap <expr> " <SID>QuotePair('"')
+inoremap <expr> ' <SID>QuotePair("'")
 
 autocmd VimEnter * redraw | echo ''

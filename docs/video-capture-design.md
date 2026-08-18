@@ -492,6 +492,162 @@ The pilot scene now types `nvim hello.c` — honestly, not aliased behind
 alongside `vimtutor`, so a viewer who notices `nvim` in a recording isn't
 left wondering why it's a name the curriculum never mentioned.
 
+## 15. Live-typed, self-deleting explanatory comments (2026-08-19, ninth)
+
+New experiment, owner-proposed: turn the pilot into a teaching device
+without narration — write a real C comment explaining a line or concept
+live, hold it on screen long enough to read, then erase it live, leaving
+the file exactly as it would be without the aside. A code block alone
+shows *what* to type; this shows the "why" a reader would otherwise only
+get from someone talking over the recording — which this pipeline
+deliberately doesn't do (§11).
+
+**Planned before building, not built first** — owner interrupted an
+in-progress implementation start ("Don't implement yet, let's plan this")
+specifically to lock the design first. Worth remembering as a standing
+preference: for a genuinely new mechanism (not a bugfix to something
+already agreed), design + confirm before code, even mid-turn.
+
+**Two shapes, one `comment:` action** (`hestia-video`), chosen by the
+presence of `lines_up`:
+- **inline** — a plain string, or a mapping with no `lines_up`. Appended
+  at the CURRENT cursor position (typically right after a line just
+  typed) as `" /* text */"`, held, then removed with exactly as many
+  `BackSpace` presses as characters were typed. Insertion count equals
+  deletion count by construction — no hand-counted `BackSpace` to get
+  wrong in a scene's YAML.
+- **block** — a mapping WITH `lines_up`: how many lines above the CURRENT
+  cursor the top of the code being explained sits. Moves up, opens a line
+  (`O`), types the (possibly multi-line) comment, holds, moves to the
+  comment's own first line, deletes exactly its own line count with `dd`,
+  moves back down to resume where the scene left off. Each of the
+  author's own newline-separated segments becomes its own complete
+  `/* ... */` line — no word-wrapping/reflow, matching how `text:` never
+  reflows either.
+
+**C-only, `/* */` exclusively, verified against the actual codebase, not
+assumed**: grepped every code block across `f04-writing-c` — 100%
+`/* */`, zero `//`, including a comment standing alone above a data block
+(never a K&R-style `/* \n * ... \n */` continuation form either). Owner's
+own reason, better than "matches existing style" alone: `/* */` is the
+original ISO C89/C90 comment syntax; `//` is a C++ import C didn't
+standardise until C99 — this curriculum teaches traditional, portable C.
+
+**Pacing — the one genuinely new `hestia-type` primitive**: a `wpm:N`
+action, changing the typing rate from that point forward in the SAME
+invocation (previously `--wpm` was fixed for a whole scene). Owner's
+insight: a long comment is being read WHILE it's typed, not just during
+the hold after, so it doesn't need code's more deliberate pace — typing
+ramps with length (`comment_wpm = min(340, scene_wpm + 0.5 × chars)`),
+hold time is generous and capped rather than linear
+(`min(4000, 1200 + 150 × words)`), and typo rate is untouched — the
+existing fixed per-character probability already produces proportionally
+more typos in longer text for free. All numbers are starting points, same
+as every other pacing constant here — tune after watching a render, not
+treated as final on paper.
+
+**Deletion variety (visual-select, normal-mode `h`/`0`+`d` for inline;
+visual-line for block) explicitly deferred** — owner's own framing:
+implement one reliable mechanic per style now, architect so a `method:`
+field can pick or randomise among alternatives later, don't build the
+variety this round.
+
+**`relativenumber` added to all four rig configs** (vim + nvim, dark +
+light) — not just cosmetic: it's how a scene author computes `lines_up`
+while writing the YAML (read the number off a real editor, same as owner
+does day to day), and it's now visibly authentic in the recording too.
+
+**Two real bugs found only by rendering and checking the actual output
+file, not the dry-run argv or frame screenshots**:
+1. Motion/command keystrokes (`3k`, `4dd`) were nearly routed through the
+   same `text:` path as prose — caught during design, before code: that
+   path's typo injection assumes INSERT-mode editing (wrong char → notice
+   → BackSpace → retype); firing it mid-command would send an unintended
+   vim command (a mistyped digit or motion letter changes what gets
+   deleted or where the cursor lands) instead of a harmless correctable
+   typo. Fixed by giving motion/command sequences their own path
+   (`emit_command`) — individual `key:` presses, which are never typo'd.
+2. The first real render of the block form corrupted the file — it
+   LOOKED right on paper (navigation math checked out) but the deletion
+   commands (`1k2dd2j`) showed up as literal garbage characters in
+   `hello.c` instead of deleting anything. Root cause: no `key: Escape`
+   after typing the block comment's content, so the "delete it" commands
+   were STILL sent in insert mode and got typed as text instead of
+   interpreted as motions. Fixed with an explicit `Escape` between typing
+   the block and navigating to delete it — inline doesn't need this (its
+   `BackSpace` cleanup runs while still in insert mode, by design).
+
+Verified end-to-end on the real pilot scene after both fixes: rendered
+with `--keep-workdir`, `hello.c` diffed byte-identical against the
+chapter's own code block, compiled clean with `gcc -Wall -Wextra`, ran
+correctly. Frame-checked too: the syntax highlighter only colours a
+comment once it's syntactically closed (the `*/` typed) — an in-progress
+`/* pulls in...` reads as plain text until closed, then retroactively
+recolours the instant `*/` lands. Not a bug, just how incremental
+highlighting works — and it reads as fairly natural on screen.
+
+## 16. Comment immediate-closing + auto-pairs (2026-08-19, tenth)
+
+Owner watched the live-comment feature (§15) render and flagged a real
+problem: typing a comment straight through left-to-right (`/* ` then the
+whole explanation then finally ` */`) leaves it syntactically UNCLOSED for
+the entire time the explanation is being typed — Neovim's treesitter
+highlighting genuinely misbehaves during that window ("the parser goes
+mad with the coloring"), not just "reads as plain text until closed" as
+originally assumed watching the first render. Owner's fix, generalised
+correctly beyond just comments: establish a PATTERN of typing the closing
+delimiter immediately after the opening one, then filling content in
+between — the same principle real auto-pair-equipped editors already
+apply to `()[]{}""`, so do the same there too.
+
+**Comments**: `hestia-video`'s `emit_comment_line` (replacing the old
+`wrap_c_comment`) now types `/*  */` (note: two spaces between the `*`s)
+as one unit, moves the cursor back 3 with `key: Left`, types the actual
+content between the two spaces, then moves forward 3 with `key: Right` to
+return to the true end — same visible final string as before
+(`/* content */`), same exact-count `BackSpace`/`dd` cleanup as before
+(insertion/deletion counts are unaffected by internal typing order), just
+never syntactically unclosed at any point while typing. Verified live:
+the whole comment — including the still-being-typed middle — stays
+correctly coloured throughout, not just once `*/` lands.
+
+**Brackets/parens/quotes**: checked the owner's own personal profile
+first rather than guessing — it uses `coc.nvim`'s `coc-pairs` extension
+(`user/vim/.vimrc:177`). Deliberately NOT installed here: `coc.nvim` is a
+full LSP/completion framework (Node.js-backed, manages a dozen
+extensions, language servers) — far too heavy for a rig that's
+deliberately plugin-free. Instead, `user/video-rig/{vimrc,nvimrc}-{dark,
+light}` gained ~15-line hand-rolled equivalents (Vimscript `<expr>`
+`inoremap`s / Lua `vim.keymap.set` with `expr=true`) replicating just the
+BEHAVIOUR: an opener inserts its closer immediately with the cursor
+between them; a closer, when it's already the very next character, moves
+over it instead of duplicating. Deliberately NOT "smart" — no backspace-
+deletes-an-empty-pair-together behaviour — `BackSpace` always removes
+exactly one character, which `comment:`'s exact-count cleanup depends on.
+
+`/* */` is explicitly NOT handled by the general bracket-pair keymaps,
+and that's deliberate, not an oversight: `a / *ptr` (division then a
+pointer dereference) also contains the two-character sequence `/` `*` — a
+naive editor-level auto-pair rule on that trigger risks inserting a
+phantom `*/` into real C code that isn't a comment at all. `hestia-video`
+handles `/* */` itself instead (`emit_comment_line`), where the tool
+KNOWS it's typing a comment rather than guessing from two characters in a
+stream — a narrower, unambiguous fix at the layer that actually has the
+context to make it safely.
+
+**Compatibility with every existing scene, verified not assumed**: since
+every scene so far already types BOTH characters of any pair explicitly
+(nothing relied on auto-completion), the "skip over the closer instead of
+duplicating" rule means no existing scene needed rewriting — including
+the scaffold-first sequence's riskiest case, typing `{` then `Return`
+then `}` on separate lines, where the auto-inserted `}` (same line as the
+`{` at first) gets pushed to its own line by the `Return` exactly as
+intended, and the scene's own subsequent `}` keystroke correctly skips
+over the one already there instead of adding a second. Confirmed by
+re-rendering the full real pilot scene end to end: `hello.c` still diffs
+byte-identical against the chapter's own code block, compiles clean with
+`gcc -Wall -Wextra`, runs correctly.
+
 ## 10. Open questions
 
 - **TTS engine** — Piper (local, default-recommended) vs. a cloud API

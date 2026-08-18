@@ -394,6 +394,43 @@ frame also caught a live typo-in-progress (`prij` mid-typing `printf`,
 about to self-correct) — the mechanism is visibly real, not just
 unit-tested in isolation.
 
+## 13. Recording quality + prompt branding (2026-08-18, seventh)
+
+Owner watched the pilot clip and flagged perceived colour drift on
+syntax-highlighted text (the orange `int`/`void` in particular). Turned
+out to be encoder defaults, not a real theme/colour-space problem:
+`hestia-shot`'s record mode ran `wf-recorder` with zero tuning, defaulting
+to `yuv420p` (quarter chroma resolution — the actual cause of both the
+perceived colour bleed AND the softness the owner also noticed) at a very
+low ~139kbps for a 1280x720 clip.
+
+Considered and ruled out: rendering at a higher resolution and downscaling
+(the supersampling trick `tools/manim` gets for free, since it's a
+deterministic vector re-render). Doesn't transfer here — this is a
+real-time capture on the already-fragile headless/pixman rig, so a higher
+resolution risks the SAME frame-timing/input-drop fragility
+`hestia-type`'s drop-compensation already exists to work around. Different
+lever needed.
+
+**Fix**: `wf-recorder --no-damage -x yuv444p -p crf=18 -p preset=slow`
+— full chroma resolution (no subsampling) at a real quality target
+instead of the default. Verified with a same-seed before/after frame
+crop, upscaled 6x: visibly crisper text edges, no more colour bleed into
+the background. Cost: ~139kbps → ~164kbps (~18% bigger) — negligible for
+this content, and the slower preset still completed the render in real
+time with no dropped-frame symptoms on this rig. Landed as the new
+DEFAULT for record mode (same "required, not a tuning knob" status as
+`--no-damage` itself) — shoot mode's `grim` call is untouched.
+
+**Also**: the video-rig `.bashrc` prompt gained hestia's own exit-status-
+coloured `$` (green success / red failure) — same `PROMPT_COMMAND`+
+`prompt_exit_status_color()` mechanism as the REAL personal `.bashrc`
+(`user/bash/.bashrc`), with every other segment that prompt has (user,
+path, git branch/status) deliberately left out — the colour is hestia's
+branding, not operator identity, so it doesn't conflict with the earlier
+"bare `$`, no identity" decision (§11). Verified live both ways: a
+successful command keeps `$` green, `false` turns the next one red.
+
 ## 10. Open questions
 
 - **TTS engine** — Piper (local, default-recommended) vs. a cloud API

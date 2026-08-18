@@ -270,7 +270,7 @@ if [ "$MODE" = record ]; then
   # subscription on this backend, not a rendering problem). The frozen
   # damage-tracking mode also failed to exit cleanly on SIGINT in testing;
   # --no-damage's steady polling terminated promptly every time.
-  WAYLAND_DISPLAY="$WD" wf-recorder --no-damage -f "$OUT" >"$WORK/wf-recorder.log" 2>&1 &
+  WAYLAND_DISPLAY="$WD" wf-recorder --no-damage -x yuv444p -p crf=18 -p preset=slow -f "$OUT" >"$WORK/wf-recorder.log" 2>&1 &
   WFPID=$!
   sleep 0.3   # let the encoder actually start before anything on-screen happens
   if [ -n "${HESTIA_HOOK:-}" ]; then

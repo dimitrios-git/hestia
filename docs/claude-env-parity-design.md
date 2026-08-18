@@ -177,9 +177,9 @@ the theme, runs the scene, captures it, and tears the whole thing down:
 hestia-shot desktop  out.png     # waybar + mesh wallpaper + tiled vifm (composite)
 hestia-shot vifm     out.png [p] # vifm alone (any single-app scene)
 hestia-shot ranger|yazi out.png
-hestia-shot app "cmus" out.png   # any command in a themed kitty
+hestia-shot app "cmus" out.png   # any command in a themed alacritty
 hestia-shot vim "+15 sample.py" out.png   # plain vim on the repo colorscheme, borderless
-                                          # (fullscreened kitty — the hestia.vim screenshot scene)
+                                          # (fullscreened alacritty — the hestia.vim screenshot scene)
 hestia-shot url  <url|file> out.png   # a web page (chromium in-sway; re-shot flash-preview)
 ```
 
@@ -210,12 +210,19 @@ What made it work (the load-bearing details):
   (the way the bootstrap symlink does). So it renders the **real** theme from the
   clone — no hardcoded hexes.
 - **Clean teardown** — launched under `setsid` (own process group); teardown does a
-  graceful `swaymsg exit` then a group kill, so waybar/kitty (grandchildren of
+  graceful `swaymsg exit` then a group kill, so waybar/alacritty (grandchildren of
   `dbus-run-session`) never leak. Verified: `changed=0` strays after each run.
 
 Same discipline as the existing TUI **pty-testing** note (CLAUDE.md, repo overview),
 extended from "scrape a TUI" to "screenshot a themed Wayland surface." A re-shoot is
 now a one-line command, not a one-off.
+
+**Record mode (2026-08-18):** the rig also brackets a `wf-recorder` capture around
+the same scene/hook machinery — pass a `.mp4`/`.mkv`/`.webm` output path instead of
+`.png` and the capture mode switches from a single `grim` shot to a recording spanning
+the whole `HESTIA_HOOK` action sequence. This is layer 1 of a video-content pipeline
+built on top of the same rig — full design, phased plan, and the companion
+human-timed-typing tool `user/bin/hestia-type`: `docs/video-capture-design.md`.
 
 ## 8. Phased plan (multiple PRs)
 

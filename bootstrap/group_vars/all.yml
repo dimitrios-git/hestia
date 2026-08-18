@@ -412,6 +412,10 @@ dotfile_links:
   # claude agent re-shoot themed showcase images with no live desktop. claude-tagged
   # (its purpose is claude's, though harmless for dimitrios). No secrets/identity.
   - { src: user/bin/hestia-shot,            dest: "{{ target_home }}/.local/bin/hestia-shot", claude: true }
+  # Companion to hestia-shot's record mode: human-timed wtype driver for
+  # HESTIA_HOOK action sequences (docs/video-capture-design.md). Same
+  # claude-tagged rationale as hestia-shot itself.
+  - { src: user/bin/hestia-type,            dest: "{{ target_home }}/.local/bin/hestia-type", claude: true }
   # DuckDNS dynamic-DNS updater, driven by the cron entry the `duckdns` role installs.
   # The SCRIPT is public (it reads its token from a 0600 config the role renders);
   # NOT claude-tagged — the container/DNS layer is dimitrios's.
@@ -637,7 +641,7 @@ localbin_binaries:
 # bluetuith, Claude Code, **Tailscale** (own repo). (libreoffice is heavy but now
 # an opt-in toggle — the gated `office` group below; Nerd Fonts are the `fonts` role.)
 apt_packages:
-  wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, gammastep, playerctl, xwayland, breeze-cursor-theme, mate-polkit]   # gammastep: software gamma dim of all outputs as the pre-lock warning cue (no hardware backlight on this desktop). mate-polkit: the GTK PolicyKit auth agent — sway runs none by default, so GUI privilege prompts (nemo Open-as-Root, disk mounts, pkexec) are silently denied without it; started from the sway config
+  wayland:   [sway, swayidle, swaylock, waybar, mako-notifier, wofi, grim, slurp, wl-clipboard, brightnessctl, gammastep, playerctl, xwayland, breeze-cursor-theme, mate-polkit, wf-recorder]   # gammastep: software gamma dim of all outputs as the pre-lock warning cue (no hardware backlight on this desktop). mate-polkit: the GTK PolicyKit auth agent — sway runs none by default, so GUI privilege prompts (nemo Open-as-Root, disk mounts, pkexec) are silently denied without it; started from the sway config. wf-recorder: screen recording (wlr-screencopy-v1 — the same protocol grim uses) for hestia-shot's record capture mode, see docs/video-capture-design.md; base/unconditional like grim, not gated — no session-daemon setup needed, it's a one-shot capture tool
   portals:   [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk, pipewire, pipewire-pulse, wireplumber]
   terminal:  [alacritty, kitty, vifm, tree, cmus, cava, glow, imv, zathura, mpv, bat, poppler-utils, mediainfo, 7zip, unzip, pulsemixer, htop, qalc, ncdu, ffmpegthumbnailer, imagemagick]   # alacritty: the DEFAULT terminal (terminal-emulator evaluation verdict, 2026-08 — see showcase/terminal-emulator.md); kitty: KEPT alongside it, unconditional too — ranger's `preview_images_method kitty` and $mod+m's music session (kitty --session, no Alacritty equivalent) still need a real kitty window. bat: syntax-highlighted file preview in vifm (Debian installs it as `batcat`). chafa dropped — vifm no longer renders images in-pane (mediainfo info + imv to open). tree: directory tree viewer (companion to vifm). ffmpegthumbnailer + imagemagick: vifm's imv-browse.sh poster-frame thumbnails for videos (the ▶ overlay) — videos browse alongside images in imv
   editors:   [vim, neovim, build-essential, shellcheck, ripgrep]   # build-essential: nvim treesitter compiles parsers on first run; shellcheck: shell-script linter (neovim shell diagnostics + manual `shellcheck`); ripgrep: backs the vim content-grep keybind (coc-lists `:CocList grep` / `<leader>g`)

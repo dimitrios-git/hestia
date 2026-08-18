@@ -13,21 +13,31 @@
 # name the way the bootstrap symlink does), so nothing needs deploying first.
 #
 # Usage:
-#   hestia-shot <scene> [output.png] [path]
+#   hestia-shot <scene> [output.png|output.mp4] [path]
 # Scenes:
 #   desktop            waybar + mesh wallpaper + tiled vifm (the full composite)
 #   vifm [path]        vifm alone (default path: the repo)
 #   ranger | yazi      that file manager alone
-#   app "<command>"    any command in a themed kitty (e.g. app "cmus")
+#   app "<command>"    any command in a themed alacritty (e.g. app "cmus")
 #   vim "<vim args>"   plain vim with the repo's hestia colorscheme, BORDERLESS —
-#                      the kitty window is fullscreened in the nested sway, so the
+#                      the alacritty window is fullscreened in the nested sway, so the
 #                      shot is exactly the terminal surface (no sway border, no
 #                      wallpaper gaps). This is the hestia.vim screenshot scene.
 #                      e.g.  vim "+15 sample.py"  or  vim "-d old.py new.py"
 #                      Relative paths resolve against your cwd (vim inherits it,
 #                      so the statusline shows the bare filename). Default res
 #                      840x540 — override with HESTIA_RES (vimdiff wants ~1280x620).
-# Env overrides: HESTIA_REPO, HESTIA_VARIANT (dark|light), HESTIA_RES (WxH).
+#
+# CAPTURE MODE is inferred from the output's extension — no separate flag:
+#   .png (default)  single grim shot, after the settle + optional HESTIA_HOOK
+#   .mp4/.mkv/.webm wf-recorder bracketed AROUND the settle + HESTIA_HOOK, so the
+#                    whole scripted action sequence gets captured, not just the
+#                    end state. With no HESTIA_HOOK, records HESTIA_DURATION
+#                    seconds (default 5) of the scene as-is (e.g. ambient motion).
+#                    docs/video-capture-design.md — layer 1 of the video pipeline.
+#
+# Env overrides: HESTIA_REPO, HESTIA_VARIANT (dark|light), HESTIA_RES (WxH),
+#                HESTIA_DURATION (record mode, no-hook seconds, default 5).
 set -euo pipefail
 
 REPO="${HESTIA_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)}"
@@ -57,10 +67,17 @@ WAIT_MATCH=term; SETTLE=1
 # (the vim scene writes its rig vimrc here).
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/hestia-shot.XXXXXX")
 cleanup() {
+  # A still-running recorder (script errored mid-recording) must die BEFORE
+  # sway does — killing sway out from under it would drop the container's
+  # trailer, corrupting the mp4, instead of wf-recorder's own clean finalize.
+  if [ -n "${WFPID:-}" ] && kill -0 "$WFPID" 2>/dev/null; then
+    kill -INT "$WFPID" 2>/dev/null
+    for _ in $(seq 1 20); do kill -0 "$WFPID" 2>/dev/null || break; sleep 0.1; done
+  fi
   # Graceful first (`swaymsg exit` closes waybar + the app), then let
   # dbus-run-session exit on its own so it REAPS its dbus-daemon — a straight
   # group kill orphans that daemon (they pile up and wedge later chromium runs).
-  # Only group-kill (waybar/kitty are grandchildren of dbus-run-session, missed
+  # Only group-kill (waybar/alacritty are grandchildren of dbus-run-session, missed
   # by a plain launcher kill) if it hasn't exited within ~2s.
   [ -n "${SWAYSOCK:-}" ] && swaymsg exit >/dev/null 2>&1 || true
   if [ -n "${SWAYPID:-}" ]; then
@@ -72,11 +89,11 @@ cleanup() {
 trap cleanup EXIT
 
 case "$SCENE" in
-  desktop) APP="kitty --class term -e $VIFM $U"; WANT_BAR=1 ;;
-  vifm)    APP="kitty --class term -e $VIFM ${3:-$REPO}" ;;
-  ranger)  APP="kitty --class term -e ranger ${3:-$REPO}" ;;
-  yazi)    APP="kitty --class term -e yazi ${3:-$REPO}" ;;
-  app)     APP="kitty --class term -e ${2:?scene 'app' needs a command}"; OUT="${3:-$PWD/hestia-shot.png}" ;;
+  desktop) APP="alacritty --class term -e $VIFM $U"; WANT_BAR=1 ;;
+  vifm)    APP="alacritty --class term -e $VIFM ${3:-$REPO}" ;;
+  ranger)  APP="alacritty --class term -e ranger ${3:-$REPO}" ;;
+  yazi)    APP="alacritty --class term -e yazi ${3:-$REPO}" ;;
+  app)     APP="alacritty --class term -e ${2:?scene 'app' needs a command}"; OUT="${3:-$PWD/hestia-shot.png}" ;;
   # Plain vim on the repo's colorscheme, fullscreened so the capture is exactly
   # the terminal surface — the scene hestia.vim's screenshots are shot with. The
   # rig vimrc mirrors those shots: no plugins, line numbers, cursorline, and the
@@ -95,7 +112,7 @@ set background=$VARIANT
 colorscheme hestia
 autocmd VimEnter * redraw | echo ''
 EOF
-           APP="kitty --class term -d $PWD -e vim -u $WORK/rig.vim $VIMARGS"
+           APP="alacritty --class term --working-directory $PWD -e vim -u $WORK/rig.vim $VIMARGS"
            EXTRA_CFG='for_window [app_id="^term$"] fullscreen enable' ;;
   # A URL/file rendered by chromium *inside* the nested sway, captured with grim —
   # NOT chromium's own --screenshot/headless (that path is broken in claude's env;
@@ -138,16 +155,19 @@ if [ "$WANT_BAR" = 1 ]; then
   cp "$U"/waybar/scripts/*.sh "$WORK/wb/scripts/" 2>/dev/null || true
 fi
 
-# --- stage a kitty dir resolving the theme-<variant>.conf pair to `theme.conf` ----
-# The scenes launch bare `kitty`, which reads the DEPLOYED ~/.config/kitty — the
-# deployed variant, not $VARIANT, and not the branch under review (a light shot
-# rendered vim light inside a dark kitty). Stage the repo pair like waybar above
-# and point kitty at it (relative `include theme.conf` resolves in this dir).
-case "$APP" in kitty\ *)
-  mkdir -p "$WORK/kitty"
-  cp "$U/kitty/kitty.conf" "$WORK/kitty/"
-  cp "$U/kitty/theme-$VARIANT.conf" "$WORK/kitty/theme.conf"
-  APP="kitty --config $WORK/kitty/kitty.conf ${APP#kitty }"
+# --- stage an alacritty dir resolving the theme-<variant>.toml pair to `theme.toml` -
+# The scenes launch bare `alacritty`, which reads the DEPLOYED ~/.config/alacritty —
+# the deployed variant, not $VARIANT, and not the branch under review. Stage the repo
+# pair like waybar above — but alacritty.toml's `[general] import` is an ABSOLUTE
+# path (`~/.config/alacritty/theme.toml`), unlike kitty's relative `include
+# theme.conf`, so staging a plain copy would still pull the DEPLOYED theme; the
+# import line itself has to be rewritten to point at the staged one.
+case "$APP" in alacritty\ *)
+  mkdir -p "$WORK/alacritty"
+  sed "s|~/.config/alacritty/theme.toml|$WORK/alacritty/theme.toml|" \
+    "$U/alacritty/alacritty.toml" > "$WORK/alacritty/alacritty.toml"
+  cp "$U/alacritty/theme-$VARIANT.toml" "$WORK/alacritty/theme.toml"
+  APP="alacritty --config-file $WORK/alacritty/alacritty.toml ${APP#alacritty }"
 ;; esac
 
 # --- the throwaway rig sway config ------------------------------------------------
@@ -171,10 +191,14 @@ EOF
   echo "exec sleep 0.3 && $APP"
 } > "$CFG"
 
+# Snapshot the wayland-* sockets BEFORE launch — see the WD resolution below
+# for why. `|| true`: no sockets yet (fresh boot) must not trip -e.
+WD_BEFORE=$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | grep -v '\.lock$' || true)
+
 # --- launch the throwaway compositor (dbus session so waybar/portals init) --------
 export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_HEADLESS_OUTPUTS=1
 # setsid → own process group, so cleanup can kill the whole tree (sway + its
-# dbus-session children waybar/kitty) with one group kill.
+# dbus-session children waybar/alacritty) with one group kill.
 setsid dbus-run-session -- sway -c "$CFG" >"$WORK/sway.log" 2>&1 &
 SWAYPID=$!
 
@@ -190,18 +214,82 @@ done
 [ -n "$SOCK" ] || { echo "hestia-shot: sway did not start" >&2; tail -5 "$WORK/sway.log" >&2; exit 1; }
 export SWAYSOCK="$SOCK"
 
+# Capture mode is inferred from $OUT's extension (see the usage header) — no
+# separate flag, so every existing shoot invocation keeps working unchanged.
+case "$OUT" in
+  *.mp4 | *.mkv | *.webm) MODE=record ;;
+  *)                      MODE=shoot ;;
+esac
+
 # wait for the scene window to map, then settle for the render
 for _ in $(seq 1 80); do
   swaymsg -t get_tree 2>/dev/null | grep -q "\"app_id\": \"$WAIT_MATCH" && break
   sleep 0.1
 done
 sleep "$SETTLE"
-# optional post-map hook — drive the scene into a specific state before the shot
-# (e.g. send vifm `--remote` commands via $VIFM_SHOT_SERVER). Runs in this shell.
-if [ -n "${HESTIA_HOOK:-}" ]; then eval "$HESTIA_HOOK"; sleep 1; fi
-sleep 0.5
 
-WD=$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | grep -v '\.lock$' | head -1 | xargs -n1 basename)
+# The nested compositor's OWN wayland-N socket, found by set difference
+# against the pre-launch snapshot — NOT "first"/"most recent" of whatever's
+# on disk. Both of those are unreliable on a machine that already has a real
+# desktop session (exactly this case, run by dimitrios rather than the
+# headless-only claude agent): a bare `ls | head -1` picks wayland-1 (the
+# REAL desktop) over the nested rig's own higher-numbered socket, since
+# sway/wlroots doesn't renumber sequentially from 1 when wayland-1 is
+# already taken by someone else — caught LIVE capturing the real desktop
+# instead of the isolated scene (docs/video-capture-design.md's phase-2
+# test). Worse: wlroots' OWN reported $WAYLAND_DISPLAY in its process
+# environment is STALE in this situation too (it reports the name it first
+# tried, not the one it actually fell back to after the collision) — so
+# reading it from /proc/$SWAYPID/environ doesn't work either. The one
+# reliably correct signal is "which socket appeared that wasn't there
+# before we launched this specific instance".
+WD=$(comm -13 <(printf '%s\n' "$WD_BEFORE") <(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | grep -v '\.lock$') | head -1 | xargs -n1 basename)
+[ -n "$WD" ] || { echo "hestia-shot: could not identify the nested compositor's own Wayland socket" >&2; exit 1; }
+# EXPORTED, not just passed to grim/wf-recorder below — a HESTIA_HOOK that
+# drives input (wtype, for record-mode action sequences) needs it in its own
+# ambient environment too. Left unexported, a hook's `wtype` would silently
+# fall back to whatever WAYLAND_DISPLAY the invoking shell already has set —
+# on dimitrios's own machine, that's the REAL desktop, not this throwaway
+# rig (the same class of mistake the WD-resolution bug above was).
+export WAYLAND_DISPLAY="$WD"
 mkdir -p "$(dirname "$OUT")"
-WAYLAND_DISPLAY="$WD" grim "$OUT"
-echo "hestia-shot: wrote $OUT ($SCENE, $VARIANT, $RES)"
+
+if [ "$MODE" = record ]; then
+  # wf-recorder brackets the hook, instead of running before a single grim
+  # shot — the whole scripted action sequence gets captured, not just the
+  # end state (docs/video-capture-design.md, layer 1). Started only after
+  # the settle above, so the first recorded frame is already fully painted,
+  # not a half-rendered flash.
+  #
+  # --no-damage is REQUIRED here, not an optimisation — caught live: without
+  # it, wf-recorder's default damage-tracking captures the first frame (or
+  # two) against this headless/pixman backend and then silently STOPS
+  # requesting new ones, even though the scene keeps changing underneath (a
+  # `grim` shot taken at the same point in an identical hook correctly shows
+  # the updated state, so this is specific to wf-recorder's damage-event
+  # subscription on this backend, not a rendering problem). The frozen
+  # damage-tracking mode also failed to exit cleanly on SIGINT in testing;
+  # --no-damage's steady polling terminated promptly every time.
+  WAYLAND_DISPLAY="$WD" wf-recorder --no-damage -f "$OUT" >"$WORK/wf-recorder.log" 2>&1 &
+  WFPID=$!
+  sleep 0.3   # let the encoder actually start before anything on-screen happens
+  if [ -n "${HESTIA_HOOK:-}" ]; then
+    eval "$HESTIA_HOOK"
+  else
+    sleep "${HESTIA_DURATION:-5}"
+  fi
+  sleep 0.3   # trailing pad, so the last action isn't cut off mid-frame
+  # SIGINT, not SIGTERM/kill -9 — wf-recorder finalizes the container's
+  # trailer on a clean interrupt (its own documented stop signal); anything
+  # harsher risks an unplayable/truncated mp4.
+  kill -INT "$WFPID" 2>/dev/null
+  wait "$WFPID" 2>/dev/null || true
+  echo "hestia-shot: recorded $OUT ($SCENE, $VARIANT, $RES)"
+else
+  # optional post-map hook — drive the scene into a specific state before the
+  # shot (e.g. send vifm `--remote` commands via $VIFM_SHOT_SERVER).
+  if [ -n "${HESTIA_HOOK:-}" ]; then eval "$HESTIA_HOOK"; sleep 1; fi
+  sleep 0.5
+  WAYLAND_DISPLAY="$WD" grim "$OUT"
+  echo "hestia-shot: wrote $OUT ($SCENE, $VARIANT, $RES)"
+fi

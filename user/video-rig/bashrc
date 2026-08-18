@@ -4,7 +4,21 @@
 # it — the whole point being that a recording carries no operator identity
 # (no username/hostname/real-dotfile leakage) and needs no live "clean up
 # the environment" commands typed on camera.
-PS1='$ '
-unset PROMPT_COMMAND
+#
+# The $ itself is still exit-status-coloured (green success / red failure)
+# — same mechanism as hestia's real personal .bashrc (user/bash/.bashrc:
+# PROMPT_COMMAND captures $? before each prompt draw, prompt_exit_status_
+# color() picks the ANSI colour) — every OTHER segment that real prompt has
+# (user, path, git branch/status) is deliberately left out here: the
+# coloured $ is hestia's own branding, not identity.
+PROMPT_COMMAND='last_exit_status=$?'
+prompt_exit_status_color() {
+    if [ "$last_exit_status" -eq 0 ]; then
+        echo "01;92m"  # green
+    else
+        echo "01;91m"  # red
+    fi
+}
+PS1='\[\033[$(prompt_exit_status_color)\]$\[\033[00m\] '
 HISTFILE=/dev/null
 export EDITOR=vim

@@ -1,0 +1,27 @@
+" hestia video-rig .vimrc (light) — NOT anyone's personal vimrc: no plugins,
+" no personal keymaps. Staged as $HOME/.vimrc for hestia-video recordings
+" (docs/video-capture-design.md) so a clip's editor behaviour is identical
+" no matter which real user renders it. `colorscheme hestia` resolves via
+" $HOME/.vim/colors/hestia.vim — hestia-video copies that file in fresh
+" from the repo each run, not a symlink to anyone's personal ~/.vim.
+set nocompatible
+set termguicolors
+set number
+set cursorline
+set laststatus=2
+syntax on
+set background=light
+colorscheme hestia
+
+" `filetype indent on` (part of the common `filetype plugin indent on`) is
+" DELIBERATELY not loaded — its per-language auto-indent-on-Enter/{/}
+" DOUBLES literal leading whitespace typed on top of it (confirmed live:
+" 4-space C source came out at 6, then 10 spaces per subsequent line — see
+" docs/video-capture-design.md §11). `filetype plugin on` alone still gives
+" filetype detection/syntax/ftplugin settings without that conflict, so a
+" scene's typed text is exactly what ends up on screen — no on-camera
+" `:setlocal` workaround needed, and no per-scene indent guessing either.
+filetype plugin on
+set shiftwidth=4 tabstop=4 expandtab
+
+autocmd VimEnter * redraw | echo ''

@@ -1,0 +1,10 @@
+# hestia video-rig .bashrc — NOT anyone's real shell config. Staged as
+# $HOME for hestia-video recordings (docs/video-capture-design.md) so a
+# clip's prompt/behaviour is identical no matter which real user renders
+# it — the whole point being that a recording carries no operator identity
+# (no username/hostname/real-dotfile leakage) and needs no live "clean up
+# the environment" commands typed on camera.
+PS1='$ '
+unset PROMPT_COMMAND
+HISTFILE=/dev/null
+export EDITOR=vim

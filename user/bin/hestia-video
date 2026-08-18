@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+"""hestia-video — declarative action-script runner for hestia-shot's record mode.
+
+Companion to hestia-shot/hestia-type (docs/video-capture-design.md): turns a
+small YAML script (an ordered list of typed/keyed actions, grouped into
+labelled beats for readability) into ONE hestia-type invocation wired up as
+hestia-shot's HESTIA_HOOK, then runs hestia-shot to record it. Removes the
+need to hand-assemble HESTIA_HOOK shell strings for every demo.
+
+Deliberately narrower than the design doc's original storyboard-compiler
+plan: no narration/TTS, no ffprobe duration math, no audio mux. Silent
+capture only — see the doc's phase notes for why. Beats have no timing
+significance of their own; pacing is entirely the actions' explicit pause:
+entries plus hestia-type's own per-character timing.
+
+Usage:
+  hestia-video SCRIPT.yml -o out.mp4 [OPTIONS]
+
+Script format (YAML):
+  title: "optional, documentation only"
+  scene: app            # a hestia-shot scene (default: app)
+  scene_arg: bash        # hestia-shot's $2 for this scene (default: bash)
+  res: 1280x720           # optional, overrides HESTIA_RES
+  variant: dark            # optional, overrides HESTIA_VARIANT
+  wpm: 200                  # optional, default below (see DEFAULT_WPM)
+  jitter: 0.35                # optional, hestia-type default
+  seed: 1                       # optional, default below — set for a
+                                  # reproducible take while iterating
+  drop_compensation: opener       # optional, hestia-type default
+  workdir:                          # optional: files staged into a FRESH
+    hello.c: |                       # temp dir before recording — the
+      ...                             # scene's cwd (e.g. the app scene's
+                                        # bash starts there). Omit for a
+                                        # genuinely empty starting directory.
+  beats:
+    - label: "write hello.c"           # optional, dry-run/organisation only
+      actions:
+        - text: "vim hello.c"           # typed via hestia-type
+        - key: Return                    # a single named key
+        - pause: 500                      # milliseconds, no keystroke
+        - text: |                          # embedded newlines become key:Return
+            multi
+            line
+            text
+
+Each beat's actions are concatenated across ALL beats into ONE hestia-type
+call — never one call per beat/action (hestia-type's own docstring explains
+why: splitting the invocation reintroduces its nested-rig input-drop quirk).
+
+Options:
+  -o, --output PATH     output file (.mp4/.mkv/.webm); default: SCRIPT's
+                         basename with .mp4, in the current directory
+  --dry-run              print the resolved HESTIA_HOOK + hestia-shot
+                         invocation and a rough duration estimate; do not
+                         spin up the rig
+  --keep-workdir          don't delete the staged temp working directory
+                          after the run (default: deleted on success)
+  --res WxH                override the script's res
+  --variant dark|light      override the script's variant
+  --seed N                    override the script's seed
+"""
+import argparse
+import os
+import shlex
+import subprocess
+import sys
+import tempfile
+import shutil
+from pathlib import Path
+
+try:
+    import yaml
+except ImportError:
+    sys.exit("hestia-video: PyYAML is required (pip install pyyaml)")
+
+DEFAULT_WPM = 200  # slower/more deliberate than hestia-type's own 280 default —
+                    # this tool is for teaching demos, not a confident-typist stunt
+DEFAULT_SEED = 1   # reproducible by default; re-running the same script while
+                    # iterating on a take should reproduce the same timing
+
+
+def resolve_repo():
+    """Same resolution order as hestia-shot itself (user/bin/hestia-shot):
+    HESTIA_REPO env override, else derive from this script's own location
+    (works from the deployed ~/.local/bin symlink too), else the known
+    shared clone.
+    """
+    repo = os.environ.get("HESTIA_REPO")
+    if repo:
+        return Path(repo)
+    candidate = Path(__file__).resolve().parent.parent.parent
+    if (candidate / "user").is_dir():
+        return candidate
+    return Path("/srv/devshare/hestia")
+
+
+def stage_rig_home(root, repo, variant):
+    """A recording-profile $HOME — NOT the invoking user's real dotfiles.
+    docs/video-capture-design.md §11: a clip rendered under the real
+    deployed ~/.bashrc/~/.vimrc leaks operator identity (PS1 shows the
+    real username) and vim's filetype indent plugin mangles literal typed
+    whitespace. Staging a dedicated, versioned bashrc/vimrc as $HOME for
+    just the recorded shell's child process fixes both, identically
+    regardless of which real user runs hestia-video — same isolation
+    hestia-shot itself already applies to waybar/alacritty theme configs,
+    just extended to bash+vim for this scene.
+    """
+    rig = root / "rig-home"
+    rig.mkdir(parents=True, exist_ok=True)
+    video_rig = repo / "user" / "video-rig"
+    shutil.copy(video_rig / "bashrc", rig / ".bashrc")
+    vimcolors = rig / ".vim" / "colors"
+    vimcolors.mkdir(parents=True, exist_ok=True)
+    shutil.copy(repo / "user" / "vim" / "colors" / "hestia.vim", vimcolors / "hestia.vim")
+    shutil.copy(video_rig / f"vimrc-{variant}", rig / ".vimrc")
+    return rig
+
+
+def load_script(path):
+    with open(path) as f:
+        doc = yaml.safe_load(f) or {}
+    if "beats" not in doc:
+        sys.exit(f"hestia-video: {path}: no 'beats' key")
+    return doc
+
+
+def flatten_actions(doc):
+    """Beats exist only for the script author's readability — flatten to one
+    ordered action list. A text action's embedded newlines become key:Return
+    (a human without editor autoindent typing a literal Enter), not a
+    hestia-type feature — hestia-type sees plain text/key/pause strings.
+    """
+    flat = []
+    for beat in doc["beats"]:
+        for action in beat.get("actions", []):
+            if "text" in action:
+                buf = []
+                for ch in action["text"]:
+                    if ch == "\n":
+                        if buf:
+                            flat.append(("text", "".join(buf)))
+                            buf = []
+                        flat.append(("key", "Return"))
+                    else:
+                        buf.append(ch)
+                if buf:
+                    flat.append(("text", "".join(buf)))
+            elif "key" in action:
+                flat.append(("key", str(action["key"])))
+            elif "pause" in action:
+                flat.append(("pause", str(action["pause"])))
+            else:
+                sys.exit(f"hestia-video: bad action {action!r} (want text/key/pause)")
+    return flat
+
+
+def estimate_ms(flat, wpm):
+    """Rough planning estimate only — ignores jitter and hestia-type's own
+    word/punctuation micro-pauses. Good enough to judge a take's length
+    without a full render; not a substitute for one.
+    """
+    avg_char_ms = 60000 / (wpm * 5)
+    total = 0.0
+    for kind, val in flat:
+        if kind == "text":
+            total += len(val) * avg_char_ms
+        elif kind == "key":
+            total += 120
+        elif kind == "pause":
+            total += float(val)
+    return total
+
+
+def build_hook(flat, wpm, jitter, seed, drop_compensation):
+    argv = ["hestia-type", "--wpm", str(wpm), "--jitter", str(jitter)]
+    if seed is not None:
+        argv += ["--seed", str(seed)]
+    if drop_compensation:
+        argv += ["--drop-compensation", drop_compensation]
+    argv += [f"{kind}:{val}" for kind, val in flat]
+    return shlex.join(argv)
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("script", type=Path)
+    ap.add_argument("-o", "--output", type=Path)
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--keep-workdir", action="store_true")
+    ap.add_argument("--res")
+    ap.add_argument("--variant", choices=("dark", "light"))
+    ap.add_argument("--seed", type=int)
+    args = ap.parse_args()
+
+    doc = load_script(args.script)
+    flat = flatten_actions(doc)
+
+    wpm = doc.get("wpm", DEFAULT_WPM)
+    jitter = doc.get("jitter")
+    seed = args.seed if args.seed is not None else doc.get("seed", DEFAULT_SEED)
+    drop_compensation = doc.get("drop_compensation")
+    hook = build_hook(flat, wpm, jitter if jitter is not None else 0.35, seed, drop_compensation)
+
+    scene = doc.get("scene", "app")
+    scene_arg = doc.get("scene_arg", "bash")
+    res = args.res or doc.get("res")
+    variant = args.variant or doc.get("variant") or "dark"  # hestia-shot's own default
+    output = (args.output or Path.cwd() / (args.script.stem + ".mp4")).resolve()
+    repo = resolve_repo()
+
+    if args.dry_run:
+        ms = estimate_ms(flat, wpm)
+        print(f"# {doc.get('title', args.script.name)}")
+        print(f"# ~{ms/1000:.1f}s estimated ({len(flat)} actions across {len(doc['beats'])} beats)")
+        for beat in doc["beats"]:
+            if beat.get("label"):
+                print(f"#   - {beat['label']}")
+        if scene == "app":
+            print("# scene_arg wrapped: env HOME=<staged rig-home> " + scene_arg)
+        print(f"HESTIA_HOOK={shlex.quote(hook)} \\")
+        if res:
+            print(f"HESTIA_RES={shlex.quote(res)} \\")
+        print(f"HESTIA_VARIANT={shlex.quote(variant)} \\")
+        print(f"hestia-shot {shlex.quote(scene)} {shlex.quote(scene_arg)} {shlex.quote(str(output))}")
+        return
+
+    root = Path(tempfile.mkdtemp(prefix="hestia-video."))
+    # Seeded project files live in their own subdirectory, kept separate
+    # from rig-home (below) so a demo that runs `ls` sees only the files
+    # the scene actually seeded — not the staged rig scaffolding.
+    workdir = root / "project"
+    workdir.mkdir()
+    try:
+        for rel, content in doc.get("workdir", {}).items():
+            dest = workdir / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(content)
+
+        if scene == "app":
+            # The recording-profile HOME (see stage_rig_home) — not the
+            # invoking user's real one. Only the `app` scene launches a
+            # raw shell/vim session that can leak operator identity; other
+            # scenes (vifm/desktop/url) don't need this.
+            rig_home = stage_rig_home(root, repo, variant)
+            scene_arg = f"env HOME={shlex.quote(str(rig_home))} {scene_arg}"
+
+        env = {**os.environ, "HESTIA_HOOK": hook, "HESTIA_VARIANT": variant}
+        if res:
+            env["HESTIA_RES"] = res
+
+        output.parent.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(
+            ["hestia-shot", scene, scene_arg, str(output)],
+            cwd=workdir,
+            env=env,
+        )
+        if result.returncode != 0:
+            sys.exit(result.returncode)
+    finally:
+        if args.keep_workdir:
+            print(f"hestia-video: kept workdir {root}")
+        else:
+            shutil.rmtree(root, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    main()

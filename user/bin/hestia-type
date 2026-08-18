@@ -13,6 +13,8 @@ Each ACTION is one of:
   text:STRING   type STRING with human-like per-character timing
   key:NAME      press a named key once (wtype -k NAME)
   pause:MS      pause for MS milliseconds, no keystroke (wtype -s MS)
+  wpm:N         change the typing rate from here on (this invocation only —
+                does not persist past it); see --wpm below
 
 Example — the vim-hello-world demo, by hand vs. via this tool:
   hand-tuned (docs/video-capture-design.md's first pass):
@@ -145,8 +147,8 @@ def parse_actions(raw):
     actions = []
     for item in raw:
         kind, sep, val = item.partition(":")
-        if not sep or kind not in ("text", "key", "pause"):
-            sys.exit(f"hestia-type: bad action {item!r} (want text:/key:/pause:)")
+        if not sep or kind not in ("text", "key", "pause", "wpm"):
+            sys.exit(f"hestia-type: bad action {item!r} (want text:/key:/pause:/wpm:)")
         actions.append((kind, val))
     return actions
 
@@ -164,6 +166,12 @@ def build_argv(actions, wpm, jitter, rng, drop_compensation, typo_rate=0.0):
     typo_rate: per-letter probability of a plausible adjacent-key slip,
     typed, briefly held, then BackSpace'd and retyped correctly — see
     typo_char(). 0 (default) never injects one.
+
+    A wpm: action changes the typing rate from that point forward in THIS
+    SAME invocation — added for hestia-video's comment: action (2026-08-19),
+    which types explanatory comments faster than surrounding code (the
+    viewer reads while it's being typed, not just during the hold after)
+    and restores the original rate once the comment's done.
     """
     avg_ms = 60000 / (wpm * 5)  # ~5 chars/word, the standard WPM convention
     argv = []
@@ -199,6 +207,8 @@ def build_argv(actions, wpm, jitter, rng, drop_compensation, typo_rate=0.0):
     for kind, val in actions:
         if kind == "pause":
             add_pause(val)
+        elif kind == "wpm":
+            avg_ms = 60000 / (float(val) * 5)
         elif kind == "key":
             # A single printable character (e.g. a vim command key like O,
             # i, G, $) goes through the SAME per-character path as text: —

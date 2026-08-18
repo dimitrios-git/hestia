@@ -7,6 +7,7 @@
 -- symlink to anyone's personal ~/.config/nvim.
 vim.o.termguicolors = true
 vim.o.number = true
+vim.o.relativenumber = true
 vim.o.cursorline = true
 vim.o.laststatus = 2
 vim.o.background = "dark"
@@ -66,6 +67,52 @@ vim.api.nvim_create_autocmd("FileType", {
     end
   end,
 })
+
+-- Minimal auto-pairs, hand-rolled rather than installing a plugin (owner,
+-- 2026-08-19: their real personal profile uses coc.nvim's coc-pairs, but
+-- coc.nvim is a full LSP/completion framework — Node.js-backed, manages
+-- a dozen extensions — far too heavy to pull into a rig that's
+-- deliberately plugin-free). This replicates just the BEHAVIOUR: typing
+-- an opener inserts its closer immediately with the cursor between them
+-- (matches how a real auto-pair-equipped editor behaves, which is also
+-- what a scene's own typed text already assumes — every existing scene
+-- types BOTH characters of a pair explicitly); typing the closer when
+-- it's already the very next character moves over it instead of
+-- inserting a second one, so existing scenes need no rewriting.
+-- Deliberately NOT "smart" — no backspace-deletes-empty-pair-together
+-- behaviour — BackSpace always removes exactly one character, which
+-- comment: 's exact-count cleanup (see emit_comment_line, hestia-video)
+-- depends on.
+--
+-- /* */ comments are NOT handled here, and deliberately so: `a / *ptr`
+-- (division then a pointer dereference) also contains the sequence "/",
+-- "*" — a naive auto-pair rule on that trigger risks inserting a phantom
+-- */ into real code that isn't a comment at all. hestia-video's own
+-- comment: action handles /* */ immediate-closing itself instead (see
+-- emit_comment_line), where the tool KNOWS it's typing a comment rather
+-- than guessing from two characters in a stream.
+local OPEN_CLOSE = { ["("] = ")", ["["] = "]", ["{"] = "}" }
+for open, close in pairs(OPEN_CLOSE) do
+  vim.keymap.set("i", open, open .. close .. "<Left>", { noremap = true, silent = true })
+  vim.keymap.set("i", close, function()
+    local col = vim.fn.col(".")
+    local line = vim.fn.getline(".")
+    if line:sub(col, col) == close then
+      return "<Right>"
+    end
+    return close
+  end, { noremap = true, expr = true, replace_keycodes = true })
+end
+for _, q in ipairs({ '"', "'" }) do
+  vim.keymap.set("i", q, function()
+    local col = vim.fn.col(".")
+    local line = vim.fn.getline(".")
+    if line:sub(col, col) == q then
+      return "<Right>"
+    end
+    return q .. q .. "<Left>"
+  end, { noremap = true, expr = true, replace_keycodes = true })
+end
 
 vim.api.nvim_create_autocmd("VimEnter", {
   callback = function()

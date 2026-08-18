@@ -27,6 +27,12 @@ symlinks the one `theme_variant` selects to a variant-neutral dest, M7):
   editor      user/vim/colors/hestia.vim — the Vim/Neovim colorscheme, one
               symlinked file carrying both &background branches (not a pair);
               dark reproduces wildcharm, light lands on the AA-tuned values
+  wt fragment themes/hestia/dist/windows-terminal/hestia-schemes.json — a
+              Windows Terminal JSON Fragment Extension carrying BOTH
+              hestia-dark and hestia-light colour schemes in one file (WT has
+              its own scheme picker, so no theme_variant pair here); applied
+              manually inside WSL via deploy-windows-terminal.py, not the
+              Ansible bootstrap — WSL is a separate machine
 
 Same tokenColors everywhere; only the per-target chrome differs. The WCAG AA
 contrast gate runs before anything is written — a palette edit that breaks a
@@ -684,6 +690,49 @@ magenta = "{a['bright_magenta']}"
 cyan    = "{a['bright_cyan']}"
 white   = "{a['bright_white']}"
 """
+
+
+def render_windows_terminal() -> str:
+    """dist/windows-terminal/hestia-schemes.json — a Windows Terminal JSON
+    Fragment Extension (docs: learn.microsoft.com/windows/terminal/
+    json-fragment-extensions) contributing two named colour schemes,
+    "hestia-dark" and "hestia-light". Deliberately ONE file for BOTH variants
+    (unlike every other target's theme_variant dark/light pair): Windows
+    Terminal already has its own scheme picker in Settings, so there's no
+    host-side variant switch to drive here. Field mapping mirrors
+    render_kitty (the repo's canonical 16-colour definition): background=bg,
+    foreground=text, cursorColor/selectionBackground=accent. Windows
+    Terminal's ANSI field name is "purple", not "magenta" — same colour.
+    Consumed by deploy-windows-terminal.py, run manually from inside WSL (not
+    the Ansible bootstrap — WSL is a separate machine)."""
+    def scheme(variant: str) -> dict:
+        r, a = vroles(variant), vansi(variant)
+        return {
+            "name": f"hestia-{variant}",
+            "background": r["bg"],
+            "foreground": r["text"],
+            "cursorColor": r["accent"],
+            "selectionBackground": r["accent"],
+            "black": a["black"],
+            "red": a["red"],
+            "green": a["green"],
+            "yellow": a["yellow"],
+            "blue": a["blue"],
+            "purple": a["magenta"],
+            "cyan": a["cyan"],
+            "white": a["white"],
+            "brightBlack": a["bright_black"],
+            "brightRed": a["bright_red"],
+            "brightGreen": a["bright_green"],
+            "brightYellow": a["bright_yellow"],
+            "brightBlue": a["bright_blue"],
+            "brightPurple": a["bright_magenta"],
+            "brightCyan": a["bright_cyan"],
+            "brightWhite": a["bright_white"],
+        }
+
+    fragment = {"schemes": [scheme("dark"), scheme("light")]}
+    return json.dumps(fragment, indent=2) + "\n"
 
 
 def render_sway(variant: str) -> str:
@@ -2185,6 +2234,7 @@ OUTPUTS = {
     REPO / "user/zellij/hestia-light.kdl": lambda: render_zellij("light"),
     REPO / "user/alacritty/theme-dark.toml": lambda: render_alacritty("dark"),
     REPO / "user/alacritty/theme-light.toml": lambda: render_alacritty("light"),
+    HERE / "dist/windows-terminal/hestia-schemes.json": lambda: render_windows_terminal(),
 }
 
 

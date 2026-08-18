@@ -42,6 +42,17 @@ but either way a layer-3 file is never the place a colour decision lives.
 
 ## Decision log
 
+- **2026-08-18 — Windows Terminal (WSL) joins as a new layer-3 consumer, chrome-only.**
+  `render_windows_terminal()` emits `themes/hestia/dist/windows-terminal/hestia-schemes.json`,
+  a Windows Terminal JSON Fragment carrying both `hestia-dark`/`hestia-light` colour
+  schemes (ANSI 16 + bg/fg/cursor, mapped like `render_kitty`) in ONE file — Windows
+  Terminal has its own scheme picker, so unlike every other target there's no
+  `theme_variant` dark/light pair to maintain. This is chrome only: it deliberately
+  skips layer 2 (the `syntax:` table) — same class as sway/waybar/kitty, not a
+  code-highlighting consumer like bat/Shiki/VS Code. Deployed by a new manual script,
+  `themes/hestia/deploy-windows-terminal.py`, run once from inside WSL — outside
+  `site.yml` (WSL is a separate machine), see `docs/theming.md` and CLAUDE.md's
+  *Windows Terminal (WSL)* section.
 - **2026-07-17 — bat/TextMate markdown SOURCE mirrors glow (H1 violet, H2–H6 cyan,
   `code`/links violet); vifm's glow-in-pane preview dropped.** The vifm `.md` preview
   was a glow *render* piped into the pane, but forced notty it's 16-colour only and its

@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""deploy-windows-terminal.py — apply the hestia Windows Terminal theme.
+
+Run manually, once, from inside a WSL distro. This is deliberately NOT part
+of the Ansible bootstrap (site.yml) — WSL is a separate machine the
+bootstrap was never meant to reach, same category as NVM/vim-plug/GitHub
+onboarding in CLAUDE.md.
+
+Drops two JSON Fragment files into Windows Terminal's Fragments folder (see
+learn.microsoft.com/windows/terminal/json-fragment-extensions) — Windows
+Terminal auto-merges these at launch, so this NEVER touches the user's own
+settings.json:
+
+  hestia-schemes.json  copied verbatim from dist/windows-terminal/ (both
+                        hestia-dark and hestia-light colour schemes; run
+                        render.py first if this is missing/stale)
+  hestia-profile.json  a small profile PATCH (colorScheme/cursorColor/
+                        tabColor) targeting THIS distro's own
+                        Windows-Terminal-auto-generated WSL profile, located
+                        by computing its GUID from $WSL_DISTRO_NAME (the
+                        same value Windows Terminal itself used to name that
+                        profile when it auto-generated it) — not guessed.
+                        Safe no-op if the GUID matches nothing (e.g. an
+                        already-renamed profile): Windows Terminal just
+                        ignores an "updates" that targets no profile.
+
+Idempotent — always overwrites both files. A fragment is only picked up on
+the next Windows Terminal launch / new tab, not live.
+
+Usage: deploy-windows-terminal.py [--variant dark|light]
+"""
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+import uuid
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SCHEMES_SRC = HERE / "dist/windows-terminal/hestia-schemes.json"
+
+# Windows Terminal's namespace GUID for its own auto-generated profiles
+# (e.g. the WSL profile it creates per installed distro) — from the MS Learn
+# JSON-fragment-extensions doc.
+WT_AUTOGEN_NAMESPACE = uuid.UUID("{2bde4a90-d05f-401c-9492-e40884ead1d8}")
+
+ACCENT = "#7c3aed"
+
+
+def profile_guid(distro_name: str) -> str:
+    """Replicates MS's documented recipe exactly. uuid.uuid5() always
+    UTF-8-encodes its `name` argument internally, but Windows Terminal
+    derives the GUID from the UTF-16LE bytes of the name (it's a
+    WinRT/C++ app) — so the name is round-tripped through a UTF-16LE
+    encode + ASCII decode first. For an ASCII distro name (always true
+    for WSL) that produces a Python str which, when uuid5 re-encodes it
+    to UTF-8, comes back out as exactly the original UTF-16LE byte
+    sequence."""
+    utf16_as_str = distro_name.encode("utf-16-le").decode("ascii")
+    return f"{{{uuid.uuid5(WT_AUTOGEN_NAMESPACE, utf16_as_str)}}}"
+
+
+def run(cmd: list) -> str:
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, check=True
+        ).stdout.strip()
+    except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        sys.exit(f"failed to run {cmd!r}: {e}")
+
+
+def win_userprofile() -> Path:
+    """Resolve %USERPROFILE% via cmd.exe (always present via WSL interop,
+    no extra utility beyond the wslpath binary WSL itself ships) and
+    translate it to its /mnt/c/... path."""
+    win_path = run(["cmd.exe", "/c", "echo %USERPROFILE%"])
+    return Path(run(["wslpath", "-u", win_path]))
+
+
+def fragments_dir(userprofile: Path) -> Path:
+    """Detect which Windows Terminal install is present (unpackaged/winget
+    vs. Microsoft Store) by checking for THAT install's settings.json, and
+    return its Fragments dir."""
+    local = userprofile / "AppData" / "Local"
+    unpackaged = local / "Microsoft" / "Windows Terminal"
+    store = local / "Packages" / "Microsoft.WindowsTerminal_8wekyb3d8bbwe" / "LocalState"
+    if (unpackaged / "settings.json").exists():
+        return unpackaged / "Fragments"
+    if (store / "settings.json").exists():
+        return store / "Fragments"
+    sys.exit(
+        "Windows Terminal settings.json not found under either the "
+        f"unpackaged path ({unpackaged}) or the Microsoft Store path "
+        f"({store}) — is Windows Terminal installed?"
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--variant", choices=["dark", "light"], default="dark")
+    args = parser.parse_args()
+
+    distro = os.environ.get("WSL_DISTRO_NAME")
+    if not distro:
+        sys.exit(
+            "WSL_DISTRO_NAME is not set — this only makes sense run from "
+            "inside a WSL distro."
+        )
+    if not SCHEMES_SRC.exists():
+        sys.exit(f"{SCHEMES_SRC} does not exist — run render.py first.")
+
+    dest_dir = fragments_dir(win_userprofile()) / "hestia"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    shutil.copyfile(SCHEMES_SRC, dest_dir / "hestia-schemes.json")
+
+    guid = profile_guid(distro)
+    profile_patch = {
+        "profiles": [
+            {
+                "updates": guid,
+                "colorScheme": f"hestia-{args.variant}",
+                "cursorColor": ACCENT,
+                "tabColor": ACCENT,
+            }
+        ]
+    }
+    (dest_dir / "hestia-profile.json").write_text(
+        json.dumps(profile_patch, indent=2) + "\n"
+    )
+
+    print(f"wrote {dest_dir / 'hestia-schemes.json'}")
+    print(f"wrote {dest_dir / 'hestia-profile.json'} (distro '{distro}', profile {guid})")
+    print("Open a new Windows Terminal tab/window to pick this up.")
+
+
+if __name__ == "__main__":
+    main()

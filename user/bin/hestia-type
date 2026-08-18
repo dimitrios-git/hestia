@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+"""hestia-type — human-timed text/key input for hestia-shot's record mode.
+
+Companion to user/bin/hestia-shot (docs/video-capture-design.md): drives
+wtype with per-character timing shaped like a real typist instead of a flat
+`-d N` delay — jitter around a target WPM, an extra beat after spaces, a
+longer beat after punctuation, a small tax on shifted characters.
+
+Usage (inside a HESTIA_HOOK):
+  hestia-type [OPTIONS] ACTION [ACTION ...]
+
+Each ACTION is one of:
+  text:STRING   type STRING with human-like per-character timing
+  key:NAME      press a named key once (wtype -k NAME)
+  pause:MS      pause for MS milliseconds, no keystroke (wtype -s MS)
+
+Example — the vim-hello-world demo, by hand vs. via this tool:
+  hand-tuned (docs/video-capture-design.md's first pass):
+    wtype -d 55 "vvim -u rig.vim hello.txt" -k Return -s 1200 -k i -s 400 \\
+      -d 70 "Hello world!" -s 800 -k Escape -s 600 ":wq" -k Return
+  via this tool:
+    hestia-type 'text:vim -u rig.vim hello.txt' key:Return pause:1200 \\
+      key:i pause:400 'text:Hello world!' pause:800 key:Escape pause:600 \\
+      'text::wq' key:Return
+
+ALL actions are sent as ONE wtype invocation — never one wtype call per
+action. Caught live building the vim-hello-world demo: hestia-shot's nested
+headless rig drops the first character/key sent after EVERY `-s` pause —
+including the pause-of-zero-length before the sequence's very first unit,
+but NOT limited to it: an early version of this tool only compensated that
+opening unit and worked on a pause-free run of text, then silently lost the
+"-" in "-u" the instant per-word pauses were added mid-text (confirmed the
+pause was the trigger, not the character or its position: swap the timing
+model to zero mid-text pauses and the loss disappears). Confirmed against a
+REAL desktop too — identical calls there never drop anything — so this is a
+nested-compositor input-timing quirk, not a wtype bug in general. Every unit
+immediately following a `-s` (explicit pause: action, or this tool's own
+automatic word/punctuation pause) is sent twice to compensate; the rig eats
+the first, the second lands, and the visible result is correct with no
+stray duplicate (verified: typing "vvim" this way renders as plain "vim" on
+screen, not "vvim").
+
+That compensation assumes the drop actually happens (true in hestia-shot's
+rig, false on a real desktop) — use --no-drop-compensation when driving a
+real session directly, or every doubled unit will visibly show up twice
+(or, for a mode-toggle key, undo itself).
+
+Options:
+  --wpm N                  target words-per-minute (default 280 — a fast,
+                            confident typist; try 140-180 for a more
+                            hesitant/learning feel)
+  --jitter F                relative per-character timing jitter, 0-1
+                            (default 0.35)
+  --seed N                  RNG seed, for a reproducible take
+  --no-drop-compensation    don't double the first unit (see above)
+  --dry-run                 print the wtype argv instead of running it
+"""
+import argparse
+import random
+import subprocess
+import sys
+
+WORD_PAUSE_MS = (30, 160)      # extra pause after a space
+PUNCT_PAUSE_MS = (150, 420)    # extra pause after . , ! ? : ;
+SHIFT_EXTRA_MS = (10, 40)      # extra pause for a character that needs Shift
+MIN_CHAR_MS = 18
+PUNCT_CHARS = set(".,!?:;")
+SHIFT_CHARS = set('~!@#$%^&*()_+{}|:"<>?')
+
+
+def char_delay(ch, avg_ms, jitter, rng):
+    d = rng.gauss(avg_ms, avg_ms * jitter)
+    if ch.isupper() or ch in SHIFT_CHARS:
+        d += rng.uniform(*SHIFT_EXTRA_MS)
+    return max(MIN_CHAR_MS, d)
+
+
+def parse_actions(raw):
+    actions = []
+    for item in raw:
+        kind, sep, val = item.partition(":")
+        if not sep or kind not in ("text", "key", "pause"):
+            sys.exit(f"hestia-type: bad action {item!r} (want text:/key:/pause:)")
+        actions.append((kind, val))
+    return actions
+
+
+def build_argv(actions, wpm, jitter, rng, compensate):
+    """Every `-s` pause is its own drop boundary, not just the start of the
+    whole invocation — caught live: a version that only doubled the very
+    first character worked for a pause-free run of text, but silently lost
+    the '-' in '-u' the moment word-boundary pauses were introduced mid-text
+    (confirmed the pause was the trigger: the hand-tuned version that had
+    zero mid-text `-s` calls never lost a character; this one, with a `-s`
+    after every space, lost exactly the character right after one). So
+    `needs_comp` is armed by ANY `-s` — an explicit pause: action or an
+    automatic word/punctuation one — and disarmed by doubling whatever
+    unit (character or key) comes next, not just the sequence's opener.
+    """
+    avg_ms = 60000 / (wpm * 5)  # ~5 chars/word, the standard WPM convention
+    argv = []
+    needs_comp = compensate  # armed before anything is sent too — the original finding
+
+    def add_pause(ms):
+        nonlocal needs_comp
+        argv.extend(["-s", str(int(ms))])
+        if compensate:
+            needs_comp = True
+
+    def emit(unit):
+        nonlocal needs_comp
+        if needs_comp:
+            argv.extend(unit)  # sacrificial — the drop-after-pause eats this one
+            needs_comp = False
+        argv.extend(unit)
+
+    for kind, val in actions:
+        if kind == "pause":
+            add_pause(val)
+        elif kind == "key":
+            emit(["-k", val])
+        elif kind == "text":
+            for ch in val:
+                d = int(char_delay(ch, avg_ms, jitter, rng))
+                if ch == "-":
+                    # wtype reserves a BARE "-" positional argument as its own
+                    # "read text from stdin" placeholder ("Stdin place-holder
+                    # can only appear once" — a hard error, not a silent
+                    # misread) — and per-character splitting means a lone "-"
+                    # in the middle of typed text (e.g. "-u") is exactly that
+                    # bare form. -k minus sidesteps it entirely (a named
+                    # keysym, never mistaken for the placeholder).
+                    emit(["-k", "minus"])
+                else:
+                    emit(["-d", str(d), ch])
+                if ch == " ":
+                    add_pause(rng.uniform(*WORD_PAUSE_MS))
+                elif ch in PUNCT_CHARS:
+                    add_pause(rng.uniform(*PUNCT_PAUSE_MS))
+    return argv
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument("--wpm", type=float, default=280)
+    ap.add_argument("--jitter", type=float, default=0.35)
+    ap.add_argument("--seed", type=int, default=None)
+    ap.add_argument("--no-drop-compensation", action="store_true")
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("actions", nargs="+")
+    args = ap.parse_args()
+
+    rng = random.Random(args.seed)
+    actions = parse_actions(args.actions)
+    argv = build_argv(actions, args.wpm, args.jitter, rng, not args.no_drop_compensation)
+
+    if args.dry_run:
+        print("wtype", " ".join(argv))
+        return
+    subprocess.run(["wtype", *argv], check=True)
+
+
+if __name__ == "__main__":
+    main()

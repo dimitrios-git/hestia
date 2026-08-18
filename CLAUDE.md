@@ -115,6 +115,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/gtk/gtk-4.0/gtk.css` | `~/.config/gtk-4.0/gtk.css` |
 | `user/bin/claude-access` | `~/.local/bin/claude-access` |
 | `user/bin/hestia-shot` | `~/.local/bin/hestia-shot` |
+| `user/bin/hestia-type` | `~/.local/bin/hestia-type` |
 | `user/bin/duckdns-update` | `~/.local/bin/duckdns-update` |
 | `user/claude/keybindings.json` | `~/.claude/keybindings.json` |
 | `user/firefox/firefox-dimitrios.desktop` | `~/.local/share/applications/firefox-dimitrios.desktop` |

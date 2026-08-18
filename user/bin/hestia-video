@@ -89,6 +89,29 @@ Options:
   --res WxH                override the script's res
   --variant dark|light      override the script's variant
   --seed N                    override the script's seed
+  --locale LOCALE               override the script's locale (default
+                                 en-GB) — see comment:'s locale map below
+
+Locales: a comment:'s text may be a plain string (typed identically for
+every locale — the default, and the only form any pre-2026-08-19 script
+uses) or a mapping of locale code to string:
+
+  - comment:
+      text:
+        en-GB: "pulls in the standard I/O header, so printf is available"
+        el-GR: "..."
+      # falls back to the en-GB entry for any locale not yet present —
+      # translation work stays independently pausable per the project's
+      # own broader locale-cadence decisions, this never blocks a render
+
+CODE is never translated (typed identically regardless of locale — C
+syntax/keywords aren't language-dependent) — only comment: text varies.
+Reuse the chapter's own established vocabulary from apps/thecodingidiot/
+content/TRANSLATION.md and the real translated .mdx files, don't
+re-translate independently, same practice tools/manim's locale scenes
+already follow. Rendered output naming isn't auto-derived (-o stays
+explicit) — follow tools/manim's own <basename>-<locale> convention by
+hand, e.g. f04-your-first-program-el.mp4.
 """
 import argparse
 import os
@@ -109,6 +132,10 @@ DEFAULT_WPM = 200  # slower/more deliberate than hestia-type's own 280 default �
                     # this tool is for teaching demos, not a confident-typist stunt
 DEFAULT_SEED = 1   # reproducible by default; re-running the same script while
                     # iterating on a take should reproduce the same timing
+DEFAULT_LOCALE = "en-GB"  # matches the project's own base-locale convention
+                    # (content/en-GB/ is what every other locale falls back
+                    # from) — a comment:'s locale map falls back to this key
+                    # when the target locale isn't present yet
 DEFAULT_LINE_PAUSE_MS = (250, 800)  # a beat to "think about the next line" —
                     # hestia-type has no concept of a line (it only ever sees
                     # one text: chunk at a time, already split at newlines by
@@ -291,7 +318,25 @@ def comment_pacing(text, scene_wpm):
     return wpm, hold_ms
 
 
-def emit_comment(spec, flat, rng, line_pause_range, scene_wpm):
+def resolve_locale_text(text, locale):
+    """A comment:'s text is either a plain string (typed identically for
+    every locale — the only form any pre-2026-08-19 script uses) or a
+    {locale: string} mapping — see the module docstring's Locales
+    section. Falls back to DEFAULT_LOCALE's entry for any locale not yet
+    present, so a script can grow locale coverage incrementally (matching
+    the site's own broader per-chapter translation cadence) without ever
+    blocking a render on a translation that hasn't landed yet.
+    """
+    if isinstance(text, str):
+        return text
+    if locale in text:
+        return text[locale]
+    if DEFAULT_LOCALE in text:
+        return text[DEFAULT_LOCALE]
+    sys.exit(f"hestia-video: comment text has neither {locale!r} nor {DEFAULT_LOCALE!r}: {text!r}")
+
+
+def emit_comment(spec, flat, rng, line_pause_range, scene_wpm, locale):
     """Expands one comment: action — an explanatory C comment that gets
     typed, held long enough to read, then removed, leaving the file
     byte-identical to what it would be without it. Two shapes, chosen by
@@ -315,7 +360,7 @@ def emit_comment(spec, flat, rng, line_pause_range, scene_wpm):
       where the scene left off.
     """
     spec = {"text": spec} if isinstance(spec, str) else dict(spec)
-    text = spec["text"]
+    text = resolve_locale_text(spec["text"], locale)
     is_block = "lines_up" in spec
     lines = text.split("\n")
     ramped_wpm, auto_hold = comment_pacing(text, scene_wpm)
@@ -357,7 +402,7 @@ def emit_comment(spec, flat, rng, line_pause_range, scene_wpm):
         flat.extend([("key", "BackSpace")] * total_chars)
 
 
-def flatten_actions(doc, rng, line_pause_range, wpm):
+def flatten_actions(doc, rng, line_pause_range, wpm, locale):
     """Beats exist only for the script author's readability — flatten to
     one ordered action list."""
     flat = []
@@ -366,7 +411,7 @@ def flatten_actions(doc, rng, line_pause_range, wpm):
             if "text" in action:
                 emit_text(action["text"], flat, rng, line_pause_range)
             elif "comment" in action:
-                emit_comment(action["comment"], flat, rng, line_pause_range, wpm)
+                emit_comment(action["comment"], flat, rng, line_pause_range, wpm, locale)
             elif "key" in action:
                 flat.append(("key", str(action["key"])))
             elif "pause" in action:
@@ -414,6 +459,7 @@ def main():
     ap.add_argument("--res")
     ap.add_argument("--variant", choices=("dark", "light"))
     ap.add_argument("--seed", type=int)
+    ap.add_argument("--locale")
     args = ap.parse_args()
 
     doc = load_script(args.script)
@@ -424,11 +470,12 @@ def main():
     drop_compensation = doc.get("drop_compensation")
     typo_rate = doc.get("typo_rate")
     line_pause_range = tuple(doc.get("line_pause_ms", DEFAULT_LINE_PAUSE_MS))
+    locale = args.locale or doc.get("locale") or DEFAULT_LOCALE
 
     rng = random.Random(seed)  # drives line-pause jitter — same rng a re-run
                                  # with the same seed reproduces, consistent
                                  # with hestia-type's own seeded reproducibility
-    flat = flatten_actions(doc, rng, line_pause_range, wpm)
+    flat = flatten_actions(doc, rng, line_pause_range, wpm, locale)
     hook = build_hook(flat, wpm, jitter if jitter is not None else 0.35, seed, drop_compensation, typo_rate)
 
     scene = doc.get("scene", "app")
@@ -441,6 +488,7 @@ def main():
     if args.dry_run:
         ms = estimate_ms(flat, wpm)
         print(f"# {doc.get('title', args.script.name)}")
+        print(f"# locale: {locale}")
         print(f"# ~{ms/1000:.1f}s estimated ({len(flat)} actions across {len(doc['beats'])} beats)")
         for beat in doc["beats"]:
             if beat.get("label"):

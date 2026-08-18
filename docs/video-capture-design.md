@@ -648,6 +648,63 @@ re-rendering the full real pilot scene end to end: `hello.c` still diffs
 byte-identical against the chapter's own code block, compiles clean with
 `gcc -Wall -Wextra`, runs correctly.
 
+## 17. Locale convention for comment: text (2026-08-19, eleventh)
+
+Owner asked for a convention for translating `comment:` text into other
+locales, ahead of actually needing one — thecodingidiot's locale
+translation work is broadly paused (en-GB-only focus until the curriculum
+itself is solid, see the tci-content-routines project history), so this
+is deliberately plumbing, not a request to translate anything now.
+
+Modelled on `tools/manim`'s own locale pattern rather than invented from
+scratch: a Manim scene keeps ONE shared `construct()` and swaps a `TEXT`
+dict per locale subclass (`BinaryAndNandGreek(BinaryAndNand)`) — the
+animation/timeline structure never duplicates, only the strings do.
+`comment:`'s YAML equivalent: a `text` value is either a plain string
+(typed identically for every locale — untouched, every existing script
+still works exactly as before) or a `{locale: string}` mapping:
+
+```yaml
+- comment:
+    text:
+      en-GB: "pulls in the standard I/O header, so printf is available"
+      el-GR: "..."
+```
+
+`hestia-video` gains `--locale LOCALE` (also settable as a script-level
+`locale:` key, CLI wins) — default `en-GB`, matching the project's own
+base-locale convention (`content/en-GB/` is what every other locale
+falls back from). `resolve_locale_text()` falls back to the `en-GB` entry
+for any locale key not yet present, so a scene can grow locale coverage
+one comment at a time without ever blocking a render on a translation
+that hasn't landed — same spirit as the site's own per-chapter (not
+per-string) translation cadence, just at finer grain since a single scene
+file holds many independent comments.
+
+**Deliberately NOT translated by this mechanism**: the CODE itself —
+every `text:` action typing real C stays exactly as authored, in every
+locale, since C keywords/syntax aren't language-dependent. Only
+`comment:`'s explanatory prose varies. Whoever DOES eventually translate
+a comment should reuse the chapter's own established vocabulary from
+`apps/thecodingidiot/content/TRANSLATION.md` and the real translated
+`.mdx` files rather than re-translating independently — the exact
+practice already established for Manim's locale scenes (§ in
+`tools/manim/README.md`'s "Locale variants" section, stoa repo).
+
+**Rendered output naming is NOT auto-derived** — `hestia-video` already
+requires an explicit `-o`, and stays that way; follow `tools/manim`'s own
+`<basename>-<locale>` convention by hand (e.g.
+`f04-your-first-program-el.mp4`), same as light/dark variants already do.
+
+Verified: dry-run resolution (en-GB default, an explicit el-GR override,
+and a missing-locale fallback to en-GB) all produce the expected text;
+a live render (`--locale el-GR`) confirmed Greek text types and holds
+correctly through the real `wtype`/Neovim pipeline, and cleans up to
+exactly the pre-comment state (frame-checked, not assumed) — the
+BackSpace-count cleanup is character-count-based (Python `len()` on a
+Unicode string), which is correct regardless of a language's UTF-8 byte
+width, not something that needed special-casing.
+
 ## 10. Open questions
 
 - **TTS engine** — Piper (local, default-recommended) vs. a cloud API

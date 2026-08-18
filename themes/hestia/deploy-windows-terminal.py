@@ -6,10 +6,12 @@ of the Ansible bootstrap (site.yml) — WSL is a separate machine the
 bootstrap was never meant to reach, same category as NVM/vim-plug/GitHub
 onboarding in CLAUDE.md.
 
-Drops two JSON Fragment files into Windows Terminal's Fragments folder (see
-learn.microsoft.com/windows/terminal/json-fragment-extensions) — Windows
-Terminal auto-merges these at launch, so this NEVER touches the user's own
-settings.json:
+Drops two JSON Fragment files into the ONE folder Windows Terminal scans for
+third-party fragments regardless of install variant —
+%LOCALAPPDATA%/Microsoft/Windows Terminal/Fragments/hestia/ (see
+learn.microsoft.com/windows/terminal/json-fragment-extensions,
+"applications installed from the web") — Windows Terminal auto-merges these
+at launch, so this NEVER touches the user's own settings.json:
 
   hestia-schemes.json  copied verbatim from dist/windows-terminal/ (both
                         hestia-dark and hestia-light colour schemes; run
@@ -106,21 +108,36 @@ def win_userprofile() -> Path:
 
 
 def fragments_dir(userprofile: Path) -> Path:
-    """Detect which Windows Terminal install is present (unpackaged/winget
-    vs. Microsoft Store) by checking for THAT install's settings.json, and
-    return its Fragments dir."""
-    local = userprofile / "AppData" / "Local"
-    unpackaged = local / "Microsoft" / "Windows Terminal"
-    store = local / "Packages" / "Microsoft.WindowsTerminal_8wekyb3d8bbwe" / "LocalState"
-    if (unpackaged / "settings.json").exists():
-        return unpackaged / "Fragments"
-    if (store / "settings.json").exists():
-        return store / "Fragments"
-    sys.exit(
-        "Windows Terminal settings.json not found under either the "
-        f"unpackaged path ({unpackaged}) or the Microsoft Store path "
-        f"({store}) — is Windows Terminal installed?"
-    )
+    """The ONE folder Windows Terminal scans for third-party fragments,
+    regardless of whether the installed Terminal is the Microsoft Store
+    package, the unpackaged/winget build, Preview, or Canary — per
+    learn.microsoft.com/windows/terminal/json-fragment-extensions
+    ("applications installed from the web", current-user case), confirmed
+    live 2026-08-19: a Store package's OWN
+    Packages\\<pkg>\\LocalState\\Fragments is a DIFFERENT, unrelated
+    mechanism (for a Store app declaring itself as an extension via its
+    own appxmanifest, surfaced through the AppExtension catalog, not a
+    folder Terminal scans on disk) — an earlier version of this script
+    wrote there by mistake (branching on which install's settings.json
+    existed) and nothing loaded, because Terminal never looks there."""
+    return userprofile / "AppData" / "Local" / "Microsoft" / "Windows Terminal" / "Fragments"
+
+
+# Where the earlier (buggy) version of this script mistakenly wrote —
+# cleaned up automatically since Windows Terminal never reads these.
+_STALE_FRAGMENT_DIRS = [
+    "AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/Fragments/hestia",
+    "AppData/Local/Packages/Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe/LocalState/Fragments/hestia",
+    "AppData/Local/Packages/Microsoft.WindowsTerminalCanary_8wekyb3d8bbwe/LocalState/Fragments/hestia",
+]
+
+
+def clean_stale(userprofile: Path) -> None:
+    for rel in _STALE_FRAGMENT_DIRS:
+        stale = userprofile / rel
+        if stale.exists():
+            shutil.rmtree(stale)
+            print(f"removed stale {stale} (Windows Terminal never reads this location)")
 
 
 def main() -> None:
@@ -137,7 +154,9 @@ def main() -> None:
     if not SCHEMES_SRC.exists():
         sys.exit(f"{SCHEMES_SRC} does not exist — run render.py first.")
 
-    dest_dir = fragments_dir(win_userprofile()) / "hestia"
+    userprofile = win_userprofile()
+    clean_stale(userprofile)
+    dest_dir = fragments_dir(userprofile) / "hestia"
     dest_dir.mkdir(parents=True, exist_ok=True)
 
     shutil.copyfile(SCHEMES_SRC, dest_dir / "hestia-schemes.json")

@@ -335,6 +335,65 @@ against the same f04 chapter scene end-to-end (frame-checked again): clip
 now shows only `$ vim hello.c` / `$ gcc hello.c -o hello` / `$ ./hello` /
 `Hello, world.` — no identity, no path, no config command, anywhere.
 
+## 12. Typing-engine round (2026-08-18, sixth) — pacing, typos, scaffold-first
+
+Owner feedback on the isolated-profile pilot: the typing itself read as too
+fast/uniform even for an experienced typist, who both makes occasional
+mistakes and pauses between words/sentences. Typo simulation had been
+deliberately avoided earlier specifically because of live-narration timing
+risk — moot now that audio is out of scope (§11). Owner also named a
+real coding-habit gap: real coders scaffold structure (signature + both
+braces) before filling in a function body — "I don't believe there's
+anybody that writes the `}` last."
+
+**Split across the same two layers as everything else in this pipeline**:
+- `hestia-type` (character-level): widened `WORD_PAUSE_MS`
+  ((30,160)→(60,240)) and `PUNCT_PAUSE_MS` ((150,420)→(200,550)); added
+  `--typo-rate` (default 0.03) — a per-letter chance of a plausible
+  QWERTY-adjacent-key slip, typed, held briefly, then `BackSpace`'d and
+  retyped correctly. Only fires on letters, by design (punctuation/digit
+  typos risk confusing editor/matching state for no realism gain).
+- `hestia-video` (line-level): `hestia-type` never sees more than one line
+  at a time (multi-line `text:` is already split into separate `key:Return`
+  actions by `flatten_actions` before `hestia-type` runs), so a "thinking
+  about the next line" pause is this tool's job, not `hestia-type`'s — new
+  `line_pause_ms` (default `(250, 800)`), inserted after every Return
+  synthesized from a newline INSIDE a `text:` value (not after an explicit
+  `key: Return` the script wrote itself).
+- **Scaffold-first is not an engine feature at all** — it's purely how a
+  scene's actions are ordered: type the skeleton (`{` and `}` together),
+  `Escape`, `O` to open a line above the `}` and insert the body there.
+  Demonstrated in the pilot script (stoa `tools/video-capture/scenes/
+  f04-your-first-program.yml`), documented as a convention in
+  `tools/video-capture/README.md`, no new mechanism needed.
+
+**A real bug surfaced building the scaffold-first demo, caught by actually
+compiling the recorded file instead of trusting frame screenshots**: the
+first pilot render of the scaffolded version LOOKED right frame-by-frame
+(braces appeared, a new line opened, body typed in) but `gcc` on the
+resulting file failed — `key: O` had silently produced a lowercase `o`, so
+the body landed AFTER the closing brace, at file scope. Isolated live test
+(`hestia-shot app bash` shoot mode, typing `key:O` at a bare prompt):
+confirmed `wtype -k O` types literal `o`, not `O` — `-k`'s keysym-name
+lookup is case-INSENSITIVE for a bare letter, no error, no automatic
+Shift. Every capital letter used anywhere in this pipeline before now went
+through the CHARACTER path (`-d MS <char>`, from a `text:` action or the
+per-char loop), never `-k <single-uppercase-letter>` — this is the first
+scene to use an uppercase single-letter `key:` action, which is why the
+bug was invisible until now. Fix, in `hestia-type`'s `build_argv`: a
+`key:` action whose value is exactly one character now routes through the
+same character-emission path as `text:`, instead of `-k NAME` — multi-
+character named keysyms (`Return`, `Escape`, `BackSpace`, ...) are
+unaffected, they have no character form to route through anyway.
+
+**Verification this round went one level deeper than frame-eyeballing**:
+rendered with `--keep-workdir`, then `cat`'d and `gcc -Wall -Wextra`'d the
+actual resulting `hello.c` directly — byte-identical to the chapter's code
+block, compiles with zero warnings, `./hello` prints `Hello, world.`. A
+frame also caught a live typo-in-progress (`prij` mid-typing `printf`,
+about to self-correct) — the mechanism is visibly real, not just
+unit-tested in isolation.
+
 ## 10. Open questions
 
 - **TTS engine** — Piper (local, default-recommended) vs. a cloud API

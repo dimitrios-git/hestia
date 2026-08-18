@@ -27,6 +27,15 @@ Script format (YAML):
   seed: 1                       # optional, default below — set for a
                                   # reproducible take while iterating
   drop_compensation: opener       # optional, hestia-type default
+  typo_rate: 0.03                  # optional, hestia-type default — chance
+                                     # per typed letter of a plausible
+                                     # adjacent-key slip, caught and
+                                     # corrected immediately. 0 disables.
+  line_pause_ms: [250, 800]         # optional, default above — a "thinking
+                                      # about the next line" beat inserted
+                                      # after every newline INSIDE a text:
+                                      # block (not after an explicit key:
+                                      # Return the script wrote itself)
   workdir:                          # optional: files staged into a FRESH
     hello.c: |                       # temp dir before recording — the
       ...                             # scene's cwd (e.g. the app scene's
@@ -61,6 +70,7 @@ Options:
 """
 import argparse
 import os
+import random
 import shlex
 import subprocess
 import sys
@@ -77,6 +87,11 @@ DEFAULT_WPM = 200  # slower/more deliberate than hestia-type's own 280 default �
                     # this tool is for teaching demos, not a confident-typist stunt
 DEFAULT_SEED = 1   # reproducible by default; re-running the same script while
                     # iterating on a take should reproduce the same timing
+DEFAULT_LINE_PAUSE_MS = (250, 800)  # a beat to "think about the next line" —
+                    # hestia-type has no concept of a line (it only ever sees
+                    # one text: chunk at a time, already split at newlines by
+                    # flatten_actions below), so line-level pacing is this
+                    # tool's job, not hestia-type's character-level one
 
 
 def resolve_repo():
@@ -124,11 +139,19 @@ def load_script(path):
     return doc
 
 
-def flatten_actions(doc):
+def flatten_actions(doc, rng, line_pause_range):
     """Beats exist only for the script author's readability — flatten to one
     ordered action list. A text action's embedded newlines become key:Return
     (a human without editor autoindent typing a literal Enter), not a
     hestia-type feature — hestia-type sees plain text/key/pause strings.
+
+    Each such synthesized Return also gets a trailing pause — a real coder
+    doesn't advance to the next line at the same tempo as the characters
+    within one (owner feedback, 2026-08-18: the typing read as too uniform,
+    partly because line boundaries carried no beat at all before this). An
+    explicit key:Return the script author wrote themselves (e.g. to run a
+    shell command) is untouched — this only fires for a newline INSIDE a
+    text: value.
     """
     flat = []
     for beat in doc["beats"]:
@@ -141,6 +164,7 @@ def flatten_actions(doc):
                             flat.append(("text", "".join(buf)))
                             buf = []
                         flat.append(("key", "Return"))
+                        flat.append(("pause", str(int(rng.uniform(*line_pause_range)))))
                     else:
                         buf.append(ch)
                 if buf:
@@ -171,12 +195,14 @@ def estimate_ms(flat, wpm):
     return total
 
 
-def build_hook(flat, wpm, jitter, seed, drop_compensation):
+def build_hook(flat, wpm, jitter, seed, drop_compensation, typo_rate):
     argv = ["hestia-type", "--wpm", str(wpm), "--jitter", str(jitter)]
     if seed is not None:
         argv += ["--seed", str(seed)]
     if drop_compensation:
         argv += ["--drop-compensation", drop_compensation]
+    if typo_rate is not None:
+        argv += ["--typo-rate", str(typo_rate)]
     argv += [f"{kind}:{val}" for kind, val in flat]
     return shlex.join(argv)
 
@@ -193,13 +219,19 @@ def main():
     args = ap.parse_args()
 
     doc = load_script(args.script)
-    flat = flatten_actions(doc)
 
     wpm = doc.get("wpm", DEFAULT_WPM)
     jitter = doc.get("jitter")
     seed = args.seed if args.seed is not None else doc.get("seed", DEFAULT_SEED)
     drop_compensation = doc.get("drop_compensation")
-    hook = build_hook(flat, wpm, jitter if jitter is not None else 0.35, seed, drop_compensation)
+    typo_rate = doc.get("typo_rate")
+    line_pause_range = tuple(doc.get("line_pause_ms", DEFAULT_LINE_PAUSE_MS))
+
+    rng = random.Random(seed)  # drives line-pause jitter — same rng a re-run
+                                 # with the same seed reproduces, consistent
+                                 # with hestia-type's own seeded reproducibility
+    flat = flatten_actions(doc, rng, line_pause_range)
+    hook = build_hook(flat, wpm, jitter if jitter is not None else 0.35, seed, drop_compensation, typo_rate)
 
     scene = doc.get("scene", "app")
     scene_arg = doc.get("scene_arg", "bash")

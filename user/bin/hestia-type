@@ -75,6 +75,15 @@ Options:
   --seed N                  RNG seed, for a reproducible take
   --drop-compensation MODE  opener (default) | every-pause | none (see above)
   --no-drop-compensation    deprecated alias for --drop-compensation none
+  --typo-rate F              per-letter chance of a plausible adjacent-key
+                              slip (a real QWERTY-neighbour key, not a
+                              random wrong character), typed, held briefly,
+                              then BackSpace'd and retyped correctly —
+                              default 0.03 ("a few, immediately corrected",
+                              not a sprinkle across every word). 0 disables.
+                              Only fires on letters — punctuation/digits are
+                              left alone, not worth the realism for the risk
+                              of confusing editor/matching state.
   --dry-run                 print the wtype argv instead of running it
 """
 import argparse
@@ -82,12 +91,37 @@ import random
 import subprocess
 import sys
 
-WORD_PAUSE_MS = (30, 160)      # extra pause after a space
-PUNCT_PAUSE_MS = (150, 420)    # extra pause after . , ! ? : ;
+WORD_PAUSE_MS = (60, 240)      # extra pause after a space — widened 2026-08-18
+                                # (owner: even an experienced typist pauses
+                                # between words; the original (30,160) read
+                                # as too uniform/fast on a real render)
+PUNCT_PAUSE_MS = (200, 550)    # extra pause after . , ! ? : ; — same reason
 SHIFT_EXTRA_MS = (10, 40)      # extra pause for a character that needs Shift
 MIN_CHAR_MS = 18
 PUNCT_CHARS = set(".,!?:;")
 SHIFT_CHARS = set('~!@#$%^&*()_+{}|:"<>?')
+
+TYPO_NOTICE_MS = (80, 220)     # beat between typing a wrong letter and
+                                # noticing it — see typo_char()/build_argv()
+TYPO_FIX_MS = (60, 160)        # beat between the corrective BackSpace and
+                                # retyping the right letter
+DEFAULT_TYPO_RATE = 0.03       # ~3% of letters — "a few, immediately
+                                # corrected" (owner, 2026-08-18), not a
+                                # sprinkle across every word
+
+# Adjacent keys on a US QWERTY layout — the pool a real mistyped letter is
+# actually drawn from (a finger landing one key off), not a uniformly random
+# wrong letter. No punctuation/digits: word-level letter slips are the
+# recognizable "human" mistake this models; typo-ing a paren or a quote
+# risks confusing editor/matching state for no realism gain.
+QWERTY_NEIGHBORS = {
+    "q": "wa", "w": "qeas", "e": "wrsd", "r": "etdf", "t": "rygf",
+    "y": "tuhg", "u": "yijh", "i": "uokj", "o": "iplk", "p": "ol",
+    "a": "qwsz", "s": "weadzx", "d": "ersfxc", "f": "rtdgcv", "g": "tyfhvb",
+    "h": "yugjbn", "j": "uihknm", "k": "iojlm", "l": "opk",
+    "z": "asx", "x": "sdzc", "c": "dfxv", "v": "fgcb", "b": "ghvn",
+    "n": "hjbm", "m": "jkn",
+}
 
 
 def char_delay(ch, avg_ms, jitter, rng):
@@ -95,6 +129,16 @@ def char_delay(ch, avg_ms, jitter, rng):
     if ch.isupper() or ch in SHIFT_CHARS:
         d += rng.uniform(*SHIFT_EXTRA_MS)
     return max(MIN_CHAR_MS, d)
+
+
+def typo_char(ch, rng):
+    """A plausible adjacent-key slip for a letter, same case as ch — or
+    None if ch has no mapped neighbour (only a-z/A-Z do)."""
+    neighbors = QWERTY_NEIGHBORS.get(ch.lower())
+    if not neighbors:
+        return None
+    wrong = rng.choice(neighbors)
+    return wrong.upper() if ch.isupper() else wrong
 
 
 def parse_actions(raw):
@@ -107,7 +151,7 @@ def parse_actions(raw):
     return actions
 
 
-def build_argv(actions, wpm, jitter, rng, drop_compensation):
+def build_argv(actions, wpm, jitter, rng, drop_compensation, typo_rate=0.0):
     """drop_compensation is one of "opener" (default), "every-pause", or
     "none" — see the module docstring for the two contradictory live
     findings behind why this is a choice rather than one hardcoded rule.
@@ -116,6 +160,10 @@ def build_argv(actions, wpm, jitter, rng, drop_compensation):
     `-s`, whether an explicit pause: action or this tool's own automatic
     word/punctuation one, so every post-pause unit gets doubled — the
     stronger, riskier-to-overcorrect-with mode.
+
+    typo_rate: per-letter probability of a plausible adjacent-key slip,
+    typed, briefly held, then BackSpace'd and retyped correctly — see
+    typo_char(). 0 (default) never injects one.
     """
     avg_ms = 60000 / (wpm * 5)  # ~5 chars/word, the standard WPM convention
     argv = []
@@ -134,25 +182,48 @@ def build_argv(actions, wpm, jitter, rng, drop_compensation):
             needs_comp = False
         argv.extend(unit)
 
+    def emit_char(ch):
+        d = int(char_delay(ch, avg_ms, jitter, rng))
+        if ch == "-":
+            # wtype reserves a BARE "-" positional argument as its own
+            # "read text from stdin" placeholder ("Stdin place-holder
+            # can only appear once" — a hard error, not a silent
+            # misread) — and per-character splitting means a lone "-"
+            # in the middle of typed text (e.g. "-u") is exactly that
+            # bare form. -k minus sidesteps it entirely (a named
+            # keysym, never mistaken for the placeholder).
+            emit(["-k", "minus"])
+        else:
+            emit(["-d", str(d), ch])
+
     for kind, val in actions:
         if kind == "pause":
             add_pause(val)
         elif kind == "key":
-            emit(["-k", val])
+            # A single printable character (e.g. a vim command key like O,
+            # i, G, $) goes through the SAME per-character path as text: —
+            # confirmed live (2026-08-18) that wtype's own -k NAME keysym
+            # lookup is case-INSENSITIVE for bare letters (`-k O` produces
+            # lowercase 'o', silently), while -d MS <char> has always typed
+            # case correctly (every capital in every rendered scene so far
+            # went through this path already). -k is for multi-character
+            # NAMED keysyms with no direct character form (Return, Escape,
+            # BackSpace, ...), which this case-insensitivity bug can't
+            # apply to.
+            if len(val) == 1:
+                emit_char(val)
+            else:
+                emit(["-k", val])
         elif kind == "text":
             for ch in val:
-                d = int(char_delay(ch, avg_ms, jitter, rng))
-                if ch == "-":
-                    # wtype reserves a BARE "-" positional argument as its own
-                    # "read text from stdin" placeholder ("Stdin place-holder
-                    # can only appear once" — a hard error, not a silent
-                    # misread) — and per-character splitting means a lone "-"
-                    # in the middle of typed text (e.g. "-u") is exactly that
-                    # bare form. -k minus sidesteps it entirely (a named
-                    # keysym, never mistaken for the placeholder).
-                    emit(["-k", "minus"])
-                else:
-                    emit(["-d", str(d), ch])
+                if ch.isalpha() and typo_rate > 0 and rng.random() < typo_rate:
+                    wrong = typo_char(ch, rng)
+                    if wrong:
+                        emit_char(wrong)
+                        add_pause(rng.uniform(*TYPO_NOTICE_MS))
+                        emit(["-k", "BackSpace"])
+                        add_pause(rng.uniform(*TYPO_FIX_MS))
+                emit_char(ch)
                 if ch == " ":
                     add_pause(rng.uniform(*WORD_PAUSE_MS))
                 elif ch in PUNCT_CHARS:
@@ -170,6 +241,9 @@ def main():
     ap.add_argument("--drop-compensation", choices=("opener", "every-pause", "none"), default="opener")
     ap.add_argument("--no-drop-compensation", action="store_true",
                      help="deprecated alias for --drop-compensation none")
+    ap.add_argument("--typo-rate", type=float, default=DEFAULT_TYPO_RATE,
+                     help=f"per-letter chance of a plausible adjacent-key slip, "
+                          f"caught and corrected immediately (default {DEFAULT_TYPO_RATE}; 0 disables)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("actions", nargs="+")
     args = ap.parse_args()
@@ -177,7 +251,7 @@ def main():
     drop_compensation = "none" if args.no_drop_compensation else args.drop_compensation
     rng = random.Random(args.seed)
     actions = parse_actions(args.actions)
-    argv = build_argv(actions, args.wpm, args.jitter, rng, drop_compensation)
+    argv = build_argv(actions, args.wpm, args.jitter, rng, drop_compensation, args.typo_rate)
 
     if args.dry_run:
         print("wtype", " ".join(argv))

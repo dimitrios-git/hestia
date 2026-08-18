@@ -124,11 +124,37 @@ def stage_rig_home(root, repo, variant):
     rig.mkdir(parents=True, exist_ok=True)
     video_rig = repo / "user" / "video-rig"
     shutil.copy(video_rig / "bashrc", rig / ".bashrc")
+
     vimcolors = rig / ".vim" / "colors"
     vimcolors.mkdir(parents=True, exist_ok=True)
     shutil.copy(repo / "user" / "vim" / "colors" / "hestia.vim", vimcolors / "hestia.vim")
     shutil.copy(video_rig / f"vimrc-{variant}", rig / ".vimrc")
+
+    nvim_cfg = rig / ".config" / "nvim"
+    nvim_colors = nvim_cfg / "colors"
+    nvim_colors.mkdir(parents=True, exist_ok=True)
+    shutil.copy(repo / "user" / "vim" / "colors" / "hestia.vim", nvim_colors / "hestia.vim")
+    shutil.copy(video_rig / f"nvimrc-{variant}.lua", nvim_cfg / "init.lua")
+    stage_treesitter_parsers(nvim_cfg / "parser")
     return rig
+
+
+def stage_treesitter_parsers(dest):
+    """Best-effort: copy any compiled Neovim treesitter parsers (parser/
+    <lang>.so) already installed for the invoking user into the isolated
+    rig. These are compiled binaries — this repo doesn't vendor them, so a
+    machine with none produces no parser/ dir at all, and the rig's
+    nvimrc-*.lua falls back to legacy :syntax cleanly (see its own
+    comment) rather than erroring. Not a real dependency, just nicer
+    highlighting when it's there.
+    """
+    candidates = list(Path.home().glob(".local/share/nvim/site/pack/*/start/nvim-treesitter/parser/*.so"))
+    candidates += list(Path.home().glob(".local/share/nvim/lazy/nvim-treesitter/parser/*.so"))
+    if not candidates:
+        return
+    dest.mkdir(parents=True, exist_ok=True)
+    for so in candidates:
+        shutil.copy(so, dest / so.name)
 
 
 def load_script(path):

@@ -33,6 +33,7 @@ Usage: deploy-windows-terminal.py [--variant dark|light]
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -64,19 +65,43 @@ def profile_guid(distro_name: str) -> str:
 
 
 def run(cmd: list) -> str:
+    """Capture RAW BYTES, not text=True — some corporate Windows images wire
+    an AutoRun hook onto cmd.exe (VPN/EDR/IT-policy banners) that prints
+    legacy-codepage text ahead of the real output; text=True decodes both
+    streams as strict UTF-8 inside subprocess.run() itself and crashes on
+    that before we ever see a chance to handle it (hit live, 2026-08-18).
+    Decode leniently instead so garbage bytes can't take the whole script
+    down; win_userprofile() below does the actual banner-line filtering."""
     try:
-        return subprocess.run(
-            cmd, capture_output=True, text=True, check=True
-        ).stdout.strip()
-    except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        result = subprocess.run(cmd, capture_output=True, check=True)
+    except FileNotFoundError as e:
         sys.exit(f"failed to run {cmd!r}: {e}")
+    except subprocess.CalledProcessError as e:
+        stderr = (e.stderr or b"").decode("utf-8", errors="replace")
+        sys.exit(f"failed to run {cmd!r} (exit {e.returncode}): {stderr}")
+    return result.stdout.decode("utf-8", errors="replace").strip()
 
 
 def win_userprofile() -> Path:
     """Resolve %USERPROFILE% via cmd.exe (always present via WSL interop,
     no extra utility beyond the wslpath binary WSL itself ships) and
-    translate it to its /mnt/c/... path."""
-    win_path = run(["cmd.exe", "/c", "echo %USERPROFILE%"])
+    translate it to its /mnt/c/... path. `/d` disables cmd.exe's AutoRun
+    registry hook (HKCU/HKLM ...\\Command Processor\\AutoRun) — the likely
+    source of banner text corporate images print on every cmd.exe launch.
+    As a second layer of defense, take the LAST non-empty output line (the
+    echoed value always comes last) and sanity-check it looks like a
+    Windows path before trusting it."""
+    win_path = run(["cmd.exe", "/d", "/c", "echo %USERPROFILE%"])
+    lines = [ln.strip() for ln in win_path.splitlines() if ln.strip()]
+    if not lines:
+        sys.exit("cmd.exe produced no output for %USERPROFILE%")
+    win_path = lines[-1]
+    if not re.match(r"^[A-Za-z]:\\", win_path):
+        sys.exit(
+            f"unexpected output resolving %USERPROFILE% (got {win_path!r}) "
+            "— check for a cmd.exe AutoRun banner (HKCU/HKLM ...\\Command "
+            "Processor\\AutoRun) printing extra text ahead of it"
+        )
     return Path(run(["wslpath", "-u", win_path]))
 
 

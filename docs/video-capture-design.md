@@ -431,6 +431,67 @@ branding, not operator identity, so it doesn't conflict with the earlier
 "bare `$`, no identity" decision (§11). Verified live both ways: a
 successful command keeps `$` green, `false` turns the next one red.
 
+## 14. Editor switch: Vim → Neovim (2026-08-18, eighth)
+
+Owner's own read on the recording-quality thread (§13): the remaining
+colour difference between a video's syntax highlighting and the site's own
+code blocks isn't really fixable at the encoder level — Vim's legacy
+regex-based `:syntax` and the site's Shiki (TextMate-grammar) highlighter
+are just different classification engines, and the hestia theme project
+already did the real work of keeping their PALETTES coherent (`docs/
+theme-roadmap.md`'s vim/bat/Shiki/VS Code layer). What's left is which
+GROUPS get assigned to which tokens, not the colours themselves. Owner's
+proposal: record in Neovim instead — its built-in `vim.treesitter`
+(structural, AST-based parsing) classifies tokens with more context than
+Vim's pattern matching, closer in spirit to how Shiki resolves tokens too,
+even though the two don't share an underlying engine.
+
+Verified cheaply before committing to it: `nvim` (0.10.4) is already
+installed, the hestia colourscheme is already documented as identical
+across Vim/Neovim, and the invoking user's own personal Neovim setup
+already has `nvim-treesitter` configured with `c` in its parser list — the
+compiled `parser/c.so` was already sitting on disk. Confirmed live
+(isolated `hestia-shot app` shoot-mode test, no full record needed) that
+`vim.treesitter.start()` — Neovim's CORE treesitter API, not the community
+`nvim-treesitter` plugin — highlights correctly with just a compiled
+parser on the runtimepath; Neovim ships highlight query files for common
+languages (including C) built in, no extra query files needed.
+
+**Isolation extended, not reinvented**: `user/video-rig/nvimrc-{dark,
+light}.lua` — same "no personal plugins/keymaps, hestia colourscheme,
+bare essentials" posture as `vimrc-{dark,light}`. `hestia-video`'s
+`stage_rig_home()` now also stages `$HOME/.config/nvim/init.lua` +
+`colors/hestia.vim` + a best-effort copy of any compiled treesitter
+parsers found under the invoking user's own `~/.local/share/nvim/...`
+(binaries this repo doesn't vendor — falls back to legacy `:syntax`
+cleanly, never a hard failure, if none are found on a given machine).
+
+**Two real indent bugs, not one, both confirmed live before landing**:
+1. Neovim, UNLIKE Vim, defaults `autoindent=true` — the same
+   accumulating-indent symptom as the Vim rig's original bug (§11), but a
+   DIFFERENT setting. Fixed with an explicit `vim.o.autoindent = false`.
+2. That alone wasn't enough — Neovim's OWN bundled `ftplugin/c.vim` sets
+   `cindent=true` unconditionally as part of `filetype plugin on`, NOT
+   gated behind the separate `filetype ... indent on` layer the way Vim's
+   `indent/c.vim` is. The "skip filetype indent" fix that worked for the
+   Vim rig does NOT carry over — `cindent`/`smartindent` have to be
+   re-asserted `false` INSIDE a `FileType` autocmd callback (they get set
+   reactively when the ftplugin loads, which runs before a plain top-
+   level option-setting line would take effect).
+
+Both caught by the same discipline established in §12 — rendering with
+`--keep-workdir` and diffing the actual output file against the chapter's
+code block, not trusting frame screenshots. First attempt compiled and
+ran fine (C doesn't care about whitespace) but came out at 8-then-12-space
+indentation instead of a flat 4 — a `diff` catches this instantly, a
+frame screenshot at this display size easily wouldn't.
+
+The pilot scene now types `nvim hello.c` — honestly, not aliased behind
+`vim` — matching the doc paragraph added to `f01-the-terminal/12-vim.mdx`
+(en-GB + en-US, stoa repo) explaining Neovim as a "going further" aside
+alongside `vimtutor`, so a viewer who notices `nvim` in a recording isn't
+left wondering why it's a name the curriculum never mentioned.
+
 ## 10. Open questions
 
 - **TTS engine** — Piper (local, default-recommended) vs. a cloud API

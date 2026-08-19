@@ -134,6 +134,25 @@ promoted to `palette.yml` as `extended.visual` rather than duplicated as a
 second hardcoded literal. `render.py --check` now covers all three
 (42 artifacts total, up from 36).
 
+**Round 6 — the cyan wasn't hestia cyan.** Weeks later, on a low-quality
+monitor, the selection fill read as off — not quite hestia's actual ANSI/
+Memphis teal cyan (`#0cb2c0`/`#22cdda`), but *close* to it, close enough to
+pass on a good screen. It wasn't a rendering fluke: `extended.visual`
+(`#5fd7ff` dark / `#0087d7` light) was never hestia's cyan at all — it was
+upstream wildcharm's own `Visual` colour, admitted verbatim in Round 2 and
+never touched by the 0.9.0 Memphis re-anchor, which only re-anchored
+`syntax:`. It was also the one selection surface across the whole desktop
+that *wasn't* branded on the accent — kitty's `selection_background`, vifm's
+`Selected`, and Windows Terminal's `selectionBackground` all already used
+`roles.accent` (`#7c3aed`), which is literally what `roles.accent`'s own
+comment says it's for ("focus, highlights, selection, FILL"). Fix: drop
+`extended.visual` from `palette.yml` entirely and point both `hi Visual`
+(`render_vim()`) and `[colors.selection]` (`render_alacritty()`) at
+`roles.accent`/`accent_fg` directly (`palette.yml` 0.12.0) — vim and
+Alacritty selection is now the same violet as every other selection surface
+in hestia, not a look-alike. The *Screenshots* section below still shows the
+pre-0.12.0 cyan selection; pending a reshoot.
+
 ## How hestia ships it
 
 **The default swap** touches every place sway/waybar spawn a terminal, not
@@ -153,12 +172,14 @@ dozen places, it deleted a whole workaround.
 
 **The theme** (`user/alacritty/theme-{dark,light}.toml`, **GENERATED** by
 `render_alacritty()` in `themes/hestia/render.py` — see Round 5 below) maps
-every vi-mode surface to the matching `hestia.vim` highlight group:
-`[colors.selection]` = `Visual`, `[colors.search.matches]`/
+every vi-mode surface to the matching `hestia.vim` highlight group where vim
+has one worth matching: `[colors.search.matches]`/
 `[colors.search.focused_match]` = `Search`/`CurSearch`, plus a `bright_cyan`
 (dark) / base-`cyan` (light) line indicator and a footer bar on the raised
-`surface` colour. The cursor is deliberately *not* mode-specific (see Round 3
-above) — same accent, same shape, always.
+`surface` colour. `[colors.selection]` is the accent fill (same as vim's own
+`Visual` group, see Round 6) rather than a vim-specific colour. The cursor is
+deliberately *not* mode-specific (see Round 3 above) — same accent, same
+shape, always.
 
 **The music session** (`user/alacritty/music-session.sh`, bound to
 `$mod+m`) replaces kitty's native `--session`/layout feature, which

@@ -574,21 +574,24 @@ themes {{
 
 def render_alacritty(variant: str) -> str:
     """theme-{dark,light}.toml — pulled in by alacritty.toml's [general] import.
-    The vi-mode surfaces map onto hestia.vim's OWN highlight groups, not a
-    generic accent treatment: selection = Visual (extended.visual — a vim-only
-    UI colour, not the accent), search.matches/search.focused_match =
+    The vi-mode surfaces map onto hestia.vim's OWN highlight groups where vim
+    has one worth matching: search.matches/search.focused_match =
     Search/CurSearch (every-match green vs. cursor-is-here orange — vim's
     persisted-vs-current split, distinct from zathura's active/inactive one).
-    The cursor is deliberately IDENTICAL in normal and vi mode (two earlier
-    attempts at a vi-mode-specific cursor were reverted live as illegible —
-    see showcase/terminal-emulator.md)."""
+    Selection used to follow vim's own bespoke Visual cyan too
+    (extended.visual, 0.11.0) but that read as an off-brand near-cyan next to
+    the real ANSI/Memphis teal; 0.12.0 dropped it in favour of the accent
+    fill, same as vim's own Visual now uses and the same "selection = accent"
+    convention kitty/vifm/Windows Terminal already followed. The cursor is
+    deliberately IDENTICAL in normal and vi mode (two earlier attempts at a
+    vi-mode-specific cursor were reverted live as illegible — see
+    showcase/terminal-emulator.md)."""
     r, a, e = vroles(variant), vansi(variant), vext(variant)
     c = VARIANTS[variant]  # syntax roles: c["string"] green, c["type"] orange
     dark = variant == "dark"
     bg, text = r["bg"], r["text"]
     acc, accfg = r["accent"], r["accent_fg"]
     surface = r["surface"]
-    visual = e["visual"]
     match_bg, focus_bg = c["string"], c["type"]
     # Text ON the vi-mode surfaces (selection/search/line-indicator fills):
     # black on dark's bright fills, white on light's AA-darkened ones — same
@@ -624,12 +627,13 @@ cursor = "{acc}"
 text = "{accfg}"
 cursor = "{acc}"
 
-# Selection: matches vim's OWN Visual group exactly (extended.visual — a
-# vim/wildcharm UI colour with no other cross-app role, promoted 0.11.0 once
-# this became a second consumer alongside render_vim()).
+# Selection: the accent fill, matching kitty's selection_background/vifm's
+# Selected/Windows Terminal's selectionBackground — and vim's OWN Visual
+# group, which uses the same accent since 0.12.0 (dropped the bespoke
+# off-brand Visual cyan, extended.visual, that both used through 0.11.0).
 [colors.selection]
-text = "{fill_fg}"
-background = "{visual}"
+text = "{accfg}"
+background = "{acc}"
 
 # Search — mirrors vim's OWN two-tier search highlighting (Search/CurSearch),
 # not zathura's active/inactive split: the CURRENT match (Alacritty's
@@ -656,8 +660,7 @@ background = "{surface}"
 # Line indicator (top-right, position in scrollback during search/vi mode) —
 # bright_cyan fill on dark (base cyan on light, for contrast with its white
 # text — see fill_fg/line_ind_bg above), the same brand teal used for ANSI
-# cyan/bright_cyan everywhere else (kitty/vifm/cmus), not vim's one-off
-# Visual cyan (that one's reserved for selection, just above).
+# cyan/bright_cyan everywhere else (kitty/vifm/cmus).
 [colors.line_indicator]
 foreground = "{fill_fg}"
 background = "{line_ind_bg}"
@@ -1964,8 +1967,12 @@ def _vim_rows(variant: str) -> list:
     palette's AA-tuned values. The vimdiff fills come from the palette `diff:`
     section (Claude-style: tinted row bg, guifg=NONE so syntax shows through).
     Two vim-only UI accents with no cross-app role stay literal here —
-    lCursor/MatchParen. Visual was the third until Alacritty's theme needed
-    the same value for vi-mode selection parity (0.11.0) — now extended.visual."""
+    lCursor/MatchParen. Visual briefly had its own bespoke cyan too
+    (extended.visual, 0.11.0), but that read as "close to hestia cyan but not
+    quite" against the real ANSI/Memphis teal — 0.12.0 dropped it and Visual
+    now uses the shared accent fill instead, same as every other selection
+    surface (kitty's selection_background, vifm's Selected, Windows Terminal's
+    selectionBackground)."""
     r, a, e = vroles(variant), vansi(variant), vext(variant)
     s = PALETTE["syntax"] if variant == "dark" else LIGHT["syntax"]
     df = PALETTE["diff"] if variant == "dark" else LIGHT["diff"]
@@ -1982,7 +1989,7 @@ def _vim_rows(variant: str) -> list:
         line_hi, colcol = r["surface"], r["surface_alt"]
         cur_bg, pthumb = white, a["white"]
         eob, curnr = a["bright_black"], white
-        vis, lcur, mparen = e["visual"], "#ff5fff", "#ff00af"
+        vis, lcur, mparen = r["accent"], "#ff5fff", "#ff00af"
         stl = (r["accent_fg"], r["accent"], "bold")       # white on the violet accent (matches waybar/swaynag)
         stlnc = (a["bright_black"], r["bg"], "reverse")
         split = a["bright_black"]
@@ -1996,7 +2003,7 @@ def _vim_rows(variant: str) -> list:
         line_hi, colcol = r["surface"], r["surface"]
         cur_bg, pthumb = ink, a["bright_black"]
         eob, curnr = ln, ink
-        vis, lcur, mparen = e["visual"], "#ff00ff", "#ff00af"
+        vis, lcur, mparen = r["accent"], "#ff00ff", "#ff00af"
         stl = (r["accent_fg"], r["accent"], "bold")       # white on the violet accent (matches waybar/swaynag)
         stlnc = (ink, r["surface_alt"], N)                # inactive: light-grey bar
         split = e["ui_dark"]
@@ -2044,7 +2051,7 @@ def _vim_rows(variant: str) -> list:
         ("debugBreakpoint", a["cyan"], N, "reverse"),
         ("Cursor", fill_fg, cur_bg, N),
         ("lCursor", ink, lcur, N),
-        ("Visual", vis, fill_fg, "reverse"),
+        ("Visual", vis, r["accent_fg"], "reverse"),
         ("VisualNOS", fill_fg, s["keyword"], N),
         ("CursorLine", N, line_hi, N),
         ("CursorColumn", N, line_hi, N),

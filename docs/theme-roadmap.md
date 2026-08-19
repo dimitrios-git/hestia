@@ -699,6 +699,21 @@ the platform mapping, never in an artifact.
 are added, **patch** for a value tweak, and record one line here. Layer-3
 artifacts and cross-repo copies stamp the version they were generated from.
 
+- **0.12.0** (2026-08) — **vim's `Visual` selection re-anchored on the accent,
+  `extended.visual` dropped.** Spotted on a low-quality monitor: Alacritty's
+  vi-mode selection (and vim's own `hi Visual`) read as "close to hestia cyan
+  but not quite" — because it wasn't hestia cyan at all. `extended.visual`
+  (`#5fd7ff` dark / `#0087d7` light, 0.11.0) was a bespoke UI colour inherited
+  unchanged from upstream wildcharm's `Visual` group; it never went through
+  the Memphis re-anchor (0.9.0 only touched `syntax:`) and was never actually
+  the ANSI/brand teal cyan (`#0cb2c0`/`#22cdda`) it visually resembled. It was
+  also the one selection surface in the whole desktop NOT using the accent —
+  kitty's `selection_background`, vifm's `Selected`, and Windows Terminal's
+  `selectionBackground` all already used `roles.accent` (`#7c3aed`), per its
+  own stated purpose ("focus, highlights, selection, FILL"). Both `hi Visual`
+  (`render_vim()`) and `[colors.selection]` (`render_alacritty()`) now read
+  `roles.accent`/`accent_fg` directly; `extended.visual` is removed from
+  `palette.yml`, not just unused.
 - **0.11.0** (2026-08) — **tmux/zellij/Alacritty promoted from hand-authored to
   GENERATED** (`render_tmux()`/`render_zellij()`/`render_alacritty()`,
   `themes/hestia/render.py`, 42 artifacts now vs. 36), and vim's own `Visual`

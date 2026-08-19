@@ -705,6 +705,138 @@ BackSpace-count cleanup is character-count-based (Python `len()` on a
 Unicode string), which is correct regardless of a language's UTF-8 byte
 width, not something that needed special-casing.
 
+## 18. Inline-comment overflow → auto block conversion (2026-08-19, twelfth)
+
+The 640×480 pilot (§14/§17) surfaced a real readability gap: owner
+watched the rendered video and found that a long inline `comment:` wraps
+inside nvim's own soft-wrap at the smaller resolution — still readable,
+but not the intended effect, since it was designed to *look* like a
+short annotation, not a wrapped paragraph. Owner asked for a precise
+measurement before implementing rather than eyeballing it.
+
+**Measured directly**, not estimated: rendered an isolated `winwidth(0)`
+probe at 640×480 with the rig's actual 11pt font —
+`winwidth(0)=65, &numberwidth=4, usable=61` columns. Confirmed the
+owner's separate assumption (80-char lines) genuinely doesn't fit at
+this resolution; 61 is the real budget. `usable_cols(res)` in
+`hestia-video` reproduces this from any `res:` via a linear scale off
+the measured 640×480 baseline (`PX_PER_COL = 640/65`, `GUTTER_COLS = 4`),
+returning `None` when a scene has no `res:` set — auto-fallback is
+opt-out-by-absence, not a separate flag.
+
+**The mechanism**: `flatten_actions` now threads a `LineColumn` tracker
+through the action list (advances on `text:` content and on
+`key: Return/O/o`, deliberately blind to any other motion — every
+`comment:` in practice sits immediately after the `text:` it annotates,
+so a narrow tracker is enough; general vim-motion tracking isn't
+tractable here and wasn't needed). `emit_comment` receives the current
+column and the scene's `cols` budget; when a would-be inline comment's
+projected length (`column + len(" /*  */") + len(text)`, plus a small
+`INLINE_OVERFLOW_MARGIN` safety buffer) exceeds `cols`, it word-wraps
+the text with `textwrap.wrap()` and renders it as a block instead —
+same content, same explanatory intent, just placed on its own line(s)
+above the code instead of soft-wrapping mid-line.
+
+**The mode bug this caught** (real, found by inspecting the actual
+rendered file, not just the dry-run key sequence): a deliberately
+authored block `comment:` (explicit `lines_up:`) is, by this codebase's
+existing convention, always triggered from NORMAL mode — the author's
+own script escapes first. But an inline `comment:` is always triggered
+mid-INSERT, right after the `text:` it follows. Auto-conversion crosses
+that boundary: it reuses the block-mode `O`/`dd` machinery from a
+context that's still in INSERT mode. First attempt sent `O` as a
+literal typed capital letter instead of "open line above," which
+silently ate part of the file (confirmed via a real render + file read,
+not just the dry-run's printed key sequence — the dry-run alone would
+have looked plausible). Fixed by bracketing auto-converted block
+comments with `key: Escape` (insert → normal, before `O`) going in and
+`emit_command("A", ...)` (normal → insert at true end-of-line) coming
+out — a deliberately-authored block comment doesn't need either, since
+its caller already owns mode on both sides.
+
+Verified end-to-end against the real pilot scene
+(`tools/video-capture/scenes/f04-your-first-program.yml`, stoa repo),
+whose one existing inline comment (57 chars at column 19) genuinely
+crosses the 61-column budget and now auto-converts: real render with
+`--keep-workdir`, resulting `hello.c` read back byte-identical to the
+chapter's own code block, and `gcc -Wall -Wextra` compiles and runs it
+clean. Also checked the two guard cases: a short inline comment at the
+same resolution stays inline (no false-positive conversion), and a
+scene with no `res:` skips the check entirely (`cols=None`).
+
+## 19. Resolution bump to 1024x768 for real 80-char headroom (2026-08-19, thirteenth)
+
+Owner asked whether bumping resolution would get to a genuine 80-column
+budget (the pilot's own stated target width), rather than relying on
+§18's auto-fallback alone. Measured — not estimated — 5 real
+resolutions with the same `winwidth(0)` probe methodology, rendered
+through the actual rig at each size:
+
+| `res:` | `winwidth(0)` | usable cols |
+|---|---|---|
+| 640x480 | 65 | 61 |
+| 768x576 (4:3 "576p") | 80 | 76 |
+| 800x600 | 83 | 79 |
+| 832x624 | 87 | 83 |
+| 1024x768 (XGA) | 108 | 104 |
+
+Two real findings from having 5 data points instead of 1:
+
+1. **768x576 ("576p" at 4:3) does NOT reach 80 columns** — only 76.
+   800x600 gets to 79 (a single column short). The smallest resolution
+   in this set that comfortably clears 80 is 832x624 (83); 1024x768
+   clears it with real headroom (104).
+2. **Column count is not linear in pixel width** — §18's
+   `PX_PER_COL`/`GUTTER_COLS` single-point extrapolation from the
+   640x480 measurement alone predicts 100 cols at 1024x768; the real
+   number is 104. Fitting a line through all 5 measured points shows why:
+   there's a roughly fixed PIXEL overhead (window chrome/decoration,
+   ballpark ~55px) that a pure `width/cell_px` model doesn't account
+   for, so the single-point scale systematically undershoots at larger
+   sizes. Not a huge error, but enough to wrongly force a handful of
+   otherwise-fine inline comments into block form.
+
+Fix: `hestia-video` gained `MEASURED_USABLE_COLS`, a lookup table of the
+5 real measurements above; `usable_cols()` checks it first and only
+falls back to the old linear estimate (documented as approximate) for a
+`res:` nobody's measured yet. This is the same "measure the real thing,
+don't extrapolate" discipline as §14's Neovim indent bugs and §18's
+mode-boundary bug — the fallback formula exists for convenience, not
+because it's trusted.
+
+Owner picked **1024x768 (XGA)** — comfortably past 80 columns, still
+4:3, still well below `1280x720` in both dimensions. Pilot scene's
+`res:` updated; re-rendered with `--keep-workdir`, `hello.c` read back
+byte-identical to the chapter's own code block, `gcc -Wall -Wextra`
+compiles and runs clean — same verification discipline as every prior
+round. At this resolution the pilot's one inline comment (57 chars) no
+longer crosses the (now much larger) budget, so it stays inline exactly
+as originally authored — confirming the auto-fallback machinery from
+§18 correctly does nothing when nothing needs to change, not just that
+it correctly converts when something does.
+
+Re-transcoded via `tools/video-capture/optimize.sh` into the live
+chapter's `public/video/f04-writing-c/` — same VP9/H.264/poster pipeline
+as before, no script changes needed (CRF-based, not
+resolution-specific).
+
+**Follow-up, same round**: owner asked for the rig to also render a
+`colorcolumn` bar at 80, matching their real personal config
+(`user/vim/.vimrc`: `set colorcolumn=80,120,160`, sourced by both their
+real Vim and Neovim via `user/nvim/init.vim`'s `source ~/.vimrc`). Added
+`colorcolumn=80` to all four rig configs (`vimrc-{dark,light}`,
+`nvimrc-{dark,light}.lua`) — deliberately just the 80 mark, not
+120/160, since fitting inside 80 columns is this pipeline's whole
+concern, not the 120/160 marks that matter for the owner's own
+general-purpose editing. No new highlight needed — `hestia.vim` already
+defines `ColorColumn` for both variants (dark `guibg=#303030`, light
+`guibg=#e4e4e4`), picked up automatically once the option is set.
+Verified by extracting a real frame from a re-render (not assumed from
+the config diff): bar renders correctly in both dark and light,
+confirmed visible in the pilot's own published poster frame.
+Re-rendered the pilot again after this change (file still verified
+byte-identical + compiles), re-transcoded, re-published.
+
 ## 10. Open questions
 
 - **TTS engine** — Piper (local, default-recommended) vs. a cloud API

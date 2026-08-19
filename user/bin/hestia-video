@@ -120,6 +120,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import textwrap
 import shutil
 from pathlib import Path
 
@@ -151,6 +152,33 @@ COMMENT_WPM_PER_CHAR = 0.5
 COMMENT_HOLD_BASE_MS = 1200
 COMMENT_HOLD_PER_WORD_MS = 150
 COMMENT_HOLD_MAX_MS = 4000
+
+# Auto-fallback: an inline comment: that would overflow the terminal's
+# actual column width gets rendered as a block instead (owner, 2026-08-19
+# — nvim soft-wraps an overflowing inline comment, which stays readable
+# and is harmless since it's deleted afterward, but "would be nicer if it
+# didn't happen"). MEASURED_USABLE_COLS is real `:echo winwidth(0)`/
+# `&numberwidth` probes rendered through the actual rig at each listed
+# `res:` — not estimated. Column count is NOT linear in pixel width
+# (confirmed by measuring 5 resolutions, not just interpolating from one):
+# window chrome eats a roughly fixed PIXEL amount, so a naive single-point
+# scale (PX_PER_COL below) systematically UNDERSHOOTS at larger sizes —
+# e.g. it predicts 100 cols at 1024x768 where the real number is 104.
+# Exact resolutions get their real measured value; PX_PER_COL/GUTTER_COLS
+# are a rough fallback for anything unmeasured, and any new `res:` a scene
+# actually uses should get a real probe added here rather than trusting
+# that fallback — see docs/video-capture-design.md §18/§19 for the probe
+# method.
+MEASURED_USABLE_COLS = {
+    "640x480": 61,
+    "768x576": 76,
+    "800x600": 79,
+    "832x624": 83,
+    "1024x768": 104,
+}
+PX_PER_COL = 640 / 65
+GUTTER_COLS = 4
+INLINE_OVERFLOW_MARGIN = 2  # small safety buffer, not an exact-fit cutoff
 
 
 def resolve_repo():
@@ -300,6 +328,48 @@ def emit_comment_line(content, leading_space, flat, rng, line_pause_range):
     return len(wrapper) + len(content)
 
 
+def usable_cols(res):
+    """Usable text columns for a scene's res: (e.g. "1024x768") — the real
+    measured value from MEASURED_USABLE_COLS if this exact res: has been
+    probed, else a rough PX_PER_COL/GUTTER_COLS estimate (see the constants'
+    comment for why that estimate alone isn't trustworthy). None if res
+    isn't set, in which case overflow-checking is skipped entirely (no
+    known column budget to check against).
+    """
+    if not res:
+        return None
+    if res in MEASURED_USABLE_COLS:
+        return MEASURED_USABLE_COLS[res]
+    try:
+        width_px = int(res.split("x")[0])
+    except (ValueError, IndexError):
+        return None
+    return max(10, int(width_px / PX_PER_COL) - GUTTER_COLS)
+
+
+class LineColumn:
+    """Tracks the CURRENT line's column position as flatten_actions
+    processes actions in order — used only to decide whether an inline
+    comment: would overflow the terminal's column budget (see
+    emit_comment). Deliberately narrow: only text: content and an
+    explicit key: Return/O/o reset or advance it. Any other key:
+    (navigation, commands) leaves it unchanged — tracking arbitrary vim
+    motions isn't tractable here, and in practice every comment: is
+    authored right after a text: action with no navigation in between.
+    """
+    def __init__(self):
+        self.value = 0
+
+    def advance_text(self, text):
+        for ch in text:
+            self.value = 0 if ch == "\n" else self.value + 1
+
+    def advance_key(self, key):
+        if key in ("Return", "O", "o"):
+            self.value = 0
+        # else: unchanged — see class docstring
+
+
 def comment_pacing(text, scene_wpm):
     """Comment typing ramps up with length: a long explanation is being
     read WHILE it's typed, not just during the hold after (owner,
@@ -336,7 +406,7 @@ def resolve_locale_text(text, locale):
     sys.exit(f"hestia-video: comment text has neither {locale!r} nor {DEFAULT_LOCALE!r}: {text!r}")
 
 
-def emit_comment(spec, flat, rng, line_pause_range, scene_wpm, locale):
+def emit_comment(spec, flat, rng, line_pause_range, scene_wpm, locale, column=0, cols=None):
     """Expands one comment: action — an explanatory C comment that gets
     typed, held long enough to read, then removed, leaving the file
     byte-identical to what it would be without it. Two shapes, chosen by
@@ -358,16 +428,48 @@ def emit_comment(spec, flat, rng, line_pause_range, scene_wpm, locale):
       comment, holds, moves to the comment's own first line, deletes
       exactly its own line count with dd, then moves back down to resume
       where the scene left off.
+
+    An inline comment that would overflow the scene's known column budget
+    (cols, from res: — see usable_cols) at its current column (column, from
+    flatten_actions's LineColumn tracker) auto-converts to a block comment
+    instead, word-wrapped to fit — same on-screen readability the author
+    asked for inline, without the nvim soft-wrap it'd otherwise trigger at
+    small resolutions. cols=None (no res: set) skips the check entirely.
+
+    Mode matters here: an inline comment: (no lines_up) is, by this
+    project's convention, ALWAYS authored mid-INSERT — right after the
+    text: it annotates, cursor still live from typing. A block comment:
+    (explicit lines_up) is, by convention, always authored from NORMAL
+    mode (typically right after a key: Escape). Auto-conversion crosses
+    that boundary — it turns an inline (insert-mode) comment into block
+    styling (O/dd, which need NORMAL mode) — so it has to bracket the
+    block-typing sequence with an Escape-in / A-out pair that a
+    deliberately-authored block comment doesn't need (its caller already
+    handles mode on both sides). Confirmed live (2026-08-19): without
+    this, "O" typed as a literal capital O into the still-open INSERT
+    mode instead of opening a line, corrupting the file.
     """
     spec = {"text": spec} if isinstance(spec, str) else dict(spec)
     text = resolve_locale_text(spec["text"], locale)
     is_block = "lines_up" in spec
+    auto_converted = False
+
+    if not is_block and cols is not None:
+        inline_len = column + len(" /*  */") + len(text)
+        if inline_len + INLINE_OVERFLOW_MARGIN > cols:
+            wrap_width = max(10, cols - len("/*  */"))
+            text = "\n".join(textwrap.wrap(text, width=wrap_width)) or text
+            is_block = True
+            auto_converted = True
+
     lines = text.split("\n")
     ramped_wpm, auto_hold = comment_pacing(text, scene_wpm)
     hold_ms = spec.get("hold_ms", auto_hold)
 
-    lines_up = int(spec["lines_up"]) if is_block else 0
+    lines_up = int(spec.get("lines_up", 0)) if is_block else 0
     if is_block:
+        if auto_converted:
+            flat.append(("key", "Escape"))  # insert -> normal, see docstring
         if lines_up > 0:
             emit_command(f"{lines_up}k", flat)
         flat.append(("key", "O"))
@@ -398,22 +500,37 @@ def emit_comment(spec, flat, rng, line_pause_range, scene_wpm, locale):
         emit_command(f"{comment_lines}dd", flat)
         if lines_up > 0:
             emit_command(f"{lines_up}j", flat)
+        if auto_converted:
+            # dd lands on the interrupted line at its first non-blank
+            # column; A resumes INSERT at true end-of-line, exactly where
+            # inline mode would have left the cursor — see docstring.
+            emit_command("A", flat)
     else:
         flat.extend([("key", "BackSpace")] * total_chars)
 
 
-def flatten_actions(doc, rng, line_pause_range, wpm, locale):
+def flatten_actions(doc, rng, line_pause_range, wpm, locale, cols):
     """Beats exist only for the script author's readability — flatten to
-    one ordered action list."""
+    one ordered action list. cols (see usable_cols) drives comment:'s
+    inline-overflow auto-fallback via the LineColumn tracker — None skips
+    that check entirely (no known column budget for this scene's res:).
+    """
     flat = []
+    column = LineColumn()
     for beat in doc["beats"]:
         for action in beat.get("actions", []):
             if "text" in action:
                 emit_text(action["text"], flat, rng, line_pause_range)
+                column.advance_text(action["text"])
             elif "comment" in action:
-                emit_comment(action["comment"], flat, rng, line_pause_range, wpm, locale)
+                # A comment: doesn't persist a column change — it's typed
+                # then removed, so the line it interrupts resumes exactly
+                # where it left off; only pass the CURRENT value in.
+                emit_comment(action["comment"], flat, rng, line_pause_range, wpm, locale, column.value, cols)
             elif "key" in action:
-                flat.append(("key", str(action["key"])))
+                key = str(action["key"])
+                flat.append(("key", key))
+                column.advance_key(key)
             elif "pause" in action:
                 flat.append(("pause", str(action["pause"])))
             else:
@@ -471,16 +588,17 @@ def main():
     typo_rate = doc.get("typo_rate")
     line_pause_range = tuple(doc.get("line_pause_ms", DEFAULT_LINE_PAUSE_MS))
     locale = args.locale or doc.get("locale") or DEFAULT_LOCALE
+    res = args.res or doc.get("res")
+    cols = usable_cols(res)  # None if res isn't set — skips overflow-checking
 
     rng = random.Random(seed)  # drives line-pause jitter — same rng a re-run
                                  # with the same seed reproduces, consistent
                                  # with hestia-type's own seeded reproducibility
-    flat = flatten_actions(doc, rng, line_pause_range, wpm, locale)
+    flat = flatten_actions(doc, rng, line_pause_range, wpm, locale, cols)
     hook = build_hook(flat, wpm, jitter if jitter is not None else 0.35, seed, drop_compensation, typo_rate)
 
     scene = doc.get("scene", "app")
     scene_arg = doc.get("scene_arg", "bash")
-    res = args.res or doc.get("res")
     variant = args.variant or doc.get("variant") or "dark"  # hestia-shot's own default
     output = (args.output or Path.cwd() / (args.script.stem + ".mp4")).resolve()
     repo = resolve_repo()

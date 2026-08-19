@@ -10,6 +10,7 @@ vim.o.number = true
 vim.o.relativenumber = true
 vim.o.cursorline = true
 vim.o.laststatus = 2
+vim.o.colorcolumn = "80"
 vim.o.background = "light"
 vim.cmd("colorscheme hestia")
 

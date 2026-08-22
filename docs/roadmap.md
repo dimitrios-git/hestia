@@ -179,6 +179,7 @@ the next chore in a queue.
 | Office | libreoffice | `●◐–○●○` | Opt-in, heavy |
 | Calculator | qalc | `●●–◐●○` | Corrected from gnome-calculator |
 | Gaming | steam *(opt-in)* | `●●–○◐○` | `steam-installer` from Debian's own contrib repo, not a vendor repo (`enable_steam`, default off; `steam` role) — enables `i386` + `contrib`; first-run client update + sign-in stay in-app. Forced through XWayland (launcher overrides) after its native-Wayland backend crashed sway on NVIDIA; a residual storefront/library flicker is an unfixed upstream NVIDIA+Wayland+CEF bug, worked around via Steam's own GPU-accel-in-webviews setting — see CLAUDE.md. Added to test Wayland/Sway compatibility; never researched (no real alternative) or themed (Steam skins itself) |
+| Video editing / color grading | — none *(evaluated: DaVinci Resolve — blocked)* | `○○–●○○` | A real trial (2026-08) got surprisingly far — past a Debian trixie `t64` packaging mismatch, a bundled-glib ABI crash, and an NVIDIA-driver/OpenSSL crash on the host, then past a containerized (Distrobox) install's own OpenCL-ICD gap — before hitting a genuine kernel DRM single-master conflict with the dual-GPU sway setup's NVIDIA reverse-PRIME scanout. Not a config gap; nothing shipped. Full chain in the [app log](#path-to-ultimate--the-app-logs). No open-source NLE (Kdenlive, Shotcut) evaluated yet either |
 | Password manager | gnome-keyring | `●●–○◐○` | Secrets only; no KeePassXC-class tool |
 | Calendar / contacts / notes / PKM | — none | | Big gap for a "complete" desktop |
 
@@ -271,3 +272,61 @@ Config is a 12-line stub. Image preview is wired (kitty), the rest is not.
 - **Theming shallow** — a theme file exists but was never tested in detail against
   the hestia identity. *(gate 3)*
 - **No detailed config** — keymap/openers/preview left at defaults. *(gate 2)*
+
+### DaVinci Resolve *(evaluated, blocked — video editing gap)*
+
+Real attempt 2026-08-22, chasing the RTX 4060 the dual-GPU sway setup (PR #306)
+exposes. A chain of real fixes, each clearing one wall and hitting the next:
+
+1. **Debian trixie's `t64` package rename** — `libapr1`/`libaprutil1`/`libasound2`/
+   `libglib2.0-0` don't exist under those names any more (only `*t64`, though the
+   actual libraries are present), so the `.run` installer's own dependency check
+   fails outright even though nothing is actually missing. Fixed with four
+   `equivs`-built transitional dummy packages depending on the real `t64` names —
+   safe and fully reversible, never touches the real libraries.
+2. Direct host install then **segfaults on first launch**: Resolve bundles its own
+   (older, 2.68) glib family under `/opt/resolve/libs` with an RPATH that always
+   wins, shadowing the system's newer glib that `libpango-1.0.so.0` needs
+   (`undefined symbol: g_once_init_leave_pointer`). Fixed by moving the bundled
+   glib/gobject/gio/gmodule aside so the app falls through to the system copies
+   (glib's own strict ABI back-compat makes this safe).
+3. Past that: a genuine, undocumented **NVIDIA driver ↔ system OpenSSL 3.5 crash**
+   inside `libcuda.so.1`'s own GPU-detect path (`OPENSSL_LH_retrieve`, called via
+   `libgpudetect.so`). No fix found. Concluded the direct host install isn't
+   viable on an unsupported distro (Resolve targets Rocky/RHEL) and containerized
+   instead.
+4. **Containerized via Distrobox + [zelikos/davincibox](https://github.com/zelikos/davincibox)**
+   (Fedora-based, NVIDIA Container Toolkit + CDI `--device nvidia.com/gpu=all`) —
+   sidesteps the glib/OpenSSL crashes entirely (different distro, different
+   OpenSSL build). Two more gotchas surfaced here: the installer must be
+   `--appimage-extract`ed into `$HOME`, not an arbitrary shared path — Distrobox
+   only bind-mounts `$HOME` + standard exchange dirs, not e.g. `/srv/clipshare`;
+   and Resolve's Linux GPU auto-detect requires *both* a CUDA/NVML match *and* an
+   OpenCL match to succeed, but CDI injects NVIDIA's OpenCL **library** without
+   its ICD **registration file** — `/etc/OpenCL/vendors/nvidia.icd` has to be
+   added by hand inside the container before the GPU is even selectable in
+   Preferences.
+5. **The actual wall.** With OpenCL selectable, Resolve still deadlocks loading
+   the Color page. Root cause: its OpenGL (GLX) context and its OpenCL context
+   land on *different* GPUs — this host's sway compositor deliberately renders
+   through the AMD iGPU (see CLAUDE.md's Sway section), so XWayland's GLX
+   defaults to Mesa/AMD while OpenCL correctly picks NVIDIA, and the two can't
+   interop across vendors. The standard fix for "force this X11 app onto the
+   discrete GPU" is VirtualGL (a dedicated NVIDIA-bound headless Xorg server +
+   `vglrun`) — but starting that second Xorg server fails outright: `NVIDIA(GPU-0):
+   Failed to acquire modesetting permission`. The kernel DRM subsystem allows only
+   one exclusive master per GPU, and sway/wlroots already holds it continuously
+   for NVIDIA reverse-PRIME scanout. No Xorg flag or VirtualGL option can
+   negotiate around single-master arbitration — it's a kernel constraint, not a
+   config gap.
+
+Everything installed for the attempt was cleaned up (equivs packages, the
+Distrobox container, podman/distrobox host packages, the headless Xorg config) —
+nothing shipped, gate 1 stays hollow.
+
+- **Revisit conditions** — none of these are a config change: either Resolve gains
+  a pure-EGL/render-node GLX path (no DRM master needed — this is exactly why
+  CUDA/OpenCL/NVML *do* work today, since they only touch the GPU's render node),
+  or NVIDIA/wlroots gain usable DRM-lease-based master sharing, or the dual-GPU
+  scanout design is given up. Worth re-checking after a driver/wlroots upgrade,
+  not worth another attempt on the current stack. *(closes gate 1)*

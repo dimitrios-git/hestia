@@ -160,7 +160,7 @@
         - "{{ target_home }}/.local/bin"
         - "{{ target_home }}/.local/share/applications"
 
-    - name: Force Steam through XWayland (terminal launches)
+    - name: Force Steam through XWayland + PRIME-offload to NVIDIA when present (terminal launches)
       # Steam's native-Wayland client backend is unstable on wlroots — on this host
       # it corrupted XWayland override-redirect surfaces (menus/cursor) and CRASHED
       # sway outright resizing a tiled window alongside it (see CLAUDE.md's steam
@@ -171,26 +171,34 @@
       # (system/sway-session/start-sway.j2, 2026-08, for a video-compare flicker
       # fix) and re-tested against Steam under THIS XWayland-forcing fix — if Steam
       # regresses again, that start-sway.j2 line gets re-commented, independent of
-      # this wrapper. No `become` — this writes into the invoking user's own home,
-      # not root's.
+      # this wrapper. Also PRIME-offloads Steam + games onto NVIDIA when it's live
+      # alongside another GPU (see the script's own comment + start-sway.j2's GPU
+      # render-path selection) — without it, games default to whichever GPU sway
+      # renders on (the weaker iGPU on a multi-GPU host), not the discrete NVIDIA
+      # card. No `become` — this writes into the invoking user's own home, not
+      # root's.
       ansible.builtin.copy:
         src: steam-x11-wrapper.sh
         dest: "{{ target_home }}/.local/bin/steam"
         mode: "0755"
 
     - name: Force Steam through XWayland (desktop-launcher / wofi launches)
-      # Same fix as the wrapper above, for launches via a .desktop entry (wofi drun,
-      # any app grid) rather than a terminal — those exec the Exec= path directly,
-      # not through $PATH, so the wrapper script alone doesn't cover them. A
-      # user-level override at this exact XDG path takes precedence over
+      # Launches via a .desktop entry (wofi drun, any app grid) exec the Exec= path
+      # directly, not through $PATH, so the wrapper script above alone doesn't cover
+      # them — this just points Exec= AT that same wrapper (by its known per-user
+      # path, hence template: not copy:) rather than duplicating its XWayland +
+      # PRIME-offload logic inline; a .desktop Exec= line can't do the NVIDIA-live
+      # conditional the wrapper needs (see the script's own comment on why forcing
+      # the vendor library unconditionally would be unsafe on an NVIDIA-less host).
+      # A user-level override at this exact XDG path takes precedence over
       # steam-installer's system one (/usr/share/applications/steam.desktop).
       # CAVEAT: if the real Valve client ever re-registers its OWN desktop entry at
       # this same user-level path (some Steam builds do, via `xdg-desktop-menu
       # install`), it will silently overwrite this file and undo the override — the
       # terminal wrapper above is unaffected either way; re-run `--tags steam` to
       # reassert this one if wofi launches start misbehaving again.
-      ansible.builtin.copy:
-        src: steam-x11.desktop
+      ansible.builtin.template:
+        src: steam-x11.desktop.j2
         dest: "{{ target_home }}/.local/share/applications/steam.desktop"
         mode: "0644"
 

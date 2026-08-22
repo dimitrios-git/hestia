@@ -4,11 +4,12 @@
 # step). It sets the Wayland session environment, then execs sway.
 #
 # On a host with an NVIDIA GPU AND another GPU (AMD/Intel) present, sway renders
-# on the OTHER GPU exclusively and never opens the NVIDIA device at all — see the
-# "GPU render-path selection" block below. The NVIDIA-only workarounds further
-# down apply ONLY when NVIDIA is the sole live GPU. That keeps this one script
-# correct on AMD/Intel-only machines too — where GBM_BACKEND=nvidia-drm and
-# __GLX_VENDOR_LIBRARY_NAME=nvidia would otherwise break rendering.
+# on the OTHER GPU while NVIDIA is kept purely as a scanout target (wlroots'
+# built-in multi-GPU "reverse PRIME" support) for any monitors wired to it — see
+# the "GPU render-path selection" block below. The NVIDIA-only workarounds
+# further down apply ONLY when NVIDIA is the sole live GPU. That keeps this one
+# script correct on AMD/Intel-only machines too — where GBM_BACKEND=nvidia-drm
+# and __GLX_VENDOR_LIBRARY_NAME=nvidia would otherwise break rendering.
 #
 # Tracked at system/sway-session/start-sway.j2; RENDERED to /usr/local/bin/start-sway
 # by the `sway_session` bootstrap role (the XCURSOR_THEME below follows `theme_variant`).
@@ -58,44 +59,74 @@ export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/openssh_agent"
 
 # --- GPU render-path selection -------------------------------------------------
 # Prefer rendering on any non-NVIDIA GPU (AMD/Intel) when one is present alongside
-# an NVIDIA card. Root-caused 2026-08-22 on hephaestus (AMD Raphael iGPU + NVIDIA
-# RTX 4060): with NVIDIA as the wlroots render GPU, Chrome/Chromium windows would
-# intermittently go fully blank (repaint only on mouse movement) or render text at
-# the wrong position — worse than, and a different bug from, the hover/repaint
-# flicker already fixed by forcing XWayland (see the NVIDIA-only block below).
-# Live-tested: pointing WLR_DRM_DEVICES at ONLY the AMD card (so the NVIDIA DRM
-# device is never opened at all) makes wlroots render via Mesa/radeonsi instead,
-# and the corruption is gone. NVIDIA stays fully available for CUDA/NVENC/PRIME
-# render-offload (Steam, ffmpeg) — none of that goes through this render path, only
-# through /dev/nvidia* directly.
+# an NVIDIA card, while still letting NVIDIA scan out any monitors physically wired
+# to it (wlroots' built-in multi-GPU "reverse PRIME" support — the secondary GPU
+# gets its own local renderer purely to import/texture the primary GPU's rendered
+# buffers for its own scanout, not to render the desktop itself). Root-caused +
+# live-tested 2026-08-22 on hephaestus (AMD Raphael iGPU + NVIDIA RTX 4060):
 #
-# NVIDIA must be excluded from WLR_DRM_DEVICES entirely, not merely deprioritized:
-# sway's proprietary-driver guard (sway/server.c, detect_proprietary) fires on ANY
-# DRM device it opens that reports the nvidia-drm driver, regardless of which GPU
-# ends up rendering — so as long as NVIDIA is in the device list, --unsupported-gpu
-# stays mandatory. Excluding it avoids that guard entirely, on top of fixing the
-# renderer choice (wlroots picks a GPU's boot_vga/BIOS-primary flag as a tiebreak
-# for the renderer when multiple DRM devices are listed, independent of listing
-# order — confirmed live; NVIDIA was boot_vga on this host, so simply listing AMD
-# first in WLR_DRM_DEVICES was NOT enough on its own).
+#   - With NVIDIA as the wlroots render GPU, Chrome/Chromium windows would
+#     intermittently go fully blank (repaint only on mouse movement) or render
+#     text at the wrong position — worse than, and a different bug from, the
+#     hover/repaint flicker already fixed by forcing XWayland (see the
+#     NVIDIA-only block below). Rendering via the non-NVIDIA GPU instead (Mesa)
+#     fixes it outright — confirmed on that GPU's own outputs.
+#   - A monitor scanned out via NVIDIA (reverse PRIME) still shows a residual
+#     flicker even with the non-NVIDIA GPU rendering — a related but distinct
+#     issue, most likely the same implicit-sync weakness in this driver (550.163,
+#     predates EGL_ANDROID_native_fence_sync) affecting NVIDIA's own scanout/
+#     present path regardless of which GPU rendered the buffer.
+#     WLR_RENDERER=vulkan does NOT help here (confirmed) — Vulkan's device
+#     selection ignores WLR_RENDER_DRM_DEVICE entirely and just grabs the
+#     discrete GPU (NVIDIA), reintroducing the original bug. Accepted as an
+#     unfixed limitation for now, same category as the residual XWayland
+#     flicker below.
 #
-# A monitor physically wired to the NVIDIA card is NOT yet supported by this
-# script — that needs cross-GPU (reverse-PRIME) scanout, which is a separate,
-# still-open investigation. Until then, all monitors need to be on the non-NVIDIA
-# GPU's own outputs.
+# Both GPUs are listed in WLR_DRM_DEVICES (non-NVIDIA first) so NVIDIA's own
+# outputs still get scanned/used — excluding it entirely would mean any monitor
+# physically wired to NVIDIA goes dark. WLR_RENDER_DRM_DEVICE pins the actual
+# compositor renderer to the non-NVIDIA GPU's RENDER node specifically (not its
+# card node — wlroots rejects a non-render DRM node there); without it wlroots
+# picks a GPU's boot_vga/BIOS-primary flag as a tiebreak for the renderer,
+# independent of WLR_DRM_DEVICES listing order (confirmed live — NVIDIA was
+# boot_vga on this host, so simply listing the other GPU first was NOT enough on
+# its own). --unsupported-gpu stays mandatory even though NVIDIA isn't the
+# renderer: sway's proprietary-driver guard (sway/server.c, detect_proprietary)
+# fires on ANY DRM device it opens that reports the nvidia-drm driver, regardless
+# of which GPU ends up rendering.
 other_gpu_card=""
+other_gpu_render=""
+nvidia_card=""
 for vendor_file in /sys/class/drm/card[0-9]/device/vendor; do
-    [ "$(cat "$vendor_file" 2>/dev/null)" = "0x10de" ] && continue
-    card_dir=$(dirname "$(dirname "$vendor_file")")
-    other_gpu_card="/dev/dri/$(basename "$card_dir")"
-    break
+    card_dev_dir=$(dirname "$vendor_file")
+    card_path="/dev/dri/$(basename "$(dirname "$card_dev_dir")")"
+    if [ "$(cat "$vendor_file" 2>/dev/null)" = "0x10de" ]; then
+        [ -z "$nvidia_card" ] && nvidia_card="$card_path"
+        continue
+    fi
+    if [ -z "$other_gpu_card" ]; then
+        other_gpu_card="$card_path"
+        pci_path=$(readlink -f "$card_dev_dir")
+        for render_dir in /sys/class/drm/renderD*; do
+            if [ "$(readlink -f "$render_dir/device")" = "$pci_path" ]; then
+                other_gpu_render="/dev/dri/$(basename "$render_dir")"
+                break
+            fi
+        done
+    fi
 done
 
+nvidia_live=false
+{ [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; } && nvidia_live=true
+
 sway_args=()
-if [ -n "$other_gpu_card" ] && { [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; }; then
-    export WLR_DRM_DEVICES="$other_gpu_card"
+if [ -n "$other_gpu_card" ] && [ -n "$other_gpu_render" ] && [ -n "$nvidia_card" ] && [ "$nvidia_live" = true ]; then
+    export WLR_DRM_DEVICES="$other_gpu_card:$nvidia_card"
+    export WLR_RENDER_DRM_DEVICE="$other_gpu_render"
+    export WLR_NO_HARDWARE_CURSORS=1
+    sway_args+=(--unsupported-gpu)
 # --- NVIDIA-only workarounds (applied only when NVIDIA is the sole live GPU) ---
-elif [ -e /dev/nvidia0 ] || grep -qE '^nvidia ' /proc/modules 2>/dev/null; then
+elif [ "$nvidia_live" = true ]; then
     export NVIDIA_DRIVER_CAPABILITIES=all
     export GBM_BACKEND=nvidia-drm
     export __GLX_VENDOR_LIBRARY_NAME=nvidia

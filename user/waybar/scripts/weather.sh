@@ -6,6 +6,8 @@
 # tmpfs and falls back to it on a network failure; prints nothing (Waybar hides the
 # module) when there's no data at all. Refresh interval (30 min) is in the waybar config.
 
+. "$HOME/.config/waybar/scripts/lib-density.sh"
+
 cache="${XDG_RUNTIME_DIR:-/tmp}/waybar-weather.json"
 
 # Map the wttr.in condition TEXT (%C) to an nf-md-weather glyph (monochrome — takes the
@@ -47,8 +49,15 @@ case "$data" in
         temp=$2; ctext=$3; feels=$4; hum=$5; wind=$6; loc=$7
         if [ -n "$temp" ]; then
             # Monochrome glyph in the standard icon span (same as cpu/gpu/etc.) so the
-            # temperature aligns by construction — no rise hack needed.
-            text="<span size='xx-large' rise='-3072'>$(weather_glyph "$ctext")</span> $(esc "$temp")"
+            # temperature aligns by construction — no rise hack needed. Dropped to
+            # icon-only on a narrow bar (lib-density.sh) — cached as-is, so a stale
+            # reading (network down) replays whatever density was live when it was
+            # last fetched; the 30-min interval makes that a non-issue in practice.
+            if [ "$(hestia_density)" = minimal ]; then
+                text="<span size='xx-large' rise='-3072'>$(weather_glyph "$ctext")</span>"
+            else
+                text="<span size='xx-large' rise='-3072'>$(weather_glyph "$ctext")</span> $(esc "$temp")"
+            fi
             tip="$(esc "$loc")\\n$(esc "$ctext"), $(esc "$temp") (feels $(esc "$feels"))\\n$(esc "$hum") humidity · $(esc "$wind")"
             json=$(printf '{"text":"%s","tooltip":"%s"}' "$text" "$tip")
             printf '%s\n' "$json" > "$cache"

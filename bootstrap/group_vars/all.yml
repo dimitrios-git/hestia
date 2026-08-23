@@ -316,6 +316,7 @@ dotfile_links:
   - { src: user/waybar/scripts/gpu-watch.sh, dest: "{{ target_home }}/.config/waybar/scripts/gpu-watch.sh" }
   - { src: user/waybar/scripts/weather.sh,   dest: "{{ target_home }}/.config/waybar/scripts/weather.sh" }
   - { src: user/waybar/scripts/notifications.sh, dest: "{{ target_home }}/.config/waybar/scripts/notifications.sh" }
+  - { src: user/waybar/scripts/calendar.sh,   dest: "{{ target_home }}/.config/waybar/scripts/calendar.sh" }
   - { src: user/waybar/scripts/usb.sh,        dest: "{{ target_home }}/.config/waybar/scripts/usb.sh" }
   - { src: user/waybar/scripts/power.sh,      dest: "{{ target_home }}/.config/waybar/scripts/power.sh" }
   - { src: user/mako/config,                dest: "{{ target_home }}/.config/mako/config" }

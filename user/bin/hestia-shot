@@ -153,6 +153,18 @@ if [ "$WANT_BAR" = 1 ]; then
   cp "$U/waybar/config" "$U/waybar/style.css" "$WORK/wb/"
   cp "$U/waybar/theme-$VARIANT.css" "$WORK/wb/theme.css"
   cp "$U"/waybar/scripts/*.sh "$WORK/wb/scripts/" 2>/dev/null || true
+  chmod +x "$WORK"/wb/scripts/*.sh 2>/dev/null || true
+  # Rewrite every $HOME/.config/waybar/scripts reference to the staged path --
+  # both in the config's own on-click/exec strings AND inside the scripts'
+  # OWN internal cross-references (lib-density.sh sourcing, clock.sh's
+  # calendar.sh on-click, ...), same technique already used for alacritty's
+  # theme.toml import below. A HOME=<staged dir> override was tried first
+  # (simpler, no sed) but broke fontconfig's Nerd Font lookup entirely --
+  # every bar icon rendered as a tofu box, confirmed live by comparing
+  # against a capture with $HOME untouched -- since the fonts live under the
+  # REAL $HOME/.local/share/fonts, not a throwaway staged one.
+  sed -i "s#\$HOME/\.config/waybar/scripts#$WORK/wb/scripts#g" \
+    "$WORK/wb/config" "$WORK"/wb/scripts/*.sh
 fi
 
 # --- stage an alacritty dir resolving the theme-<variant>.toml pair to `theme.toml` -

@@ -14,6 +14,7 @@ for_window [class=".*"] border pixel 2
 for_window [app_id="floatterm"] floating enable, resize set 800 600
 for_window [app_id="floatterm-weather"] resize set 1180 720
 for_window [app_id="floatterm-gpu"] resize set 1100 700
+for_window [app_id="floatterm-calendar"] resize set 480 420
 
 # MEGAsync (the `mega` role — XWayland, class "MEGAsync"): force its windows
 # TILED. Its setup wizard / infoDialog are frameless Qt windows that reposition
@@ -116,6 +117,10 @@ input type:keyboard {
     # triggers the `floating enable, resize set 800 600` rule above. Toggles like
     # the waybar widgets (pgrep -x): a second $mod+c closes it instead of stacking.
     bindsym $mod+c exec pgrep -u "$USER" -x qalc >/dev/null && pkill -u "$USER" -x qalc || alacritty --class floatterm -e qalc
+    # Calendar: same floatterm-calendar toggle as the waybar clock's on-click
+    # (user/waybar/config) — h/l/j/k-navigable, no mouse needed. A second
+    # $mod+t closes it instead of stacking, matching the other toggles here.
+    bindsym $mod+t exec swaymsg -t get_tree | grep -q floatterm-calendar && swaymsg '[app_id="^floatterm-calendar$"] kill' || alacritty --class floatterm-calendar -e $HOME/.config/waybar/scripts/calendar.sh
 
     # Drag floating windows with $mod + left mouse, resize with $mod + right.
     floating_modifier $mod normal

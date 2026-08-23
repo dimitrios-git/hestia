@@ -85,21 +85,15 @@
         "on-scroll-down": "$HOME/.config/waybar/scripts/audio.sh down"
     },
 
+    // Calendar is a keyboard-driven floatterm (calendar.sh), not waybar's own
+    // tooltip-format calendar -- that one only opens on hover and only
+    // navigates by mouse-scroll. Click here, or $mod+t from anywhere
+    // (user/sway/config), toggle the same window.
     "clock": {
         "format": "<span size='xx-large' rise='-3072'></span> {:%a %d, %H:%M:%S}",
         "interval": 1,
-        "tooltip-format": "{:%A, %d %B %Y  %Z}\n<tt>{calendar}</tt>",
-        "calendar": {
-            "mode": "month",
-            "format": {
-                "today": "<span color='#7c3aed'><b>{}</b></span>"
-            }
-        },
-        "actions": {
-            "on-click": "shift_reset",
-            "on-scroll-up": "shift_up",
-            "on-scroll-down": "shift_down"
-        }
+        "tooltip-format": "{:%A, %d %B %Y  %Z}\nclick, or $mod+t, for a keyboard-navigable calendar",
+        "on-click": "swaymsg -t get_tree | grep -q floatterm-calendar && swaymsg '[app_id=\"^floatterm-calendar$\"] kill' || alacritty --class floatterm-calendar -e $HOME/.config/waybar/scripts/calendar.sh"
     },
 
     "custom/usb": {

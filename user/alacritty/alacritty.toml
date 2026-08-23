@@ -17,6 +17,17 @@ size = 11.0
 [window]
 padding = { x = 6, y = 6 }
 decorations = "None"   # tiling WM (sway) — no title bar, matches kitty's look
+# When the requested size isn't an exact multiple of the cell grid (routine
+# in a tiling WM — sway hands alacritty whatever pixel size the layout has,
+# not a size alacritty chose), the leftover remainder gets dumped entirely
+# on one edge (bottom-right) by default, rather than spread evenly — caught
+# live as a stray grey sliver sitting just inside the sway focus border on
+# ONE side of an 800x600 NetHack recording (thecodingidiot f01), confirmed
+# via pixel sampling to be asymmetric (nothing on the opposite edge) and
+# present even in an uncompressed capture, so not a video-compression
+# artifact. `true` distributes any such remainder across all four edges
+# instead of concentrating it on one.
+dynamic_padding = true
 
 [scrolling]
 history = 10000

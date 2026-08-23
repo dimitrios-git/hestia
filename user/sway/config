@@ -105,6 +105,28 @@ workspace 28:8 output $mon2
 workspace 29:9 output $mon2
 workspace 30:10 output $mon2
 
+# Land each output on its OWN "1" at boot, instead of sway's generic
+# auto-numbering fallback. The `workspace N:M output ...` lines above are
+# an ASSIGNMENT (where a workspace goes IF it gets created) — they don't
+# make sway switch to one at startup. Without an explicit switch, sway
+# still auto-creates plain "1" on the first output (then "2" on the
+# second, its own fallback numbering, oblivious to our num:name scheme)
+# the moment anything needs a workspace there — so the first real
+# $mod+1 press creates a GENUINELY SEPARATE "11:1" alongside the stale
+# "1", and both display as the same "1" in waybar (format strips the
+# num: prefix), looking like a duplicate that has to be cleaned up by
+# hand (caught live: exactly this, after the per-monitor redesign).
+# Switching here, before anything else opens a window, means sway's own
+# fallback numbering never gets a chance to create anything in the first
+# place — an empty, unfocused workspace is auto-destroyed by sway itself.
+# `exec`, not `exec_always`: this sets the BOOT default only, it
+# shouldn't yank focus away from wherever the user is on every
+# `$mod+Shift+c` config reload. Add one more `exec swaymsg workspace
+# N1:1` line here for $mon3/4/5 when those displays arrive, matching the
+# workspace-assignment block above.
+exec swaymsg workspace 11:1
+exec swaymsg workspace 21:1
+
 gaps inner 8
 # The top edge keeps the same 8px gutter as the tiles, so windows never touch
 # Waybar (until 2026-07 a `gaps top -8` cancelled it for a flush look — dropped

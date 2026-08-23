@@ -83,6 +83,7 @@ window#waybar {
 
 #window {
     color: @muted;
+    padding: 0 10px;
 }
 
 #tray {
@@ -93,7 +94,7 @@ window#waybar {
     padding: 0 4px;
 }
 
-#network,
+#custom-network,
 #bluetooth,
 #custom-usb,
 #custom-notifications,
@@ -103,8 +104,8 @@ window#waybar {
 #custom-cpu,
 #memory,
 #custom-audio,
-#language,
-#clock {
+#custom-language,
+#custom-clock {
     padding: 0 14px;
     border-left: 1px solid @border;
     color: @muted;
@@ -118,11 +119,11 @@ window#waybar {
    already truncates gracefully) absorbs the squeeze instead. 52px is
    live-verified on the narrow screen that triggered this (down from an
    unverified 70px estimate — PR #268). */
-#language {
+#custom-language {
     min-width: 52px;
 }
 
-#clock {
+#custom-clock {
     font-weight: bold;
 }
 

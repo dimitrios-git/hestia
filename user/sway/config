@@ -14,7 +14,7 @@ for_window [class=".*"] border pixel 2
 for_window [app_id="floatterm"] floating enable, resize set 800 600
 for_window [app_id="floatterm-weather"] resize set 1180 720
 for_window [app_id="floatterm-gpu"] resize set 1100 700
-for_window [app_id="floatterm-calendar"] resize set 240 320
+for_window [app_id="floatterm-calendar"] resize set 210 295
 
 # MEGAsync (the `mega` role — XWayland, class "MEGAsync"): force its windows
 # TILED. Its setup wizard / infoDialog are frameless Qt windows that reposition

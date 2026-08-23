@@ -8,11 +8,15 @@
 # xkb variants put a DESCRIPTIVE name there instead of a country code (e.g.
 # Bulgarian's "traditional phonetic" layout reports as "Bulgarian
 # (traditional phonetic)", not "Bulgarian (BG)"), so the bar printed the
-# whole phrase. Now: use the parenthetical only when it's short enough to
-# plausibly BE a code (<=4 chars — "US", "UK", "intl"); otherwise fall back
-# to the first two letters of the LANGUAGE name itself (the part before the
-# paren), which is always short by construction. A hard cut to 4 chars
-# afterwards is a safety net against any layout name shape not seen yet.
+# whole phrase. Now, in order: (1) the parenthetical when it's short enough
+# to plausibly BE a code (<=4 chars — "US", "UK", "intl"); (2) a small
+# hardcoded language-name -> ISO 639-1 lookup for languages actually in use
+# here (deliberately NOT an exhaustive database — add to it as needed, not
+# ahead of need); (3) the first two letters of the language name itself,
+# lowercase, as the last-resort fallback. A hard cut to 4 chars afterwards
+# is a safety net against any layout name shape not seen yet. Always
+# lowercased at the end, matching locale-code convention (en/us/bg, not
+# EN/US/BG).
 
 . "$HOME/.config/waybar/scripts/lib-density.sh"
 
@@ -41,9 +45,19 @@ lang=$(printf '%s' "$name" | sed 's/ *(.*//')   # text before the first "(" (or 
 if [ -n "$paren" ] && [ "${#paren}" -le 4 ]; then
     short=$paren
 else
-    short=$(printf '%s' "$lang" | cut -c1-2 | tr '[:lower:]' '[:upper:]')
+    case "$lang" in
+        Bulgarian) short=bg ;;
+        Greek)     short=el ;;
+        German)    short=de ;;
+        French)    short=fr ;;
+        Spanish)   short=es ;;
+        Italian)   short=it ;;
+        Russian)   short=ru ;;
+        Polish)    short=pl ;;
+        *)         short=$(printf '%s' "$lang" | cut -c1-2) ;;
+    esac
 fi
-short=$(printf '%s' "$short" | cut -c1-4)   # safety net, regardless of branch above
+short=$(printf '%s' "$short" | cut -c1-4 | tr '[:upper:]' '[:lower:]')   # safety net + lowercase, regardless of branch above
 
 case "$(hestia_density)" in
     minimal) text="<span size='xx-large' rise='-3072'>$icon</span>" ;;

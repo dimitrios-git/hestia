@@ -14,6 +14,8 @@
 #   mixer                     — pulsemixer floatterm toggle (pgrep pattern)
 # interval 1 stays as the fallback sync for changes made elsewhere.
 
+. "$HOME/.config/waybar/scripts/lib-density.sh"
+
 ICON_VOL=$(/usr/bin/printf '\U000F057E')
 ICON_MUTE=$(/usr/bin/printf '\U000F0581')
 SINK=@DEFAULT_AUDIO_SINK@
@@ -41,11 +43,17 @@ desc=${desc//[\"\\]/}   # keep the JSON well-formed
 [ "$desc" = "Dummy Output" ] && exit 0
 [ -n "$desc" ] || desc="Default sink"
 
+# Dropped to icon-only on a narrow bar (lib-density.sh) — the "muted" word
+# is redundant there anyway, since the icon itself already switches.
+minimal=0; [ "$(hestia_density)" = minimal ] && minimal=1
+
 if [[ $out == *MUTED* ]]; then
-    text="<span size='xx-large' rise='-3072'>$ICON_MUTE</span> muted"
+    if [ "$minimal" = 1 ]; then text="<span size='xx-large' rise='-3072'>$ICON_MUTE</span>"
+    else text="<span size='xx-large' rise='-3072'>$ICON_MUTE</span> muted"; fi
     cls=muted
 else
-    text=$(printf "<span size='xx-large' rise='-3072'>%s</span> %2d%%" "$ICON_VOL" "$vol")
+    if [ "$minimal" = 1 ]; then text="<span size='xx-large' rise='-3072'>$ICON_VOL</span>"
+    else text=$(printf "<span size='xx-large' rise='-3072'>%s</span> %2d%%" "$ICON_VOL" "$vol"); fi
     cls=""
 fi
 printf '{"text": "%s", "tooltip": "%s — %s%%", "class": "%s"}\n' "$text" "$desc" "$vol" "$cls"

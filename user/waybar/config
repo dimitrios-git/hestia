@@ -4,7 +4,7 @@
     "height": 32,
     "modules-left": ["custom/launcher", "sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
-    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu", "power-profiles-daemon", "custom/audio", "sway/language", "network", "bluetooth", "custom/usb", "custom/notifications", "custom/weather", "clock", "custom/power"],
+    "modules-right": ["tray", "custom/cpu", "memory", "custom/gpu", "power-profiles-daemon", "custom/audio", "custom/language", "custom/network", "bluetooth", "custom/usb", "custom/notifications", "custom/weather", "custom/clock", "custom/power"],
 
     "custom/gpu": {
         "format": "<span size='xx-large' rise='-3072'>󰢮</span> {}",
@@ -38,18 +38,24 @@
         "on-click-right": "rfkill toggle bluetooth"
     },
 
-    "network": {
-        "format-wifi": "<span size='xx-large' rise='-3072'>󰖩</span> {signalStrength:>2}%",
-        "format-ethernet": "<span size='xx-large' rise='-3072'>󰈀</span>",
-        "format-disconnected": "<span size='xx-large' rise='-3072'>󰖪</span>",
-        "tooltip-format-wifi": "{essid} ({signalStrength}%)\n{ipaddr}",
-        "tooltip-format-ethernet": "{ifname}: {ipaddr}",
-        "tooltip-format-disconnected": "Disconnected",
+    // Replaces the built-in `network` module -- feature-matches its 3 states
+    // via nmcli, but drops wifi's signal percentage to icon-only on a narrow
+    // bar (lib-density.sh). Ethernet/disconnected were already icon-only.
+    "custom/network": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 5,
+        "exec": "$HOME/.config/waybar/scripts/network.sh",
         "on-click": "pgrep -u $USER -x nmtui >/dev/null && pkill -u $USER -x nmtui || alacritty --class floatterm -e nmtui"
     },
 
-    "sway/language": {
-        "format": "<span size='xx-large' rise='-3072'>󰗊</span> {short}",
+    // Replaces the built-in `sway/language` module -- drops the layout code
+    // to icon-only on a narrow bar (lib-density.sh).
+    "custom/language": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 2,
+        "exec": "$HOME/.config/waybar/scripts/language.sh",
         "on-click": "swaymsg input type:keyboard xkb_switch_layout next"
     },
 
@@ -85,14 +91,16 @@
         "on-scroll-down": "$HOME/.config/waybar/scripts/audio.sh down"
     },
 
-    // Calendar is a keyboard-driven floatterm (calendar.sh), not waybar's own
-    // tooltip-format calendar -- that one only opens on hover and only
-    // navigates by mouse-scroll. Click here, or $mod+t from anywhere
-    // (user/sway/config), toggle the same window.
-    "clock": {
-        "format": "<span size='xx-large' rise='-3072'></span> {:%a %d, %H:%M:%S}",
+    // Replaces the built-in `clock` module -- drops the date, then seconds,
+    // on a narrow bar (lib-density.sh). Calendar is a keyboard-driven
+    // floatterm (calendar.sh), not waybar's own tooltip-format calendar --
+    // that one only opens on hover and only navigates by mouse-scroll. Click
+    // here, or $mod+t from anywhere (user/sway/config), toggle the same window.
+    "custom/clock": {
+        "format": "{}",
+        "return-type": "json",
         "interval": 1,
-        "tooltip-format": "{:%A, %d %B %Y  %Z}\nclick, or $mod+t, for a keyboard-navigable calendar",
+        "exec": "$HOME/.config/waybar/scripts/clock.sh",
         "on-click": "swaymsg -t get_tree | grep -q floatterm-calendar && swaymsg '[app_id=\"^floatterm-calendar$\"] kill' || alacritty --class floatterm-calendar -e $HOME/.config/waybar/scripts/calendar.sh"
     },
 

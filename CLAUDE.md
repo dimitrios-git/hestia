@@ -72,6 +72,10 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/waybar/scripts/weather.sh` | `~/.config/waybar/scripts/weather.sh` |
 | `user/waybar/scripts/notifications.sh` | `~/.config/waybar/scripts/notifications.sh` |
 | `user/waybar/scripts/calendar.sh` | `~/.config/waybar/scripts/calendar.sh` |
+| `user/waybar/scripts/lib-density.sh` | `~/.config/waybar/scripts/lib-density.sh` |
+| `user/waybar/scripts/clock.sh` | `~/.config/waybar/scripts/clock.sh` |
+| `user/waybar/scripts/network.sh` | `~/.config/waybar/scripts/network.sh` |
+| `user/waybar/scripts/language.sh` | `~/.config/waybar/scripts/language.sh` |
 | `user/waybar/scripts/usb.sh` | `~/.config/waybar/scripts/usb.sh` |
 | `user/waybar/scripts/power.sh` | `~/.config/waybar/scripts/power.sh` |
 | `user/mako/config` | `~/.config/mako/config` |

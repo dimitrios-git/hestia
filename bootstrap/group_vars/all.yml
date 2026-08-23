@@ -317,6 +317,10 @@ dotfile_links:
   - { src: user/waybar/scripts/weather.sh,   dest: "{{ target_home }}/.config/waybar/scripts/weather.sh" }
   - { src: user/waybar/scripts/notifications.sh, dest: "{{ target_home }}/.config/waybar/scripts/notifications.sh" }
   - { src: user/waybar/scripts/calendar.sh,   dest: "{{ target_home }}/.config/waybar/scripts/calendar.sh" }
+  - { src: user/waybar/scripts/lib-density.sh, dest: "{{ target_home }}/.config/waybar/scripts/lib-density.sh" }
+  - { src: user/waybar/scripts/clock.sh,      dest: "{{ target_home }}/.config/waybar/scripts/clock.sh" }
+  - { src: user/waybar/scripts/network.sh,    dest: "{{ target_home }}/.config/waybar/scripts/network.sh" }
+  - { src: user/waybar/scripts/language.sh,   dest: "{{ target_home }}/.config/waybar/scripts/language.sh" }
   - { src: user/waybar/scripts/usb.sh,        dest: "{{ target_home }}/.config/waybar/scripts/usb.sh" }
   - { src: user/waybar/scripts/power.sh,      dest: "{{ target_home }}/.config/waybar/scripts/power.sh" }
   - { src: user/mako/config,                dest: "{{ target_home }}/.config/mako/config" }

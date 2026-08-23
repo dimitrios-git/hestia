@@ -213,14 +213,6 @@ client.focused_inactive $BORDER $GROUND  $DIM       $BORDER $BORDER
 client.unfocused        $BORDER $GROUND  $DIM       $BORDER $BORDER
 client.urgent           $ACCENT $ACCENT  $ACCENT_FG $ACCENT $ACCENT
 EOF
-  # KNOWN GAP, not fixable by config: a FLOATING window's border never
-  # paints at all under this rig's headless+pixman software renderer,
-  # confirmed even for a single, definitely-focused, solitary floating
-  # window (no other window to steal focus) — the colours above are
-  # correct (verified: a tiled window's border does render, and in the
-  # right colour), sway/wlroots just isn't drawing the floating-container
-  # border on this backend. Doesn't reflect the real desktop (a real GPU
-  # renderer draws it fine there) — only a capture-tool cosmetic gap.
   # Real floatterm-* floating/sizing rules, pulled from the deployed sway
   # config rather than duplicated here — a HESTIA_HOOK that pops one (the
   # calendar, weather, gpu monitor, ...) should float exactly like it does
@@ -228,6 +220,16 @@ EOF
   # calendar demo tiled next to vifm instead of floating centred, since this
   # throwaway rig config never had these rules at all).
   grep '^for_window \[app_id="floatterm' "$U/sway/config" || true
+  # A floating window's border never painted its first frame on this
+  # backend (WLR_RENDERER=pixman) when it only came from the *passive*
+  # default_floating_border setting — sway's own tree state showed the
+  # correct border/width the whole time (`current_border_width: 2`), so
+  # this isn't a config or colour bug, it's a damage-tracking gap specific
+  # to this rig: an EXPLICIT `border` COMMAND (same resulting value)
+  # reliably repaints it where the passive default doesn't. Same family as
+  # wf-recorder needing --no-damage above — this backend keeps missing the
+  # first paint for anything that isn't triggered by a live command.
+  echo 'for_window [app_id="floatterm.*"] border pixel 2'
   [ -n "${EXTRA_CFG:-}" ] && echo "$EXTRA_CFG"
   [ "$WANT_BAR" = 1 ] && echo "exec waybar -c $WORK/wb/config -s $WORK/wb/style.css"
   echo "exec sleep 0.3 && $APP"

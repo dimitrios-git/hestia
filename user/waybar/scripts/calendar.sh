@@ -11,7 +11,8 @@
 # dependency, bsdmainutils, just for this), and GNU date already does all the
 # calendar math this needs.
 
-ACCENT=$'\033[38;2;124;58;237m'
+ACCENT_BG=$'\033[48;2;124;58;237m'
+WHITE_FG=$'\033[38;2;255;255;255m'
 REVERSE=$'\033[7m'
 DIM=$'\033[2m'
 RESET=$'\033[0m'
@@ -27,7 +28,11 @@ draw() {
     today_y=$(date +%Y); today_m=$(date +%-m); today_d=$(date +%-d)
 
     clear
-    printf '%s%s %s%s\n\n' "$ACCENT" "$(date -d "$yr-$mon-01" +%B)" "$yr" "$RESET"
+    # Full-width purple band + white text -- the same header-bar look as
+    # vifm's path bar, not just coloured text (21 cols matches the grid's
+    # own row width below, "%2d " x 7).
+    header=$(printf '%s %s' "$(date -d "$yr-$mon-01" +%B)" "$yr")
+    printf '%s%s%-21s%s\n\n' "$ACCENT_BG" "$WHITE_FG" "$header" "$RESET"
     printf 'Su Mo Tu We Th Fr Sa\n'
 
     col=0
@@ -45,7 +50,11 @@ draw() {
     done
     [ "$col" -ne 0 ] && printf '\n'
 
-    printf '\n%sh/l month   j/k year   r today   q quit%s\n' "$DIM" "$RESET"
+    # Two short lines instead of one wide one -- narrows the window to the
+    # grid's own width instead of the hint's, which was the widest line and
+    # forced a wider (mostly empty) floatterm than the content needed.
+    printf '\n%sh/l month   j/k year%s\n' "$DIM" "$RESET"
+    printf '%sr today     q quit%s\n' "$DIM" "$RESET"
 }
 
 draw

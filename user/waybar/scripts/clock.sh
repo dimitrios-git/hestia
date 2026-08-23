@@ -14,8 +14,11 @@ esac
 
 # Same clock glyph the old built-in module's format string used, emitted by
 # codepoint (weather.sh's convention) rather than a literal PUA character in
-# this file.
-icon=$(/usr/bin/printf '\U000F08AE')
+# this file. (First cut of this extraction grabbed the WRONG span — it
+# searched for "clock" from the start of the file, which matched the bare
+# module NAME inside modules-right first, landing on custom/gpu's icon
+# instead. Confirmed against the pre-PR config at fc62c2d.)
+icon=$(/usr/bin/printf '\U0000F017')
 text=$(date "$fmt")
 # The \n is a literal 2-char JSON escape baked into the VALUE here, not into
 # printf's format string below — printf itself interprets \n in its OWN

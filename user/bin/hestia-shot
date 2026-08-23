@@ -40,6 +40,22 @@
 #                HESTIA_DURATION (record mode, no-hook seconds, default 5).
 set -euo pipefail
 
+# INCIDENT (2026-08-24): run from a terminal INSIDE a real, live sway
+# session (dimitrios, not claude's always-headless account), this script
+# inherits a SWAYSOCK from that real session — sway exports it for every
+# child process. If the script errors out at ANY point before it finishes
+# discovering and assigning the nested rig's OWN socket further down, the
+# cleanup trap's `[ -n "${SWAYSOCK:-}" ] && swaymsg exit` still sees that
+# inherited, non-empty value and exits the real compositor — which is
+# exactly what happened: dropped straight back to the greeter. Unsetting
+# it here means the trap only ever acts on a socket THIS script itself
+# verified belongs to its own throwaway compositor. WAYLAND_DISPLAY is the
+# same class of inherited variable (sway exports it too) — nothing below
+# currently trusts it before the WD set-difference resolution overwrites
+# it, but unset it too rather than leave that an invariant future edits
+# have to remember not to break.
+unset SWAYSOCK WAYLAND_DISPLAY
+
 REPO="${HESTIA_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)}"
 # When run from the deployed symlink (~/.local/bin/hestia-shot -> repo/user/bin),
 # readlink resolves into the clone, so REPO is the clone root. Fall back to the
@@ -235,9 +251,11 @@ EOF
   echo "exec sleep 0.3 && $APP"
 } > "$CFG"
 
-# Snapshot the wayland-* sockets BEFORE launch — see the WD resolution below
-# for why. `|| true`: no sockets yet (fresh boot) must not trip -e.
+# Snapshot the wayland-* AND sway-ipc.*.sock sockets BEFORE launch — see the
+# WD resolution below for why. `|| true`: no sockets yet (fresh boot) must
+# not trip -e.
 WD_BEFORE=$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | grep -v '\.lock$' || true)
+SOCK_BEFORE=$(ls "$XDG_RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null || true)
 
 # --- launch the throwaway compositor (dbus session so waybar/portals init) --------
 export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_HEADLESS_OUTPUTS=1
@@ -246,12 +264,26 @@ export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_HEADLESS_OUTPUTS=1
 setsid dbus-run-session -- sway -c "$CFG" >"$WORK/sway.log" 2>&1 &
 SWAYPID=$!
 
+# INCIDENT (2026-08-24): the exact same class of bug as the WD resolution
+# below — but this copy went unfixed and cost dimitrios his real desktop
+# session. `ls -t sway-ipc.*.sock | head -1` picks the MOST RECENTLY
+# MODIFIED socket, not the new one: on claude's headless-only account
+# there's only ever one candidate, so this looked correct for this entire
+# rig's development — but on a machine with a real live sway session (run
+# by dimitrios instead of claude), the real socket already exists and can
+# win this race on an early poll, before the nested compositor has even
+# created its own socket file yet. `get_version` happily succeeds against
+# ANY working sway socket, real or nested, so the loop breaks thinking it
+# found the rig — and every following `swaymsg`, including this script's
+# own `swaymsg exit` in the cleanup trap, then talks to dimitrios's REAL
+# compositor. His live session exited and dropped him back to the greeter.
+# Fixed with the identical set-difference technique already used for WD.
 SOCK=""
 for _ in $(seq 1 50); do
   # `|| true` guards the whole pipeline: under set -euo pipefail an unmatched
   # glob makes ls fail and the failing assignment would kill the script on the
   # FIRST poll — masked until now by stale sockets from earlier sessions.
-  SOCK=$(ls -t "$XDG_RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null | head -1 || true)
+  SOCK=$(comm -13 <(printf '%s\n' "$SOCK_BEFORE") <(ls "$XDG_RUNTIME_DIR"/sway-ipc.*.sock 2>/dev/null || true) | head -1 || true)
   [ -n "$SOCK" ] && SWAYSOCK="$SOCK" swaymsg -t get_version >/dev/null 2>&1 && break
   sleep 0.1
 done

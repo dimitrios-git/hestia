@@ -305,6 +305,7 @@ dotfile_links:
   - { src: user/sway/screenshot.sh,         dest: "{{ target_home }}/.config/sway/scripts/screenshot.sh" }
   - { src: user/sway/wallpaper.sh,          dest: "{{ target_home }}/.config/sway/scripts/wallpaper.sh" }
   - { src: user/sway/nemo-setup.sh,         dest: "{{ target_home }}/.config/sway/scripts/nemo-setup.sh" }
+  - { src: user/sway/workspace-here.sh,     dest: "{{ target_home }}/.config/sway/scripts/workspace-here.sh" }
   - { src: user/waybar/config,              dest: "{{ target_home }}/.config/waybar/config" }
   - { src: user/waybar/style.css,           dest: "{{ target_home }}/.config/waybar/style.css" }
   # GENERATED colour tokens (render.py) — @import'ed by style.css. src picked by

@@ -62,6 +62,7 @@ _Generated from the bootstrap manifest (`bootstrap/group_vars/all.yml`) — **do
 | `user/sway/screenshot.sh` | `~/.config/sway/scripts/screenshot.sh` |
 | `user/sway/wallpaper.sh` | `~/.config/sway/scripts/wallpaper.sh` |
 | `user/sway/nemo-setup.sh` | `~/.config/sway/scripts/nemo-setup.sh` |
+| `user/sway/workspace-here.sh` | `~/.config/sway/scripts/workspace-here.sh` |
 | `user/waybar/config` | `~/.config/waybar/config` |
 | `user/waybar/style.css` | `~/.config/waybar/style.css` |
 | `user/waybar/theme-{{ theme_variant }}.css` | `~/.config/waybar/theme.css` |

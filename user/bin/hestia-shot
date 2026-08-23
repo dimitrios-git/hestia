@@ -145,7 +145,12 @@ ACCENT=$(sed -n 's/^set \$accent  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head
 ACCENT_FG=$(sed -n 's/^set \$accent_fg  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
 GROUND=$(sed -n 's/^set \$bg  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
 DIM=$(sed -n 's/^set \$dim  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
+FOCUS=$(sed -n 's/^set \$focus  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
+BORDER=$(sed -n 's/^set \$border  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
+SURFACE=$(sed -n 's/^set \$surface  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
+TEXT=$(sed -n 's/^set \$text  *\(#[0-9a-fA-F]\{6\}\).*/\1/p' "$THEME" | head -1)
 : "${ACCENT:=#7c3aed}"; : "${ACCENT_FG:=#ffffff}"; : "${GROUND:=#1a1a1a}"; : "${DIM:=#8c8c8c}"
+: "${FOCUS:=#22cdda}"; : "${BORDER:=#3a3a3a}"; : "${SURFACE:=#262626}"; : "${TEXT:=#e0e0e0}"
 
 # --- stage a waybar dir resolving the theme-<variant>.css pair to `theme.css` ------
 if [ "$WANT_BAR" = 1 ]; then
@@ -193,11 +198,29 @@ default_border pixel 2
 gaps inner 8
 gaps outer 8
 gaps top 8
-# hestia window colours (border/indicator from the palette accent)
-client.focused          $ACCENT $ACCENT $ACCENT_FG $ACCENT $ACCENT
-client.focused_inactive $GROUND $GROUND $DIM $GROUND $GROUND
-client.unfocused        $GROUND $GROUND $DIM $GROUND $GROUND
+# hestia window colours — matches the deployed config's client.* lines
+# exactly (<border> <background> <text> <indicator> <child_border>):
+# focused uses the cyan FOCUS role, NOT the purple ACCENT role (that's
+# reserved for urgent) — and unfocused/focused_inactive use the BORDER grey,
+# NOT the ground colour, which made an unfocused window's border the same
+# colour as the desktop behind it — invisible, not "no border" as it first
+# looked. Caught live comparing a capture against a real screenshot. (\$-
+# prefixed role names avoided here on purpose — this is an UNQUOTED heredoc,
+# so a literal "\$focus" in a comment is not just text, it's a variable
+# expansion, and set -u turns any undefined one into a hard crash.)
+client.focused          $FOCUS  $SURFACE $TEXT      $FOCUS  $FOCUS
+client.focused_inactive $BORDER $GROUND  $DIM       $BORDER $BORDER
+client.unfocused        $BORDER $GROUND  $DIM       $BORDER $BORDER
+client.urgent           $ACCENT $ACCENT  $ACCENT_FG $ACCENT $ACCENT
 EOF
+  # KNOWN GAP, not fixable by config: a FLOATING window's border never
+  # paints at all under this rig's headless+pixman software renderer,
+  # confirmed even for a single, definitely-focused, solitary floating
+  # window (no other window to steal focus) — the colours above are
+  # correct (verified: a tiled window's border does render, and in the
+  # right colour), sway/wlroots just isn't drawing the floating-container
+  # border on this backend. Doesn't reflect the real desktop (a real GPU
+  # renderer draws it fine there) — only a capture-tool cosmetic gap.
   # Real floatterm-* floating/sizing rules, pulled from the deployed sway
   # config rather than duplicated here — a HESTIA_HOOK that pops one (the
   # calendar, weather, gpu monitor, ...) should float exactly like it does

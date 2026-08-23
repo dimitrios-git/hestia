@@ -198,6 +198,13 @@ client.focused          $ACCENT $ACCENT $ACCENT_FG $ACCENT $ACCENT
 client.focused_inactive $GROUND $GROUND $DIM $GROUND $GROUND
 client.unfocused        $GROUND $GROUND $DIM $GROUND $GROUND
 EOF
+  # Real floatterm-* floating/sizing rules, pulled from the deployed sway
+  # config rather than duplicated here — a HESTIA_HOOK that pops one (the
+  # calendar, weather, gpu monitor, ...) should float exactly like it does
+  # on a real desktop, not tile into the layout (caught live: a captured
+  # calendar demo tiled next to vifm instead of floating centred, since this
+  # throwaway rig config never had these rules at all).
+  grep '^for_window \[app_id="floatterm' "$U/sway/config" || true
   [ -n "${EXTRA_CFG:-}" ] && echo "$EXTRA_CFG"
   [ "$WANT_BAR" = 1 ] && echo "exec waybar -c $WORK/wb/config -s $WORK/wb/style.css"
   echo "exec sleep 0.3 && $APP"

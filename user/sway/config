@@ -60,24 +60,50 @@ include /etc/sway/config-vars.d/*
 
 # Identify monitors by serial (both are DELL U3219Q) so the layout is
 # correct regardless of which DisplayPort socket each one is plugged into.
-set $left_mon  "Dell Inc. DELL U3219Q 6L1L413"
-set $right_mon "Dell Inc. DELL U3219Q 567V413"
+set $mon1 "Dell Inc. DELL U3219Q 6L1L413"
+set $mon2 "Dell Inc. DELL U3219Q 567V413"
+# Add $mon3/$mon4/$mon5 here when those displays arrive -- get each one's
+# identifier via `swaymsg -t get_outputs`, then mirror the `output ...` and
+# `workspace N:M output ...` block below for it (workspaces 31:1-40:10,
+# 41:1-51:10, ...). Nothing else needs to change: workspace-here.sh (bound
+# below) computes which block to use from live output position, not a
+# hardcoded monitor count.
 
-output $left_mon  resolution 3840x2160 position 0,0 scale 1
-output $right_mon resolution 3840x2160 position 3840,0 scale 1
+output $mon1 resolution 3840x2160 position 0,0 scale 1
+output $mon2 resolution 3840x2160 position 3840,0 scale 1
 # (the `output * bg` desktop background lives in the theme fragment above)
 
-# Pin workspaces to physical screens: odd -> left, even -> right
-workspace 1 output $left_mon
-workspace 3 output $left_mon
-workspace 5 output $left_mon
-workspace 7 output $left_mon
-workspace 9 output $left_mon
-workspace 2 output $right_mon
-workspace 4 output $right_mon
-workspace 6 output $right_mon
-workspace 8 output $right_mon
-workspace 10 output $right_mon
+# Each monitor gets its OWN full 1-10 workspace set, not a shared 10-way
+# split (the old "odd -> left, even -> right" scheme, which only gives 5
+# workspaces per screen and doesn't scale past 2 monitors). The leading
+# number (11-20 for monitor 1, 21-30 for monitor 2, ...) is a `num:name`
+# sway workspace name -- globally unique so sway treats each as a genuinely
+# separate workspace, but the NAME after the colon is what waybar's
+# sway/workspaces module displays (`"format": "{name}"`, user/waybar/
+# config), so every monitor's bar shows a clean 1-10 regardless of which
+# block it's actually using underneath. $mod+1..0 (below) computes the
+# right block for whichever output is currently focused, so the same
+# physical key always means "workspace N of the screen I'm on."
+workspace 11:1 output $mon1
+workspace 12:2 output $mon1
+workspace 13:3 output $mon1
+workspace 14:4 output $mon1
+workspace 15:5 output $mon1
+workspace 16:6 output $mon1
+workspace 17:7 output $mon1
+workspace 18:8 output $mon1
+workspace 19:9 output $mon1
+workspace 20:10 output $mon1
+workspace 21:1 output $mon2
+workspace 22:2 output $mon2
+workspace 23:3 output $mon2
+workspace 24:4 output $mon2
+workspace 25:5 output $mon2
+workspace 26:6 output $mon2
+workspace 27:7 output $mon2
+workspace 28:8 output $mon2
+workspace 29:9 output $mon2
+workspace 30:10 output $mon2
 
 gaps inner 8
 # The top edge keeps the same 8px gutter as the tiles, so windows never touch
@@ -134,11 +160,14 @@ input type:keyboard {
     bindsym $mod+$down focus down
     bindsym $mod+$up focus up
     bindsym $mod+$right focus right
-    # Or use $mod+[up|down|left|right]
-    bindsym $mod+Left focus left
-    bindsym $mod+Down focus down
-    bindsym $mod+Up focus up
-    bindsym $mod+Right focus right
+    # Bare arrows are deliberately NOT aliases of h/j/k/l here (unlike
+    # every other direction bind in this file) -- they switch the focused
+    # OUTPUT (monitor) instead, native sway, no scripting needed. h/j/k/l
+    # stay pure window-focus; this is the one place the two differ.
+    bindsym $mod+Left focus output left
+    bindsym $mod+Down focus output down
+    bindsym $mod+Up focus output up
+    bindsym $mod+Right focus output right
 
     # Move the focused window with the same, but add Shift
     bindsym $mod+Shift+$left move left
@@ -150,28 +179,32 @@ input type:keyboard {
     bindsym $mod+Shift+Up move up
     bindsym $mod+Shift+Right move right
 
-# Workspaces
-    bindsym $mod+1 workspace number 1
-    bindsym $mod+2 workspace number 2
-    bindsym $mod+3 workspace number 3
-    bindsym $mod+4 workspace number 4
-    bindsym $mod+5 workspace number 5
-    bindsym $mod+6 workspace number 6
-    bindsym $mod+7 workspace number 7
-    bindsym $mod+8 workspace number 8
-    bindsym $mod+9 workspace number 9
-    bindsym $mod+0 workspace number 10
-    # Move focused container to workspace
-    bindsym $mod+Shift+1 move container to workspace number 1
-    bindsym $mod+Shift+2 move container to workspace number 2
-    bindsym $mod+Shift+3 move container to workspace number 3
-    bindsym $mod+Shift+4 move container to workspace number 4
-    bindsym $mod+Shift+5 move container to workspace number 5
-    bindsym $mod+Shift+6 move container to workspace number 6
-    bindsym $mod+Shift+7 move container to workspace number 7
-    bindsym $mod+Shift+8 move container to workspace number 8
-    bindsym $mod+Shift+9 move container to workspace number 9
-    bindsym $mod+Shift+0 move container to workspace number 10
+# Workspaces -- each monitor has its own full 1-10 set (see the Output
+# configuration block above), so $mod+N goes to workspace N OF WHICHEVER
+# OUTPUT IS CURRENTLY FOCUSED, not a single global workspace N. Switch
+# monitor first ($mod+Left/Right/Up/Down, above), then $mod+N reaches that
+# screen's own workspace N.
+    bindsym $mod+1 exec $HOME/.config/sway/scripts/workspace-here.sh 1
+    bindsym $mod+2 exec $HOME/.config/sway/scripts/workspace-here.sh 2
+    bindsym $mod+3 exec $HOME/.config/sway/scripts/workspace-here.sh 3
+    bindsym $mod+4 exec $HOME/.config/sway/scripts/workspace-here.sh 4
+    bindsym $mod+5 exec $HOME/.config/sway/scripts/workspace-here.sh 5
+    bindsym $mod+6 exec $HOME/.config/sway/scripts/workspace-here.sh 6
+    bindsym $mod+7 exec $HOME/.config/sway/scripts/workspace-here.sh 7
+    bindsym $mod+8 exec $HOME/.config/sway/scripts/workspace-here.sh 8
+    bindsym $mod+9 exec $HOME/.config/sway/scripts/workspace-here.sh 9
+    bindsym $mod+0 exec $HOME/.config/sway/scripts/workspace-here.sh 0
+    # Move focused container to workspace N of the focused output
+    bindsym $mod+Shift+1 exec $HOME/.config/sway/scripts/workspace-here.sh 1 move
+    bindsym $mod+Shift+2 exec $HOME/.config/sway/scripts/workspace-here.sh 2 move
+    bindsym $mod+Shift+3 exec $HOME/.config/sway/scripts/workspace-here.sh 3 move
+    bindsym $mod+Shift+4 exec $HOME/.config/sway/scripts/workspace-here.sh 4 move
+    bindsym $mod+Shift+5 exec $HOME/.config/sway/scripts/workspace-here.sh 5 move
+    bindsym $mod+Shift+6 exec $HOME/.config/sway/scripts/workspace-here.sh 6 move
+    bindsym $mod+Shift+7 exec $HOME/.config/sway/scripts/workspace-here.sh 7 move
+    bindsym $mod+Shift+8 exec $HOME/.config/sway/scripts/workspace-here.sh 8 move
+    bindsym $mod+Shift+9 exec $HOME/.config/sway/scripts/workspace-here.sh 9 move
+    bindsym $mod+Shift+0 exec $HOME/.config/sway/scripts/workspace-here.sh 0 move
 
 # Layout
     # $mod+b / $mod+v split horizontally / vertically

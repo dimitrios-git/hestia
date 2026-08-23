@@ -60,8 +60,13 @@
     },
 
 
+    // "format": "{name}" strips the leading "num:" block prefix each
+    // output's own 1-10 workspace set uses (user/sway/config) -- every
+    // monitor's bar shows a clean 1-10 regardless of which global block
+    // (11-20, 21-30, ...) it's actually using underneath.
     "sway/workspaces": {
-        "disable-scroll": true
+        "disable-scroll": true,
+        "format": "{name}"
     },
 
     "custom/cpu": {

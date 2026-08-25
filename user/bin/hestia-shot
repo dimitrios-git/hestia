@@ -27,6 +27,14 @@
 #                      Relative paths resolve against your cwd (vim inherits it,
 #                      so the statusline shows the bare filename). Default res
 #                      840x540 — override with HESTIA_RES (vimdiff wants ~1280x620).
+#   game "<command>"   a GUI binary launched directly (NOT terminal-wrapped) and
+#                      fullscreened — the command should set its own env (e.g.
+#                      SDL_VIDEODRIVER=wayland, LIBGL_ALWAYS_SOFTWARE=1 for an
+#                      SDL2 app with no /dev/dri access) and cwd handling (e.g.
+#                      sh -c 'cd <dir> && exec ./game ...' for relative-path
+#                      assets). Matches on the window's own app_id (its binary's
+#                      basename via xdg_shell), not "term".
+#   url <path>         a URL/file rendered by chromium inside the nested sway
 #
 # CAPTURE MODE is inferred from the output's extension — no separate flag:
 #   .png (default)  single grim shot, after the settle + optional HESTIA_HOOK
@@ -38,7 +46,10 @@
 #
 # Env overrides: HESTIA_REPO, HESTIA_VARIANT (dark|light), HESTIA_RES (WxH),
 #                HESTIA_DURATION (record mode, no-hook seconds, default 5),
-#                HESTIA_TERM (alacritty|kitty, scene 'app' only, default alacritty).
+#                HESTIA_TERM (alacritty|kitty, scene 'app' only, default alacritty),
+#                HESTIA_AUDIO (record mode only, e.g. auto_null.monitor —
+#                mux live PipeWire audio into the recording via wf-recorder
+#                --audio; unset means video-only, the default for every scene).
 set -euo pipefail
 
 # INCIDENT (2026-08-24): run from a terminal INSIDE a real, live sway
@@ -146,6 +157,20 @@ EOF
   # NOT chromium's own --screenshot/headless (that path is broken in claude's env;
   # this renders to a real Wayland window instead). WebGL works via the NVIDIA EGL
   # stack (falls back to swiftshader). Used to re-shoot the flash-mesh tuning page.
+  # A GUI (non-terminal) binary launched directly -- NOT wrapped in
+  # alacritty like `app`, which would leave an idle terminal pane
+  # composited alongside the real window and mismatch WAIT_MATCH (an
+  # unwrapped toplevel gets its OWN app_id from the binary's own basename
+  # via xdg_shell, confirmed live: a game named `game` maps as app_id
+  # "game", not "term"). Modeled on `url` below, the only other scene that
+  # captures a real non-terminal Wayland client instead of a themed
+  # terminal. The caller's command string carries its own env (e.g.
+  # SDL_VIDEODRIVER=wayland, LIBGL_ALWAYS_SOFTWARE=1) and cwd handling
+  # (e.g. `sh -c 'cd <dir> && exec ./game ...'`) -- hestia-shot doesn't
+  # know or need to know what kind of GUI binary this is.
+  game)    APP="${2:?scene 'game' needs a command}"; OUT="${3:-$PWD/hestia-shot.png}"
+           EXTRA_CFG='for_window [app_id="game"] fullscreen enable'
+           WAIT_MATCH=game; SETTLE=2 ;;
   url)     URL="${2:?scene 'url' needs a URL or file path}"; OUT="${3:-$PWD/hestia-shot.png}"
            case "$URL" in *://*) ;; *) URL="file://$(readlink -f "$URL")" ;; esac
            CHROME_PROFILE=$(mktemp -d)
@@ -370,7 +395,13 @@ if [ "$MODE" = record ]; then
   # subscription on this backend, not a rendering problem). The frozen
   # damage-tracking mode also failed to exit cleanly on SIGINT in testing;
   # --no-damage's steady polling terminated promptly every time.
-  WAYLAND_DISPLAY="$WD" wf-recorder --no-damage -x yuv444p -p crf=18 -p preset=slow -f "$OUT" >"$WORK/wf-recorder.log" 2>&1 &
+  # Optional live audio mux, gated behind HESTIA_AUDIO (e.g.
+  # HESTIA_AUDIO=auto_null.monitor for claude's own PipeWire null-sink
+  # monitor) — unset by default, so every existing/other invocation stays
+  # byte-for-byte unchanged (video-only, as this pipeline always was).
+  WF_AUDIO_ARGS=()
+  [ -n "${HESTIA_AUDIO:-}" ] && WF_AUDIO_ARGS=(--audio="$HESTIA_AUDIO")
+  WAYLAND_DISPLAY="$WD" wf-recorder --no-damage -x yuv444p -p crf=18 -p preset=slow "${WF_AUDIO_ARGS[@]}" -f "$OUT" >"$WORK/wf-recorder.log" 2>&1 &
   WFPID=$!
   sleep 0.3   # let the encoder actually start before anything on-screen happens
   if [ -n "${HESTIA_HOOK:-}" ]; then

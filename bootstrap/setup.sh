@@ -139,6 +139,7 @@ enable_chrome: $enable_chrome
 enable_edge: $enable_edge
 enable_trading: $enable_trading
 enable_mega: $enable_mega
+enable_powershell: $enable_powershell
 enable_steam: $enable_steam
 enable_yaru_icons: $enable_yaru_icons
 enable_nvidia: $enable_nvidia
@@ -283,6 +284,7 @@ def_chrome=$(cur enable_chrome); def_chrome=${def_chrome:-false}
 def_edge=$(cur enable_edge); def_edge=${def_edge:-false}
 def_trading=$(cur enable_trading); def_trading=${def_trading:-false}
 def_mega=$(cur enable_mega); def_mega=${def_mega:-false}
+def_powershell=$(cur enable_powershell); def_powershell=${def_powershell:-false}
 def_steam=$(cur enable_steam); def_steam=${def_steam:-false}
 def_yaruicons=$(cur enable_yaru_icons); def_yaruicons=${def_yaruicons:-false}
 # NVIDIA: detect a card via lspci (pciutils), else the PCI vendor id 0x10de in sysfs.
@@ -369,6 +371,7 @@ askyn enable_chrome      "Install Google Chrome? (vendor apt repo — amd64 only
 askyn enable_edge        "Install Microsoft Edge? (vendor apt repo — amd64 only)" "$def_edge"
 askyn enable_trading     "Install trading apps? (TradingView Desktop — vendor .deb)" "$def_trading"
 askyn enable_mega        "Install MEGA Desktop? (MEGAsync cloud sync — vendor apt repo)" "$def_mega"
+askyn enable_powershell  "Install PowerShell? (pwsh — Microsoft's PMC vendor apt repo, amd64 only)" "$def_powershell"
 askyn enable_steam       "Install Steam? (steam-installer — Debian contrib repo, needs i386)" "$def_steam"
 askyn enable_yaru_icons  "Theme app & folder icons to match hestia? (downloads a prebuilt icon theme)" "$def_yaruicons"
 askyn enable_nvidia      "Install the NVIDIA proprietary driver? (non-free; needs reboot)" "$def_nvidia"
@@ -452,6 +455,7 @@ cat <<EOF
     enable_edge        = $enable_edge
     enable_trading     = $enable_trading
     enable_mega        = $enable_mega
+    enable_powershell  = $enable_powershell
     enable_steam       = $enable_steam
     enable_nvidia      = $enable_nvidia
     enable_razer       = $enable_razer

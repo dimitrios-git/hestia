@@ -1,0 +1,53 @@
+---
+# Install PowerShell (pwsh) the way Microsoft documents for Debian
+# (learn.microsoft.com/powershell/scripting/install/install-debian): register
+# the Microsoft package repository (PMC) via Microsoft's own
+# packages-microsoft-prod.deb config package, then apt-install `powershell`
+# from it. This mirrors their published steps exactly (download the repo/key
+# config .deb, install it, refresh, apt-get install powershell) rather than
+# hand-rolling a sources.list.d entry like `chrome`/`edge`/`mega` do — PMC's
+# config package is the vendor's own supported registration path here.
+#
+# amd64-only (like chrome/edge/steam/trading) — self-skips elsewhere.
+# Root (become) for the repo registration + package install.
+
+- name: Detect CPU architecture
+  ansible.builtin.command: uname -m
+  register: _powershell_arch
+  changed_when: false
+
+- name: "powershell: no vendor build for this arch -> skip"
+  ansible.builtin.debug:
+    msg: "PowerShell's Debian PMC package targets amd64 — skipping on {{ _powershell_arch.stdout }}."
+  when: _powershell_arch.stdout != 'x86_64'
+
+- name: Install PowerShell from the Microsoft package repository (PMC)
+  when: _powershell_arch.stdout == 'x86_64'
+  block:
+    - name: Detect the Debian VERSION_ID (PMC's config package is versioned per-release)
+      ansible.builtin.shell: . /etc/os-release && echo "$VERSION_ID"
+      register: _powershell_debver
+      changed_when: false
+
+    - name: Download Microsoft's repository registration package (packages-microsoft-prod.deb)
+      ansible.builtin.get_url:
+        url: "https://packages.microsoft.com/config/debian/{{ _powershell_debver.stdout }}/packages-microsoft-prod.deb"
+        dest: /tmp/packages-microsoft-prod.deb
+        mode: "0644"
+
+    - name: Register the Microsoft package repository + signing key
+      ansible.builtin.apt:
+        deb: /tmp/packages-microsoft-prod.deb
+      become: true
+
+    - name: Remove the downloaded registration package
+      ansible.builtin.file:
+        path: /tmp/packages-microsoft-prod.deb
+        state: absent
+
+    - name: Install powershell (refresh the cache so the new repo is seen)
+      ansible.builtin.apt:
+        name: powershell
+        state: present
+        update_cache: true
+      become: true

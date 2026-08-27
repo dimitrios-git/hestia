@@ -10,6 +10,15 @@
 #
 # amd64-only (like chrome/edge/steam/trading) — self-skips elsewhere.
 # Root (become) for the repo registration + package install.
+#
+# Microsoft's .deb ships NO .desktop entry or icon at all (verified via
+# `dpkg -L powershell` — just the /opt payload + a /usr/bin/pwsh symlink), so
+# after install the role also drops a wofi/app-grid launcher (no root): the
+# official PowerShell logo (assets/powershell_128.svg from the upstream
+# PowerShell/PowerShell repo, MIT-licensed) into the user's hicolor icon
+# theme, and a .desktop entry that opens pwsh in the default terminal
+# ($term alacritty in sway config) — same shape as the $mod+m/$mod+c
+# alacritty -e launches in user/sway/config.
 
 - name: Detect CPU architecture
   ansible.builtin.command: uname -m
@@ -51,3 +60,34 @@
         state: present
         update_cache: true
       become: true
+
+    - name: Ensure the icon + applications dirs exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ target_home }}/.local/share/icons/hicolor/scalable/apps"
+        - "{{ target_home }}/.local/share/applications"
+
+    - name: Install the PowerShell icon (upstream MIT-licensed SVG logo)
+      ansible.builtin.copy:
+        src: powershell.svg
+        dest: "{{ target_home }}/.local/share/icons/hicolor/scalable/apps/powershell.svg"
+        mode: "0644"
+
+    - name: Install the PowerShell wofi/app-grid launcher entry
+      ansible.builtin.copy:
+        src: powershell.desktop
+        dest: "{{ target_home }}/.local/share/applications/powershell.desktop"
+        mode: "0644"
+
+    # Best-effort, same idiom as the yaru_icons role: GTK/wofi can resolve the
+    # icon by scanning the hicolor dir even without a cache, this just speeds
+    # the lookup. Skip cleanly if gtk-update-icon-cache isn't installed or the
+    # user-level hicolor dir has no index.theme to refresh against.
+    - name: Refresh the icon cache
+      ansible.builtin.command:
+        cmd: "gtk-update-icon-cache -qtf {{ target_home }}/.local/share/icons/hicolor"
+      changed_when: true
+      failed_when: false

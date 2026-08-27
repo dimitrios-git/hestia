@@ -66,6 +66,9 @@
     - role: mega       # MEGA Desktop (MEGAsync) from MEGA's vendor apt repo (root); amd64/arm64, self-skips elsewhere; sign-in + sync config stay manual
       tags: [system, mega]
       when: enable_mega | default(false) | bool
+    - role: powershell # PowerShell (pwsh), Microsoft's documented Debian PMC install (root); amd64-only, self-skips elsewhere
+      tags: [system, powershell]
+      when: enable_powershell | default(false) | bool
     - role: steam      # Steam (steam-installer) from Debian's own contrib apt repo (root); enables i386 + contrib; amd64-only, self-skips elsewhere; first-run client update + sign-in stay manual
       tags: [system, steam]
       when: enable_steam | default(false) | bool

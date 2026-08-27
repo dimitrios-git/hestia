@@ -182,6 +182,13 @@ enable_trading: false       # install trading apps (TradingView Desktop; JForex4
 # (e.g. → /mnt/cloud-data/files/MEGA) is in-app on first run and stays manual.
 # Default OFF — a per-host choice. Add `nemo-megasync` etc. via `mega_packages`.
 enable_mega: false          # install MEGA Desktop from MEGA's vendor repo (mega role)
+# PowerShell (the `powershell` role): pwsh via Microsoft's own documented
+# Debian install method — register the Microsoft package repository (PMC)
+# using their packages-microsoft-prod.deb config package, then apt-install
+# `powershell` from it (learn.microsoft.com/powershell/scripting/install/
+# install-debian). amd64-only; the role self-skips on other arches.
+# Default OFF — a per-host dev-toolchain choice, like enable_golang.
+enable_powershell: false    # install PowerShell from Microsoft's PMC repo (powershell role)
 # Steam (the `steam` role): steam-installer from DEBIAN'S OWN apt archive
 # (contrib/games) — not a vendor repo like chrome/mega/trading. The role
 # enables the `contrib` component + the `i386` foreign architecture (Steam's

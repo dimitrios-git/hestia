@@ -10,11 +10,20 @@ Usage (inside a HESTIA_HOOK):
   hestia-type [OPTIONS] ACTION [ACTION ...]
 
 Each ACTION is one of:
-  text:STRING   type STRING with human-like per-character timing
-  key:NAME      press a named key once (wtype -k NAME)
-  pause:MS      pause for MS milliseconds, no keystroke (wtype -s MS)
-  wpm:N         change the typing rate from here on (this invocation only —
-                does not persist past it); see --wpm below
+  text:STRING     type STRING with human-like per-character timing
+  key:NAME        press a named key once (wtype -k NAME)
+  hold:NAME:MS    press NAME, hold for MS milliseconds, then release
+                  (wtype -P NAME -s MS -p NAME) — for a program that polls
+                  live key state (SDL_GetKeyboardState and similar) rather
+                  than reacting to discrete press events; key:NAME's
+                  press+release is instantaneous and never registers as
+                  "held" to that kind of program. Added 2026-09-01 for
+                  thecodingidiot's g02a/g02b platformer clips — the first
+                  scenes needing sustained directional movement; every
+                  earlier scene only ever tapped or toggled a key.
+  pause:MS        pause for MS milliseconds, no keystroke (wtype -s MS)
+  wpm:N           change the typing rate from here on (this invocation only —
+                  does not persist past it); see --wpm below
 
 Example — the vim-hello-world demo, by hand vs. via this tool:
   hand-tuned (docs/video-capture-design.md's first pass):
@@ -147,8 +156,8 @@ def parse_actions(raw):
     actions = []
     for item in raw:
         kind, sep, val = item.partition(":")
-        if not sep or kind not in ("text", "key", "pause", "wpm"):
-            sys.exit(f"hestia-type: bad action {item!r} (want text:/key:/pause:/wpm:)")
+        if not sep or kind not in ("text", "key", "hold", "pause", "wpm"):
+            sys.exit(f"hestia-type: bad action {item!r} (want text:/key:/hold:/pause:/wpm:)")
         actions.append((kind, val))
     return actions
 
@@ -224,6 +233,17 @@ def build_argv(actions, wpm, jitter, rng, drop_compensation, typo_rate=0.0):
                 emit_char(val)
             else:
                 emit(["-k", val])
+        elif kind == "hold":
+            # A held key for a program polling live key state, not reacting
+            # to a discrete press event (see the module docstring). The
+            # press is the meaningful input event — same compensable role
+            # -k plays for a tap — so it goes through emit() the same way;
+            # the release afterward is unconditional, not itself a candidate
+            # for the opener/every-pause drop workaround.
+            key, _, ms = val.partition(":")
+            emit(["-P", key])
+            add_pause(float(ms))
+            argv.extend(["-p", key])
         elif kind == "text":
             for ch in val:
                 if ch.isalpha() and typo_rate > 0 and rng.random() < typo_rate:

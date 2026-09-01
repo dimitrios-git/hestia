@@ -45,7 +45,16 @@ Script format (YAML):
     - label: "write hello.c"           # optional, dry-run/organisation only
       actions:
         - text: "vim hello.c"           # typed via hestia-type
-        - key: Return                    # a single named key
+        - key: Return                    # a single named key (press+release,
+                                           # instantaneous)
+        - hold: {key: Right, ms: 600}     # press, hold for ms, release -- for
+                                           # a program polling LIVE key state
+                                           # (SDL_GetKeyboardState and
+                                           # similar), where key:'s
+                                           # instantaneous tap never registers
+                                           # as "held". See hestia-type's own
+                                           # docstring for the wtype -P/-p
+                                           # mechanics.
         - pause: 500                      # milliseconds, no keystroke
         - text: |                          # embedded newlines become key:Return
             multi
@@ -112,6 +121,37 @@ re-translate independently, same practice tools/manim's locale scenes
 already follow. Rendered output naming isn't auto-derived (-o stays
 explicit) — follow tools/manim's own <basename>-<locale> convention by
 hand, e.g. f04-your-first-program-el.mp4.
+
+`res:` for a `scene: game` recording MUST match the target binary's own
+compiled window size, not an arbitrary "smaller file" choice — a real bug
+hunted down and fixed 2026-09-01 while adding hold: (below) for
+thecodingidiot's g02a/g02b platformer clips. Recording g02a (a fixed
+800x608 SDL2 window per its own map.h) at res: 640x480 — the size c06's
+depthvis scene uses — produced a video that looked "correct" at a glance
+(the window mapped, fullscreened, showed the sky-blue clear colour) but
+never rendered a single tile or sprite: EVERY frame across MULTIPLE
+different recordings was a flat, single-colour rectangle, confirmed by
+histogramming each frame's actual pixel colours, not by eyeballing.
+Re-recording at res: 800x608 (matching WINDOW_W/WINDOW_H) fixed it
+completely — real ground/platform/player colours appeared immediately.
+Root cause, isolated by comparing against c06's own depthvis (which DOES
+render correctly at a mismatched-from-nothing 640x480, because that's
+ITS OWN native size): depthvis draws with SDL_RenderFillRect (solid
+colour, no texture) while g02a/g01b/g02b draw via IMG_LoadTexture +
+SDL_RenderCopy — texture-blit rendering, under this rig's headless
+pixman/software-GL stack, silently produces nothing but the clear colour
+when the compositor fullscreens the window into an output size that
+doesn't match the surface's own committed buffer size (g01b's own scene
+happens to already use its native size, which is why this went
+undetected until g02a's higher native resolution exposed it). Lesson:
+for ANY new `scene: game` recording, read the target binary's own
+window-creation call (or its equivalent constant) for the real window
+size and set `res:` to exactly that — don't copy another scene's `res:`
+value on the assumption "small is fine," and don't trust that a
+recording "looks like the game" from the window mapping/fullscreening
+alone — histogram a few real frames before trusting a take, the same
+discipline this file's own README already applies to typing scenes'
+output files.
 """
 import argparse
 import os
@@ -531,10 +571,18 @@ def flatten_actions(doc, rng, line_pause_range, wpm, locale, cols):
                 key = str(action["key"])
                 flat.append(("key", key))
                 column.advance_key(key)
+            elif "hold" in action:
+                # Not a text-editing action (no scene has used this for
+                # anything but sustained game movement so far) -- deliberately
+                # doesn't touch column, unlike key: above.
+                spec = action["hold"]
+                key = str(spec["key"])
+                ms = spec["ms"]
+                flat.append(("hold", f"{key}:{ms}"))
             elif "pause" in action:
                 flat.append(("pause", str(action["pause"])))
             else:
-                sys.exit(f"hestia-video: bad action {action!r} (want text/key/pause/comment)")
+                sys.exit(f"hestia-video: bad action {action!r} (want text/key/hold/pause/comment)")
     return flat
 
 
@@ -550,6 +598,9 @@ def estimate_ms(flat, wpm):
             total += len(val) * avg_char_ms
         elif kind == "key":
             total += 120
+        elif kind == "hold":
+            _, _, ms = val.rpartition(":")
+            total += float(ms)
         elif kind == "pause":
             total += float(val)
     return total

@@ -52,9 +52,23 @@ Script format (YAML):
                                            # (SDL_GetKeyboardState and
                                            # similar), where key:'s
                                            # instantaneous tap never registers
-                                           # as "held". See hestia-type's own
-                                           # docstring for the wtype -P/-p
-                                           # mechanics.
+                                           # as "held". Reliable ALONE or
+                                           # repeated for the SAME key --
+                                           # NOT reliable immediately after
+                                           # a hold: for a DIFFERENT key, see
+                                           # press:/release: below and
+                                           # hestia-type's own docstring.
+        - press: Right                     # press and hold, no scheduled
+                                            # release -- for overlapping a
+                                            # held key with something else
+                                            # (a tap, a pause, even a second
+                                            # held key) instead of releasing
+                                            # it first. e.g. jump WHILE
+                                            # still moving:
+        - pause: 800
+        - key: space                        # the jump tap, Right still down
+        - pause: 700
+        - release: Right                     # pairs with the press: above
         - pause: 500                      # milliseconds, no keystroke
         - text: |                          # embedded newlines become key:Return
             multi
@@ -579,10 +593,14 @@ def flatten_actions(doc, rng, line_pause_range, wpm, locale, cols):
                 key = str(spec["key"])
                 ms = spec["ms"]
                 flat.append(("hold", f"{key}:{ms}"))
+            elif "press" in action:
+                flat.append(("press", str(action["press"])))
+            elif "release" in action:
+                flat.append(("release", str(action["release"])))
             elif "pause" in action:
                 flat.append(("pause", str(action["pause"])))
             else:
-                sys.exit(f"hestia-video: bad action {action!r} (want text/key/hold/pause/comment)")
+                sys.exit(f"hestia-video: bad action {action!r} (want text/key/hold/press/release/pause/comment)")
     return flat
 
 
@@ -601,6 +619,9 @@ def estimate_ms(flat, wpm):
         elif kind == "hold":
             _, _, ms = val.rpartition(":")
             total += float(ms)
+        elif kind in ("press", "release"):
+            pass  # instantaneous -- the scene's own pause: actions between
+                  # a press:/release: pair carry the real held duration
         elif kind == "pause":
             total += float(val)
     return total

@@ -20,7 +20,43 @@ Each ACTION is one of:
                   "held" to that kind of program. Added 2026-09-01 for
                   thecodingidiot's g02a/g02b platformer clips — the first
                   scenes needing sustained directional movement; every
-                  earlier scene only ever tapped or toggled a key.
+                  earlier scene only ever tapped or toggled a key. ONLY
+                  reliable as the very FIRST hold of an invocation, or
+                  repeated for the SAME key — see press:/release: below.
+  press:NAME      press and hold NAME with no scheduled release (wtype
+                  -P NAME) — pairs with a later release:NAME, with any
+                  other actions (a tap, a pause, even a second held key)
+                  in between. Added 2026-09-01, same day as hold: above,
+                  once hold: turned out to only be reliable alone: a
+                  hold:NAME2:MS immediately following a hold:NAME1:MS for
+                  a DIFFERENT key measurably does not honour its own MS —
+                  confirmed live and repeatedly on thecodingidiot's g02a
+                  (a jump requested right after a walk consistently came
+                  out as a shallow ~20px partial hop regardless of the
+                  requested duration, 150-1200ms, across a dozen takes
+                  and several seeds, while the identical hold in ISOLATION
+                  produced a full, clean ~113px arc every time). Root
+                  cause not pinned down (a wtype-level -P/-p handoff race
+                  between two DIFFERENT keys is the leading guess, not a
+                  diagnosis — matches this file's own unresolved
+                  drop-compensation quirk above in kind, not mechanism).
+                  press:/release: sidestep it by never emitting a bare
+                  "-p KEY1 -P KEY2" handoff for two different keys at
+                  all — build a scene as press:KEY1, (anything else,
+                  including a full press:KEY2 ... release:KEY2 pair
+                  nested inside), release:KEY1 instead of two adjacent
+                  hold:s. Confirmed empirically: pressing Right, tapping
+                  space mid-hold, then releasing Right produces
+                  CONTINUOUS movement the whole time and a full jump arc,
+                  not a partial one. This is a real primitive gap
+                  filled, not a hold: replacement — hold: stays for the
+                  common single-key case, where it's simpler to read in
+                  a scene script.
+  release:NAME    release a key pressed by press:NAME (wtype -p NAME).
+                  Releasing a key that was never pressed, or double-
+                  releasing, is a plain wtype error — the scene author's
+                  responsibility to pair correctly, same as any other
+                  hand-sequenced action here.
   pause:MS        pause for MS milliseconds, no keystroke (wtype -s MS)
   wpm:N           change the typing rate from here on (this invocation only —
                   does not persist past it); see --wpm below
@@ -156,8 +192,8 @@ def parse_actions(raw):
     actions = []
     for item in raw:
         kind, sep, val = item.partition(":")
-        if not sep or kind not in ("text", "key", "hold", "pause", "wpm"):
-            sys.exit(f"hestia-type: bad action {item!r} (want text:/key:/hold:/pause:/wpm:)")
+        if not sep or kind not in ("text", "key", "hold", "press", "release", "pause", "wpm"):
+            sys.exit(f"hestia-type: bad action {item!r} (want text:/key:/hold:/press:/release:/pause:/wpm:)")
         actions.append((kind, val))
     return actions
 
@@ -244,6 +280,13 @@ def build_argv(actions, wpm, jitter, rng, drop_compensation, typo_rate=0.0):
             emit(["-P", key])
             add_pause(float(ms))
             argv.extend(["-p", key])
+        elif kind == "press":
+            # Same compensable role as hold's own press -- see hold's
+            # branch above and the module docstring for why the release
+            # is unconditional instead.
+            emit(["-P", val])
+        elif kind == "release":
+            argv.extend(["-p", val])
         elif kind == "text":
             for ch in val:
                 if ch.isalpha() and typo_rate > 0 and rng.random() < typo_rate:

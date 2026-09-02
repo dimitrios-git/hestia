@@ -52,3 +52,8 @@ vi_mode_style = { shape = "Block", blinking = "Off" }
 # to ~/.config/alacritty/theme.toml. Edit palette.yml + re-render, not the pair.
 [general]
 import = ["~/.config/alacritty/theme.toml"]
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"

@@ -1,0 +1,9 @@
+---
+# Pinned gendev release — see README.md for the bump recipe. kubilus1/gendev
+# tags real, fixed release assets (not an unpinnable rolling-latest shape like
+# trading/mega), so a normal version-bump pin works, same shape as openrgb.
+# The sha256 below was computed FROM this exact downloaded asset at pin time —
+# upstream's release page publishes no checksum of its own to verify against.
+gendev_version: "0.7.1"
+gendev_deb_url: "https://github.com/kubilus1/gendev/releases/download/{{ gendev_version }}/gendev_{{ gendev_version }}_all.deb"
+gendev_deb_sha256: "b1d8fd9e0138b4a9afe58fe82c9d8f27b185ebfff4a62a24d54fd3f207e65537"

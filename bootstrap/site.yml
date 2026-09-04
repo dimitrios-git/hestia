@@ -37,6 +37,9 @@
     - role: video_compare # build + install video-compare (FFmpeg+SDL2 side-by-side video diff tool) into ~/.local/bin — opt-in, no apt package or Linux release binary upstream
       tags: [video_compare]
       when: enable_video_compare | default(false) | bool
+    - role: blastem    # BlastEm (Genesis/Mega Drive emulator), official tarball into ~/.local — rides enable_tci; the tci apt group deliberately does NOT install Debian's own blastem package, see the role for why
+      tags: [tci, blastem]
+      when: enable_tci | default(false) | bool
     - role: testbench  # generate the theming testbench folder (code samples + dircolors/ls fixtures) — no root, opt-in
       tags: [testbench]
       when: enable_testbench | default(false) | bool
@@ -105,6 +108,9 @@
     - role: minipro    # build + install minipro (EEPROM programmer CLI) from source — not packaged in Debian OR Ubuntu; opt-in, hardware-specific
       tags: [system, minipro]
       when: enable_minipro | default(false) | bool
+    - role: gendev     # m68k-elf GCC + SGDK (pinned vendor .deb) into /opt/gendev, for r02-the-scaler's Mega Drive port — rides enable_tci, not in Debian apt at all
+      tags: [system, tci, gendev]
+      when: enable_tci | default(false) | bool
     - role: android_studio  # Android Studio (pinned vendor tarball) + kvm group membership for the emulator — opt-in, per-host dev-toolchain choice
       tags: [system, android_studio]
       when: enable_android_dev | default(false) | bool

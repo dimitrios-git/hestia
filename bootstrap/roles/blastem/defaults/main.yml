@@ -1,0 +1,10 @@
+---
+# Pinned BlastEm nightly — see README.md for the bump recipe. Not a GitHub
+# release (retrodev.com has no repo/API), so there's no {ver} URL template to
+# bump automatically like the localbin_binaries entries — the filename embeds a
+# short git commit hash that changes every nightly. Re-derive by hand: browse
+# https://www.retrodev.com/blastem/nightlies/, grab the current
+# blastem64-*.tar.gz, sha256sum it.
+blastem_version: "0.6.3-pre-8013468ed981"
+blastem_url: "https://www.retrodev.com/blastem/nightlies/blastem64-{{ blastem_version }}.tar.gz"
+blastem_sha256: "26539e1efe89aea1d79663372856e40fe874fa141517276bedc47c0c476604c8"

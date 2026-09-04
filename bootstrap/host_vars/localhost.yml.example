@@ -25,8 +25,12 @@ enable_libreoffice: false
 enable_nvidia: false
 
 # Install thecodingidiot chapter prerequisites? Package-only (no role) and off by
-# default — SDL2 headers, gdb, valgrind, alsa-utils, nethack-console. Only useful
-# on a machine that works on the course.
+# default — SDL2 headers, gdb, valgrind, alsa-utils, nethack-console, plus a
+# console-emulator set for testing tci's own homebrew: blastem (Mega Drive),
+# retroarch+snes9x (SNES), mednafen+mednaffe (PS1 — needs a legally-dumped BIOS
+# in ~/.mednafen/firmware/), flycast (Dreamcast, localbin AppImage — needs a
+# legally-dumped BIOS in ~/.local/share/flycast/data/). Only useful on a machine
+# that works on the course.
 enable_tci: false
 
 # Build + install minipro, the EEPROM-programmer CLI (f03b-the-2600-hardware)?

@@ -589,12 +589,16 @@ localbin_binaries:
       arm64: "228e87760c24a571bd390acd77f9f272338d69a62c1605bd0015994489f9547d"
 
   # flycast — Dreamcast emulator, the fourth leg of the tci console set (blastem/
-  # retroarch+snes9x/mednafen cover Genesis/SNES/PS1 via apt, see the `tci` apt
-  # group comment above). Debian ships NO Dreamcast emulator at all (no flycast,
-  # reicast or redream), and upstream's only Linux distribution is a GitHub-release
-  # AppImage (`raw: true`, no archive) — x86_64 only, no arm64 asset published.
-  # Needs libfuse2t64 (in the tci apt group) to run without --appimage-extract.
-  # Rides enable_tci, same shape as zellij riding enable_multiplexers.
+  # retroarch+snes9x/mupen64plus-qt cover Genesis/SNES/N64 via apt, see the `tci`
+  # apt group comment above). Debian ships NO Dreamcast emulator at all (no
+  # flycast, reicast or redream), and upstream's only Linux distribution is a
+  # GitHub-release AppImage (`raw: true`, no archive) — x86_64 only, no arm64
+  # asset published. Needs libfuse2t64 (in the tci apt group) to run without
+  # --appimage-extract. Ships a built-in HLE BIOS (reios), enabled by default —
+  # boots homebrew/most games with no console or BIOS dump; a real dumped one is
+  # optional, drop it in ~/.local/share/flycast/data/ for tighter commercial-game
+  # compatibility. Rides enable_tci, same shape as zellij riding
+  # enable_multiplexers.
   - name: flycast
     version: "2.7"
     url: "https://github.com/flyinghead/flycast/releases/download/v{ver}/flycast-{arch}-{ver}.AppImage"
@@ -731,21 +735,29 @@ apt_packages:
   android:      [openjdk-21-jdk, cpu-checker]     # enable_android_dev — JDK for Gradle/`npx expo run:android` (17 is NOT in Debian trixie's apt at all, only 21/25 — verified 2026-08-14 via apt-cache; 21 is the current LTS and fully supported by AGP/Gradle, 25 felt needlessly bleeding-edge), cpu-checker for `kvm-ok` (verifying emulator acceleration); Android Studio itself is a vendor tarball, installed by the android_studio role, not apt
   # tci base entries are derived from the chapters' own Setup pages (see the note
   # above); the console-emulator entries below are NOT — added 2026-09-04 so
-  # enable_tci also covers testing thecodingidiot's own Mega Drive/SNES/PS1/
-  # Dreamcast homebrew, one emulator per target: blastem (Genesis/Mega Drive —
-  # standalone, native, ships its own 68k/Z80 debugger, no BIOS needed); retroarch
-  # + retroarch-assets + libretro-snes9x (SNES — no standalone Snes9x/bsnes apt
-  # package exists on Debian, only libretro cores, so RetroArch is the frontend;
-  # no BIOS needed); mednafen + mednaffe (PS1 — mednafen's Beetle PSX core is the
-  # most accurate apt-packaged option, mednaffe is its GTK front-end since
-  # mednafen itself is CLI-driven; NEEDS a legally-dumped console BIOS dropped in
-  # ~/.mednafen/firmware/, not something hestia can ship); libfuse2t64 (runtime
-  # dep for running the flycast AppImage below without --appimage-extract-and-run).
-  # Dreamcast has NO apt-packaged emulator at all (no flycast/reicast/redream in
-  # Debian) — flycast is instead a pinned localbin AppImage, see
-  # `localbin_binaries` below (also needs a legally-dumped BIOS: dc_boot.bin +
-  # dc_flash.bin in ~/.local/share/flycast/data/).
-  tci:          [libsdl2-image-dev, libsdl2-mixer-dev, libsdl2-ttf-dev, gdb, valgrind, alsa-utils, nethack-console, python3-pil, blastem, retroarch, retroarch-assets, libretro-snes9x, mednafen, mednaffe, libfuse2t64]  # enable_tci (default off) — g01b-graphical: SDL2 image/ttf headers; g01c-acoustic: SDL2 mixer headers (playback) + alsa-utils (CLI tools); f05-building-c: gdb + valgrind; f01-the-terminal: nethack-console; g01b-graphical/g02a-the-platformer: python3-pil (Pillow's actual Debian package name — `python3-pillow` does not exist) for each chapter's gen_assets.sh; console emulators — see the comment above
+  # enable_tci also covers testing thecodingidiot's own Mega Drive/SNES/N64/
+  # Dreamcast homebrew, one emulator per target, all reachable with NO console/
+  # BIOS dump (2026-09 curriculum call: PS1 was dropped in favour of N64
+  # specifically over this — every PS1 emulator with a sane, pinnable Linux
+  # distribution (mednafen, DuckStation) hard-requires a real dumped retail BIOS,
+  # confirmed straight from DuckStation's own README; the one open-source, no-BIOS
+  # path, PCSX-Redux + OpenBIOS, publishes no GitHub Releases at all — Linux is a
+  # rolling unpinned AppImage off a third-party host, built via Docker + a full
+  # MIPS cross-toolchain the project's own README calls "fairly experimental" —
+  # too fragile/unreproducible for this manifest): blastem (Genesis/Mega Drive —
+  # standalone, native, ships its own 68k/Z80 debugger); retroarch +
+  # retroarch-assets + libretro-snes9x (SNES — no standalone Snes9x/bsnes apt
+  # package exists on Debian, only libretro cores, so RetroArch is the frontend);
+  # mupen64plus-qt (N64 — pulls in mupen64plus-ui-console + all audio/input/rsp/
+  # video plugins as apt deps; N64 emulation has used HLE PIF/boot for 20+ years,
+  # no BIOS file involved at all, unlike PS1/Saturn/Dreamcast); libfuse2t64
+  # (runtime dep for running the flycast AppImage below without
+  # --appimage-extract-and-run). Dreamcast has NO apt-packaged emulator at all (no
+  # flycast/reicast/redream in Debian) — flycast is instead a pinned localbin
+  # AppImage, see `localbin_binaries` below; it ships a built-in HLE BIOS (reios),
+  # ENABLED BY DEFAULT, that boots homebrew and most games with no real BIOS —
+  # a real dumped one is optional, only for tighter commercial-game compatibility.
+  tci:          [libsdl2-image-dev, libsdl2-mixer-dev, libsdl2-ttf-dev, gdb, valgrind, alsa-utils, nethack-console, python3-pil, blastem, retroarch, retroarch-assets, libretro-snes9x, mupen64plus-qt, libfuse2t64]  # enable_tci (default off) — g01b-graphical: SDL2 image/ttf headers; g01c-acoustic: SDL2 mixer headers (playback) + alsa-utils (CLI tools); f05-building-c: gdb + valgrind; f01-the-terminal: nethack-console; g01b-graphical/g02a-the-platformer: python3-pil (Pillow's actual Debian package name — `python3-pillow` does not exist) for each chapter's gen_assets.sh; console emulators — see the comment above
   wallpapers: []                                 # enable_wallpapers — no apt deps since mpvpaper (libmpv2) was dropped 2026-07; wpaperd/awww ride localbin, awww's liblz4-1 is Debian base
 
   # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)

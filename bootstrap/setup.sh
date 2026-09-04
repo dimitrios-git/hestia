@@ -361,7 +361,7 @@ askyn enable_thunderbird "Install Thunderbird? (email client, hestia-themed)" "$
 askyn enable_file_managers "Install the file-manager evaluation set? (ranger/yazi/krusader/dolphin/thunar/nemo/nautilus)" "$def_filemgrs"
 askyn enable_image_viewers "Install ristretto? (GUI image viewer, alongside imv)" "$def_imgviewers"
 askyn enable_terminal_emulators "Install the still-open terminal-emulator evaluation tail? (foot/gnome-terminal — alacritty is now the default, installed unconditionally)" "$def_termemus"
-askyn enable_tci         "Install thecodingidiot chapter prerequisites? (SDL2 headers, gdb, valgrind, alsa-utils, nethack + Mega Drive/SNES/PS1/Dreamcast emulators)" "$def_tci"
+askyn enable_tci         "Install thecodingidiot chapter prerequisites? (SDL2 headers, gdb, valgrind, alsa-utils, nethack + Mega Drive/SNES/N64/Dreamcast emulators, all BIOS-free)" "$def_tci"
 askyn enable_minipro     "Build minipro from source? (EEPROM programmer CLI — needs a TL866xx/T48/T56)" "$def_minipro"
 askyn enable_android_dev "Install Android dev tooling? (JDK + Android Studio + kvm group for the emulator)" "$def_android"
 askyn enable_wallpapers  "Install the wallpaper stack? (mesh default background + wpaperd/awww — prebuilt, amd64)" "$def_wallpapers"

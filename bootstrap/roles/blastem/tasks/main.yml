@@ -1,0 +1,132 @@
+---
+# blastem (enable_tci) — the Genesis/Mega Drive emulator thecodingidiot's
+# r02-the-scaler chapter tests homebrew against. Debian's own `blastem` apt
+# package (installed by #331/#332) turned out to be the WRONG call: the
+# chapter's own Setup page, verified directly against this exact package,
+# says its config file is split across /etc/blastem/ and
+# /usr/share/games/blastem/ in a way that only resolves correctly through
+# dpkg's own install process — use the official self-contained tarball
+# instead. This role replaces the apt package with that tarball, no root
+# needed (like video_compare, into ~/.local).
+#
+# No GitHub release (retrodev.com hosts its own nightlies, no API/repo), so
+# this can't use the generic localbin_binaries {ver}/{arch} shape — and
+# localbin's per-entry extraction (copy ONE member out of the archive) would
+# break blastem anyway: it needs its sibling default.cfg/shaders/ alongside
+# the binary, not just the bare executable (confirmed live: the archive is
+# one self-contained directory, exactly as the chapter's Setup page says).
+# So the whole archive is extracted (strip-components=1, dropping the
+# version-hash-named top directory) into a stable ~/.local/share/blastem, and
+# ~/.local/bin/blastem is a symlink into it — blastem resolves its own
+# resource files relative to its REAL binary location (confirmed by the
+# chapter's own `BLASTEM=/path/to/blastem` env-var pattern in
+# 06-where-things-stand.mdx, which only makes sense if the binary can be
+# referenced from anywhere and still find its config), so a symlink works.
+
+- name: Detect CPU architecture
+  ansible.builtin.command: uname -m
+  register: _blastem_arch
+  changed_when: false
+
+- name: "blastem: no x86_64 -> skip (retrodev.com only publishes a blastem64 nightly build)"
+  ansible.builtin.debug:
+    msg: "Skipping the blastem role on {{ _blastem_arch.stdout }}."
+  when: _blastem_arch.stdout != 'x86_64'
+
+- name: Install blastem
+  when: _blastem_arch.stdout == 'x86_64'
+  vars:
+    _blastem_dir: "{{ target_home }}/.local/share/blastem"
+    _blastem_marker: "{{ target_home }}/.local/state/hestia/blastem-{{ blastem_version }}"
+  block:
+    - name: Ensure ~/.local/bin and the hestia state dir exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ target_home }}/.local/bin"
+        - "{{ target_home }}/.local/state/hestia"
+
+    # Re-install only if the marker for THIS version is absent — a version
+    # bump changes the marker path, so a manual `rm` of the marker also
+    # re-installs. Same shape as the localbin role's per-(name,version) marker.
+    - name: "blastem: is v{{ blastem_version }} already installed?"
+      ansible.builtin.stat:
+        path: "{{ _blastem_marker }}"
+      register: _blastem_present
+
+    - name: "blastem: download, verify, extract v{{ blastem_version }}"
+      when: not _blastem_present.stat.exists
+      block:
+        - name: Remove any previous version's extracted directory
+          ansible.builtin.file:
+            path: "{{ _blastem_dir }}"
+            state: absent
+
+        - name: Re-create the target directory
+          ansible.builtin.file:
+            path: "{{ _blastem_dir }}"
+            state: directory
+            mode: "0755"
+
+        - name: Temp download dir
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: hestia-blastem
+          register: _blastem_tmp
+
+        - name: Download the pinned nightly tarball (sha256-verified)
+          ansible.builtin.get_url:
+            url: "{{ blastem_url }}"
+            dest: "{{ _blastem_tmp.path }}/blastem.tar.gz"
+            checksum: "sha256:{{ blastem_sha256 }}"
+            mode: "0644"
+
+        - name: Extract into ~/.local/share/blastem (strip the versioned top directory)
+          ansible.builtin.unarchive:
+            src: "{{ _blastem_tmp.path }}/blastem.tar.gz"
+            dest: "{{ _blastem_dir }}"
+            remote_src: true
+            extra_opts: ["--strip-components=1"]
+
+        # Both changes are the chapter's own recommendation (r02-the-scaler's
+        # Setup page): `vsync off` pops a BLOCKING startup dialog outright on
+        # a driver that can't support it — a real risk on this desktop's
+        # NVIDIA/Wayland setup (see docs/tool-configurations.md's Sway
+        # section) — and `gl off` forces SDL2's plain software renderer
+        # instead of BlastEm's own GL path, avoiding the same class of
+        # dialog. Baked in by default rather than left as the chapter's
+        # "optional, skip if you have a working GPU" — hestia would rather a
+        # fresh install never hit a blocking dialog than look prettier on a
+        # machine that happens to have working GL.
+        - name: "blastem: default.cfg — vsync off -> on (avoid a blocking startup dialog)"
+          ansible.builtin.lineinfile:
+            path: "{{ _blastem_dir }}/default.cfg"
+            regexp: '^\s*vsync off\s*$'
+            line: "\tvsync on"
+
+        - name: "blastem: default.cfg — gl on -> off (force the SDL2 software renderer)"
+          ansible.builtin.lineinfile:
+            path: "{{ _blastem_dir }}/default.cfg"
+            regexp: '^\s*gl on\s*$'
+            line: "\tgl off"
+
+        - name: "blastem: record v{{ blastem_version }} (idempotency marker)"
+          ansible.builtin.file:
+            path: "{{ _blastem_marker }}"
+            state: touch
+            mode: "0644"
+      always:
+        - name: Remove the temp download
+          ansible.builtin.file:
+            path: "{{ _blastem_tmp.path | default('') }}"
+            state: absent
+          when: _blastem_tmp.path is defined
+
+    - name: Symlink ~/.local/bin/blastem -> the extracted directory's binary
+      ansible.builtin.file:
+        src: "{{ _blastem_dir }}/blastem"
+        dest: "{{ target_home }}/.local/bin/blastem"
+        state: link
+        force: true

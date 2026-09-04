@@ -1,0 +1,71 @@
+---
+# gendev (enable_tci) — thecodingidiot's r02-the-scaler (Mega Drive port) needs a
+# real m68k-elf cross-compiler + SGDK, and neither is packaged in Debian apt.
+# kubilus1/gendev (https://github.com/kubilus1/gendev) ships a self-contained
+# GCC 9.3.0 built for m68k-elf plus SGDK as a GitHub-release .deb, installing
+# straight to /opt/gendev — the exact path the chapter's own instructions
+# assume (`export GENDEV=/opt/gendev`), confirmed by inspecting the .deb's file
+# list before ever installing it. Same pinned-vendor-.deb shape as the openrgb
+# role (sha256-verified against defaults/main.yml, apt resolves Depends against
+# the machine's normal sources) — installing via `apt: deb:` rather than a bare
+# `dpkg -i` is what makes the declared Depends (texinfo, default-jre, make)
+# resolve automatically instead of leaving a broken package.
+#
+# The .deb declares `Architecture: all`, but that's a mislabel — its bundled
+# m68k-elf-gcc binaries are actual x86_64 ELF executables (confirmed via `file`
+# on the extracted package), so apt would happily "install" it on arm64 and
+# leave a non-functional toolchain with no error. Guarded explicitly below,
+# same shape as openrgb's real amd64-only .deb build.
+
+- name: Detect CPU architecture
+  ansible.builtin.command: uname -m
+  register: _gendev_arch
+  changed_when: false
+
+- name: "gendev: no x86_64 -> skip (bundled GCC binaries are x86_64 despite Architecture: all)"
+  ansible.builtin.debug:
+    msg: "Skipping the gendev role on {{ _gendev_arch.stdout }}."
+  when: _gendev_arch.stdout != 'x86_64'
+
+- name: Install gendev
+  when: _gendev_arch.stdout == 'x86_64'
+  block:
+    - name: Is gendev already installed?
+      ansible.builtin.package_facts:
+
+    - name: Download + install gendev {{ gendev_version }} (only when absent)
+      when: "'gendev' not in ansible_facts.packages"
+      block:
+        - name: Temp download dir
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: hestia-gendev
+          register: _gendev_tmp
+
+        - name: Download the pinned gendev .deb (sha256-verified)
+          ansible.builtin.get_url:
+            url: "{{ gendev_deb_url }}"
+            dest: "{{ _gendev_tmp.path }}/gendev.deb"
+            checksum: "sha256:{{ gendev_deb_sha256 }}"
+            mode: "0644"
+
+        - name: Install the .deb (resolves Depends against the configured apt sources)
+          ansible.builtin.apt:
+            deb: "{{ _gendev_tmp.path }}/gendev.deb"
+            update_cache: true
+          become: true
+      always:
+        - name: Remove the temp download
+          ansible.builtin.file:
+            path: "{{ _gendev_tmp.path | default('') }}"
+            state: absent
+          when: _gendev_tmp.path is defined
+
+    - name: The manual tail (printed, not automated)
+      ansible.builtin.debug:
+        msg: >-
+          gendev installed to /opt/gendev (m68k-elf-gcc 9.3.0 + SGDK). The
+          chapter's own commands assume GENDEV=/opt/gendev — add
+          `export GENDEV=/opt/gendev` to your shell rc if you want it to
+          persist across sessions; hestia doesn't inject it into .bashrc since
+          that's a personal, chapter-scoped choice, not a system default.

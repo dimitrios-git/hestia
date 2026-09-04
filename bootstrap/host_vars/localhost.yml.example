@@ -24,14 +24,18 @@ enable_libreoffice: false
 # specific and needs a reboot. setup.sh detects a card and pre-answers this.
 enable_nvidia: false
 
-# Install thecodingidiot chapter prerequisites? Package-only (no role) and off by
-# default — SDL2 headers, gdb, valgrind, alsa-utils, nethack-console, plus a
-# console-emulator set for testing tci's own homebrew, all reachable with NO
-# console or BIOS dump: blastem (Mega Drive), retroarch+snes9x (SNES),
-# mupen64plus-qt (N64 — replaces PS1 in the curriculum: every apt-packagable PS1
-# emulator hard-requires a real dumped retail BIOS), flycast (Dreamcast, localbin
-# AppImage — ships a built-in HLE BIOS, enabled by default). Only useful on a
-# machine that works on the course.
+# Install thecodingidiot chapter prerequisites? Mostly package-only, but also
+# rides two small roles (blastem, gendev) — off by default: SDL2 headers, gdb,
+# valgrind, alsa-utils, nethack-console, plus a console-emulator set for
+# testing tci's own homebrew, all reachable with NO console or BIOS dump:
+# blastem (Mega Drive — the OFFICIAL tarball via its own role, deliberately
+# NOT Debian's apt package, which the chapter itself says only works installed
+# through dpkg), retroarch+snes9x (SNES), mupen64plus-qt (N64 — replaces PS1
+# in the curriculum: every apt-packagable PS1 emulator hard-requires a real
+# dumped retail BIOS), flycast (Dreamcast, localbin AppImage — ships a
+# built-in HLE BIOS, enabled by default). Also installs gendev (m68k-elf GCC +
+# SGDK into /opt/gendev) for the Mega Drive chapter's own build toolchain.
+# Only useful on a machine that works on the course.
 enable_tci: false
 
 # Build + install minipro, the EEPROM-programmer CLI (f03b-the-2600-hardware)?

@@ -731,6 +731,14 @@ apt_packages:
   # (f03b-the-2600-hardware) — it is NOT in Debian at all, so it cannot be an apt
   # entry; it needs a source build, and the chapter's `sudo apt install minipro`
   # instruction fails on Debian.
+  #
+  # Re-derived 2026-09-04 against three newly-written chapters (c08-the-deadlock,
+  # r01-the-scaler, f02-version-control): NO new apt entries needed, every literal
+  # `apt install` line in their Setup pages was already covered by an existing
+  # entry — c08's `valgrind` (already present, see the tci: line below), r01's
+  # `libsdl2-dev libsdl2-image-dev` + `python3-pil` (both already present), f02's
+  # `git diffutils` (already covered generically above). Citations on the tci:
+  # line's own comment extended to note the additional chapters relying on each.
   minipro:      [pkg-config, libusb-1.0-0-dev, zlib1g-dev]  # enable_minipro — BUILD deps only for the minipro role (build-essential + git are already core); minipro itself is not in Debian or Ubuntu and is compiled from source
   android:      [openjdk-21-jdk, cpu-checker]     # enable_android_dev — JDK for Gradle/`npx expo run:android` (17 is NOT in Debian trixie's apt at all, only 21/25 — verified 2026-08-14 via apt-cache; 21 is the current LTS and fully supported by AGP/Gradle, 25 felt needlessly bleeding-edge), cpu-checker for `kvm-ok` (verifying emulator acceleration); Android Studio itself is a vendor tarball, installed by the android_studio role, not apt
   # tci base entries are derived from the chapters' own Setup pages (see the note
@@ -757,7 +765,7 @@ apt_packages:
   # AppImage, see `localbin_binaries` below; it ships a built-in HLE BIOS (reios),
   # ENABLED BY DEFAULT, that boots homebrew and most games with no real BIOS —
   # a real dumped one is optional, only for tighter commercial-game compatibility.
-  tci:          [libsdl2-image-dev, libsdl2-mixer-dev, libsdl2-ttf-dev, gdb, valgrind, alsa-utils, nethack-console, python3-pil, blastem, retroarch, retroarch-assets, libretro-snes9x, mupen64plus-qt, libfuse2t64]  # enable_tci (default off) — g01b-graphical: SDL2 image/ttf headers; g01c-acoustic: SDL2 mixer headers (playback) + alsa-utils (CLI tools); f05-building-c: gdb + valgrind; f01-the-terminal: nethack-console; g01b-graphical/g02a-the-platformer: python3-pil (Pillow's actual Debian package name — `python3-pillow` does not exist) for each chapter's gen_assets.sh; console emulators — see the comment above
+  tci:          [libsdl2-image-dev, libsdl2-mixer-dev, libsdl2-ttf-dev, gdb, valgrind, alsa-utils, nethack-console, python3-pil, blastem, retroarch, retroarch-assets, libretro-snes9x, mupen64plus-qt, libfuse2t64]  # enable_tci (default off) — g01b-graphical/r01-the-scaler: SDL2 image/ttf headers; g01c-acoustic: SDL2 mixer headers (playback) + alsa-utils (CLI tools); f05-building-c/c08-the-deadlock: gdb + valgrind (c08 uses valgrind's bundled helgrind for race-detection); f01-the-terminal: nethack-console; g01b-graphical/g02a-the-platformer/r01-the-scaler: python3-pil (Pillow's actual Debian package name — `python3-pillow` does not exist) for each chapter's gen_assets.sh/billboard-sprite generation; console emulators — see the comment above
   wallpapers: []                                 # enable_wallpapers — no apt deps since mpvpaper (libmpv2) was dropped 2026-07; wpaperd/awww ride localbin, awww's liblz4-1 is Debian base
 
   # KDE's Qt platform-theme plugin: makes Qt apps read kdeglobals (the hestia scheme)
